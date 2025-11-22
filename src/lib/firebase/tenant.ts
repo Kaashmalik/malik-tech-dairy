@@ -1,5 +1,7 @@
 // Firestore Helpers for Tenant-Isolated Data Access
+// Enhanced with Redis caching for all Firestore reads
 import { adminDb } from "./admin";
+import { withCache, cacheKeys, invalidateTenantCache } from "@/lib/redis/cache";
 import type {
   TenantConfig,
   TenantSubscription,
@@ -10,39 +12,45 @@ import type {
 } from "@/types";
 
 /**
- * Get tenant config from Firestore
+ * Get tenant config from Firestore (with Redis cache)
  */
 export async function getTenantConfig(tenantId: string): Promise<TenantConfig | null> {
   if (!adminDb) {
     return null;
   }
 
-  try {
-    const configDoc = await adminDb
-      .collection("tenants")
-      .doc(tenantId)
-      .collection("config")
-      .doc("main")
-      .get();
+  return withCache(
+    cacheKeys.tenantConfig(tenantId),
+    async () => {
+      try {
+        const configDoc = await adminDb
+          .collection("tenants")
+          .doc(tenantId)
+          .collection("config")
+          .doc("main")
+          .get();
 
-    if (!configDoc.exists) {
-      return null;
-    }
+        if (!configDoc.exists) {
+          return null;
+        }
 
-    const data = configDoc.data();
-    return {
-      ...data,
-      createdAt: data?.createdAt?.toDate() || new Date(),
-      updatedAt: data?.updatedAt?.toDate() || new Date(),
-    } as TenantConfig;
-  } catch (error) {
-    console.error("Error fetching tenant config:", error);
-    return null;
-  }
+        const data = configDoc.data();
+        return {
+          ...data,
+          createdAt: data?.createdAt?.toDate() || new Date(),
+          updatedAt: data?.updatedAt?.toDate() || new Date(),
+        } as TenantConfig;
+      } catch (error) {
+        console.error("Error fetching tenant config:", error);
+        return null;
+      }
+    },
+    300 // 5 minutes cache
+  );
 }
 
 /**
- * Create or update tenant config
+ * Create or update tenant config (invalidates cache)
  */
 export async function setTenantConfig(
   tenantId: string,
@@ -65,6 +73,9 @@ export async function setTenantConfig(
         },
         { merge: true }
       );
+    
+    // Invalidate cache
+    await invalidateTenantCache(tenantId);
   } catch (error) {
     console.error("Error setting tenant config:", error);
     throw error;
@@ -72,7 +83,7 @@ export async function setTenantConfig(
 }
 
 /**
- * Get tenant subscription
+ * Get tenant subscription (with Redis cache)
  */
 export async function getTenantSubscription(
   tenantId: string
@@ -81,55 +92,67 @@ export async function getTenantSubscription(
     return null;
   }
 
-  try {
-    const subDoc = await adminDb
-      .collection("tenants")
-      .doc(tenantId)
-      .collection("subscription")
-      .doc("main")
-      .get();
+  return withCache(
+    cacheKeys.tenantSubscription(tenantId),
+    async () => {
+      try {
+        const subDoc = await adminDb
+          .collection("tenants")
+          .doc(tenantId)
+          .collection("subscription")
+          .doc("main")
+          .get();
 
-    if (!subDoc.exists) {
-      return null;
-    }
+        if (!subDoc.exists) {
+          return null;
+        }
 
-    const data = subDoc.data();
-    return {
-      ...data,
-      renewDate: data?.renewDate?.toDate() || new Date(),
-      trialEndsAt: data?.trialEndsAt?.toDate(),
-    } as TenantSubscription;
-  } catch (error) {
-    console.error("Error fetching tenant subscription:", error);
-    return null;
-  }
+        const data = subDoc.data();
+        return {
+          ...data,
+          renewDate: data?.renewDate?.toDate() || new Date(),
+          trialEndsAt: data?.trialEndsAt?.toDate(),
+        } as TenantSubscription;
+      } catch (error) {
+        console.error("Error fetching tenant subscription:", error);
+        return null;
+      }
+    },
+    300 // 5 minutes cache
+  );
 }
 
 /**
- * Get tenant limits
+ * Get tenant limits (with Redis cache)
  */
 export async function getTenantLimits(tenantId: string): Promise<TenantLimits | null> {
   if (!adminDb) {
     return null;
   }
 
-  try {
-    const limitsDoc = await adminDb
-      .collection("tenants")
-      .doc(tenantId)
-      .collection("limits")
-      .doc("main")
-      .get();
+  return withCache(
+    cacheKeys.tenantLimits(tenantId),
+    async () => {
+      try {
+        const limitsDoc = await adminDb
+          .collection("tenants")
+          .doc(tenantId)
+          .collection("limits")
+          .doc("main")
+          .get();
 
-    if (!limitsDoc.exists) {
-      return null;
-    }
+        if (!limitsDoc.exists) {
+          return null;
+        }
 
-    return limitsDoc.data() as TenantLimits;
-  } catch (error) {
-    console.error("Error fetching tenant limits:", error);
-    return null;
-  }
+        return limitsDoc.data() as TenantLimits;
+      } catch (error) {
+        console.error("Error fetching tenant limits:", error);
+        return null;
+      }
+    },
+    300 // 5 minutes cache
+  );
 }
 
 /**
