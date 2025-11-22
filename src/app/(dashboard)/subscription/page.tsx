@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,13 @@ import { UsageLimits } from "@/components/subscription/UsageLimits";
 import { SUBSCRIPTION_PLANS } from "@/lib/constants";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useSearchParams } from "next/navigation";
+import { usePostHogAnalytics } from "@/hooks/usePostHog";
 import type { SubscriptionPlan } from "@/types";
 
 export default function SubscriptionPage() {
+  const searchParams = useSearchParams();
+  const { trackSubscriptionUpgrade } = usePostHogAnalytics();
   const { data: subscription, isLoading } = useQuery({
     queryKey: ["subscription"],
     queryFn: async () => {
@@ -19,6 +24,22 @@ export default function SubscriptionPage() {
       return res.json();
     },
   });
+
+  // Track subscription upgrade on success
+  useEffect(() => {
+    const success = searchParams?.get("success");
+    if (success === "true" && subscription) {
+      // Get previous plan from localStorage or default to free
+      const previousPlan = localStorage.getItem("previous_plan") || "free";
+      trackSubscriptionUpgrade({
+        fromPlan: previousPlan,
+        toPlan: subscription.plan,
+        amount: subscription.amount,
+        gateway: subscription.gateway,
+      });
+      localStorage.removeItem("previous_plan");
+    }
+  }, [searchParams, subscription, trackSubscriptionUpgrade]);
 
   if (isLoading) {
     return <div className="text-center py-8">Loading subscription...</div>;

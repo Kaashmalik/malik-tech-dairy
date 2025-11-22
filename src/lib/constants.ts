@@ -3,49 +3,60 @@
 export const APP_NAME = "Malik Tech Dairy";
 export const APP_TAGLINE = "Empowering Dairy Farms with Technology";
 
-// Subscription Plans (PKR)
+// Subscription Plans (PKR) - Updated for Pakistan Market
 export const SUBSCRIPTION_PLANS = {
   free: {
     name: "Free",
     price: 0,
-    maxAnimals: 30,
+    maxAnimals: 5,
     maxUsers: 1,
-    features: ["basic_reports", "mobile_app"],
-  },
-  starter: {
-    name: "Starter",
-    price: 2999,
-    maxAnimals: 100,
-    maxUsers: 3,
-    features: ["basic_reports", "mobile_app", "email_support"],
+    features: ["basic_milk_logs", "mobile_app"],
+    addOnPricePer10Animals: 0, // Not applicable for free tier
   },
   professional: {
     name: "Professional",
-    price: 7999,
+    price: 4999,
+    maxAnimals: 100,
+    maxUsers: 5,
+    features: [
+      "full_analytics",
+      "mobile_app",
+      "breeding_management",
+      "health_records",
+      "expense_tracking",
+      "email_support",
+    ],
+    addOnPricePer10Animals: 100,
+  },
+  farm: {
+    name: "Farm",
+    price: 12999,
     maxAnimals: 500,
     maxUsers: 15,
     features: [
-      "basic_reports",
+      "all_professional_features",
+      "iot_integration",
+      "api_access",
       "advanced_analytics",
-      "breeding_management",
-      "ai_insights",
       "sms_alerts",
       "priority_support",
     ],
+    addOnPricePer10Animals: 100,
   },
   enterprise: {
     name: "Enterprise",
-    price: 19999,
+    price: 0, // Custom pricing
     maxAnimals: -1, // Unlimited
     maxUsers: -1, // Unlimited
     features: [
-      "all_professional_features",
+      "all_farm_features",
       "white_label",
-      "api_access",
-      "custom_integrations",
       "dedicated_support",
       "on_premise_option",
+      "custom_integrations",
+      "sla_guarantee",
     ],
+    addOnPricePer10Animals: 0, // Not applicable
   },
 } as const;
 
