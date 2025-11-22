@@ -1,0 +1,77 @@
+{
+  "common": {
+    "appName": "مالک ٹیک ڈیری",
+    "tagline": "ٹیکنالوجی کے ساتھ ڈیری فارمز کو بااختیار بنانا",
+    "loading": "لوڈ ہو رہا ہے...",
+    "save": "محفوظ کریں",
+    "cancel": "منسوخ کریں",
+    "delete": "حذف کریں",
+    "edit": "ترمیم",
+    "create": "بنائیں",
+    "search": "تلاش",
+    "filter": "فلٹر",
+    "export": "برآمد",
+    "import": "درآمد",
+    "back": "واپس",
+    "next": "اگلا",
+    "previous": "پچھلا",
+    "submit": "جمع کروائیں",
+    "close": "بند کریں"
+  },
+  "auth": {
+    "signIn": "سائن ان",
+    "signUp": "سائن اپ",
+    "signOut": "سائن آؤٹ",
+    "email": "ای میل",
+    "password": "پاس ورڈ",
+    "phone": "فون نمبر",
+    "forgotPassword": "پاس ورڈ بھول گئے؟",
+    "dontHaveAccount": "اکاؤنٹ نہیں ہے؟",
+    "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟"
+  },
+  "dashboard": {
+    "title": "ڈیش بورڈ",
+    "welcome": "خوش آمدید",
+    "totalAnimals": "کل جانور",
+    "totalMilkToday": "آج کا دودھ",
+    "totalEggsToday": "آج کے انڈے",
+    "recentActivity": "حالیہ سرگرمی"
+  },
+  "animals": {
+    "title": "جانور",
+    "addAnimal": "جانور شامل کریں",
+    "tag": "ٹیگ نمبر",
+    "name": "نام",
+    "species": "قسم",
+    "breed": "نسل",
+    "dateOfBirth": "تاریخ پیدائش",
+    "gender": "جنس",
+    "male": "نر",
+    "female": "مادہ",
+    "cow": "گائے",
+    "buffalo": "بھینس",
+    "chicken": "مرغی",
+    "goat": "بکری",
+    "sheep": "بھیڑ",
+    "horse": "گھوڑا"
+  },
+  "milk": {
+    "title": "دودھ کی لاگز",
+    "addLog": "دودھ لاگ شامل کریں",
+    "morning": "صبح",
+    "evening": "شام",
+    "quantity": "مقدار (لیٹر)",
+    "quality": "معیار",
+    "date": "تاریخ"
+  },
+  "subscription": {
+    "title": "سبسکرپشن",
+    "currentPlan": "موجودہ پلان",
+    "upgrade": "اپ گریڈ",
+    "downgrade": "ڈاؤن گریڈ",
+    "cancel": "سبسکرپشن منسوخ کریں",
+    "renewDate": "تجدید کی تاریخ",
+    "status": "حالت"
+  }
+}
+

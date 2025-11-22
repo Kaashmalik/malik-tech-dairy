@@ -1,0 +1,77 @@
+{
+  "common": {
+    "appName": "Malik Tech Dairy",
+    "tagline": "Empowering Dairy Farms with Technology",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "phone": "Phone Number",
+    "forgotPassword": "Forgot Password?",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "totalAnimals": "Total Animals",
+    "totalMilkToday": "Milk Today",
+    "totalEggsToday": "Eggs Today",
+    "recentActivity": "Recent Activity"
+  },
+  "animals": {
+    "title": "Animals",
+    "addAnimal": "Add Animal",
+    "tag": "Tag Number",
+    "name": "Name",
+    "species": "Species",
+    "breed": "Breed",
+    "dateOfBirth": "Date of Birth",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "cow": "Cow",
+    "buffalo": "Buffalo",
+    "chicken": "Chicken",
+    "goat": "Goat",
+    "sheep": "Sheep",
+    "horse": "Horse"
+  },
+  "milk": {
+    "title": "Milk Logs",
+    "addLog": "Add Milk Log",
+    "morning": "Morning",
+    "evening": "Evening",
+    "quantity": "Quantity (Liters)",
+    "quality": "Quality",
+    "date": "Date"
+  },
+  "subscription": {
+    "title": "Subscription",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "cancel": "Cancel Subscription",
+    "renewDate": "Renewal Date",
+    "status": "Status"
+  }
+}
+

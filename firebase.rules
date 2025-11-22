@@ -1,0 +1,250 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is super admin
+    function isSuperAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.platformRole == "super_admin";
+    }
+    
+    // Helper function to get user's role in a tenant
+    function getUserRole(tenantId) {
+      // First check members collection (new structure)
+      let memberDoc = get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+      if (memberDoc != null && memberDoc.data != null) {
+        return memberDoc.data.role;
+      }
+      // Fallback to legacy users collection
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      if (userDoc != null && userDoc.data != null && userDoc.data.tenantId == tenantId) {
+        return userDoc.data.role;
+      }
+      return null;
+    }
+    
+    // Helper function to check if user belongs to tenant
+    function belongsToTenant(tenantId) {
+      return isSuperAdmin() || 
+        exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId);
+    }
+    
+    // Helper function to check permissions
+    function hasPermission(tenantId, resource, action) {
+      // Super admin has all permissions
+      if (isSuperAdmin()) {
+        return true;
+      }
+      
+      let role = getUserRole(tenantId);
+      if (role == null) {
+        return false;
+      }
+      
+      // Farm owner has all permissions
+      if (role == "farm_owner") {
+        return true;
+      }
+      
+      // Farm manager has most permissions (except delete for sensitive data)
+      if (role == "farm_manager") {
+        if (action == "delete" && resource in ["animals", "staff", "subscription"]) {
+          return false;
+        }
+        return true;
+      }
+      
+      // Role-specific permissions
+      if (resource == "health" && role == "veterinarian") {
+        return action in ["create", "read", "update"];
+      }
+      
+      if (resource == "breeding" && role == "breeder") {
+        return action in ["create", "read", "update"];
+      }
+      
+      if (resource == "milk" && role == "milking_staff") {
+        return action in ["create", "read"];
+      }
+      
+      if (resource == "feed" && role == "feed_manager") {
+        return action in ["create", "read", "update", "delete"];
+      }
+      
+      if (resource == "expenses" && role == "feed_manager") {
+        return action in ["create", "read"]; // feed costs only
+      }
+      
+      if (resource == "expenses" && role == "accountant") {
+        return action in ["create", "read", "update"];
+      }
+      
+      if (resource == "milk" && role == "accountant") {
+        return action == "read"; // sales data
+      }
+      
+      if (resource == "reports" && role == "accountant") {
+        return action == "read"; // financial only
+      }
+      
+      if (resource == "staff" && role == "accountant") {
+        return action == "read"; // payroll
+      }
+      
+      if (resource == "animals" && role == "accountant") {
+        return action == "read"; // valuation
+      }
+      
+      // Guest has read-only access
+      if (role == "guest") {
+        return action == "read";
+      }
+      
+      return false;
+    }
+
+    // Users collection - users can only read/write their own profile
+    match /users/{userId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == userId || 
+        isSuperAdmin()
+      );
+      allow write: if request.auth != null && (
+        request.auth.uid == userId || 
+        isSuperAdmin()
+      );
+    }
+
+    // Tenants collection
+    match /tenants/{tenantId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        belongsToTenant(tenantId)
+      );
+      allow write: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(tenantId) == "farm_owner"
+      );
+    }
+
+    // Tenant members collection
+    match /tenants/{tenantId}/members/{memberId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        request.auth.uid == memberId ||
+        getUserRole(tenantId) in ["farm_owner", "farm_manager"]
+      );
+      allow write: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(tenantId) in ["farm_owner", "farm_manager"]
+      );
+    }
+
+    // Tenant configuration - only owner/manager can write
+    match /tenants/{tenantId}/config {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        belongsToTenant(tenantId)
+      );
+      allow write: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(tenantId) in ["farm_owner", "farm_manager"]
+      );
+    }
+    
+    // Tenant subscription - only owner can write
+    match /tenants/{tenantId}/subscription {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        belongsToTenant(tenantId)
+      );
+      allow write: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(tenantId) == "farm_owner"
+      );
+    }
+    
+    // Tenant limits - read only for tenant members
+    match /tenants/{tenantId}/limits {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        belongsToTenant(tenantId)
+      );
+      allow write: if false; // Only server can write limits
+    }
+
+    // Tenant data collections - strict isolation with role-based permissions
+    match /tenants_data/{tenantId}_{collection}/{document=**} {
+      // Extract tenantId from path (format: {tenantId}_animals, {tenantId}_milkLogs, etc.)
+      function extractTenantId() {
+        return tenantId.split('_')[0];
+      }
+      
+      function getResourceName() {
+        let parts = tenantId.split('_');
+        if (parts.size() > 1) {
+          return parts[parts.size() - 1];
+        }
+        return collection;
+      }
+      
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        (belongsToTenant(extractTenantId()) && 
+         hasPermission(extractTenantId(), getResourceName(), "read"))
+      );
+      
+      allow create: if request.auth != null && (
+        isSuperAdmin() || 
+        (belongsToTenant(extractTenantId()) && 
+         hasPermission(extractTenantId(), getResourceName(), "create"))
+      );
+      
+      allow update: if request.auth != null && (
+        isSuperAdmin() || 
+        (belongsToTenant(extractTenantId()) && 
+         hasPermission(extractTenantId(), getResourceName(), "update"))
+      );
+      
+      allow delete: if request.auth != null && (
+        isSuperAdmin() || 
+        (belongsToTenant(extractTenantId()) && 
+         hasPermission(extractTenantId(), getResourceName(), "delete"))
+      );
+    }
+
+    // Global payments collection - only owner and accountant can read their tenant's payments
+    match /payments/{paymentId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        (belongsToTenant(resource.data.tenantId) && 
+         getUserRole(resource.data.tenantId) in ["farm_owner", "accountant"])
+      );
+      allow write: if false; // Only server can write payments
+    }
+
+    // Invitations collection
+    match /invitations/{inviteId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        request.auth.uid == resource.data.invitedBy ||
+        request.auth.uid == resource.data.userId
+      );
+      allow create: if request.auth != null && (
+        isSuperAdmin() || 
+        getUserRole(resource.data.tenantId) in ["farm_owner", "farm_manager"]
+      );
+      allow update: if request.auth != null && (
+        isSuperAdmin() || 
+        request.auth.uid == resource.data.userId ||
+        getUserRole(resource.data.tenantId) in ["farm_owner", "farm_manager"]
+      );
+      allow delete: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(resource.data.tenantId) in ["farm_owner", "farm_manager"]
+      );
+    }
+  }
+}
