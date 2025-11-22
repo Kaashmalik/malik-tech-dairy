@@ -71,7 +71,79 @@
     "downgrade": "Downgrade",
     "cancel": "Cancel Subscription",
     "renewDate": "Renewal Date",
-    "status": "Status"
+    "status": "Status",
+    "pricing": "Pricing",
+    "choosePlan": "Choose Your Plan",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "perMonth": "per month",
+    "addOn": "Add-on: ₨100 per 10 animals above tier limit",
+    "bankTransfer": "Bank Transfer",
+    "paymentReference": "Payment Reference",
+    "paymentInstructions": "Payment Instructions"
+  },
+  "pricing": {
+    "title": "Pricing Plans",
+    "subtitle": "Choose the perfect plan for your farm",
+    "free": {
+      "name": "Free",
+      "price": "₨0",
+      "description": "Perfect for small farms getting started",
+      "features": ["Up to 5 animals", "Basic milk logs", "1 user", "Mobile app"]
+    },
+    "professional": {
+      "name": "Professional",
+      "price": "₨4,999",
+      "description": "For growing farms with advanced needs",
+      "features": ["Up to 100 animals", "Full analytics", "5 users", "Mobile app", "Breeding management", "Health records", "Email support"]
+    },
+    "farm": {
+      "name": "Farm",
+      "price": "₨12,999",
+      "description": "For established farms with IoT integration",
+      "features": ["Up to 500 animals", "IoT integration", "15 users", "API access", "Advanced analytics", "SMS alerts", "Priority support"]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "price": "Custom",
+      "description": "For large farms with custom requirements",
+      "features": ["Unlimited animals", "White-label", "Dedicated support", "On-premise option", "Custom integrations", "SLA guarantee"]
+    }
+  },
+  "iot": {
+    "title": "IoT Integration",
+    "apiKey": "API Key",
+    "webhook": "Webhook",
+    "milkLogEndpoint": "Milk Log Endpoint",
+    "instructions": "Use your API key to authenticate IoT device requests"
+  },
+  "nps": {
+    "title": "How likely are you to recommend us?",
+    "subtitle": "Your feedback helps us improve",
+    "submit": "Submit Feedback",
+    "thankYou": "Thank you for your feedback!",
+    "promoters": "Promoters (9-10)",
+    "passives": "Passives (7-8)",
+    "detractors": "Detractors (0-6)"
+  },
+  "emails": {
+    "welcome": {
+      "subject": "Welcome to Malik Tech Dairy!",
+      "greeting": "Welcome to Malik Tech Dairy!"
+    },
+    "onboarding": {
+      "subject": "Get Started with Your Dairy Management",
+      "greeting": "Let's set up your farm"
+    }
+  },
+  "bankTransfer": {
+    "title": "Bank Transfer Payment",
+    "referenceCode": "Reference Code",
+    "instructions": "Please transfer the amount to the account below and include the reference code in the transfer description.",
+    "accountDetails": "Account Details",
+    "pending": "Pending Verification",
+    "verified": "Verified",
+    "rejected": "Rejected"
   }
 }
 
