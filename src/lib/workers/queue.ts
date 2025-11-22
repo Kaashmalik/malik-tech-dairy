@@ -22,6 +22,7 @@ export const QUEUE_NAMES = {
   EMAIL: "email",
   PREDICTIONS: "predictions",
   PAYMENT_RENEWAL: "payment_renewal",
+  MILK_LOGS: "milk_logs",
 } as const;
 
 // Create queues
@@ -30,6 +31,7 @@ export const smsQueue = new Queue(QUEUE_NAMES.SMS, { connection });
 export const emailQueue = new Queue(QUEUE_NAMES.EMAIL, { connection });
 export const predictionQueue = new Queue(QUEUE_NAMES.PREDICTIONS, { connection });
 export const paymentRenewalQueue = new Queue(QUEUE_NAMES.PAYMENT_RENEWAL, { connection });
+export const milkLogQueue = new Queue(QUEUE_NAMES.MILK_LOGS, { connection });
 
 // Queue events for monitoring
 export const reportQueueEvents = new QueueEvents(QUEUE_NAMES.REPORTS, { connection });
