@@ -156,9 +156,22 @@ export async function checkUserRole(
 }
 
 /**
- * Get tenant limits from Firestore
+ * Get tenant limits - queries Supabase first, falls back to Firestore
  */
 export async function getTenantLimits(tenantId: string) {
+  try {
+    // Try Supabase first
+    const { getTenantLimits: getSupabaseLimits } = await import("@/lib/supabase/tenant");
+    const limits = await getSupabaseLimits(tenantId);
+    
+    if (limits) {
+      return limits;
+    }
+  } catch (error) {
+    console.warn("Error fetching tenant limits from Supabase, falling back to Firestore:", error);
+  }
+
+  // Fallback to Firestore (for backward compatibility during migration)
   if (!adminDb) {
     return null;
   }
@@ -177,7 +190,7 @@ export async function getTenantLimits(tenantId: string) {
 
     return limitsDoc.data();
   } catch (error) {
-    console.error("Error fetching tenant limits:", error);
+    console.error("Error fetching tenant limits from Firestore:", error);
     return null;
   }
 }

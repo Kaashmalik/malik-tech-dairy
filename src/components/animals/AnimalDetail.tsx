@@ -6,9 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, ArrowLeft } from "lucide-react";
 import { AnimalForm } from "./AnimalForm";
+import { RealtimeMilkLogs } from "./RealtimeMilkLogs";
+import { CustomFieldsRenderer } from "@/components/custom-fields/CustomFieldsRenderer";
+import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import type { Animal } from "@/types";
+import type { Animal, CustomField } from "@/types";
 
 export function AnimalDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -30,6 +33,16 @@ export function AnimalDetail({ params }: { params: Promise<{ id: string }> }) {
       return data.animal as Animal;
     },
     enabled: !!animalId,
+  });
+
+  // Fetch custom fields
+  const { data: customFieldsData } = useQuery<{ fields: CustomField[] }>({
+    queryKey: ["custom-fields"],
+    queryFn: async () => {
+      const res = await fetch("/api/tenants/custom-fields");
+      if (!res.ok) return { fields: [] };
+      return res.json();
+    },
   });
 
   const handleDelete = async () => {
@@ -89,6 +102,7 @@ export function AnimalDetail({ params }: { params: Promise<{ id: string }> }) {
               ? new Date(animal.purchaseDate).toISOString().split("T")[0]
               : undefined,
             purchasePrice: animal.purchasePrice,
+            customFields: animal.customFields,
           }}
           onSuccess={() => {
             setIsEditing(false);
@@ -191,8 +205,22 @@ export function AnimalDetail({ params }: { params: Promise<{ id: string }> }) {
               </div>
             )}
           </div>
+
+          {/* Custom Fields */}
+          {customFieldsData?.fields && customFieldsData.fields.length > 0 && animal.customFields && (
+            <div className="mt-6 pt-6 border-t">
+              <CustomFieldsRenderer
+                fields={customFieldsData.fields}
+                values={animal.customFields}
+                readOnly={true}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Real-time Milk Logs */}
+      {animalId && <RealtimeMilkLogs animalId={animalId} />}
     </div>
   );
 }

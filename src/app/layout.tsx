@@ -4,6 +4,9 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { PWARegister } from "@/components/PWARegister";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { PostHogPageView } from "@/components/analytics/PostHogPageView";
+import { SentryProvider } from "@/components/providers/SentryProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -51,24 +54,29 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <head>
-          <link rel="manifest" href="/manifest.json" />
-          <meta name="theme-color" content="#1F7A3D" />
-          <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-          <meta name="apple-mobile-web-app-title" content="Malik Tech Dairy" />
-        </head>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} antialiased`}
-        >
-          <ErrorBoundary>
-            {children}
-            <PWARegister />
-            <Toaster position="top-right" richColors />
-          </ErrorBoundary>
-        </body>
-      </html>
+      <PostHogProvider>
+        <SentryProvider>
+          <html lang="en" suppressHydrationWarning>
+            <head>
+              <link rel="manifest" href="/manifest.json" />
+              <meta name="theme-color" content="#1F7A3D" />
+              <meta name="apple-mobile-web-app-capable" content="yes" />
+              <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+              <meta name="apple-mobile-web-app-title" content="Malik Tech Dairy" />
+            </head>
+            <body
+              className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} antialiased`}
+            >
+              <ErrorBoundary>
+                <PostHogPageView />
+                {children}
+                <PWARegister />
+                <Toaster position="top-right" richColors />
+              </ErrorBoundary>
+            </body>
+          </html>
+        </SentryProvider>
+      </PostHogProvider>
     </ClerkProvider>
   );
 }

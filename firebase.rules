@@ -31,6 +31,16 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId);
     }
     
+    // Helper function to check if request is from API key
+    function isApiKeyRequest() {
+      return request.auth != null && request.auth.token.apiKey == true;
+    }
+    
+    // Helper function to check if staff role (non-owner/manager roles)
+    function isStaffRole(role) {
+      return role != null && role != "farm_owner" && role != "farm_manager" && role != "super_admin";
+    }
+    
     // Helper function to check permissions
     function hasPermission(tenantId, resource, action) {
       // Super admin has all permissions
@@ -48,9 +58,20 @@ service cloud.firestore {
         return true;
       }
       
+      // Staff cannot access finance or subscription data
+      if (isStaffRole(role)) {
+        if (resource in ["subscription", "payments", "finance"]) {
+          return false;
+        }
+      }
+      
       // Farm manager has most permissions (except delete for sensitive data)
       if (role == "farm_manager") {
         if (action == "delete" && resource in ["animals", "staff", "subscription"]) {
+          return false;
+        }
+        // Staff cannot read/write finance or subscription
+        if (resource in ["subscription", "payments"]) {
           return false;
         }
         return true;
@@ -117,11 +138,32 @@ service cloud.firestore {
       );
     }
 
-    // Tenants collection
+    // Tenants collection - only owner can delete
     match /tenants/{tenantId} {
       allow read: if request.auth != null && (
         isSuperAdmin() || 
         belongsToTenant(tenantId)
+      );
+      allow create: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(tenantId) == "farm_owner"
+      );
+      allow update: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(tenantId) == "farm_owner"
+      );
+      // Only owner can delete tenant
+      allow delete: if isSuperAdmin() || (
+        request.auth != null && 
+        getUserRole(tenantId) == "farm_owner"
+      );
+    }
+    
+    // API Keys collection - only owner can manage
+    match /tenants/{tenantId}/api_keys/{keyId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || 
+        (belongsToTenant(tenantId) && getUserRole(tenantId) == "farm_owner")
       );
       allow write: if isSuperAdmin() || (
         request.auth != null && 
@@ -154,11 +196,11 @@ service cloud.firestore {
       );
     }
     
-    // Tenant subscription - only owner can write
+    // Tenant subscription - only owner can read/write, staff cannot access
     match /tenants/{tenantId}/subscription {
       allow read: if request.auth != null && (
         isSuperAdmin() || 
-        belongsToTenant(tenantId)
+        (belongsToTenant(tenantId) && getUserRole(tenantId) == "farm_owner")
       );
       allow write: if isSuperAdmin() || (
         request.auth != null && 
@@ -190,6 +232,12 @@ service cloud.firestore {
         return collection;
       }
       
+      // API key authentication - can only write to milk_logs and health_records
+      function isApiKeyAllowedResource() {
+        let resource = getResourceName();
+        return resource == "milkLogs" || resource == "health";
+      }
+      
       allow read: if request.auth != null && (
         isSuperAdmin() || 
         (belongsToTenant(extractTenantId()) && 
@@ -198,24 +246,28 @@ service cloud.firestore {
       
       allow create: if request.auth != null && (
         isSuperAdmin() || 
+        (isApiKeyRequest() && isApiKeyAllowedResource()) ||
         (belongsToTenant(extractTenantId()) && 
          hasPermission(extractTenantId(), getResourceName(), "create"))
       );
       
       allow update: if request.auth != null && (
         isSuperAdmin() || 
+        (isApiKeyRequest() && isApiKeyAllowedResource()) ||
         (belongsToTenant(extractTenantId()) && 
          hasPermission(extractTenantId(), getResourceName(), "update"))
       );
       
+      // Only owner can delete animals or tenant data
       allow delete: if request.auth != null && (
         isSuperAdmin() || 
         (belongsToTenant(extractTenantId()) && 
+         getUserRole(extractTenantId()) == "farm_owner" &&
          hasPermission(extractTenantId(), getResourceName(), "delete"))
       );
     }
 
-    // Global payments collection - only owner and accountant can read their tenant's payments
+    // Global payments collection - only owner and accountant can read (staff cannot access)
     match /payments/{paymentId} {
       allow read: if request.auth != null && (
         isSuperAdmin() || 

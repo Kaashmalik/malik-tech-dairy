@@ -4,6 +4,8 @@ import { withTenantContext } from "@/lib/api/middleware";
 import { adminDb } from "@/lib/firebase/admin";
 import { getTenantSubcollection } from "@/lib/firebase/tenant";
 import type { HealthRecord } from "@/types";
+import { createHealthRecordSchema, listHealthRecordsSchema } from "@/lib/validations/health";
+import { encrypt } from "@/lib/encryption";
 
 export const dynamic = "force-dynamic";
 
@@ -46,13 +48,30 @@ export async function GET(request: NextRequest) {
       query = query.orderBy("date", "desc");
 
       const snapshot = await query.limit(100).get();
-      const records = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate(),
-        nextDueDate: doc.data().nextDueDate?.toDate(),
-        createdAt: doc.data().createdAt?.toDate(),
-      }));
+      const { decrypt } = await import("@/lib/encryption");
+      
+      const records = snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        // Decrypt notes if encrypted
+        let notes = data?.notes;
+        if (notes && typeof notes === "string") {
+          try {
+            notes = decrypt(notes);
+          } catch (error) {
+            // If decryption fails, return as-is (might be unencrypted legacy data)
+            console.warn("Failed to decrypt notes, returning as-is");
+          }
+        }
+        
+        return {
+          id: doc.id,
+          ...data,
+          notes, // Decrypted notes
+          date: data.date?.toDate(),
+          nextDueDate: data.nextDueDate?.toDate(),
+          createdAt: data.createdAt?.toDate(),
+        };
+      });
 
       return NextResponse.json({ records });
     } catch (error) {
@@ -74,6 +93,18 @@ export async function POST(request: NextRequest) {
       }
 
       const body = await req.json();
+      
+      // Validate with Zod
+      let validated;
+      try {
+        validated = createHealthRecordSchema.parse(body);
+      } catch (error: any) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+
       const {
         animalId,
         type,
@@ -82,14 +113,8 @@ export async function POST(request: NextRequest) {
         veterinarian,
         cost,
         nextDueDate,
-      } = body;
-
-      if (!animalId || !type || !date || !description) {
-        return NextResponse.json(
-          { error: "Missing required fields: animalId, type, date, description" },
-          { status: 400 }
-        );
-      }
+        notes,
+      } = validated;
 
       const healthRef = getTenantSubcollection(
         context.tenantId,
@@ -97,18 +122,22 @@ export async function POST(request: NextRequest) {
         "records"
       );
 
+      // Encrypt sensitive notes
+      const encryptedNotes = notes ? encrypt(notes) : undefined;
+
       const recordData: Omit<HealthRecord, "id" | "tenantId" | "createdAt"> = {
         animalId,
         type: type as HealthRecord["type"],
-        date: new Date(date),
+        date: typeof date === "string" ? new Date(date) : date,
         description,
         veterinarian,
         cost,
-        nextDueDate: nextDueDate ? new Date(nextDueDate) : undefined,
+        nextDueDate: nextDueDate ? (typeof nextDueDate === "string" ? new Date(nextDueDate) : nextDueDate) : undefined,
       };
 
       const docRef = await healthRef.add({
         ...recordData,
+        notes: encryptedNotes, // Store encrypted notes
         createdAt: new Date(),
       });
 

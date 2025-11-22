@@ -6,6 +6,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import type { Animal } from "@/types";
 import { canAddAnimal } from "@/lib/utils/limits";
 import { getTenantLimits } from "@/lib/firebase/tenant";
+import { createAnimalSchema, listAnimalsSchema } from "@/lib/validations/animals";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,18 @@ export async function POST(request: NextRequest) {
       }
 
       const body = await req.json();
+      
+      // Validate with Zod
+      let validated;
+      try {
+        validated = createAnimalSchema.parse(body);
+      } catch (error: any) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+
       const {
         tag,
         name,
@@ -82,15 +95,8 @@ export async function POST(request: NextRequest) {
         photoUrl,
         purchaseDate,
         purchasePrice,
-      } = body;
-
-      // Validate required fields
-      if (!tag || !species || !gender) {
-        return NextResponse.json(
-          { error: "Missing required fields: tag, species, gender" },
-          { status: 400 }
-        );
-      }
+        status,
+      } = validated;
 
       // Check if tag already exists
       const existingTag = await animalsRef
@@ -112,11 +118,11 @@ export async function POST(request: NextRequest) {
         name: name || "",
         species,
         breed: breed || "",
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : new Date(),
+        dateOfBirth: dateOfBirth ? (typeof dateOfBirth === "string" ? new Date(dateOfBirth) : dateOfBirth) : new Date(),
         gender,
         photoUrl: photoUrl || undefined,
-        status: "active",
-        purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
+        status: status || "active",
+        purchaseDate: purchaseDate ? (typeof purchaseDate === "string" ? new Date(purchaseDate) : purchaseDate) : undefined,
         purchasePrice: purchasePrice || undefined,
         createdAt: now,
         updatedAt: now,

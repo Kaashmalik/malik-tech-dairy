@@ -94,16 +94,22 @@ export async function GET(
     const paymentIntent = paymentIntents.docs[0].data();
     const { tenantId, plan, userId, couponCode, discountAmount } = paymentIntent;
 
-    // Record payment
-    await adminDb.collection("payments").add({
+    // Record payment in Supabase
+    const { getDrizzle } = await import("@/lib/supabase");
+    const { payments } = await import("@/db/schema");
+    const { nanoid } = await import("nanoid");
+    const db = getDrizzle();
+    
+    await db.insert(payments).values({
+      id: nanoid(),
       tenantId,
-      amount: verification.amount || paymentIntent.amount,
+      amount: (verification.amount || paymentIntent.amount) * 100, // Convert to paise
       currency: "PKR",
-      gateway: gateway as PaymentGateway,
+      gateway: gateway as any,
       status: "completed",
-      transactionId: verification.transactionId,
-      plan,
-      orderId,
+      transactionId: verification.transactionId || null,
+      plan: plan as any,
+      metadata: { orderId, couponCode, discountAmount },
       createdAt: new Date(),
       updatedAt: new Date(),
     });

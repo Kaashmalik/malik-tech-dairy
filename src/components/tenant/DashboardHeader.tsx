@@ -18,6 +18,7 @@ import {
   FileText,
   Settings,
   Shield,
+  BarChart3,
 } from "lucide-react";
 
 export function DashboardHeader() {
@@ -66,6 +67,12 @@ export function DashboardHeader() {
       href: "/dashboard/expenses",
       icon: DollarSign,
       module: "expenses",
+    },
+    {
+      label: "Analytics",
+      href: "/dashboard/analytics",
+      icon: BarChart3,
+      module: "analytics",
     },
     {
       label: "Reports",

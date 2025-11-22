@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ANIMAL_BREEDS } from "@/lib/constants";
-import type { AnimalSpecies } from "@/types";
+import type { AnimalSpecies, CustomField } from "@/types";
 import { useTenantLimits } from "@/hooks/useTenantLimits";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { usePostHogAnalytics } from "@/hooks/usePostHog";
+import { CustomFieldsRenderer } from "@/components/custom-fields/CustomFieldsRenderer";
 
 interface AnimalFormData {
   tag: string;
@@ -20,6 +23,7 @@ interface AnimalFormData {
   photoUrl?: string;
   purchaseDate?: string;
   purchasePrice?: number;
+  customFields?: Record<string, string | number | Date>;
 }
 
 interface AnimalFormProps {
@@ -32,9 +36,23 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
   const router = useRouter();
   const { canAddAnimal } = useTenantLimits();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { trackAnimalCreation } = usePostHogAnalytics();
   const [selectedSpecies, setSelectedSpecies] = useState<AnimalSpecies>(
     initialData?.species || "cow"
   );
+  const [customFieldValues, setCustomFieldValues] = useState<
+    Record<string, string | number | Date>
+  >(initialData?.customFields || {});
+
+  // Fetch custom fields
+  const { data: customFieldsData } = useQuery<{ fields: CustomField[] }>({
+    queryKey: ["custom-fields"],
+    queryFn: async () => {
+      const res = await fetch("/api/tenants/custom-fields");
+      if (!res.ok) return { fields: [] };
+      return res.json();
+    },
+  });
 
   const {
     register,
@@ -59,7 +77,10 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          customFields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined,
+        }),
       });
 
       if (!response.ok) {
@@ -68,6 +89,14 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
       }
 
       toast.success(animalId ? "Animal updated successfully" : "Animal created successfully");
+      
+      // Track event only on creation
+      if (!animalId) {
+        trackAnimalCreation({
+          species: data.species,
+          breed: data.breed,
+        });
+      }
       
       if (onSuccess) {
         onSuccess();
@@ -199,6 +228,19 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
               />
             </div>
           </div>
+
+          {/* Custom Fields */}
+          {customFieldsData?.fields && customFieldsData.fields.length > 0 && (
+            <div className="mt-6">
+              <CustomFieldsRenderer
+                fields={customFieldsData.fields}
+                values={customFieldValues}
+                onChange={(fieldId, value) => {
+                  setCustomFieldValues((prev) => ({ ...prev, [fieldId]: value }));
+                }}
+              />
+            </div>
+          )}
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting}>

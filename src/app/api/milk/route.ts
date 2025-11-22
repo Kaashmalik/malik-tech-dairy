@@ -4,6 +4,7 @@ import { withTenantContext } from "@/lib/api/middleware";
 import { getTenantSubcollection } from "@/lib/firebase/tenant";
 import { adminDb } from "@/lib/firebase/admin";
 import type { MilkLog } from "@/types";
+import { createMilkLogSchema, listMilkLogsSchema } from "@/lib/validations/milk";
 
 export const dynamic = "force-dynamic";
 
@@ -70,31 +71,19 @@ export async function POST(request: NextRequest) {
       }
 
       const body = await req.json();
-      const { animalId, date, session, quantity, quality, notes } = body;
-
-      // Validate required fields
-      if (!animalId || !date || !session || quantity === undefined) {
+      
+      // Validate with Zod
+      let validated;
+      try {
+        validated = createMilkLogSchema.parse(body);
+      } catch (error: any) {
         return NextResponse.json(
-          { error: "Missing required fields: animalId, date, session, quantity" },
+          { error: "Validation failed", details: error.errors },
           { status: 400 }
         );
       }
 
-      // Validate session
-      if (session !== "morning" && session !== "evening") {
-        return NextResponse.json(
-          { error: "Session must be 'morning' or 'evening'" },
-          { status: 400 }
-        );
-      }
-
-      // Validate quantity
-      if (quantity < 0 || quantity > 100) {
-        return NextResponse.json(
-          { error: "Quantity must be between 0 and 100 liters" },
-          { status: 400 }
-        );
-      }
+      const { animalId, date, session, quantity, quality, notes } = validated;
 
       // Check if log already exists for this animal/date/session
       const milkLogsRef = getTenantSubcollection(

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { PaymentGateway, SubscriptionPlan } from "@/types";
 import { Check, X } from "lucide-react";
+import { usePostHogAnalytics } from "@/hooks/usePostHog";
 
 interface CheckoutFormData {
   gateway: PaymentGateway;
@@ -22,6 +23,7 @@ export function CheckoutForm() {
   const searchParams = useSearchParams();
   const plan = (searchParams.get("plan") || "starter") as SubscriptionPlan;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { trackSubscriptionUpgrade } = usePostHogAnalytics();
   const [couponCode, setCouponCode] = useState("");
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponResult, setCouponResult] = useState<{
@@ -112,6 +114,10 @@ export function CheckoutForm() {
       }
 
       const result = await res.json();
+
+      // Store previous plan for tracking
+      const currentPlan = await fetch("/api/subscription").then(r => r.json()).then(s => s?.plan || "free").catch(() => "free");
+      localStorage.setItem("previous_plan", currentPlan);
 
       // Redirect to payment gateway
       window.location.href = result.checkoutUrl;

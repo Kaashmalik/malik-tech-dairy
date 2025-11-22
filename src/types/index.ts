@@ -48,6 +48,15 @@ export interface TenantLimits {
   features: string[];
 }
 
+export interface CustomField {
+  id: string;
+  name: string;
+  type: "text" | "number" | "date" | "dropdown";
+  required?: boolean;
+  options?: string[]; // For dropdown type
+  defaultValue?: string | number;
+}
+
 export interface Animal {
   id: string;
   tenantId: string;
@@ -61,6 +70,7 @@ export interface Animal {
   status: "active" | "sold" | "deceased" | "sick";
   purchaseDate?: Date;
   purchasePrice?: number;
+  customFields?: Record<string, string | number | Date>; // Custom field values
   createdAt: Date;
   updatedAt: Date;
 }

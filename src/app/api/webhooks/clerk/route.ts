@@ -2,8 +2,8 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { initializeTenant } from "@/lib/firebase/tenant";
-import { adminDb } from "@/lib/firebase/admin";
+import { initializeTenant } from "@/lib/supabase/tenant"; // Use Supabase instead of Firestore
+import { adminDb } from "@/lib/firebase/admin"; // Keep for Firestore document data
 
 export const dynamic = "force-dynamic";
 
@@ -87,18 +87,15 @@ export async function POST(request: Request) {
       // For now, we'll just log it
       console.log(`Organization deleted: ${orgId}`);
       
-      // TODO: Archive tenant data or mark as deleted
-      if (adminDb) {
-        await adminDb
-          .collection("tenants")
-          .doc(orgId)
-          .collection("config")
-          .doc("main")
-          .update({
-            deletedAt: new Date(),
-            status: "deleted",
-          });
-      }
+      // Archive tenant in Supabase
+      const { getDrizzle } = await import("@/lib/supabase");
+      const { tenants } = await import("@/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const db = getDrizzle();
+      
+      await db.update(tenants)
+        .set({ deletedAt: new Date() })
+        .where(eq(tenants.id, orgId));
     } catch (error) {
       console.error("Error handling organization.deleted:", error);
     }

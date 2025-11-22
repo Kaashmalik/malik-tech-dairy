@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { usePostHogAnalytics } from "@/hooks/usePostHog";
 
 interface MilkLogFormData {
   animalId: string;
@@ -26,6 +27,7 @@ interface MilkLogFormProps {
 export function MilkLogForm({ animalId, onSuccess }: MilkLogFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { trackMilkLog } = usePostHogAnalytics();
 
   // Fetch animals for dropdown
   const { data: animalsData } = useQuery({
@@ -70,6 +72,13 @@ export function MilkLogForm({ animalId, onSuccess }: MilkLogFormProps) {
       }
 
       toast.success("Milk log created successfully");
+      
+      // Track event
+      trackMilkLog({
+        animalId: data.animalId,
+        quantity: data.quantity,
+        session: data.session,
+      });
       
       if (onSuccess) {
         onSuccess();

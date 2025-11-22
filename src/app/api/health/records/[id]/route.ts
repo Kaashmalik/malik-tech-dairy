@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withTenantContext } from "@/lib/api/middleware";
 import { getTenantSubcollection } from "@/lib/firebase/tenant";
 import type { HealthRecord } from "@/types";
+import { decrypt } from "@/lib/encryption";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +31,22 @@ export async function GET(
       }
 
       const data = doc.data();
+      
+      // Decrypt notes if encrypted
+      let notes = data?.notes;
+      if (notes && typeof notes === "string") {
+        try {
+          notes = decrypt(notes);
+        } catch (error) {
+          // If decryption fails, return as-is (might be unencrypted legacy data)
+          console.warn("Failed to decrypt notes, returning as-is");
+        }
+      }
+      
       return NextResponse.json({
         id: doc.id,
         ...data,
+        notes, // Decrypted notes
         date: data?.date?.toDate(),
         nextDueDate: data?.nextDueDate?.toDate(),
         createdAt: data?.createdAt?.toDate(),
@@ -73,14 +87,36 @@ export async function PUT(
         );
       }
 
-      const updates: Partial<HealthRecord> = {};
-      if (body.type) updates.type = body.type;
-      if (body.date) updates.date = new Date(body.date);
-      if (body.description !== undefined) updates.description = body.description;
-      if (body.veterinarian !== undefined) updates.veterinarian = body.veterinarian;
-      if (body.cost !== undefined) updates.cost = body.cost;
-      if (body.nextDueDate !== undefined) {
-        updates.nextDueDate = body.nextDueDate ? new Date(body.nextDueDate) : undefined;
+      const { updateHealthRecordSchema } = await import("@/lib/validations/health");
+      const { encrypt } = await import("@/lib/encryption");
+      
+      // Validate with Zod
+      let validated;
+      try {
+        validated = updateHealthRecordSchema.parse(body);
+      } catch (error: any) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+
+      const updates: any = {};
+      if (validated.type !== undefined) updates.type = validated.type;
+      if (validated.date !== undefined) {
+        updates.date = typeof validated.date === "string" ? new Date(validated.date) : validated.date;
+      }
+      if (validated.description !== undefined) updates.description = validated.description;
+      if (validated.veterinarian !== undefined) updates.veterinarian = validated.veterinarian;
+      if (validated.cost !== undefined) updates.cost = validated.cost;
+      if (validated.nextDueDate !== undefined) {
+        updates.nextDueDate = validated.nextDueDate 
+          ? (typeof validated.nextDueDate === "string" ? new Date(validated.nextDueDate) : validated.nextDueDate)
+          : undefined;
+      }
+      if (validated.notes !== undefined) {
+        // Encrypt notes if provided
+        updates.notes = validated.notes ? encrypt(validated.notes) : undefined;
       }
 
       await docRef.update(updates);
@@ -88,9 +124,20 @@ export async function PUT(
       const updated = await docRef.get();
       const data = updated.data();
 
+      // Decrypt notes if encrypted
+      let notes = data?.notes;
+      if (notes && typeof notes === "string") {
+        try {
+          notes = decrypt(notes);
+        } catch (error) {
+          console.warn("Failed to decrypt notes, returning as-is");
+        }
+      }
+
       return NextResponse.json({
         id: updated.id,
         ...data,
+        notes, // Decrypted notes
         date: data?.date?.toDate(),
         nextDueDate: data?.nextDueDate?.toDate(),
         createdAt: data?.createdAt?.toDate(),

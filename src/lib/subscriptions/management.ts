@@ -1,5 +1,7 @@
-// Subscription Management Utilities
-import { adminDb } from "@/lib/firebase/admin";
+// Subscription Management Utilities - Now using Supabase
+import { getDrizzle } from "@/lib/supabase";
+import { subscriptions } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { SUBSCRIPTION_PLANS } from "@/lib/constants";
 import type { TenantSubscription, SubscriptionPlan } from "@/types";
 
@@ -15,60 +17,57 @@ export interface SubscriptionUpdate {
 }
 
 /**
- * Update tenant subscription
+ * Update tenant subscription in Supabase
  */
 export async function updateTenantSubscription(
   tenantId: string,
   update: SubscriptionUpdate
 ): Promise<void> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
+  const db = getDrizzle();
+  const subscriptionId = `${tenantId}_subscription`;
 
-  const subscriptionRef = adminDb
-    .collection("tenants")
-    .doc(tenantId)
-    .collection("subscription")
-    .doc("main");
-
-  await subscriptionRef.set(update, { merge: true });
-
-  // Update limits based on plan
-  const planDetails = SUBSCRIPTION_PLANS[update.plan];
-  const limitsRef = adminDb
-    .collection("tenants")
-    .doc(tenantId)
-    .collection("limits")
-    .doc("main");
-
-  await limitsRef.set(
-    {
-      maxAnimals: planDetails.maxAnimals,
-      maxUsers: planDetails.maxUsers,
-      features: planDetails.features,
+  await db.insert(subscriptions).values({
+    id: subscriptionId,
+    tenantId,
+    plan: update.plan,
+    status: update.status,
+    gateway: (update.gateway as any) || 'bank_transfer',
+    renewDate: update.renewDate,
+    token: update.token || null,
+    amount: update.amount,
+    currency: update.currency,
+    trialEndsAt: update.trialEndsAt || null,
+    updatedAt: new Date(),
+  }).onConflictDoUpdate({
+    target: subscriptions.id,
+    set: {
+      plan: update.plan,
+      status: update.status,
+      gateway: (update.gateway as any) || 'bank_transfer',
+      renewDate: update.renewDate,
+      token: update.token || null,
+      amount: update.amount,
+      trialEndsAt: update.trialEndsAt || null,
+      updatedAt: new Date(),
     },
-    { merge: true }
-  );
+  });
+
+  // Note: Limits are now calculated dynamically from plan, no need to store separately
 }
 
 /**
- * Cancel subscription
+ * Cancel subscription in Supabase
  */
 export async function cancelSubscription(tenantId: string): Promise<void> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
+  const db = getDrizzle();
+  const subscriptionId = `${tenantId}_subscription`;
 
-  const subscriptionRef = adminDb
-    .collection("tenants")
-    .doc(tenantId)
-    .collection("subscription")
-    .doc("main");
-
-  await subscriptionRef.update({
-    status: "cancelled",
-    updatedAt: new Date(),
-  });
+  await db.update(subscriptions)
+    .set({
+      status: 'cancelled',
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptions.id, subscriptionId));
 }
 
 /**
