@@ -3,17 +3,32 @@
 import { Redis } from '@upstash/redis';
 
 let redis: Redis | null = null;
+let redisDisabled = false;
+
+/**
+ * Check if Redis is configured
+ */
+function isRedisConfigured(): boolean {
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
 
 /**
  * Get Redis client (singleton)
+ * Returns null if Redis is not configured (graceful degradation)
  */
-function getRedis(): Redis {
+function getRedis(): Redis | null {
+  if (redisDisabled) {
+    return null;
+  }
+
   if (!redis) {
     const url = process.env.UPSTASH_REDIS_REST_URL;
     const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
     if (!url || !token) {
-      throw new Error('Upstash Redis credentials not configured');
+      // Redis not configured - disable silently for development
+      redisDisabled = true;
+      return null;
     }
 
     redis = new Redis({
@@ -44,6 +59,7 @@ export const cacheKeys = {
 export async function getCache<T>(key: string): Promise<T | null> {
   try {
     const client = getRedis();
+    if (!client) return null; // Redis not configured
     const value = await client.get<T>(key);
     return value;
   } catch (error) {
@@ -62,6 +78,7 @@ export async function setCache<T>(
 ): Promise<void> {
   try {
     const client = getRedis();
+    if (!client) return; // Redis not configured
     await client.setex(key, ttlSeconds, value);
   } catch (error) {
     console.error(`Redis cache set error for key ${key}:`, error);
@@ -75,6 +92,7 @@ export async function setCache<T>(
 export async function deleteCache(key: string): Promise<void> {
   try {
     const client = getRedis();
+    if (!client) return; // Redis not configured
     await client.del(key);
   } catch (error) {
     console.error(`Redis cache delete error for key ${key}:`, error);
@@ -88,6 +106,7 @@ export async function deleteCache(key: string): Promise<void> {
 export async function deleteCachePattern(pattern: string): Promise<void> {
   try {
     const client = getRedis();
+    if (!client) return; // Redis not configured
     // Upstash Redis doesn't support KEYS command, so we'll use SCAN
     // For now, we'll just log - implement if needed
     console.warn(`Pattern deletion not implemented for ${pattern}`);

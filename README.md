@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🐄 Malik Tech Dairy
+# 🐄 MTK Dairy
 
 ### **Empowering Dairy Farms with Technology**
 
@@ -11,7 +11,7 @@
 
 **Enterprise-Ready Multi-Tenant SaaS Platform for Livestock Management**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Support](#-support)
+[Features](#-features) • [Quick Start](#-quick-start) • [Setup Guide](SETUP_GUIDE.md) • [Documentation](#-documentation) • [Support](#-support)
 
 </div>
 
@@ -19,7 +19,7 @@
 
 ## 🎯 Overview
 
-**Malik Tech Dairy** is a comprehensive, enterprise-ready SaaS platform designed specifically for dairy and livestock management in Pakistan. Built with modern technologies, it supports multi-tenancy, real-time analytics, IoT integration, and multiple payment gateways optimized for the Pakistani market.
+**MTK Dairy** is a comprehensive, enterprise-ready SaaS platform designed specifically for dairy and livestock management in Pakistan. Built with modern technologies, it supports multi-tenancy, real-time analytics, IoT integration, and multiple payment gateways optimized for the Pakistani market.
 
 ### ✨ Key Highlights
 
@@ -42,6 +42,7 @@
 - **Health Records** - Vaccination, treatment, and health monitoring
 - **Breeding Management** - Heat detection, breeding cycles, pregnancy tracking
 - **Financial Tracking** - Expenses, sales, revenue analytics
+- **🆕 Disease Guide** - Comprehensive veterinary reference with 25+ diseases, treatments, and medicines
 - **Staff Management** - Role-based access control with invitations
 - **Custom Fields** - Extensible data model for farm-specific needs
 
@@ -111,81 +112,54 @@ Before you begin, ensure you have:
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+> 📖 **For complete step-by-step setup, see [SETUP_GUIDE.md](SETUP_GUIDE.md)**
+
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/Kaashmalik/malik-tech-dairy.git
 cd malik-tech-dairy
-```
-
-### 2. Install Dependencies
-
-```bash
 npm install
 ```
 
-### 3. Environment Setup
-
-Copy the example environment file and fill in your credentials:
+### 2. Configure Environment
 
 ```bash
 cp env.example .env.local
+# Edit .env.local with your credentials
 ```
 
-**Required Environment Variables:**
+### 3. Set Up Accounts (All Free Tier)
 
-```env
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+| Service | Purpose | Free Tier |
+|---------|---------|-----------|
+| [Clerk](https://clerk.com) | Authentication | 10K MAU |
+| [Supabase](https://supabase.com) | Primary Database | 500MB |
+| [Firebase](https://firebase.google.com) | Activity Feeds | 50K reads/day |
+| [Cloudinary](https://cloudinary.com) | File Storage | 25GB |
+| [Upstash](https://upstash.com) | Redis Cache | 10K commands/day |
+| [Resend](https://resend.com) | Email | 100 emails/day |
+| [PostHog](https://posthog.com) | Analytics | 1M events/mo |
+| [Sentry](https://sentry.io) | Error Tracking | 5K errors/mo |
 
-# Firebase
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+**Total Monthly Cost: $0** 🎉
 
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+### 4. Database Setup
 
-# Payment Gateways
-JAZZCASH_MERCHANT_ID=your_merchant_id
-EASYPAISA_STORE_ID=your_store_id
+Run the SQL migration in Supabase SQL Editor:
 
-# Redis
-UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
-UPSTASH_REDIS_REST_TOKEN=your_token
+```bash
+# For FRESH Supabase project, use:
+# scripts/supabase-fresh-setup.sql
 
-# Email
-RESEND_API_KEY=re_...
+# Copy the entire file content and paste in:
+# Supabase Dashboard → SQL Editor → New Query → Run
 
-# Analytics
-NEXT_PUBLIC_POSTHOG_KEY=phc_your_posthog_key
+# Verify tables created:
+# SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
 ```
 
-See `env.example` for the complete list.
-
-### 4. Firebase Setup
-
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-2. Enable Firestore (start in **datastore mode**)
-3. Enable Storage
-4. Go to Project Settings → Service Accounts
-5. Generate a new private key and add to `.env.local`
-6. Deploy security rules:
-   ```bash
-   firebase deploy --only firestore:rules
-   ```
-
-### 5. Supabase Setup
-
-1. Create a Supabase project at [Supabase](https://supabase.com)
-2. Run the migration script:
-   ```bash
-   npx tsx scripts/migrate-to-supabase.ts
-   ```
-3. Or use the SQL migration: `scripts/supabase-migration.sql`
-
-### 6. Run Development Server
+### 5. Run Development Server
 
 ```bash
 npm run dev

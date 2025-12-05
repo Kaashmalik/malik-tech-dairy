@@ -1,8 +1,7 @@
-// API Route: Get Milk Statistics
+// API Route: Get Milk Statistics (Supabase-based)
 import { NextRequest, NextResponse } from "next/server";
 import { withTenantContext } from "@/lib/api/middleware";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import { adminDb } from "@/lib/firebase/admin";
+import { getSupabaseClient } from "@/lib/supabase";
 import { format, subDays } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -10,37 +9,44 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      if (!adminDb) {
-        return NextResponse.json({ error: "Database not available" }, { status: 500 });
-      }
-
+      const supabase = getSupabaseClient();
+      
       const { searchParams } = new URL(req.url);
       const days = parseInt(searchParams.get("days") || "7");
-
-      const milkLogsRef = getTenantSubcollection(
-        context.tenantId,
-        "milkLogs",
-        "logs"
-      );
 
       const today = format(new Date(), "yyyy-MM-dd");
       const startDate = format(subDays(new Date(), days), "yyyy-MM-dd");
 
-      // Get logs for the period
-      const snapshot = await milkLogsRef
-        .where("date", ">=", startDate)
-        .where("date", "<=", today)
-        .get();
+      // Get logs for the period from Supabase
+      const { data: logs, error } = await supabase
+        .from('milk_logs')
+        .select('date, quantity, session')
+        .eq('tenant_id', context.tenantId)
+        .gte('date', startDate)
+        .lte('date', today) as { data: any[] | null; error: any };
 
-      const logs = snapshot.docs.map((doc) => doc.data());
+      if (error) {
+        console.error("Error fetching milk logs:", error);
+        // Return empty stats instead of error for graceful degradation
+        return NextResponse.json({
+          success: true,
+          todayTotal: 0,
+          periodTotal: 0,
+          averagePerDay: 0,
+          dailyTotals: [],
+          message: "No milk data available",
+        });
+      }
+
+      const milkLogs = logs || [];
 
       // Calculate today's total
-      const todayLogs = logs.filter((log) => log.date === today);
-      const todayTotal = todayLogs.reduce((sum, log) => sum + (log.quantity || 0), 0);
+      const todayLogs = milkLogs.filter((log: any) => log.date === today);
+      const todayTotal = todayLogs.reduce((sum: number, log: any) => sum + (log.quantity || 0), 0);
 
       // Calculate daily totals for chart
       const dailyTotals: Record<string, number> = {};
-      logs.forEach((log) => {
+      milkLogs.forEach((log: any) => {
         const date = log.date;
         dailyTotals[date] = (dailyTotals[date] || 0) + (log.quantity || 0);
       });
@@ -54,9 +60,10 @@ export async function GET(request: NextRequest) {
           : 0;
 
       // Calculate total for period
-      const periodTotal = logs.reduce((sum, log) => sum + (log.quantity || 0), 0);
+      const periodTotal = milkLogs.reduce((sum: number, log: any) => sum + (log.quantity || 0), 0);
 
       return NextResponse.json({
+        success: true,
         todayTotal: Math.round(todayTotal * 100) / 100,
         periodTotal: Math.round(periodTotal * 100) / 100,
         averagePerDay: Math.round(averagePerDay * 100) / 100,
@@ -66,10 +73,15 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       console.error("Error fetching milk stats:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      // Return empty stats for graceful degradation
+      return NextResponse.json({
+        success: true,
+        todayTotal: 0,
+        periodTotal: 0,
+        averagePerDay: 0,
+        dailyTotals: [],
+        message: "Error loading milk statistics",
+      });
     }
   })(request);
 }

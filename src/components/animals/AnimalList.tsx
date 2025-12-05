@@ -54,7 +54,7 @@ export function AnimalList() {
             Manage your livestock ({animals.length} total)
           </p>
         </div>
-        <Link href="/dashboard/animals/new">
+        <Link href="/animals/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add Animal
@@ -101,7 +101,7 @@ export function AnimalList() {
               {searchQuery ? "No animals found matching your search." : "No animals yet."}
             </p>
             {!searchQuery && (
-              <Link href="/dashboard/animals/new">
+              <Link href="/animals/new">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Your First Animal
@@ -113,7 +113,7 @@ export function AnimalList() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredAnimals.map((animal) => (
-            <Link key={animal.id} href={`/dashboard/animals/${animal.id}`}>
+            <Link key={animal.id} href={`/animals/${animal.id}`}>
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center justify-between">

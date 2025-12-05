@@ -1,10 +1,10 @@
-// Core Types for Malik Tech Dairy SaaS
+// Core Types for MTK Dairy SaaS
 
 export type AnimalSpecies = "cow" | "buffalo" | "chicken" | "goat" | "sheep" | "horse";
 
-export type SubscriptionPlan = "starter" | "professional" | "enterprise" | "free";
+export type SubscriptionPlan = "free" | "professional" | "farm" | "enterprise";
 
-export type SubscriptionStatus = "active" | "trial" | "expired" | "cancelled" | "past_due";
+export type SubscriptionStatus = "active" | "trial" | "expired" | "cancelled" | "past_due" | "pending_approval";
 
 // Legacy UserRole type - use types/roles.ts for new role system
 export type UserRole = "owner" | "manager" | "vet" | "worker" | "viewer";

@@ -19,16 +19,17 @@ export default async function DashboardLayout({
   }
 
   if (!orgId) {
-    redirect("/onboarding");
+    // Redirect to farm selection page instead of onboarding
+    redirect("/select-farm");
   }
 
   return (
     <QueryProvider>
       <TenantProvider>
         <DynamicBranding />
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20">
           <DashboardHeader />
-          <main className="container mx-auto py-6">
+          <main className="container mx-auto py-6 px-4 md:px-6">
             {children}
           </main>
         </div>

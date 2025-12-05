@@ -2,7 +2,7 @@
 // Generates payment reference codes and handles manual verification
 import crypto from "crypto";
 import { adminDb } from "@/lib/firebase/admin";
-import type { SubscriptionPlan, PaymentGateway } from "@/types";
+import type { SubscriptionPlan } from "@/types";
 
 export interface BankTransferPayment {
   id: string;
@@ -151,7 +151,7 @@ export async function getBankTransferByReference(
  */
 export function getBankAccountDetails() {
   return {
-    accountName: process.env.BANK_ACCOUNT_NAME || "Malik Tech Dairy Pvt Ltd",
+    accountName: process.env.BANK_ACCOUNT_NAME || "MTK Dairy Pvt Ltd",
     accountNumber: process.env.BANK_ACCOUNT_NUMBER || "1234567890123",
     bankName: process.env.BANK_NAME || "Bank Alfalah",
     iban: process.env.BANK_IBAN || "PK12ALFH1234567890123456",

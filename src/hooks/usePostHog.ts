@@ -1,15 +1,23 @@
 "use client";
 
-import { usePostHog } from "posthog-js/react";
-import { useAuth, useOrganization } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 
 /**
  * Custom hook for PostHog analytics with tenant context
  */
 export function usePostHogAnalytics() {
-  const posthog = usePostHog();
-  const { userId } = useAuth();
-  const { organization } = useOrganization();
+  const [posthog, setPosthog] = useState<any>(null);
+  
+  useEffect(() => {
+    if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+      import("posthog-js").then((module) => {
+        setPosthog(module.default);
+      }).catch(() => {});
+    }
+  }, []);
+
+  const userId: string | null = null;
+  const organization: { id?: string; slug?: string } | null = null;
 
   const trackEvent = (
     eventName: string,

@@ -5,9 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { AlertCircle, Users, Cow, TrendingUp } from "lucide-react";
+import { AlertCircle, Users, Beef, TrendingUp } from "lucide-react";
 import { SUBSCRIPTION_PLANS } from "@/lib/constants";
 import type { SubscriptionPlan } from "@/types";
+
+// Alias for semantic clarity
+const Cow = Beef;
 
 export function UsageLimits() {
   const { data: limits, isLoading } = useQuery({

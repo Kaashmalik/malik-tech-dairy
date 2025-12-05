@@ -1,14 +1,13 @@
 // Drizzle Kit Configuration
-import type { Config } from 'drizzle-kit';
+import { defineConfig } from "drizzle-kit";
 
-export default {
-  schema: './src/db/schema.ts',
-  out: './drizzle',
-  dialect: 'postgresql',
+export default defineConfig({
+  out: "./drizzle",
+  schema: "./src/db/schema.ts",
+  dialect: "postgresql",
   dbCredentials: {
-    url: process.env.SUPABASE_DATABASE_URL || '',
+    url: process.env.SUPABASE_DATABASE_URL!,
   },
   verbose: true,
   strict: true,
-} satisfies Config;
-
+});

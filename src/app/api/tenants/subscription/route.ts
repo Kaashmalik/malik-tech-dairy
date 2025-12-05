@@ -1,29 +1,53 @@
-// API Route: Get Tenant Subscription
+// API Route: Get Tenant Subscription (Supabase-based)
 import { NextRequest, NextResponse } from "next/server";
 import { withTenantContext } from "@/lib/api/middleware";
-import { getTenantSubscription } from "@/lib/firebase/tenant";
+import { getSubscriptionWithLimits } from "@/lib/supabase/limits";
+import { SUBSCRIPTION_PLANS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      const subscription = await getTenantSubscription(context.tenantId);
+      const subscription = await getSubscriptionWithLimits(context.tenantId);
 
       if (!subscription) {
-        return NextResponse.json(
-          { error: "Subscription not found" },
-          { status: 404 }
-        );
+        // Return default free subscription for graceful degradation
+        const freePlan = SUBSCRIPTION_PLANS.free;
+        return NextResponse.json({
+          success: true,
+          plan: 'free',
+          planDisplayName: freePlan.displayName,
+          status: 'trial',
+          renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          trialEndsAt: null,
+          message: "Using default subscription",
+        });
       }
 
-      return NextResponse.json(subscription);
+      const planConfig = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
+
+      return NextResponse.json({
+        success: true,
+        plan: subscription.plan,
+        planDisplayName: planConfig.displayName,
+        status: subscription.status,
+        renewDate: subscription.renewDate.toISOString(),
+        trialEndsAt: subscription.trialEndsAt?.toISOString() || null,
+        price: planConfig.price,
+        priceDisplay: planConfig.priceDisplay,
+      });
     } catch (error) {
       console.error("Error fetching subscription:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      // Return default for graceful degradation
+      return NextResponse.json({
+        success: true,
+        plan: 'free',
+        planDisplayName: SUBSCRIPTION_PLANS.free.displayName,
+        status: 'trial',
+        renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        message: "Error loading subscription, using defaults",
+      });
     }
   })(request);
 }

@@ -1,4 +1,6 @@
 // Firebase Client SDK Configuration
+// LIMITED USE: Only for real-time activity feeds (50K reads/day)
+// All other data is stored in Supabase PostgreSQL
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
@@ -21,17 +23,54 @@ const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
-// Initialize Firebase only once
-if (typeof window !== "undefined" && !getApps().length) {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  // Initialize Realtime Database if URL is provided
-  if (firebaseConfig.databaseURL) {
-    realtimeDb = getDatabase(app);
+/**
+ * Initialize Firebase - can be called from both client and server
+ */
+function initializeFirebase() {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    if (firebaseConfig.databaseURL) {
+      realtimeDb = getDatabase(app);
+    }
+  } else {
+    app = getApps()[0];
+    db = getFirestore(app);
+    storage = getStorage(app);
+    if (firebaseConfig.databaseURL) {
+      realtimeDb = getDatabase(app);
+    }
   }
-  // Note: We use Clerk for auth, but Firebase Auth is available if needed
-  // auth = getAuth(app);
+}
+
+// Initialize on import
+initializeFirebase();
+
+/**
+ * Get Firestore instance - throws if not initialized
+ */
+export function getFirestoreDb(): Firestore {
+  if (!db) {
+    initializeFirebase();
+  }
+  if (!db) {
+    throw new Error('Firestore not initialized');
+  }
+  return db;
+}
+
+/**
+ * Get Storage instance - throws if not initialized
+ */
+export function getFirebaseStorage(): FirebaseStorage {
+  if (!storage) {
+    initializeFirebase();
+  }
+  if (!storage) {
+    throw new Error('Firebase Storage not initialized');
+  }
+  return storage;
 }
 
 export { app, db, storage, auth, realtimeDb };

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Malik Tech Dairy",
+    "appName": "MTK Dairy",
     "tagline": "Empowering Dairy Farms with Technology",
     "loading": "Loading...",
     "save": "Save",
@@ -128,8 +128,8 @@
   },
   "emails": {
     "welcome": {
-      "subject": "Welcome to Malik Tech Dairy!",
-      "greeting": "Welcome to Malik Tech Dairy!"
+      "subject": "Welcome to MTK Dairy!",
+      "greeting": "Welcome to MTK Dairy!"
     },
     "onboarding": {
       "subject": "Get Started with Your Dairy Management",

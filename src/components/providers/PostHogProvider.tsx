@@ -1,72 +1,40 @@
 "use client";
 
-import posthog from "posthog-js";
-import { PostHogProvider as PHProvider } from "posthog-js/react";
-import { useEffect } from "react";
-import { useAuth, useOrganization } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 
 interface PostHogProviderProps {
   children: React.ReactNode;
 }
 
+// Check if PostHog is configured
+const isPostHogEnabled = !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
+
 export function PostHogProvider({ children }: PostHogProviderProps) {
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_POSTHOG_KEY &&
-      !posthog.__loaded
-    ) {
-      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-        api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
-        loaded: (posthog) => {
-          if (process.env.NODE_ENV === "development") {
-            posthog.debug();
-          }
-        },
-        capture_pageview: false, // We'll capture manually
-        capture_pageleave: true,
-      });
-    }
-  }, []);
-
-  return (
-    <PHProvider client={posthog}>
-      <PostHogUserIdentifier />
-      {children}
-    </PHProvider>
-  );
-}
-
-/**
- * Component to identify users and set organization context
- */
-function PostHogUserIdentifier() {
-  const { userId } = useAuth();
-  const { organization } = useOrganization();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      posthog.__loaded &&
-      process.env.NEXT_PUBLIC_POSTHOG_KEY
-    ) {
-      if (userId) {
-        posthog.identify(userId, {
-          // Add any user properties here
+    if (typeof window === "undefined" || !isPostHogEnabled) return;
+
+    import("posthog-js").then((posthogModule) => {
+      const posthog = posthogModule.default;
+      
+      if (!posthog.__loaded) {
+        posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+          api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
+          loaded: () => {
+            setIsReady(true);
+          },
+          capture_pageview: false,
+          capture_pageleave: true,
         });
       } else {
-        posthog.reset();
+        setIsReady(true);
       }
+    }).catch(() => {
+      // PostHog not available, ignore
+    });
+  }, []);
 
-      if (organization) {
-        posthog.group("organization", organization.id, {
-          name: organization.name,
-          slug: organization.slug,
-        });
-      }
-    }
-  }, [userId, organization]);
-
-  return null;
+  return <>{children}</>;
 }
 

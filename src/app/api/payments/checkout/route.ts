@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       const paymentRequest = {
         amount,
         orderId,
-        description: `Malik Tech Dairy - ${planDetails.name} Plan`,
+        description: `MTK Dairy - ${planDetails.name} Plan`,
         customerEmail: context.userId, // Will be replaced with actual email
         customerPhone: "", // Will be replaced with actual phone
       };

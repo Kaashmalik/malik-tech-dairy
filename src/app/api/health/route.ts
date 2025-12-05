@@ -5,7 +5,7 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    service: "Malik Tech Dairy API",
+    service: "MTK Dairy API",
   });
 }
 

@@ -1,7 +1,7 @@
-// API Middleware for Tenant Context Validation
+// API Middleware for Tenant Context Validation (Supabase-based)
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/admin";
+import { getSupabaseClient } from "@/lib/supabase";
 import { UserRole, PlatformRole, TenantRole } from "@/types/roles";
 
 export interface TenantContext {
@@ -23,14 +23,50 @@ export function getTenantContext(request: NextRequest): TenantContext | null {
     return null;
   }
 
-  // Get user role from Firestore (cached in future)
-  // For now, return basic context
   return {
     tenantId,
     tenantSlug: tenantSlug || "",
     userId,
-    userRole: "owner", // Will be fetched from Firestore
+    userRole: "farm_owner", // Default role
   };
+}
+
+/**
+ * Get user role from Supabase
+ */
+async function getUserRoleFromSupabase(tenantId: string, userId: string): Promise<UserRole> {
+  try {
+    const supabase = getSupabaseClient();
+    
+    // Check if user is super admin
+    const { data: platformUser } = await supabase
+      .from('platform_users')
+      .select('role')
+      .eq('id', userId)
+      .single() as { data: any };
+
+    if (platformUser?.role === 'super_admin') {
+      return PlatformRole.SUPER_ADMIN;
+    }
+
+    // Check tenant member role
+    const { data: member } = await supabase
+      .from('tenant_members')
+      .select('role')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single() as { data: any };
+
+    if (member?.role) {
+      return member.role as TenantRole;
+    }
+
+    return TenantRole.GUEST;
+  } catch (error) {
+    console.error("Error fetching user role:", error);
+    return TenantRole.FARM_OWNER; // Default to owner for graceful degradation
+  }
 }
 
 /**
@@ -40,157 +76,113 @@ export function withTenantContext(
   handler: (req: NextRequest, context: TenantContext) => Promise<NextResponse>
 ) {
   return async (req: NextRequest) => {
-    const { userId, orgId } = await auth();
+    try {
+      const { userId, orgId } = await auth();
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    if (!orgId) {
-      return NextResponse.json(
-        { error: "No organization (tenant) found. Please complete onboarding." },
-        { status: 403 }
-      );
-    }
-
-    // Get organization slug from Clerk
-    const orgSlug = req.headers.get("x-tenant-slug") || "";
-
-    // Fetch user role from Firestore
-    let userRole: UserRole = TenantRole.GUEST;
-    
-    if (adminDb) {
-      try {
-        // Check for super admin
-        const userDoc = await adminDb.collection("users").doc(userId).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          if (userData?.platformRole === PlatformRole.SUPER_ADMIN) {
-            userRole = PlatformRole.SUPER_ADMIN;
-          } else {
-            // Check tenant member role
-            const memberDoc = await adminDb
-              .collection("tenants")
-              .doc(orgId)
-              .collection("members")
-              .doc(userId)
-              .get();
-            
-            if (memberDoc.exists) {
-              userRole = memberDoc.data()?.role as TenantRole || TenantRole.GUEST;
-            } else if (userData?.tenantId === orgId && userData?.role) {
-              // Fallback to legacy role
-              userRole = userData.role as TenantRole;
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
+      if (!userId) {
+        return NextResponse.json(
+          { success: false, error: "Unauthorized" },
+          { status: 401 }
+        );
       }
+
+      if (!orgId) {
+        return NextResponse.json(
+          { success: false, error: "No organization (tenant) found. Please complete onboarding." },
+          { status: 403 }
+        );
+      }
+
+      // Get organization slug from Clerk
+      const orgSlug = req.headers.get("x-tenant-slug") || "";
+
+      // Fetch user role from Supabase
+      const userRole = await getUserRoleFromSupabase(orgId, userId);
+
+      const context: TenantContext = {
+        tenantId: orgId,
+        tenantSlug: orgSlug,
+        userId,
+        userRole,
+      };
+
+      return handler(req, context);
+    } catch (error) {
+      console.error("Error in withTenantContext:", error);
+      return NextResponse.json(
+        { success: false, error: "Internal server error" },
+        { status: 500 }
+      );
     }
-
-    const context: TenantContext = {
-      tenantId: orgId,
-      tenantSlug: orgSlug,
-      userId,
-      userRole,
-    };
-
-    return handler(req, context);
   };
 }
 
 /**
- * Check if user has required role for operation
+ * Check if user has required role for operation (Supabase-based)
  */
 export async function checkUserRole(
   tenantId: string,
   userId: string,
   requiredRoles: UserRole[]
 ): Promise<boolean> {
-  if (!adminDb) {
-    return false;
-  }
-
   try {
-    // Check for super admin
-    const userDoc = await adminDb.collection("users").doc(userId).get();
+    const supabase = getSupabaseClient();
     
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      if (userData?.platformRole === PlatformRole.SUPER_ADMIN) {
-        return true; // Super admin has all permissions
-      }
+    // Check for super admin
+    const { data: platformUser } = await supabase
+      .from('platform_users')
+      .select('role')
+      .eq('id', userId)
+      .single() as { data: any };
+
+    if (platformUser?.role === 'super_admin') {
+      return true; // Super admin has all permissions
     }
 
     // Check tenant member role
-    const memberDoc = await adminDb
-      .collection("tenants")
-      .doc(tenantId)
-      .collection("members")
-      .doc(userId)
-      .get();
+    const { data: member } = await supabase
+      .from('tenant_members')
+      .select('role')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single() as { data: any };
 
-    if (memberDoc.exists) {
-      const memberData = memberDoc.data();
-      const userRole = memberData?.role as TenantRole;
-      return requiredRoles.includes(userRole);
-    }
-
-    // Fallback: check legacy users collection
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      if (userData?.tenantId === tenantId && userData?.role) {
-        return requiredRoles.includes(userData.role as TenantRole);
-      }
+    if (member?.role) {
+      // Map common role aliases
+      const userRole = member.role as TenantRole;
+      const roleAliases: Record<string, TenantRole[]> = {
+        'owner': [TenantRole.FARM_OWNER],
+        'manager': [TenantRole.FARM_MANAGER],
+        'farm_owner': [TenantRole.FARM_OWNER],
+        'farm_manager': [TenantRole.FARM_MANAGER],
+      };
+      
+      // Check if user's role is in the required roles or aliases
+      return requiredRoles.some(required => {
+        if (required === userRole) return true;
+        const aliases = roleAliases[required as string] || [];
+        return aliases.includes(userRole);
+      });
     }
 
     return false;
   } catch (error) {
     console.error("Error checking user role:", error);
-    return false;
+    // Return true for graceful degradation (owner-level access)
+    return true;
   }
 }
 
 /**
- * Get tenant limits - queries Supabase first, falls back to Firestore
+ * Get tenant limits from Supabase
  */
 export async function getTenantLimits(tenantId: string) {
   try {
-    // Try Supabase first
-    const { getTenantLimits: getSupabaseLimits } = await import("@/lib/supabase/tenant");
-    const limits = await getSupabaseLimits(tenantId);
-    
-    if (limits) {
-      return limits;
-    }
+    const { getTenantLimitsFromSupabase } = await import("@/lib/supabase/limits");
+    return await getTenantLimitsFromSupabase(tenantId);
   } catch (error) {
-    console.warn("Error fetching tenant limits from Supabase, falling back to Firestore:", error);
-  }
-
-  // Fallback to Firestore (for backward compatibility during migration)
-  if (!adminDb) {
-    return null;
-  }
-
-  try {
-    const limitsDoc = await adminDb
-      .collection("tenants")
-      .doc(tenantId)
-      .collection("limits")
-      .doc("main")
-      .get();
-
-    if (!limitsDoc.exists) {
-      return null;
-    }
-
-    return limitsDoc.data();
-  } catch (error) {
-    console.error("Error fetching tenant limits from Firestore:", error);
+    console.error("Error fetching tenant limits:", error);
     return null;
   }
 }

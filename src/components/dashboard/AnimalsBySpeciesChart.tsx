@@ -1,16 +1,30 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Beef, Loader2 } from "lucide-react";
+import Link from "next/link";
+
+// Alias for semantic clarity
+const CowIcon = Beef;
 
 const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  { fill: "#10B981", name: "Emerald" },
+  { fill: "#3B82F6", name: "Blue" },
+  { fill: "#F59E0B", name: "Amber" },
+  { fill: "#8B5CF6", name: "Purple" },
+  { fill: "#EC4899", name: "Pink" },
+  { fill: "#06B6D4", name: "Cyan" },
 ];
+
+const SPECIES_ICONS: Record<string, string> = {
+  cow: "🐄",
+  buffalo: "🐃",
+  goat: "🐐",
+  sheep: "🐑",
+  chicken: "🐔",
+  horse: "🐴",
+};
 
 export function AnimalsBySpeciesChart() {
   const { data, isLoading } = useQuery({
@@ -24,16 +38,12 @@ export function AnimalsBySpeciesChart() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Animals by Species</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center">
-            Loading chart...
-          </div>
-        </CardContent>
-      </Card>
+      <div className="h-[280px] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Loading chart...</p>
+        </div>
+      </div>
     );
   }
 
@@ -43,58 +53,101 @@ export function AnimalsBySpeciesChart() {
     return acc;
   }, {});
 
-  const chartData = Object.entries(speciesCount).map(([name, value]) => ({
+  const chartData = Object.entries(speciesCount).map(([name, value], index) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
-    value,
+    value: value as number,
+    icon: SPECIES_ICONS[name.toLowerCase()] || "🐾",
+    color: COLORS[index % COLORS.length].fill,
   }));
 
   if (chartData.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Animals by Species</CardTitle>
-          <CardDescription>No animals yet</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center text-muted-foreground">
-            Add animals to see distribution
-          </div>
-        </CardContent>
-      </Card>
+      <div className="h-[280px] flex flex-col items-center justify-center">
+        <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-2xl flex items-center justify-center mb-4">
+          <CowIcon className="w-8 h-8 text-emerald-500" />
+        </div>
+        <h4 className="font-medium text-gray-900 dark:text-white mb-1">No animals yet</h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center max-w-[200px]">
+          Add your first animal to see the distribution
+        </p>
+        <Link 
+          href="/animals/new" 
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+        >
+          <CowIcon className="w-4 h-4" />
+          Add Animal
+        </Link>
+      </div>
     );
   }
 
+  const totalAnimals = animals.length;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Animals by Species</CardTitle>
-        <CardDescription>Total: {animals.length} animals</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) =>
-                `${name}: ${((percent || 0) * 100).toFixed(0)}%`
-              }
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {/* Total count badge */}
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+        <CowIcon className="w-4 h-4 text-emerald-500" />
+        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+          Total: {totalAnimals} animals
+        </span>
+      </div>
+      
+      <div className="flex items-center gap-4">
+        {/* Chart */}
+        <div className="flex-1">
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={45}
+                outerRadius={70}
+                paddingAngle={3}
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.color}
+                    stroke="none"
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '12px',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+                }}
+                formatter={(value: number, name: string) => [`${value} animals`, name]}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        
+        {/* Legend */}
+        <div className="flex-shrink-0 space-y-2">
+          {chartData.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-lg">{item.icon}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {item.name}
+              </span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                {item.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

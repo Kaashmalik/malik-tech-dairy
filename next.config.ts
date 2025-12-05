@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
-import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -20,34 +18,49 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.clerk.com",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
     ],
   },
-  // PWA will be configured in Phase 7
-  // For now, enable experimental features
+  
+  // Experimental features
   experimental: {
-    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons", "date-fns"],
+  },
+  
+  // Suppress warnings for lockfile detection
+  outputFileTracingRoot: process.cwd(),
+  
+  // Reduce memory usage during development
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
   },
 };
 
-// Wrap with Sentry
-const sentryWebpackPluginOptions = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
+// Conditionally wrap with Sentry only if configured
+let exportedConfig = withNextIntl(nextConfig);
 
-  // Suppresses source map uploading logs during build
-  silent: true,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  // Only import and use Sentry if DSN is configured
+  const { withSentryConfig } = require("@sentry/nextjs");
   
-  // Only upload source maps in production
-  widenClientFileUpload: true,
-  hideSourceMaps: true,
-  disableClientWebpackPlugin: false,
-  disableServerWebpackPlugin: false,
-  automaticVercelMonitors: true,
-};
+  exportedConfig = withSentryConfig(exportedConfig, {
+    silent: true,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    widenClientFileUpload: true,
+    hideSourceMaps: true,
+    disableLogger: true,
+  });
+}
 
-export default withSentryConfig(
-  withNextIntl(nextConfig),
-  sentryWebpackPluginOptions
-);
+export default exportedConfig;

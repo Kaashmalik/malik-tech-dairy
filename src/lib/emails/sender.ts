@@ -27,7 +27,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
 
   try {
     const result = await resend.emails.send({
-      from: options.from || process.env.RESEND_FROM_EMAIL || "Malik Tech Dairy <noreply@maliktechdairy.com>",
+      from: options.from || process.env.RESEND_FROM_EMAIL || "MTK Dairy <noreply@maliktechdairy.com>",
       to: options.to,
       subject: options.subject,
       html: options.html,

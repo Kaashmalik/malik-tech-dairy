@@ -1,4 +1,4 @@
-// Complete Role System for Malik Tech Dairy SaaS
+// Complete Role System for MTK Dairy SaaS
 
 export enum PlatformRole {
   SUPER_ADMIN = "super_admin",

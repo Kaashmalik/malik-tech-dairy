@@ -14,7 +14,7 @@ export function getWelcomeEmailTemplate(
   userName: string,
   tenantName: string
 ): EmailTemplate {
-  const subject = "Welcome to Malik Tech Dairy! 🐄";
+  const subject = "Welcome to MTK Dairy! 🐄";
   const html = `
     <!DOCTYPE html>
     <html>
@@ -32,7 +32,7 @@ export function getWelcomeEmailTemplate(
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to Malik Tech Dairy!</h1>
+          <h1>Welcome to MTK Dairy!</h1>
         </div>
         <div class="content">
           <p>Hi ${userName},</p>
@@ -46,17 +46,17 @@ export function getWelcomeEmailTemplate(
           </ul>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/onboarding" class="button">Get Started</a>
           <p>If you have any questions, our support team is here to help!</p>
-          <p>Best regards,<br>The Malik Tech Dairy Team</p>
+          <p>Best regards,<br>The MTK Dairy Team</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Malik Tech Dairy. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} MTK Dairy. All rights reserved.</p>
         </div>
       </div>
     </body>
     </html>
   `;
   const text = `
-    Welcome to Malik Tech Dairy!
+    Welcome to MTK Dairy!
     
     Hi ${userName},
     
@@ -73,7 +73,7 @@ export function getWelcomeEmailTemplate(
     If you have any questions, our support team is here to help!
     
     Best regards,
-    The Malik Tech Dairy Team
+    The MTK Dairy Team
   `;
 
   return { subject, html, text };
@@ -124,10 +124,10 @@ export function getOnboardingEmailTemplate(
           `}
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/onboarding" class="button">Continue Setup</a>
           <p>Need help? Reply to this email or contact support.</p>
-          <p>Best regards,<br>The Malik Tech Dairy Team</p>
+          <p>Best regards,<br>The MTK Dairy Team</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Malik Tech Dairy. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} MTK Dairy. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -144,7 +144,7 @@ export function getOnboardingEmailTemplate(
     Need help? Reply to this email or contact support.
     
     Best regards,
-    The Malik Tech Dairy Team
+    The MTK Dairy Team
   `;
 
   return { subject, html, text };
@@ -176,14 +176,14 @@ export function getNPSEmailTemplate(userName: string): EmailTemplate {
         </div>
         <div class="content">
           <p>Hi ${userName},</p>
-          <p>You've been using Malik Tech Dairy for a week now. We'd love to hear your feedback!</p>
+          <p>You've been using MTK Dairy for a week now. We'd love to hear your feedback!</p>
           <p>How likely are you to recommend us to a friend or colleague?</p>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard?nps=true" class="button">Share Your Feedback</a>
           <p>Your feedback helps us improve and serve you better.</p>
-          <p>Thank you!<br>The Malik Tech Dairy Team</p>
+          <p>Thank you!<br>The MTK Dairy Team</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Malik Tech Dairy. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} MTK Dairy. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -194,7 +194,7 @@ export function getNPSEmailTemplate(userName: string): EmailTemplate {
     
     Hi ${userName},
     
-    You've been using Malik Tech Dairy for a week now. We'd love to hear your feedback!
+    You've been using MTK Dairy for a week now. We'd love to hear your feedback!
     
     How likely are you to recommend us to a friend or colleague?
     
@@ -203,7 +203,7 @@ export function getNPSEmailTemplate(userName: string): EmailTemplate {
     Your feedback helps us improve and serve you better.
     
     Thank you!
-    The Malik Tech Dairy Team
+    The MTK Dairy Team
   `;
 
   return { subject, html, text };

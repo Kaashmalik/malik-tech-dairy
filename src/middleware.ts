@@ -1,7 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { rateLimitMiddleware } from "./middleware.ratelimit";
 
 // Note: Using middleware.ts (not deprecated proxy) - Next.js 15+ supports this
 
@@ -15,10 +14,20 @@ const isPublicRoute = createRouteMatcher([
   "/about",
 ]);
 
+// Routes that require authentication but NOT organization
+const isAuthOnlyRoute = createRouteMatcher([
+  "/apply(.*)",
+  "/onboarding(.*)",
+  "/api/farm-applications(.*)",
+  "/api/upload(.*)",
+  "/admin(.*)", // Super admin routes
+  "/super-admin(.*)", // Super admin routes
+  "/api/admin(.*)",
+]);
+
 // Define routes that require organization (tenant) context
 const isOrganizationRoute = createRouteMatcher([
   "/dashboard(.*)",
-  "/onboarding(.*)",
   "/api/tenants(.*)",
   "/api/animals(.*)",
   "/api/milk(.*)",
@@ -29,12 +38,6 @@ const isOrganizationRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
-  // Apply rate limiting first
-  const rateLimitResponse = await rateLimitMiddleware(req);
-  if (rateLimitResponse) {
-    return rateLimitResponse;
-  }
-
   const { userId, orgId, orgSlug } = await auth();
 
   // Extract subdomain from hostname
@@ -54,6 +57,16 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(signInUrl);
   }
 
+  // Handle auth-only routes (apply, onboarding, etc.)
+  if (isAuthOnlyRoute(req) && userId) {
+    // User is authenticated - allow access
+    // If user has org, redirect to dashboard from onboarding/apply
+    if (orgId && (req.nextUrl.pathname === "/onboarding" || req.nextUrl.pathname === "/apply")) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    // Continue to the route
+  }
+
   // Handle organization (tenant) routes
   if (isOrganizationRoute(req) && userId) {
     // If subdomain exists and user is authenticated, ensure they belong to that tenant
@@ -66,9 +79,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       }
     }
 
-    // If no orgId and user is on organization route, redirect to onboarding
-    if (!orgId && req.nextUrl.pathname.startsWith("/dashboard")) {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
+    // If no orgId and user is on organization route, redirect to apply
+    if (!orgId) {
+      return NextResponse.redirect(new URL("/apply", req.url));
     }
   }
 

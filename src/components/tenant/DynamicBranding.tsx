@@ -60,7 +60,7 @@ export function TenantLogo({ className }: { className?: string }) {
         <span className="text-primary-foreground font-bold text-lg">M</span>
       </div>
       <span className="font-semibold text-lg">
-        {config?.farmName || "Malik Tech Dairy"}
+        {config?.farmName || "MTK Dairy"}
       </span>
     </div>
   );

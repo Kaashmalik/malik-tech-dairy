@@ -57,3 +57,6 @@ ui-debug.log
 *.swp
 *.swo
 *~
+
+# clerk configuration (can include secrets)
+/.clerk/

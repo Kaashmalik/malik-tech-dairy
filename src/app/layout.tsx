@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Nastaliq_Urdu } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { PWARegister } from "@/components/PWARegister";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { PostHogProvider } from "@/components/providers/PostHogProvider";
-import { PostHogPageView } from "@/components/analytics/PostHogPageView";
-import { SentryProvider } from "@/components/providers/SentryProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,25 +22,30 @@ const notoUrdu = Noto_Nastaliq_Urdu({
   weight: ["400", "500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#1F7A3D",
+};
+
 export const metadata: Metadata = {
-  title: "Malik Tech Dairy - Livestock Management SaaS",
-  description: "Premium multi-tenant SaaS platform for dairy and cattle management in Pakistan",
+  title: "MTK Dairy - Smart Farm Management",
+  description: "Smart dairy farm management platform for Pakistan",
   keywords: ["dairy management", "livestock", "cattle", "Pakistan", "SaaS"],
   manifest: "/manifest.json",
-  themeColor: "#1F7A3D",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://maliktechdairy.com",
-    siteName: "Malik Tech Dairy",
-    title: "Malik Tech Dairy - Livestock Management SaaS",
-    description: "Premium multi-tenant SaaS platform for dairy and cattle management in Pakistan",
+    siteName: "MTK Dairy",
+    title: "MTK Dairy - Smart Farm Management",
+    description: "Smart dairy farm management platform for Pakistan",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Malik Tech Dairy",
-    description: "Premium livestock management SaaS for Pakistan",
+    title: "MTK Dairy",
+    description: "Smart dairy farm management for Pakistan",
   },
 };
 
@@ -54,29 +56,24 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <PostHogProvider>
-        <SentryProvider>
-          <html lang="en" suppressHydrationWarning>
-            <head>
-              <link rel="manifest" href="/manifest.json" />
-              <meta name="theme-color" content="#1F7A3D" />
-              <meta name="apple-mobile-web-app-capable" content="yes" />
-              <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-              <meta name="apple-mobile-web-app-title" content="Malik Tech Dairy" />
-            </head>
-            <body
-              className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} antialiased`}
-            >
-              <ErrorBoundary>
-                <PostHogPageView />
-                {children}
-                <PWARegister />
-                <Toaster position="top-right" richColors />
-              </ErrorBoundary>
-            </body>
-          </html>
-        </SentryProvider>
-      </PostHogProvider>
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <link rel="manifest" href="/manifest.json" />
+          <meta name="theme-color" content="#1F7A3D" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+          <meta name="apple-mobile-web-app-title" content="MTK Dairy" />
+        </head>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} antialiased`}
+        >
+          <ErrorBoundary>
+            {children}
+            <PWARegister />
+            <Toaster position="top-right" richColors />
+          </ErrorBoundary>
+        </body>
+      </html>
     </ClerkProvider>
   );
 }

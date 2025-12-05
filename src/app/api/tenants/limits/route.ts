@@ -1,56 +1,73 @@
-// API Route: Get Tenant Limits with Usage
+// API Route: Get Tenant Limits with Usage (Supabase-based)
 import { NextRequest, NextResponse } from "next/server";
 import { withTenantContext } from "@/lib/api/middleware";
-import { getTenantLimits } from "@/lib/firebase/tenant";
-import { adminDb } from "@/lib/firebase/admin";
+import { 
+  getSubscriptionWithLimits, 
+  getAnimalCount, 
+  getUserCount 
+} from "@/lib/supabase/limits";
+import { SUBSCRIPTION_PLANS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      const limits = await getTenantLimits(context.tenantId);
-
-      if (!limits) {
-        return NextResponse.json(
-          { error: "Limits not found" },
-          { status: 404 }
-        );
+      // Get subscription and limits from Supabase
+      const subscription = await getSubscriptionWithLimits(context.tenantId);
+      
+      if (!subscription) {
+        // Return default free tier limits
+        return NextResponse.json({
+          success: true,
+          plan: 'free',
+          planDisplayName: SUBSCRIPTION_PLANS.free.displayName,
+          status: 'trial',
+          maxAnimals: 5,
+          maxUsers: 1,
+          features: ['basic_milk_logs', 'mobile_app'],
+          animalCount: 0,
+          userCount: 0,
+          trialEndsAt: null,
+          renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        });
       }
 
-      // Get actual usage counts
-      let animalCount = 0;
-      let userCount = 0;
+      // Get current usage counts from Supabase
+      const [animalCount, userCount] = await Promise.all([
+        getAnimalCount(context.tenantId),
+        getUserCount(context.tenantId),
+      ]);
 
-      if (adminDb) {
-        // Count animals
-        const animalsRef = adminDb
-          .collection("tenants_data")
-          .doc(`${context.tenantId}_animals`)
-          .collection("animals");
-        
-        const animalsSnapshot = await animalsRef
-          .where("status", "!=", "deceased")
-          .get();
-        animalCount = animalsSnapshot.size;
-
-        // Count users
-        const usersSnapshot = await adminDb
-          .collection("users")
-          .where("tenantId", "==", context.tenantId)
-          .get();
-        userCount = usersSnapshot.size;
-      }
+      const planConfig = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
 
       return NextResponse.json({
-        ...limits,
+        success: true,
+        plan: subscription.plan,
+        planDisplayName: planConfig.displayName,
+        status: subscription.status,
+        maxAnimals: subscription.limits.maxAnimals,
+        maxUsers: subscription.limits.maxUsers,
+        features: subscription.limits.features,
         animalCount,
         userCount,
+        trialEndsAt: subscription.trialEndsAt?.toISOString() || null,
+        renewDate: subscription.renewDate.toISOString(),
+        // Usage percentages
+        animalUsagePercent: subscription.limits.maxAnimals === -1 
+          ? 0 
+          : Math.round((animalCount / subscription.limits.maxAnimals) * 100),
+        userUsagePercent: subscription.limits.maxUsers === -1 
+          ? 0 
+          : Math.round((userCount / subscription.limits.maxUsers) * 100),
+        // Can add more?
+        canAddAnimal: subscription.limits.maxAnimals === -1 || animalCount < subscription.limits.maxAnimals,
+        canAddUser: subscription.limits.maxUsers === -1 || userCount < subscription.limits.maxUsers,
       });
     } catch (error) {
       console.error("Error fetching limits:", error);
       return NextResponse.json(
-        { error: "Internal server error" },
+        { success: false, error: "Internal server error" },
         { status: 500 }
       );
     }

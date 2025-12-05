@@ -263,7 +263,7 @@ export function OnboardingWizard() {
         <Card className="shadow-lg">
           <CardHeader className="border-b">
             <div className="flex items-center justify-between mb-4">
-              <CardTitle className="text-3xl">Welcome to Malik Tech Dairy</CardTitle>
+              <CardTitle className="text-3xl">Welcome to MTK Dairy</CardTitle>
               <div className="text-sm text-muted-foreground">
                 Step {currentStep} of {STEPS.length}
               </div>
