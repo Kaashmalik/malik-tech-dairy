@@ -68,6 +68,54 @@ export async function POST(request: Request) {
       // For now, we'll initialize without email and update later
       await initializeTenant(orgId, orgSlug, ownerId, "owner@example.com");
 
+      // Create user records for the organization owner
+      const { getDrizzle } = await import("@/lib/supabase");
+      const { platformUsers, tenantMembers } = await import("@/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const db = getDrizzle();
+
+      // Create platform user record for the owner
+      const existingPlatformUser = await db
+        .select()
+        .from(platformUsers)
+        .where(eq(platformUsers.id, ownerId))
+        .limit(1);
+
+      if (existingPlatformUser.length === 0) {
+        await db.insert(platformUsers).values({
+          id: ownerId,
+          email: "owner@example.com", // Will be updated by user.created webhook
+          firstName: "Farm",
+          lastName: "Owner",
+          platformRole: "user",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        console.log(`Created platform user for owner: ${ownerId}`);
+      }
+
+      // Create tenant member record for the owner
+      const existingMember = await db
+        .select()
+        .from(tenantMembers)
+        .where(eq(tenantMembers.userId, ownerId))
+        .where(eq(tenantMembers.tenantId, orgId))
+        .limit(1);
+
+      if (existingMember.length === 0) {
+        await db.insert(tenantMembers).values({
+          id: `${orgId}_${ownerId}`,
+          tenantId: orgId,
+          userId: ownerId,
+          role: "farm_owner", // Give the owner full access
+          status: "active",
+          joinDate: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        console.log(`Created tenant member for owner: ${ownerId} in org: ${orgId}`);
+      }
+
       console.log(`Tenant initialized: ${orgId} (${orgSlug})`);
     } catch (error) {
       console.error("Error handling organization.created:", error);

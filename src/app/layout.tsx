@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { PWARegister } from "@/components/PWARegister";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -67,11 +68,18 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} antialiased`}
         >
-          <ErrorBoundary>
-            {children}
-            <PWARegister />
-            <Toaster position="top-right" richColors />
-          </ErrorBoundary>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ErrorBoundary>
+              {children}
+              <PWARegister />
+              <Toaster position="top-right" richColors />
+            </ErrorBoundary>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

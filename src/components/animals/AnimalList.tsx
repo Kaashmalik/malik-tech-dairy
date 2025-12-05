@@ -7,6 +7,8 @@ import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import type { Animal } from "@/types";
 import { useState } from "react";
+import { AnimalListSkeleton } from "@/components/ui/skeleton";
+import { EmptyAnimals, EmptySearchResults, EmptyError } from "@/components/ui/empty-state";
 
 export function AnimalList() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,14 +36,14 @@ export function AnimalList() {
   }, {} as Record<string, number>);
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading animals...</div>;
+    return <AnimalListSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="text-center py-8 text-destructive">
-        Error loading animals. Please try again.
-      </div>
+      <EmptyError 
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
@@ -95,21 +97,13 @@ export function AnimalList() {
 
       {/* Animals Grid */}
       {filteredAnimals.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              {searchQuery ? "No animals found matching your search." : "No animals yet."}
-            </p>
-            {!searchQuery && (
-              <Link href="/animals/new">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Animal
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
+        searchQuery ? (
+          <EmptySearchResults query={searchQuery} />
+        ) : (
+          <EmptyAnimals 
+            onAdd={() => window.location.href = "/animals/new"}
+          />
+        )
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredAnimals.map((animal) => (

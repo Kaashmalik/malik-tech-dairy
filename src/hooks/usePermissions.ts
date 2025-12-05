@@ -3,8 +3,6 @@
 import { useTenantContext } from "@/components/tenant/TenantProvider";
 import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
 import { ROLE_PERMISSIONS, TenantRole, UserRole, PlatformRole, MODULE_ACCESS } from "@/types/roles";
 
 export function usePermissions() {
@@ -16,44 +14,30 @@ export function usePermissions() {
   useEffect(() => {
     async function fetchUserRole() {
       if (!user?.id || !tenantId) {
+        console.log('Missing user or tenantId', { userId: user?.id, tenantId });
         setLoading(false);
         return;
       }
 
       try {
-        // Check if super admin first
-        const userDoc = await getDoc(doc(db, "users", user.id));
+        console.log('Fetching user role from server API...', { userId: user?.id, tenantId });
         
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          
-          // Check for platform-level super admin
-          if (userData.platformRole === PlatformRole.SUPER_ADMIN) {
-            setUserRole(PlatformRole.SUPER_ADMIN);
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Get tenant-specific role from members collection
-        const memberDoc = await getDoc(
-          doc(db, `tenants/${tenantId}/members`, user.id)
+        // Fetch permissions from server-side API
+        const response = await fetch(
+          `/api/user/permissions?userId=${user.id}&tenantId=${tenantId}`
         );
-
-        if (memberDoc.exists()) {
-          const memberData = memberDoc.data();
-          setUserRole(memberData.role as TenantRole);
-        } else {
-          // Fallback: check legacy users collection
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.tenantId === tenantId && userData.role) {
-              setUserRole(userData.role as TenantRole);
-            }
-          }
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const data = await response.json();
+        console.log('Permissions API response:', data);
+        
+        setUserRole(data.userRole);
       } catch (error) {
-        console.error("Error fetching user role:", error);
+        console.error("Error fetching user role from API:", error);
+        setUserRole(null);
       } finally {
         setLoading(false);
       }
