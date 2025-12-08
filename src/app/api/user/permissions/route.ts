@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDrizzle } from '@/lib/supabase';
 import { platformUsers, tenantMembers } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 
 export async function GET(request: NextRequest) {
@@ -76,8 +76,10 @@ export async function GET(request: NextRequest) {
     const memberResult = await db
       .select()
       .from(tenantMembers)
-      .where(eq(tenantMembers.userId, userId))
-      .where(eq(tenantMembers.tenantId, tenantId))
+      .where(and(
+        eq(tenantMembers.userId, userId),
+        eq(tenantMembers.tenantId, tenantId)
+      ))
       .limit(1);
 
     console.log('Tenant member result:', memberResult);
