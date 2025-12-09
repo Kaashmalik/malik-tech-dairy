@@ -1,10 +1,10 @@
 // API Route: Get Tenant Subscription (Supabase-based)
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { getSubscriptionWithLimits } from "@/lib/supabase/limits";
-import { SUBSCRIPTION_PLANS } from "@/lib/constants";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSubscriptionWithLimits } from '@/lib/supabase/limits';
+import { SUBSCRIPTION_PLANS } from '@/lib/constants';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
           status: 'trial',
           renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           trialEndsAt: null,
-          message: "Using default subscription",
+          message: 'Using default subscription',
         });
       }
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         priceDisplay: planConfig.priceDisplay,
       });
     } catch (error) {
-      console.error("Error fetching subscription:", error);
+      console.error('Error fetching subscription:', error);
       // Return default for graceful degradation
       return NextResponse.json({
         success: true,
@@ -46,9 +46,8 @@ export async function GET(request: NextRequest) {
         planDisplayName: SUBSCRIPTION_PLANS.free.displayName,
         status: 'trial',
         renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        message: "Error loading subscription, using defaults",
+        message: 'Error loading subscription, using defaults',
       });
     }
   })(request);
 }
-

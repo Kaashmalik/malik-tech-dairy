@@ -34,19 +34,23 @@ const createSensorDataSchema = z.object({
 // Webhook schema for external device data
 const webhookSensorDataSchema = z.object({
   deviceId: z.string().min(1),
-  data: z.array(z.object({
-    dataType: z.string(),
-    value: z.number(),
-    unit: z.string().optional(),
-    timestamp: z.string().datetime(),
-    quality: z.enum(['good', 'fair', 'poor']).default('good'),
-    metadata: z.record(z.any()).optional(),
-  })),
-  deviceInfo: z.object({
-    batteryLevel: z.number().optional(),
-    signalStrength: z.number().optional(),
-    firmwareVersion: z.string().optional(),
-  }).optional(),
+  data: z.array(
+    z.object({
+      dataType: z.string(),
+      value: z.number(),
+      unit: z.string().optional(),
+      timestamp: z.string().datetime(),
+      quality: z.enum(['good', 'fair', 'poor']).default('good'),
+      metadata: z.record(z.any()).optional(),
+    })
+  ),
+  deviceInfo: z
+    .object({
+      batteryLevel: z.number().optional(),
+      signalStrength: z.number().optional(),
+      firmwareVersion: z.string().optional(),
+    })
+    .optional(),
 });
 
 // GET /api/iot-management/sensor-data - List sensor data
@@ -54,10 +58,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -191,7 +192,9 @@ export async function GET(request: NextRequest) {
         ...data,
         isNormal,
         alertLevel,
-        age: Math.floor((new Date().getTime() - new Date(data.timestamp).getTime()) / (1000 * 60 * 60)), // hours ago
+        age: Math.floor(
+          (new Date().getTime() - new Date(data.timestamp).getTime()) / (1000 * 60 * 60)
+        ), // hours ago
       };
     });
 
@@ -217,10 +220,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching sensor data:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -229,10 +229,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -249,10 +246,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!device.length) {
-      return NextResponse.json(
-        { success: false, error: 'Device not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Device not found' }, { status: 404 });
     }
 
     // Verify animal exists if provided
@@ -264,10 +258,7 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!animal.length) {
-        return NextResponse.json(
-          { success: false, error: 'Animal not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
     }
 
@@ -322,7 +313,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error adding sensor data:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -330,10 +321,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -343,10 +331,7 @@ export async function WEBHOOK(request: NextRequest) {
     // For webhooks, we might use API key authentication instead of Clerk
     const apiKey = request.headers.get('x-api-key');
     if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: 'API key required' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'API key required' }, { status: 401 });
     }
 
     // TODO: Validate API key
@@ -371,17 +356,14 @@ export async function WEBHOOK(request: NextRequest) {
       .limit(1);
 
     if (!device.length) {
-      return NextResponse.json(
-        { success: false, error: 'Device not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Device not found' }, { status: 404 });
     }
 
     // Insert multiple sensor data points
     const insertedData = [];
     for (const dataPoint of validatedData.data) {
       const sensorDataId = `sensor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       // Determine if alert should be triggered
       let alertTriggered = false;
       switch (dataPoint.dataType) {
@@ -441,7 +423,7 @@ export async function WEBHOOK(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error processing webhook data:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -449,9 +431,6 @@ export async function WEBHOOK(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

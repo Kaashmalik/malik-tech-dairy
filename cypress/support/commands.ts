@@ -18,13 +18,13 @@ declare global {
        * @example cy.login('user@example.com', 'password')
        */
       login(email: string, password: string): Chainable<void>;
-      
+
       /**
        * Custom command to wait for tenant context to load
        * @example cy.waitForTenant()
        */
       waitForTenant(): Chainable<void>;
-      
+
       /**
        * Custom command to create an animal
        * @example cy.createAnimal({ tag: 'COW-001', species: 'cow' })
@@ -35,9 +35,9 @@ declare global {
         species: string;
         breed?: string;
         dateOfBirth: string;
-        gender: "male" | "female";
+        gender: 'male' | 'female';
       }): Chainable<void>;
-      
+
       /**
        * Custom command to log milk
        * @example cy.logMilk({ animalId: 'animal-123', quantity: 10 })
@@ -45,38 +45,38 @@ declare global {
       logMilk(milkData: {
         animalId: string;
         date?: string;
-        session?: "morning" | "evening";
+        session?: 'morning' | 'evening';
         quantity: number;
       }): Chainable<void>;
     }
   }
 }
 
-Cypress.Commands.add("login", (email: string, password: string) => {
-  cy.visit("/sign-in");
+Cypress.Commands.add('login', (email: string, password: string) => {
+  cy.visit('/sign-in');
   cy.get('input[name="identifier"]').type(email);
   cy.get('input[name="password"]').type(password);
   cy.get('button[type="submit"]').click();
-  cy.url().should("not.include", "/sign-in");
+  cy.url().should('not.include', '/sign-in');
 });
 
-Cypress.Commands.add("waitForTenant", () => {
+Cypress.Commands.add('waitForTenant', () => {
   // Wait for tenant context to be loaded
-  cy.window().its("__TENANT_ID__").should("exist");
+  cy.window().its('__TENANT_ID__').should('exist');
 });
 
 Cypress.Commands.add(
-  "createAnimal",
+  'createAnimal',
   (animalData: {
     tag: string;
     name?: string;
     species: string;
     breed?: string;
     dateOfBirth: string;
-    gender: "male" | "female";
+    gender: 'male' | 'female';
   }) => {
-    cy.visit("/dashboard/animals/new");
-    
+    cy.visit('/dashboard/animals/new');
+
     cy.get('input[name="tag"]').type(animalData.tag);
     if (animalData.name) {
       cy.get('input[name="name"]').type(animalData.name);
@@ -87,22 +87,22 @@ Cypress.Commands.add(
     }
     cy.get('input[name="dateOfBirth"]').type(animalData.dateOfBirth);
     cy.get('select[name="gender"]').select(animalData.gender);
-    
+
     cy.get('button[type="submit"]').click();
-    cy.contains("Animal created successfully").should("be.visible");
+    cy.contains('Animal created successfully').should('be.visible');
   }
 );
 
 Cypress.Commands.add(
-  "logMilk",
+  'logMilk',
   (milkData: {
     animalId: string;
     date?: string;
-    session?: "morning" | "evening";
+    session?: 'morning' | 'evening';
     quantity: number;
   }) => {
-    cy.visit("/dashboard/milk/new");
-    
+    cy.visit('/dashboard/milk/new');
+
     cy.get('select[name="animalId"]').select(milkData.animalId);
     if (milkData.date) {
       cy.get('input[name="date"]').clear().type(milkData.date);
@@ -111,11 +111,10 @@ Cypress.Commands.add(
       cy.get('select[name="session"]').select(milkData.session);
     }
     cy.get('input[name="quantity"]').type(milkData.quantity.toString());
-    
+
     cy.get('button[type="submit"]').click();
-    cy.contains("Milk log created successfully").should("be.visible");
+    cy.contains('Milk log created successfully').should('be.visible');
   }
 );
 
 export {};
-

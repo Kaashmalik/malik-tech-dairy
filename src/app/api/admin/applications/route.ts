@@ -24,10 +24,7 @@ export async function GET(request: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check super admin role
@@ -60,10 +57,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching applications:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch applications' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
     }
 
     // Transform to camelCase for frontend
@@ -90,7 +84,7 @@ export async function GET(request: NextRequest) {
         rejectionReason: app.rejection_reason,
         createdAt: app.created_at,
         updatedAt: app.updated_at,
-      }
+      },
     }));
 
     // Get stats if requested
@@ -103,9 +97,18 @@ export async function GET(request: NextRequest) {
         { count: rejectedApplications },
       ] = await Promise.all([
         supabase.from('farm_applications').select('*', { count: 'exact', head: true }),
-        supabase.from('farm_applications').select('*', { count: 'exact', head: true }).in('status', ['pending', 'payment_uploaded']),
-        supabase.from('farm_applications').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-        supabase.from('farm_applications').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+        supabase
+          .from('farm_applications')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['pending', 'payment_uploaded']),
+        supabase
+          .from('farm_applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'approved'),
+        supabase
+          .from('farm_applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'rejected'),
       ]);
 
       stats = {
@@ -114,7 +117,7 @@ export async function GET(request: NextRequest) {
           pendingApplications: pendingApplications || 0,
           approvedApplications: approvedApplications || 0,
           rejectedApplications: rejectedApplications || 0,
-        }
+        },
       };
     }
 
@@ -127,9 +130,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching applications:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch applications' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
   }
 }

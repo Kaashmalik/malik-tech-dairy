@@ -1,19 +1,19 @@
 // IoT Webhook: POST /api/iot/milk-log
 // Authenticates via API key, queues job via BullMQ, returns 202 Accepted immediately
-import { NextRequest, NextResponse } from "next/server";
-import { withApiKeyAuth, hasApiKeyPermission } from "@/lib/api/middleware-api-key";
-import { milkLogQueue } from "@/lib/workers/queue";
-import { createMilkLogSchema } from "@/lib/validations/milk";
+import { NextRequest, NextResponse } from 'next/server';
+import { withApiKeyAuth, hasApiKeyPermission } from '@/lib/api/middleware-api-key';
+import { milkLogQueue } from '@/lib/workers/queue';
+import { createMilkLogSchema } from '@/lib/validations/milk';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   return withApiKeyAuth(async (req, context) => {
     try {
       // Check permission
-      if (!hasApiKeyPermission(context.permissions, "milk_logs")) {
+      if (!hasApiKeyPermission(context.permissions, 'milk_logs')) {
         return NextResponse.json(
-          { error: "API key does not have permission to create milk logs" },
+          { error: 'API key does not have permission to create milk logs' },
           { status: 403 }
         );
       }
@@ -26,24 +26,24 @@ export async function POST(request: NextRequest) {
         validated = createMilkLogSchema.parse(body);
       } catch (error: any) {
         return NextResponse.json(
-          { error: "Validation failed", details: error.errors },
+          { error: 'Validation failed', details: error.errors },
           { status: 400 }
         );
       }
 
       // Add job to BullMQ queue
       const job = await milkLogQueue.add(
-        "create-milk-log",
+        'create-milk-log',
         {
           tenantId: context.tenantId,
           ...validated,
           recordedBy: `api_key_${context.tenantId}`, // Mark as IoT-generated
-          source: "iot",
+          source: 'iot',
         },
         {
           attempts: 3,
           backoff: {
-            type: "exponential",
+            type: 'exponential',
             delay: 2000,
           },
         }
@@ -54,17 +54,13 @@ export async function POST(request: NextRequest) {
         {
           success: true,
           jobId: job.id,
-          message: "Milk log queued for processing",
+          message: 'Milk log queued for processing',
         },
         { status: 202 }
       );
     } catch (error) {
-      console.error("Error processing IoT milk log:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error processing IoT milk log:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

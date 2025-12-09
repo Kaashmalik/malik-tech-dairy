@@ -7,6 +7,7 @@ This guide provides comprehensive deployment instructions for the MTK Dairy 2025
 ## 🏗️ Implementation Status
 
 ### ✅ Phase 1: Foundation (Complete)
+
 - **Database Schema**: 9 new tables via MCP for AI features, genetics, inventory, compliance
 - **Enhanced Animal API**: Advanced filtering with 15+ filter types, performance metrics integration
 - **Batch Operations API**: Multi-select animal management for vaccination, treatment, movement, feeding
@@ -15,14 +16,16 @@ This guide provides comprehensive deployment instructions for the MTK Dairy 2025
 - **Component Architecture**: Complete UI components with responsive design
 
 ### ✅ Phase 2: Core Value Features (Partial)
+
 - **Feed Management API**: Advanced inventory tracking with analytics, expiry monitoring, cost optimization
 - **Feed Management Dashboard**: Comprehensive overview with category breakdown, efficiency metrics
 - **Nutrition Optimizer**: AI-powered feed formulation and cost optimization
 - **Database Integration**: All new tables properly exported and integrated
 
 ### 🔄 Remaining Features (Estimated Effort)
+
 - **Production Dashboards**: 2-3 days
-- **Breeding Management**: 2-3 days  
+- **Breeding Management**: 2-3 days
 - **IoT Integration**: 5-7 days
 - **AI/ML Features**: 7-10 days
 - **Blockchain Traceability**: 3-5 days
@@ -84,11 +87,11 @@ The new database tables have been applied via MCP tools. Verify they exist:
 
 ```sql
 -- Check new tables exist
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN (
   'genetic_profiles',
-  'feed_inventory', 
+  'feed_inventory',
   'nutrition_requirements',
   'computer_vision_records',
   'financial_accounts',
@@ -224,23 +227,23 @@ export const PLAN_LIMITS = {
   free: {
     animals: 5,
     users: 1,
-    features: ['basic_animal_management', 'basic_milk_tracking']
+    features: ['basic_animal_management', 'basic_milk_tracking'],
   },
   professional: {
     animals: 100,
     users: 5,
-    features: ['enhanced_animal_management', 'feed_management', 'basic_analytics']
+    features: ['enhanced_animal_management', 'feed_management', 'basic_analytics'],
   },
   farm: {
     animals: 500,
     users: 15,
-    features: ['all_professional', 'iot_integration', 'advanced_analytics']
+    features: ['all_professional', 'iot_integration', 'advanced_analytics'],
   },
   enterprise: {
     animals: -1, // unlimited
     users: -1, // unlimited
-    features: ['all_features']
-  }
+    features: ['all_features'],
+  },
 };
 ```
 
@@ -257,7 +260,7 @@ const supabase = createClient(
     db: {
       poolSize: 10, // Adjust based on expected load
       connectionTimeoutMillis: 10000,
-    }
+    },
   }
 );
 ```
@@ -283,17 +286,17 @@ import { Analytics } from '@vercel/analytics/react';
 
 ```sql
 -- Monitor slow queries
-SELECT query, mean_time, calls 
-FROM pg_stat_statements 
-WHERE mean_time > 1000 
+SELECT query, mean_time, calls
+FROM pg_stat_statements
+WHERE mean_time > 1000
 ORDER BY mean_time DESC;
 
 -- Monitor table sizes
-SELECT 
+SELECT
   schemaname,
   tablename,
   pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-FROM pg_tables 
+FROM pg_tables
 WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
@@ -311,7 +314,7 @@ export async function GET() {
       enhanced_animal_management: true,
       feed_management: true,
       nutrition_optimizer: true,
-    }
+    },
   });
 }
 ```
@@ -323,21 +326,24 @@ export async function GET() {
 ### Common Issues
 
 1. **Database Connection Errors**
+
    ```bash
    # Check Supabase connection
    npm run db:check
-   
+
    # Verify environment variables
    echo $SUPABASE_SERVICE_ROLE_KEY
    ```
 
 2. **Authentication Issues**
+
    ```bash
    # Verify Clerk configuration
    curl https://api.clerk.dev/v1/users -H "Authorization: Bearer $CLERK_SECRET_KEY"
    ```
 
 3. **Missing Database Tables**
+
    ```sql
    -- Run migration check
    SELECT * FROM schema_migrations ORDER BY version DESC LIMIT 5;
@@ -404,12 +410,10 @@ module.exports = {
     return [
       {
         source: '/api/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 's-maxage=60' }
-        ]
-      }
+        headers: [{ key: 'Cache-Control', value: 's-maxage=60' }],
+      },
     ];
-  }
+  },
 };
 ```
 
@@ -510,10 +514,11 @@ jobs:
 ## 📞 Contact
 
 For deployment support or technical issues:
+
 - **Development Team**: dev@maliktechdairy.com
 - **Infrastructure**: infra@maliktechdairy.com
 - **Product**: product@maliktechdairy.com
 
 ---
 
-*This deployment guide covers the systematic implementation approach for the MTK Dairy 2025 enhancement plan. All Phase 1 foundation features are complete and ready for production deployment.*
+_This deployment guide covers the systematic implementation approach for the MTK Dairy 2025 enhancement plan. All Phase 1 foundation features are complete and ready for production deployment._

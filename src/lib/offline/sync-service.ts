@@ -22,12 +22,12 @@ export class SyncService {
     }
 
     this.syncInProgress = true;
-    
+
     try {
       await OfflineDB.updateSyncStatus(tenantId, { syncInProgress: true });
-      
+
       const mutations = await OfflineDB.getQueuedMutations(tenantId);
-      
+
       if (mutations.length === 0) {
         console.log('No mutations to sync');
         await OfflineDB.updateSyncStatus(tenantId, {
@@ -38,7 +38,7 @@ export class SyncService {
       }
 
       console.log(`Syncing ${mutations.length} mutations`);
-      
+
       // Process mutations in order
       for (const mutation of mutations) {
         try {
@@ -47,10 +47,10 @@ export class SyncService {
           this.retryDelay = 1000; // Reset retry delay on success
         } catch (error) {
           console.error(`Failed to sync mutation ${mutation.id}:`, error);
-          
+
           // Increment retry count
           await OfflineDB.incrementRetryCount(mutation.id);
-          
+
           // Remove mutation if too many retries
           if (mutation.retryCount >= 5) {
             console.warn(`Removing mutation ${mutation.id} after 5 failed retries`);
@@ -69,7 +69,6 @@ export class SyncService {
 
       // Cleanup old data
       await OfflineDB.cleanupOldData(tenantId);
-      
     } catch (error) {
       console.error('Sync failed:', error);
       await OfflineDB.updateSyncStatus(tenantId, { syncInProgress: false });
@@ -82,7 +81,7 @@ export class SyncService {
   // Process individual mutation
   private async processMutation(mutation: QueuedMutation): Promise<void> {
     const supabase = getSupabaseClient();
-    
+
     switch (mutation.table) {
       case 'animals':
         await this.processAnimalMutation(supabase, mutation);
@@ -102,23 +101,18 @@ export class SyncService {
   private async processAnimalMutation(supabase: any, mutation: QueuedMutation): Promise<void> {
     switch (mutation.operation) {
       case 'create':
-        const { error: createError } = await supabase
-          .from('animals')
-          .insert(mutation.data);
+        const { error: createError } = await supabase.from('animals').insert(mutation.data);
         if (createError) throw createError;
-        
+
         // Mark as synced in IndexedDB
         await OfflineDB.updateAnimal(mutation.data.id, { _synced: true }, mutation.tenantId);
         break;
 
       case 'update':
         const { id, ...updates } = mutation.data;
-        const { error: updateError } = await supabase
-          .from('animals')
-          .update(updates)
-          .eq('id', id);
+        const { error: updateError } = await supabase.from('animals').update(updates).eq('id', id);
         if (updateError) throw updateError;
-        
+
         // Mark as synced in IndexedDB
         await OfflineDB.updateAnimal(id, { _synced: true }, mutation.tenantId);
         break;
@@ -129,7 +123,7 @@ export class SyncService {
           .delete()
           .eq('id', mutation.data.id);
         if (deleteError) throw deleteError;
-        
+
         // Remove from IndexedDB
         await db.animals.delete([mutation.data.id, mutation.tenantId]);
         break;
@@ -140,11 +134,9 @@ export class SyncService {
   private async processMilkLogMutation(supabase: any, mutation: QueuedMutation): Promise<void> {
     switch (mutation.operation) {
       case 'create':
-        const { error: createError } = await supabase
-          .from('milk_logs')
-          .insert(mutation.data);
+        const { error: createError } = await supabase.from('milk_logs').insert(mutation.data);
         if (createError) throw createError;
-        
+
         // Mark as synced in IndexedDB
         await OfflineDB.updateMilkLog(mutation.data.id, { _synced: true }, mutation.tenantId);
         break;
@@ -156,7 +148,7 @@ export class SyncService {
           .update(updates)
           .eq('id', id);
         if (updateError) throw updateError;
-        
+
         // Mark as synced in IndexedDB
         await OfflineDB.updateMilkLog(id, { _synced: true }, mutation.tenantId);
         break;
@@ -167,7 +159,7 @@ export class SyncService {
           .delete()
           .eq('id', mutation.data.id);
         if (deleteError) throw deleteError;
-        
+
         // Remove from IndexedDB
         await db.milkLogs.delete([mutation.data.id, mutation.tenantId]);
         break;
@@ -175,14 +167,15 @@ export class SyncService {
   }
 
   // Health record mutations
-  private async processHealthRecordMutation(supabase: any, mutation: QueuedMutation): Promise<void> {
+  private async processHealthRecordMutation(
+    supabase: any,
+    mutation: QueuedMutation
+  ): Promise<void> {
     switch (mutation.operation) {
       case 'create':
-        const { error: createError } = await supabase
-          .from('health_records')
-          .insert(mutation.data);
+        const { error: createError } = await supabase.from('health_records').insert(mutation.data);
         if (createError) throw createError;
-        
+
         // Mark as synced in IndexedDB
         await OfflineDB.updateHealthRecord(mutation.data.id, { _synced: true }, mutation.tenantId);
         break;
@@ -194,7 +187,7 @@ export class SyncService {
           .update(updates)
           .eq('id', id);
         if (updateError) throw updateError;
-        
+
         // Mark as synced in IndexedDB
         await OfflineDB.updateHealthRecord(id, { _synced: true }, mutation.tenantId);
         break;
@@ -205,7 +198,7 @@ export class SyncService {
           .delete()
           .eq('id', mutation.data.id);
         if (deleteError) throw deleteError;
-        
+
         // Remove from IndexedDB
         await db.healthRecords.delete([mutation.data.id, mutation.tenantId]);
         break;
@@ -215,18 +208,18 @@ export class SyncService {
   // Pull latest data from server
   async pullLatestData(tenantId: string): Promise<void> {
     const supabase = getSupabaseClient();
-    
+
     try {
       // Pull animals
-      const { data: animals, error: animalsError } = await supabase
+      const { data: animals, error: animalsError } = (await supabase
         .from('animals')
         .select('*')
-        .eq('tenant_id', tenantId) as { data: any[]; error: any };
+        .eq('tenant_id', tenantId)) as { data: any[]; error: any };
 
       if (!animalsError && animals) {
         for (const animal of animals) {
           const existing = await OfflineDB.getAnimal(animal.id, tenantId);
-          
+
           if (!existing || animal.updated_at > new Date(existing._lastModified).toISOString()) {
             // Update or add animal
             await db.animals.put({
@@ -241,12 +234,12 @@ export class SyncService {
       // Pull recent milk logs (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { data: milkLogs, error: milkError } = await supabase
+
+      const { data: milkLogs, error: milkError } = (await supabase
         .from('milk_logs')
         .select('*')
         .eq('tenant_id', tenantId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]) as { data: any[]; error: any };
+        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])) as { data: any[]; error: any };
 
       if (!milkError && milkLogs) {
         for (const log of milkLogs) {
@@ -259,11 +252,11 @@ export class SyncService {
       }
 
       // Pull recent health records (last 30 days)
-      const { data: healthRecords, error: healthError } = await supabase
+      const { data: healthRecords, error: healthError } = (await supabase
         .from('health_records')
         .select('*')
         .eq('tenant_id', tenantId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]) as { data: any[]; error: any };
+        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])) as { data: any[]; error: any };
 
       if (!healthError && healthRecords) {
         for (const record of healthRecords) {
@@ -274,7 +267,6 @@ export class SyncService {
           });
         }
       }
-
     } catch (error) {
       console.error('Failed to pull latest data:', error);
       throw error;
@@ -286,10 +278,9 @@ export class SyncService {
     try {
       // First pull latest data
       await this.pullLatestData(tenantId);
-      
+
       // Then push local changes
       await this.sync(tenantId);
-      
     } catch (error) {
       console.error('Full sync failed:', error);
       throw error;
@@ -297,7 +288,8 @@ export class SyncService {
   }
 
   // Auto-sync on interval
-  startAutoSync(tenantId: string, interval = 60000): void { // Default 1 minute
+  startAutoSync(tenantId: string, interval = 60000): void {
+    // Default 1 minute
     setInterval(async () => {
       try {
         const isOnline = navigator.onLine;

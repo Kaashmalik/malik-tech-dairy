@@ -10,7 +10,18 @@ import { getTenantContext } from '@/lib/tenant/context';
 const diseaseQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  category: z.enum(['metabolic', 'infectious', 'reproductive', 'nutritional', 'parasitic', 'respiratory', 'digestive', 'musculoskeletal']).optional(),
+  category: z
+    .enum([
+      'metabolic',
+      'infectious',
+      'reproductive',
+      'nutritional',
+      'parasitic',
+      'respiratory',
+      'digestive',
+      'musculoskeletal',
+    ])
+    .optional(),
   severity: z.enum(['mild', 'moderate', 'severe', 'critical']).optional(),
   animalType: z.string().optional(),
   zoonoticRisk: z.coerce.boolean().optional(),
@@ -19,29 +30,46 @@ const diseaseQuerySchema = z.object({
 });
 
 const createDiseaseSchema = z.object({
-  category: z.enum(['metabolic', 'infectious', 'reproductive', 'nutritional', 'parasitic', 'respiratory', 'digestive', 'musculoskeletal']),
+  category: z.enum([
+    'metabolic',
+    'infectious',
+    'reproductive',
+    'nutritional',
+    'parasitic',
+    'respiratory',
+    'digestive',
+    'musculoskeletal',
+  ]),
   nameEn: z.string().min(2).max(255),
   nameUr: z.string().min(2).max(255).optional(),
   symptoms: z.array(z.string()).min(1),
   diagnosisMethods: z.array(z.string()).min(1),
-  treatmentProtocols: z.array(z.object({
-    medication: z.string(),
-    dosage: z.string(),
-    duration: z.string(),
-    administrationRoute: z.string(),
-    veterinaryRequired: z.boolean(),
-  })).min(1),
+  treatmentProtocols: z
+    .array(
+      z.object({
+        medication: z.string(),
+        dosage: z.string(),
+        duration: z.string(),
+        administrationRoute: z.string(),
+        veterinaryRequired: z.boolean(),
+      })
+    )
+    .min(1),
   preventionTips: z.array(z.string()).min(1),
   severity: z.enum(['mild', 'moderate', 'severe', 'critical']),
   zoonoticRisk: z.boolean().default(false),
   estimatedCostMin: z.number().min(0).default(0),
   estimatedCostMax: z.number().min(0).default(0),
   commonInAnimalTypes: z.array(z.string()).default(['cow', 'buffalo']),
-  seasonalPrevalence: z.array(z.object({
-    season: z.string(),
-    prevalence: z.string(),
-    riskFactors: z.array(z.string()),
-  })).default([]),
+  seasonalPrevalence: z
+    .array(
+      z.object({
+        season: z.string(),
+        prevalence: z.string(),
+        riskFactors: z.array(z.string()),
+      })
+    )
+    .default([]),
 });
 
 // GET /api/veterinary/diseases - List diseases with filtering and pagination
@@ -49,10 +77,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -80,9 +105,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (query.search) {
-      whereConditions.push(
-        ilike(diseases.nameEn, `%${query.search}%`)
-      );
+      whereConditions.push(ilike(diseases.nameEn, `%${query.search}%`));
     }
 
     if (query.animalType) {
@@ -123,10 +146,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching diseases:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -135,10 +155,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // TODO: Add admin role check here
@@ -155,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     // Get tenant context
     const tenantContext = await getTenantContext();
-    
+
     const db = getDrizzle();
     const diseaseId = `disease_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -178,7 +195,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating disease:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -186,9 +203,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

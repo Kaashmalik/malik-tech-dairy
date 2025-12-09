@@ -1,7 +1,7 @@
 // Firestore Helpers for Tenant-Isolated Data Access
 // Enhanced with Redis caching for all Firestore reads
-import { adminDb } from "./admin";
-import { withCache, cacheKeys, invalidateTenantCache } from "@/lib/redis/cache";
+import { adminDb } from './admin';
+import { withCache, cacheKeys, invalidateTenantCache } from '@/lib/redis/cache';
 import type {
   TenantConfig,
   TenantSubscription,
@@ -9,7 +9,7 @@ import type {
   Animal,
   MilkLog,
   EggLog,
-} from "@/types";
+} from '@/types';
 
 /**
  * Get tenant config from Firestore (with Redis cache)
@@ -24,10 +24,10 @@ export async function getTenantConfig(tenantId: string): Promise<TenantConfig | 
     async () => {
       try {
         const configDoc = await adminDb
-          .collection("tenants")
+          .collection('tenants')
           .doc(tenantId)
-          .collection("config")
-          .doc("main")
+          .collection('config')
+          .doc('main')
           .get();
 
         if (!configDoc.exists) {
@@ -41,7 +41,7 @@ export async function getTenantConfig(tenantId: string): Promise<TenantConfig | 
           updatedAt: data?.updatedAt?.toDate() || new Date(),
         } as TenantConfig;
       } catch (error) {
-        console.error("Error fetching tenant config:", error);
+        console.error('Error fetching tenant config:', error);
         return null;
       }
     },
@@ -57,15 +57,15 @@ export async function setTenantConfig(
   config: Partial<TenantConfig>
 ): Promise<void> {
   if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
+    throw new Error('Firebase Admin not initialized');
   }
 
   try {
     await adminDb
-      .collection("tenants")
+      .collection('tenants')
       .doc(tenantId)
-      .collection("config")
-      .doc("main")
+      .collection('config')
+      .doc('main')
       .set(
         {
           ...config,
@@ -73,11 +73,11 @@ export async function setTenantConfig(
         },
         { merge: true }
       );
-    
+
     // Invalidate cache
     await invalidateTenantCache(tenantId);
   } catch (error) {
-    console.error("Error setting tenant config:", error);
+    console.error('Error setting tenant config:', error);
     throw error;
   }
 }
@@ -85,9 +85,7 @@ export async function setTenantConfig(
 /**
  * Get tenant subscription (with Redis cache)
  */
-export async function getTenantSubscription(
-  tenantId: string
-): Promise<TenantSubscription | null> {
+export async function getTenantSubscription(tenantId: string): Promise<TenantSubscription | null> {
   if (!adminDb) {
     return null;
   }
@@ -97,10 +95,10 @@ export async function getTenantSubscription(
     async () => {
       try {
         const subDoc = await adminDb
-          .collection("tenants")
+          .collection('tenants')
           .doc(tenantId)
-          .collection("subscription")
-          .doc("main")
+          .collection('subscription')
+          .doc('main')
           .get();
 
         if (!subDoc.exists) {
@@ -114,7 +112,7 @@ export async function getTenantSubscription(
           trialEndsAt: data?.trialEndsAt?.toDate(),
         } as TenantSubscription;
       } catch (error) {
-        console.error("Error fetching tenant subscription:", error);
+        console.error('Error fetching tenant subscription:', error);
         return null;
       }
     },
@@ -135,10 +133,10 @@ export async function getTenantLimits(tenantId: string): Promise<TenantLimits | 
     async () => {
       try {
         const limitsDoc = await adminDb
-          .collection("tenants")
+          .collection('tenants')
           .doc(tenantId)
-          .collection("limits")
-          .doc("main")
+          .collection('limits')
+          .doc('main')
           .get();
 
         if (!limitsDoc.exists) {
@@ -147,7 +145,7 @@ export async function getTenantLimits(tenantId: string): Promise<TenantLimits | 
 
         return limitsDoc.data() as TenantLimits;
       } catch (error) {
-        console.error("Error fetching tenant limits:", error);
+        console.error('Error fetching tenant limits:', error);
         return null;
       }
     },
@@ -165,70 +163,62 @@ export async function initializeTenant(
   ownerEmail: string
 ): Promise<void> {
   if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
+    throw new Error('Firebase Admin not initialized');
   }
 
   const batch = adminDb.batch();
 
   // Create tenant config
-  const configRef = adminDb
-    .collection("tenants")
-    .doc(tenantId)
-    .collection("config")
-    .doc("main");
+  const configRef = adminDb.collection('tenants').doc(tenantId).collection('config').doc('main');
 
   batch.set(configRef, {
-    farmName: tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1) + " Farm",
+    farmName: tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1) + ' Farm',
     subdomain: tenantSlug,
-    primaryColor: "#1F7A3D",
-    accentColor: "#F59E0B",
-    language: "en",
-    currency: "PKR",
-    timezone: "Asia/Karachi",
-    animalTypes: ["cow", "buffalo", "chicken"],
+    primaryColor: '#1F7A3D',
+    accentColor: '#F59E0B',
+    language: 'en',
+    currency: 'PKR',
+    timezone: 'Asia/Karachi',
+    animalTypes: ['cow', 'buffalo', 'chicken'],
     createdAt: new Date(),
     updatedAt: new Date(),
   });
 
   // Create default subscription (free tier)
-  const subRef = adminDb
-    .collection("tenants")
-    .doc(tenantId)
-    .collection("subscription")
-    .doc("main");
+  const subRef = adminDb.collection('tenants').doc(tenantId).collection('subscription').doc('main');
 
   batch.set(subRef, {
-    plan: "free",
-    status: "trial",
-    gateway: "bank_transfer",
+    plan: 'free',
+    status: 'trial',
+    gateway: 'bank_transfer',
     renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     amount: 0,
-    currency: "PKR",
+    currency: 'PKR',
     trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14-day trial
   });
 
   // Create tenant limits (free tier)
-  const limitsRef = adminDb
-    .collection("tenants")
-    .doc(tenantId)
-    .collection("limits")
-    .doc("main");
+  const limitsRef = adminDb.collection('tenants').doc(tenantId).collection('limits').doc('main');
 
   batch.set(limitsRef, {
     maxAnimals: 30,
     maxUsers: 1,
-    features: ["basic_reports", "mobile_app"],
+    features: ['basic_reports', 'mobile_app'],
   });
 
   // Create user document
-  const userRef = adminDb.collection("users").doc(ownerId);
-  batch.set(userRef, {
-    email: ownerEmail,
-    tenantId: tenantId,
-    role: "owner",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }, { merge: true });
+  const userRef = adminDb.collection('users').doc(ownerId);
+  batch.set(
+    userRef,
+    {
+      email: ownerEmail,
+      tenantId: tenantId,
+      role: 'owner',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    { merge: true }
+  );
 
   await batch.commit();
 }
@@ -239,7 +229,7 @@ export async function initializeTenant(
  */
 export function getTenantCollection(tenantId: string, collectionName: string) {
   if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
+    throw new Error('Firebase Admin not initialized');
   }
 
   // Return collection reference for tenant-scoped data
@@ -256,12 +246,11 @@ export function getTenantSubcollection(
   subcollectionName: string
 ) {
   if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
+    throw new Error('Firebase Admin not initialized');
   }
 
   return adminDb
-    .collection("tenants_data")
+    .collection('tenants_data')
     .doc(`${tenantId}_${collectionName}`)
     .collection(subcollectionName);
 }
-

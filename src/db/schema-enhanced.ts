@@ -1,133 +1,17 @@
 // Enhanced Database Schema for Phase 1 Features
-// Extends the main schema with new tables and relationships
-import { 
-  genetic_profiles, 
-  feed_inventory, 
-  nutrition_requirements, 
-  computer_vision_records,
-  financial_accounts,
-  staff_certifications,
-  regulatory_compliance,
-  blockchain_transactions,
-  drone_flights,
-  animals,
-  tenants,
-  platformUsers
-} from './schema';
-import { relations } from 'drizzle-orm';
-
-// Relations for Genetic Profiles
-export const geneticProfilesRelations = relations(genetic_profiles, ({ one }) => ({
-  animal: one(animals, {
-    fields: [genetic_profiles.animal_id],
-    references: [animals.id],
-  }),
-  sire: one(animals, {
-    fields: [genetic_profiles.sire_id],
-    references: [animals.id],
-  }),
-  dam: one(animals, {
-    fields: [genetic_profiles.dam_id],
-    references: [animals.id],
-  }),
-}));
-
-// Relations for Nutrition Requirements
-export const nutritionRequirementsRelations = relations(nutrition_requirements, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [nutrition_requirements.tenantId],
-    references: [tenants.id],
-  }),
-  createdBy: one(platformUsers, {
-    fields: [nutrition_requirements.createdBy],
-    references: [platformUsers.id],
-  }),
-}));
-
-// Relations for Computer Vision Records
-export const computerVisionRecordsRelations = relations(computer_vision_records, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [computer_vision_records.tenant_id],
-    references: [tenants.id],
-  }),
-  animal: one(animals, {
-    fields: [computer_vision_records.animal_id],
-    references: [animals.id],
-  }),
-  verifiedBy: one(platformUsers, {
-    fields: [computer_vision_records.verified_by],
-    references: [platformUsers.id],
-  }),
-}));
-
-// Relations for Financial Accounts
-export const financialAccountsRelations = relations(financial_accounts, ({ one, many }) => ({
-  tenant: one(tenants, {
-    fields: [financial_accounts.tenant_id],
-    references: [tenants.id],
-  }),
-  parentAccount: one(financial_accounts, {
-    fields: [financial_accounts.parent_account_id],
-    references: [financial_accounts.id],
-  }),
-  childAccounts: many(financial_accounts),
-  createdBy: one(platformUsers, {
-    fields: [financial_accounts.created_by],
-    references: [platformUsers.id],
-  }),
-}));
-
-// Relations for Staff Certifications
-export const staffCertificationsRelations = relations(staff_certifications, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [staff_certifications.tenant_id],
-    references: [tenants.id],
-  }),
-  user: one(platformUsers, {
-    fields: [staff_certifications.user_id],
-    references: [platformUsers.id],
-  }),
-  createdBy: one(platformUsers, {
-    fields: [staff_certifications.created_by],
-    references: [platformUsers.id],
-  }),
-}));
-
-// Relations for Regulatory Compliance
-export const regulatoryComplianceRelations = relations(regulatory_compliance, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [regulatory_compliance.tenant_id],
-    references: [tenants.id],
-  }),
-  complianceOfficer: one(platformUsers, {
-    fields: [regulatory_compliance.compliance_officer_id],
-    references: [platformUsers.id],
-  }),
-  createdBy: one(platformUsers, {
-    fields: [regulatory_compliance.created_by],
-    references: [platformUsers.id],
-  }),
-}));
-
-// Relations for Blockchain Transactions
-export const blockchainTransactionsRelations = relations(blockchain_transactions, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [blockchain_transactions.tenant_id],
-    references: [tenants.id],
-  }),
-}));
-
-// Relations for Drone Flights
-export const droneFlightsRelations = relations(drone_flights, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [drone_flights.tenant_id],
-    references: [tenants.id],
-  }),
-  pilot: one(platformUsers, {
-    fields: [drone_flights.pilot_id],
-    references: [platformUsers.id],
-  }),
-}));
+// NOTE: These tables exist in Supabase but we use the REST API directly,
+// not Drizzle ORM. This file only contains types and interfaces.
+//
+// The actual database tables are:
+// - genetic_profiles
+// - feed_inventory
+// - nutrition_requirements
+// - computer_vision_records
+// - financial_accounts
+// - staff_certifications
+// - regulatory_compliance
+// - blockchain_transactions
+// - drone_flights
 
 // Enhanced Types for Animal Management
 export interface EnhancedAnimalProfile {
@@ -143,10 +27,10 @@ export interface EnhancedAnimalProfile {
     rfidTag?: string;
     qrCode: string;
   };
-  
+
   // Health Intelligence
   healthDashboard: {
-    currentStatus: "Healthy" | "Sick" | "Under Treatment" | "Quarantine";
+    currentStatus: 'Healthy' | 'Sick' | 'Under Treatment' | 'Quarantine';
     vitals: {
       temperature: number;
       heartRate: number;
@@ -158,7 +42,7 @@ export interface EnhancedAnimalProfile {
     healthScore: number;
     predictiveAlerts: any[];
   };
-  
+
   // Production Analytics
   productionMetrics: {
     milkProduction?: {
@@ -176,10 +60,10 @@ export interface EnhancedAnimalProfile {
     };
     feedEfficiency: number;
   };
-  
+
   // Breeding Intelligence
   breedingManagement: {
-    reproductiveStatus: "Open" | "Bred" | "Pregnant" | "Dry";
+    reproductiveStatus: 'Open' | 'Bred' | 'Pregnant' | 'Dry';
     heatCycles: any[];
     pregnancyTracking?: {
       dueDate: Date;
@@ -193,7 +77,7 @@ export interface EnhancedAnimalProfile {
       geneticValueIndex: number;
     };
   };
-  
+
   // Financial Impact
   financialMetrics: {
     acquisitionCost: number;
@@ -202,7 +86,7 @@ export interface EnhancedAnimalProfile {
     roi: number;
     valuationEstimate: number;
   };
-  
+
   // Location & Movement
   location: {
     currentPen: string;
@@ -217,10 +101,10 @@ export interface AnimalSearchFilters {
     species: string[];
     ageRange: [number, number];
     healthStatus: string[];
-    productionLevel: "High" | "Medium" | "Low";
+    productionLevel: 'High' | 'Medium' | 'Low';
     breedingStatus: string[];
   };
-  
+
   advancedFilters: {
     customFields: Record<string, any>;
     dateRanges: {
@@ -234,13 +118,13 @@ export interface AnimalSearchFilters {
       minHealthScore?: number;
     };
   };
-  
+
   savedSearches: any[];
 }
 
 // Batch Operations Types
 export interface BatchOperation {
-  type: "vaccination" | "treatment" | "movement" | "feeding" | "health_check";
+  type: 'vaccination' | 'treatment' | 'movement' | 'feeding' | 'health_check';
   animalIds: string[];
   operation: {
     vaccineId?: string;
@@ -251,20 +135,10 @@ export interface BatchOperation {
     notes?: string;
   };
   scheduledDate?: Date;
-  priority: "low" | "medium" | "high" | "urgent";
+  priority: 'low' | 'medium' | 'high' | 'urgent';
   assignedTo?: string;
   estimatedDuration: number; // minutes
 }
 
-// Export all enhanced types and relations
-export {
-  genetic_profiles,
-  feed_inventory,
-  nutrition_requirements,
-  computer_vision_records,
-  financial_accounts,
-  staff_certifications,
-  regulatory_compliance,
-  blockchain_transactions,
-  drone_flights,
-};
+// Note: The actual database tables are accessed via Supabase REST API
+// See MEMORY.md for database schema documentation

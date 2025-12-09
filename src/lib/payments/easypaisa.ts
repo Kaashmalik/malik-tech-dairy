@@ -30,7 +30,7 @@ export async function createEasyPaisaCheckout(
   // EasyPaisa uses hash-based authentication similar to JazzCash
   // Implementation requires server-side hashing
   const hashString = `${config.storeId}|${request.orderId}|${request.amount}|${config.returnUrl}|${config.hashKey}`;
-  const hash = "PLACEHOLDER_HASH"; // Replace with actual hash
+  const hash = 'PLACEHOLDER_HASH'; // Replace with actual hash
 
   const checkoutUrl = `https://easypay.easypaisa.com.pk/easypay/Index.jsf?storeId=${config.storeId}&orderId=${request.orderId}&transactionAmount=${request.amount}&transactionType=MA&merchantHashedReq=${hash}`;
 
@@ -59,6 +59,5 @@ export async function createEasyPaisaRecurringToken(
   customerData: { email: string; phone: string }
 ): Promise<string> {
   // Placeholder - requires EasyPaisa tokenization API
-  return "easypaisa_token_placeholder";
+  return 'easypaisa_token_placeholder';
 }
-

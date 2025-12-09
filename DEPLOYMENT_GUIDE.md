@@ -108,7 +108,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     match /tenants/{tenantId}/{allPaths=**} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null 
+      allow write: if request.auth != null
         && request.resource.size < 5 * 1024 * 1024; // 5MB limit
     }
   }
@@ -171,6 +171,7 @@ In Vercel Dashboard → Settings → Environment Variables, add all variables fr
 ### 5.4 Deploy
 
 Click "Deploy" - Vercel will:
+
 1. Install dependencies
 2. Build the project
 3. Deploy to production
@@ -284,6 +285,7 @@ Vercel automatically provides SSL certificates for all domains.
 ## Support
 
 For issues or questions:
+
 - Email: support@maliktechdairy.com
 - Documentation: `/docs`
 - GitHub Issues: (if public repo)
@@ -291,4 +293,3 @@ For issues or questions:
 ---
 
 **Last Updated**: 2024
-

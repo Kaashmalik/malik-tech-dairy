@@ -1,13 +1,13 @@
 // Background job processor for generating reports
-import type { Job } from "bullmq";
-import { adminDb } from "@/lib/firebase/admin";
+import type { Job } from 'bullmq';
+import { adminDb } from '@/lib/firebase/admin';
 
 interface ReportJobData {
   tenantId: string;
-  type: "daily" | "weekly" | "monthly";
+  type: 'daily' | 'weekly' | 'monthly';
   startDate: string;
   endDate: string;
-  format: "pdf" | "excel";
+  format: 'pdf' | 'excel';
 }
 
 export async function processReportJob(job: Job<ReportJobData>) {
@@ -34,4 +34,3 @@ export async function processReportJob(job: Job<ReportJobData>) {
     throw new Error(`Report generation failed: ${error}`);
   }
 }
-

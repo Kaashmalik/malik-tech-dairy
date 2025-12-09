@@ -1,19 +1,19 @@
 // API Route: Super Admin - Manage Coupons
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { adminDb } from "@/lib/firebase/admin";
-import type { Coupon } from "@/lib/coupons/types";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { adminDb } from '@/lib/firebase/admin';
+import type { Coupon } from '@/lib/coupons/types';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // Check if user is super admin
 async function isSuperAdmin(userId: string): Promise<boolean> {
   if (!adminDb) return false;
 
   try {
-    const userDoc = await adminDb.collection("users").doc(userId).get();
+    const userDoc = await adminDb.collection('users').doc(userId).get();
     const userData = userDoc.data();
-    return userData?.role === "super_admin" || userData?.isSuperAdmin === true;
+    return userData?.role === 'super_admin' || userData?.isSuperAdmin === true;
   } catch {
     return false;
   }
@@ -26,22 +26,22 @@ export async function GET(request: NextRequest) {
 
     if (!userId || !(await isSuperAdmin(userId))) {
       return NextResponse.json(
-        { error: "Unauthorized - Super admin access required" },
+        { error: 'Unauthorized - Super admin access required' },
         { status: 403 }
       );
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "Database not available" }, { status: 500 });
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
     const { searchParams } = new URL(request.url);
-    const activeOnly = searchParams.get("activeOnly") === "true";
+    const activeOnly = searchParams.get('activeOnly') === 'true';
 
-    let query: any = adminDb.collection("coupons").orderBy("createdAt", "desc");
+    let query: any = adminDb.collection('coupons').orderBy('createdAt', 'desc');
 
     if (activeOnly) {
-      query = query.where("isActive", "==", true);
+      query = query.where('isActive', '==', true);
     }
 
     const snapshot = await query.get();
@@ -56,11 +56,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ coupons });
   } catch (error) {
-    console.error("Error fetching coupons:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error fetching coupons:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -71,13 +68,13 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !(await isSuperAdmin(userId))) {
       return NextResponse.json(
-        { error: "Unauthorized - Super admin access required" },
+        { error: 'Unauthorized - Super admin access required' },
         { status: 403 }
       );
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "Database not available" }, { status: 500 });
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
     const body = await request.json();
@@ -97,27 +94,21 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!code || !type || value === undefined || !targetPlans || !validFrom || !validUntil) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Check if code already exists
     const existing = await adminDb
-      .collection("coupons")
-      .where("code", "==", code.toUpperCase())
+      .collection('coupons')
+      .where('code', '==', code.toUpperCase())
       .limit(1)
       .get();
 
     if (!existing.empty) {
-      return NextResponse.json(
-        { error: "Coupon code already exists" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: 'Coupon code already exists' }, { status: 409 });
     }
 
-    const coupon: Omit<Coupon, "id"> = {
+    const coupon: Omit<Coupon, 'id'> = {
       code: code.toUpperCase(),
       type,
       value,
@@ -135,18 +126,14 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
 
-    const docRef = await adminDb.collection("coupons").add(coupon);
+    const docRef = await adminDb.collection('coupons').add(coupon);
 
     return NextResponse.json({
       success: true,
       coupon: { id: docRef.id, ...coupon },
     });
   } catch (error) {
-    console.error("Error creating coupon:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error creating coupon:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

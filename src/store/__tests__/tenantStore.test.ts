@@ -1,8 +1,8 @@
-import { renderHook, act } from "@testing-library/react";
-import { useTenantStore } from "@/store/tenantStore";
-import type { TenantConfig } from "@/types";
+import { renderHook, act } from '@testing-library/react';
+import { useTenantStore } from '@/store/tenantStore';
+import type { TenantConfig } from '@/types';
 
-describe("TenantStore", () => {
+describe('TenantStore', () => {
   beforeEach(() => {
     // Reset store before each test
     const { result } = renderHook(() => useTenantStore());
@@ -11,21 +11,21 @@ describe("TenantStore", () => {
     });
   });
 
-  it("should initialize with null config", () => {
+  it('should initialize with null config', () => {
     const { result } = renderHook(() => useTenantStore());
     expect(result.current.config).toBe(null);
   });
 
-  it("should set config", () => {
+  it('should set config', () => {
     const { result } = renderHook(() => useTenantStore());
     const mockConfig: TenantConfig = {
-      farmName: "Test Farm",
-      farmAddress: "123 Test St",
-      primaryColor: "#1F7A3D",
-      secondaryColor: "#2E8B57",
-      logoUrl: "https://example.com/logo.png",
-      language: "en",
-      animalTypes: ["cow", "buffalo"],
+      farmName: 'Test Farm',
+      farmAddress: '123 Test St',
+      primaryColor: '#1F7A3D',
+      secondaryColor: '#2E8B57',
+      logoUrl: 'https://example.com/logo.png',
+      language: 'en',
+      animalTypes: ['cow', 'buffalo'],
     };
 
     act(() => {
@@ -35,22 +35,22 @@ describe("TenantStore", () => {
     expect(result.current.config).toEqual(mockConfig);
   });
 
-  it("should update config", () => {
+  it('should update config', () => {
     const { result } = renderHook(() => useTenantStore());
     const initialConfig: TenantConfig = {
-      farmName: "Initial Farm",
-      farmAddress: "123 Test St",
-      primaryColor: "#1F7A3D",
-      secondaryColor: "#2E8B57",
-      logoUrl: "https://example.com/logo.png",
-      language: "en",
-      animalTypes: ["cow"],
+      farmName: 'Initial Farm',
+      farmAddress: '123 Test St',
+      primaryColor: '#1F7A3D',
+      secondaryColor: '#2E8B57',
+      logoUrl: 'https://example.com/logo.png',
+      language: 'en',
+      animalTypes: ['cow'],
     };
 
     const updatedConfig: TenantConfig = {
       ...initialConfig,
-      farmName: "Updated Farm",
-      animalTypes: ["cow", "buffalo"],
+      farmName: 'Updated Farm',
+      animalTypes: ['cow', 'buffalo'],
     };
 
     act(() => {
@@ -64,16 +64,16 @@ describe("TenantStore", () => {
     expect(result.current.config).toEqual(updatedConfig);
   });
 
-  it("should reset config", () => {
+  it('should reset config', () => {
     const { result } = renderHook(() => useTenantStore());
     const mockConfig: TenantConfig = {
-      farmName: "Test Farm",
-      farmAddress: "123 Test St",
-      primaryColor: "#1F7A3D",
-      secondaryColor: "#2E8B57",
-      logoUrl: "https://example.com/logo.png",
-      language: "en",
-      animalTypes: ["cow"],
+      farmName: 'Test Farm',
+      farmAddress: '123 Test St',
+      primaryColor: '#1F7A3D',
+      secondaryColor: '#2E8B57',
+      logoUrl: 'https://example.com/logo.png',
+      language: 'en',
+      animalTypes: ['cow'],
     };
 
     act(() => {
@@ -89,16 +89,16 @@ describe("TenantStore", () => {
     expect(result.current.config).toBe(null);
   });
 
-  it("should handle null config", () => {
+  it('should handle null config', () => {
     const { result } = renderHook(() => useTenantStore());
     const mockConfig: TenantConfig = {
-      farmName: "Test Farm",
-      farmAddress: "123 Test St",
-      primaryColor: "#1F7A3D",
-      secondaryColor: "#2E8B57",
-      logoUrl: "https://example.com/logo.png",
-      language: "en",
-      animalTypes: ["cow"],
+      farmName: 'Test Farm',
+      farmAddress: '123 Test St',
+      primaryColor: '#1F7A3D',
+      secondaryColor: '#2E8B57',
+      logoUrl: 'https://example.com/logo.png',
+      language: 'en',
+      animalTypes: ['cow'],
     };
 
     act(() => {
@@ -112,4 +112,3 @@ describe("TenantStore", () => {
     expect(result.current.config).toBe(null);
   });
 });
-

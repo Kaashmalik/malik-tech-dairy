@@ -40,10 +40,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -79,19 +76,13 @@ export async function GET(request: NextRequest) {
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0);
       whereConditions.push(
-        and(
-          gte(staffAttendance.date, startDate),
-          lte(staffAttendance.date, endDate)
-        )
+        and(gte(staffAttendance.date, startDate), lte(staffAttendance.date, endDate))
       );
     }
 
     if (query.overdue === true) {
       whereConditions.push(
-        and(
-          lte(staffAttendance.checkOut, new Date()),
-          eq(staffAttendance.status, 'present')
-        )
+        and(lte(staffAttendance.checkOut, new Date()), eq(staffAttendance.status, 'present'))
       );
     }
 
@@ -178,16 +169,16 @@ export async function GET(request: NextRequest) {
           absentDays: attendanceList.filter(r => r.status === 'absent').length,
           lateDays: attendanceList.filter(r => r.status === 'late').length,
           totalWorkHours: attendanceWithCalculatedHours.reduce((sum, r) => sum + r.workHours, 0),
-          totalOvertimeHours: attendanceWithCalculatedHours.reduce((sum, r) => sum + r.overtimeHours, 0),
+          totalOvertimeHours: attendanceWithCalculatedHours.reduce(
+            (sum, r) => sum + r.overtimeHours,
+            0
+          ),
         },
       },
     });
   } catch (error) {
     console.error('Error fetching attendance records:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -196,10 +187,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -251,7 +239,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating attendance record:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -259,28 +247,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PUT /api/staff-management/attendance/[id] - Update attendance record
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// PUT /api/staff-management/attendance?id=xxx - Update attendance record
+export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Attendance ID required' },
+        { status: 400 }
+      );
+    }
     const body = await request.json();
     const validatedData = updateAttendanceSchema.parse(body);
 
@@ -305,10 +291,7 @@ export async function PUT(
 
     // Validate tenant ownership to prevent cross-tenant updates
     if (existingRecord[0].tenantId !== tenantContext.tenantId) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
     }
 
     const updateData = {
@@ -331,7 +314,7 @@ export async function PUT(
     });
   } catch (error) {
     console.error('Error updating attendance record:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -339,9 +322,6 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -66,19 +66,13 @@ function generateFarmId(): string {
 }
 
 // POST: Review (approve/reject) application
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     const { id } = await params;
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check super admin role
@@ -102,10 +96,7 @@ export async function POST(
       .single();
 
     if (fetchError || !appData) {
-      return NextResponse.json(
-        { error: 'Application not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
 
     const application = appData as FarmApplication;
@@ -122,7 +113,7 @@ export async function POST(
       // ============ APPROVAL FLOW ============
       const farmId = generateFarmId();
       const baseSlug = generateSlug(application.farm_name);
-      
+
       // 1. Create Clerk Organization (or fallback to UUID)
       let clerkOrgId: string = '';
       let finalSlug: string = baseSlug;
@@ -130,7 +121,7 @@ export async function POST(
 
       try {
         const clerk = await clerkClient();
-        
+
         // Try to create organization with different slug variations
         const slugVariations = [
           baseSlug,
@@ -141,12 +132,12 @@ export async function POST(
         for (const slug of slugVariations) {
           try {
             console.log(`Attempting to create Clerk org with slug: ${slug}`);
-            
+
             const org = await clerk.organizations.createOrganization({
               name: application.farm_name,
               slug: slug,
             });
-            
+
             clerkOrgId = org.id;
             finalSlug = slug;
             orgCreated = true;
@@ -155,7 +146,7 @@ export async function POST(
             // Add the applicant as admin member - CRITICAL STEP
             try {
               console.log(`Adding user ${application.applicant_id} to org ${clerkOrgId}`);
-              
+
               await clerk.organizations.createOrganizationMembership({
                 organizationId: clerkOrgId,
                 userId: application.applicant_id,
@@ -179,9 +170,10 @@ export async function POST(
             }
             break;
           } catch (clerkError: unknown) {
-            const errorMessage = clerkError instanceof Error ? clerkError.message : String(clerkError);
+            const errorMessage =
+              clerkError instanceof Error ? clerkError.message : String(clerkError);
             console.error(`Clerk org creation failed for slug ${slug}:`, errorMessage);
-            
+
             if (!errorMessage.includes('slug') && !errorMessage.includes('already exists')) {
               break;
             }
@@ -213,7 +205,7 @@ export async function POST(
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: tenantError } = await (supabase.from('tenants') as any).insert([tenantData]);
-      
+
       // 2b. Create subscription record
       if (!tenantError) {
         try {
@@ -230,7 +222,9 @@ export async function POST(
             updated_at: new Date().toISOString(),
           };
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { error: subError } = await (supabase.from('subscriptions') as any).insert([subscriptionData]);
+          const { error: subError } = await (supabase.from('subscriptions') as any).insert([
+            subscriptionData,
+          ]);
           if (subError) {
             console.error('Failed to create subscription:', subError);
           }
@@ -268,7 +262,9 @@ export async function POST(
         updated_at: new Date().toISOString(),
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: memberError } = await (supabase.from('tenant_members') as any).insert([memberData]);
+      const { error: memberError } = await (supabase.from('tenant_members') as any).insert([
+        memberData,
+      ]);
 
       if (memberError) {
         console.error('Failed to create tenant member:', memberError);
@@ -286,7 +282,9 @@ export async function POST(
         updated_at: new Date().toISOString(),
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: updatedAppData, error: updateError } = await (supabase.from('farm_applications') as any)
+      const { data: updatedAppData, error: updateError } = await (
+        supabase.from('farm_applications') as any
+      )
         .update(updateData)
         .eq('id', id)
         .select()
@@ -295,24 +293,23 @@ export async function POST(
 
       if (updateError) {
         console.error('Failed to update application:', updateError);
-        return NextResponse.json(
-          { error: 'Failed to update application status' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to update application status' }, { status: 500 });
       }
 
       // 5. Create notification for the user (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('notifications') as any).insert([{
-          user_id: application.applicant_id,
-          type: 'application_approved',
-          title: 'Farm Application Approved! 🎉',
-          message: `Your farm "${application.farm_name}" has been approved. Farm ID: ${farmId}`,
-          data: { applicationId: id, farmId, tenantId: clerkOrgId! },
-          read: false,
-          created_at: new Date().toISOString(),
-        }]);
+        await (supabase.from('notifications') as any).insert([
+          {
+            user_id: application.applicant_id,
+            type: 'application_approved',
+            title: 'Farm Application Approved! 🎉',
+            message: `Your farm "${application.farm_name}" has been approved. Farm ID: ${farmId}`,
+            data: { applicationId: id, farmId, tenantId: clerkOrgId! },
+            read: false,
+            created_at: new Date().toISOString(),
+          },
+        ]);
       } catch (e) {
         console.error('Failed to create notification:', e);
       }
@@ -320,14 +317,16 @@ export async function POST(
       // 6. Create super admin notification (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('admin_notifications') as any).insert([{
-          type: 'application_processed',
-          title: 'Application Approved',
-          message: `Farm "${application.farm_name}" approved by admin`,
-          data: { applicationId: id, farmId, action: 'approved' },
-          read: false,
-          created_at: new Date().toISOString(),
-        }]);
+        await (supabase.from('admin_notifications') as any).insert([
+          {
+            type: 'application_processed',
+            title: 'Application Approved',
+            message: `Farm "${application.farm_name}" approved by admin`,
+            data: { applicationId: id, farmId, action: 'approved' },
+            read: false,
+            created_at: new Date().toISOString(),
+          },
+        ]);
       } catch (e) {
         console.error('Failed to create admin notification:', e);
       }
@@ -349,14 +348,10 @@ export async function POST(
         },
         message: `Application approved! Farm ID: ${farmId}`,
       });
-
     } else {
       // ============ REJECTION FLOW ============
       if (!validatedData.rejectionReason) {
-        return NextResponse.json(
-          { error: 'Rejection reason is required' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 });
       }
 
       const rejectData = {
@@ -368,7 +363,9 @@ export async function POST(
         updated_at: new Date().toISOString(),
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: updatedAppData, error: updateError } = await (supabase.from('farm_applications') as any)
+      const { data: updatedAppData, error: updateError } = await (
+        supabase.from('farm_applications') as any
+      )
         .update(rejectData)
         .eq('id', id)
         .select()
@@ -378,24 +375,23 @@ export async function POST(
 
       if (updateError) {
         console.error('Failed to update application:', updateError);
-        return NextResponse.json(
-          { error: 'Failed to reject application' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to reject application' }, { status: 500 });
       }
 
       // Create notification for the user (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('notifications') as any).insert([{
-          user_id: application.applicant_id,
-          type: 'application_rejected',
-          title: 'Farm Application Update',
-          message: `Your farm application has been reviewed. Reason: ${validatedData.rejectionReason}`,
-          data: { applicationId: id, reason: validatedData.rejectionReason },
-          read: false,
-          created_at: new Date().toISOString(),
-        }]);
+        await (supabase.from('notifications') as any).insert([
+          {
+            user_id: application.applicant_id,
+            type: 'application_rejected',
+            title: 'Farm Application Update',
+            message: `Your farm application has been reviewed. Reason: ${validatedData.rejectionReason}`,
+            data: { applicationId: id, reason: validatedData.rejectionReason },
+            read: false,
+            created_at: new Date().toISOString(),
+          },
+        ]);
       } catch (e) {
         console.error('Failed to create notification:', e);
       }
@@ -412,7 +408,6 @@ export async function POST(
         message: 'Application rejected',
       });
     }
-
   } catch (error) {
     console.error('Error reviewing application:', error);
 
@@ -428,7 +423,7 @@ export async function POST(
     console.error('Full error details:', { message: errorMessage, stack: errorStack });
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to review application',
         details: errorMessage,
       },

@@ -1,6 +1,6 @@
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useTenant } from "@/hooks/useTenant";
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useTenant } from '@/hooks/useTenant';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -18,20 +18,20 @@ const createWrapper = () => {
   );
 };
 
-describe("useTenant", () => {
+describe('useTenant', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should fetch tenant config successfully", async () => {
+  it('should fetch tenant config successfully', async () => {
     const mockConfig = {
-      farmName: "Test Farm",
-      farmAddress: "123 Test St",
-      primaryColor: "#1F7A3D",
-      secondaryColor: "#2E8B57",
-      logoUrl: "https://example.com/logo.png",
-      language: "en",
-      animalTypes: ["cow", "buffalo"],
+      farmName: 'Test Farm',
+      farmAddress: '123 Test St',
+      primaryColor: '#1F7A3D',
+      secondaryColor: '#2E8B57',
+      logoUrl: 'https://example.com/logo.png',
+      language: 'en',
+      animalTypes: ['cow', 'buffalo'],
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -51,8 +51,8 @@ describe("useTenant", () => {
     expect(result.current.error).toBe(null);
   });
 
-  it("should handle fetch error", async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
+  it('should handle fetch error', async () => {
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useTenant(), {
       wrapper: createWrapper(),
@@ -66,7 +66,7 @@ describe("useTenant", () => {
     expect(result.current.error).toBeTruthy();
   });
 
-  it("should handle non-ok response", async () => {
+  it('should handle non-ok response', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       status: 404,
@@ -83,4 +83,3 @@ describe("useTenant", () => {
     expect(result.current.config).toBe(null);
   });
 });
-

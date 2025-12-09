@@ -30,10 +30,7 @@ export async function GET() {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = getSupabaseClient();
@@ -41,7 +38,8 @@ export async function GET() {
     // Get all tenant memberships for this user
     const { data: memberships, error: memberError } = await supabase
       .from('tenant_members')
-      .select(`
+      .select(
+        `
         id,
         tenant_id,
         user_id,
@@ -59,7 +57,8 @@ export async function GET() {
           animal_types,
           created_at
         )
-      `)
+      `
+      )
       .eq('user_id', userId)
       .eq('status', 'active');
 
@@ -72,14 +71,14 @@ export async function GET() {
     }
 
     // Also get user's applications
-    const { data: applications } = await supabase
+    const { data: applications } = (await supabase
       .from('farm_applications')
       .select('*')
       .eq('applicant_id', userId)
-      .order('created_at', { ascending: false }) as { data: any[] | null };
+      .order('created_at', { ascending: false })) as { data: any[] | null };
 
     // Transform memberships to farm format
-    const farms = (memberships as TenantMember[] || []).map(m => ({
+    const farms = ((memberships as TenantMember[]) || []).map(m => ({
       id: m.tenant_id,
       slug: m.tenants?.slug,
       name: m.tenants?.farm_name,
@@ -107,12 +106,11 @@ export async function GET() {
         farms,
         applications: appsList,
         hasFarms: farms.length > 0,
-        pendingApplications: appsList.filter(a => 
-          a.status === 'pending' || a.status === 'payment_uploaded'
+        pendingApplications: appsList.filter(
+          a => a.status === 'pending' || a.status === 'payment_uploaded'
         ).length,
-      }
+      },
     });
-
   } catch (error: any) {
     console.error('Error in user farms API:', error);
     return NextResponse.json(

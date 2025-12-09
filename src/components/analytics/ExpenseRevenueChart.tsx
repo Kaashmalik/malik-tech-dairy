@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   LineChart,
@@ -9,8 +9,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
-import { format, parseISO } from "date-fns";
+} from 'recharts';
+import { format, parseISO } from 'date-fns';
 
 interface ExpenseRevenueChartProps {
   expenses: Array<{ date: string; amount: number }>;
@@ -21,7 +21,7 @@ export function ExpenseRevenueChart({ expenses, revenue }: ExpenseRevenueChartPr
   // Combine expenses and revenue by date
   const dataMap = new Map<string, { date: string; expenses: number; revenue: number }>();
 
-  expenses.forEach((item) => {
+  expenses.forEach(item => {
     const dateKey = item.date;
     if (!dataMap.has(dateKey)) {
       dataMap.set(dateKey, { date: dateKey, expenses: 0, revenue: 0 });
@@ -29,7 +29,7 @@ export function ExpenseRevenueChart({ expenses, revenue }: ExpenseRevenueChartPr
     dataMap.get(dateKey)!.expenses += item.amount;
   });
 
-  revenue.forEach((item) => {
+  revenue.forEach(item => {
     const dateKey = item.date;
     if (!dataMap.has(dateKey)) {
       dataMap.set(dateKey, { date: dateKey, expenses: 0, revenue: 0 });
@@ -38,8 +38,8 @@ export function ExpenseRevenueChart({ expenses, revenue }: ExpenseRevenueChartPr
   });
 
   const chartData = Array.from(dataMap.values())
-    .map((item) => ({
-      date: format(parseISO(item.date), "MMM dd"),
+    .map(item => ({
+      date: format(parseISO(item.date), 'MMM dd'),
       expenses: item.expenses,
       revenue: item.revenue,
       profit: item.revenue - item.expenses,
@@ -47,40 +47,39 @@ export function ExpenseRevenueChart({ expenses, revenue }: ExpenseRevenueChartPr
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width='100%' height={300}>
       <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis label={{ value: "Amount (PKR)", angle: -90, position: "insideLeft" }} />
+        <CartesianGrid strokeDasharray='3 3' />
+        <XAxis dataKey='date' />
+        <YAxis label={{ value: 'Amount (PKR)', angle: -90, position: 'insideLeft' }} />
         <Tooltip formatter={(value: number) => `PKR ${value.toLocaleString()}`} />
         <Legend />
         <Line
-          type="monotone"
-          dataKey="expenses"
-          stroke="#ef4444"
+          type='monotone'
+          dataKey='expenses'
+          stroke='#ef4444'
           strokeWidth={2}
-          name="Expenses"
+          name='Expenses'
           dot={{ r: 4 }}
         />
         <Line
-          type="monotone"
-          dataKey="revenue"
-          stroke="#22c55e"
+          type='monotone'
+          dataKey='revenue'
+          stroke='#22c55e'
           strokeWidth={2}
-          name="Revenue"
+          name='Revenue'
           dot={{ r: 4 }}
         />
         <Line
-          type="monotone"
-          dataKey="profit"
-          stroke="#3b82f6"
+          type='monotone'
+          dataKey='profit'
+          stroke='#3b82f6'
           strokeWidth={2}
-          name="Profit"
-          strokeDasharray="5 5"
+          name='Profit'
+          strokeDasharray='5 5'
           dot={{ r: 4 }}
         />
       </LineChart>
     </ResponsiveContainer>
   );
 }
-

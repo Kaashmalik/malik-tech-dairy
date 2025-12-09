@@ -11,10 +11,7 @@ export async function POST(request: NextRequest) {
     // Verify user is super admin
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const { alertType } = await request.json();
@@ -28,28 +25,27 @@ export async function POST(request: NextRequest) {
 
     // Attempt automated recovery
     const recoverySuccess = await migrationMonitor.attemptAutomatedRecovery(alertType);
-    
+
     if (recoverySuccess) {
       return NextResponse.json({
         success: true,
         data: { recoverySuccess: true },
-        message: `Automated recovery initiated for ${alertType}`
+        message: `Automated recovery initiated for ${alertType}`,
       });
     } else {
       return NextResponse.json({
         success: false,
         error: 'Automated recovery failed',
-        details: `Could not automatically recover from ${alertType}`
+        details: `Could not automatically recover from ${alertType}`,
       });
     }
-
   } catch (error) {
     console.error('Recovery API error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to execute recovery',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

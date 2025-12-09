@@ -1,17 +1,17 @@
 // PDF Report Generation using pdfmake
-import { adminDb } from "@/lib/firebase/admin";
-import { getTenantSubcollection, getTenantConfig } from "@/lib/firebase/tenant";
-import PdfPrinter from "pdfmake";
-import type { TDocumentDefinitions } from "pdfmake/interfaces";
+import { adminDb } from '@/lib/firebase/admin';
+import { getTenantSubcollection, getTenantConfig } from '@/lib/firebase/tenant';
+import PdfPrinter from 'pdfmake';
+import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 
 // Initialize pdfmake fonts (using default fonts for now)
 // Note: In production, you should use proper font files
 const fonts = {
   Roboto: {
-    normal: "Helvetica",
-    bold: "Helvetica-Bold",
-    italics: "Helvetica-Oblique",
-    bolditalics: "Helvetica-BoldOblique",
+    normal: 'Helvetica',
+    bold: 'Helvetica-Bold',
+    italics: 'Helvetica-Oblique',
+    bolditalics: 'Helvetica-BoldOblique',
   },
 };
 
@@ -19,47 +19,41 @@ const printer = new PdfPrinter(fonts);
 
 export async function generatePDFReport(
   tenantId: string,
-  type: "daily" | "weekly" | "monthly",
+  type: 'daily' | 'weekly' | 'monthly',
   startDate: Date,
   endDate: Date
 ): Promise<Buffer> {
   const config = await getTenantConfig(tenantId);
-  const farmName = config?.farmName || "Farm";
+  const farmName = config?.farmName || 'Farm';
 
   // Fetch data based on report type
-  const milkLogsRef = getTenantSubcollection(tenantId, "milkLogs", "logs");
-  const expensesRef = getTenantSubcollection(tenantId, "expenses", "records");
-  const salesRef = getTenantSubcollection(tenantId, "sales", "records");
+  const milkLogsRef = getTenantSubcollection(tenantId, 'milkLogs', 'logs');
+  const expensesRef = getTenantSubcollection(tenantId, 'expenses', 'records');
+  const salesRef = getTenantSubcollection(tenantId, 'sales', 'records');
 
   const [milkLogsSnapshot, expensesSnapshot, salesSnapshot] = await Promise.all([
     milkLogsRef
-      .where("date", ">=", startDate.toISOString().split("T")[0])
-      .where("date", "<=", endDate.toISOString().split("T")[0])
+      .where('date', '>=', startDate.toISOString().split('T')[0])
+      .where('date', '<=', endDate.toISOString().split('T')[0])
       .get(),
-    expensesRef
-      .where("date", ">=", startDate)
-      .where("date", "<=", endDate)
-      .get(),
-    salesRef
-      .where("date", ">=", startDate)
-      .where("date", "<=", endDate)
-      .get(),
+    expensesRef.where('date', '>=', startDate).where('date', '<=', endDate).get(),
+    salesRef.where('date', '>=', startDate).where('date', '<=', endDate).get(),
   ]);
 
-  const milkLogs = milkLogsSnapshot.docs.map((doc) => ({
+  const milkLogs = milkLogsSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
     date: doc.data().date,
   }));
 
-  const expenses = expensesSnapshot.docs.map((doc) => ({
+  const expenses = expensesSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
     date: doc.data().date?.toDate(),
     amount: doc.data().amount,
   }));
 
-  const sales = salesSnapshot.docs.map((doc) => ({
+  const sales = salesSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
     date: doc.data().date?.toDate(),
@@ -73,106 +67,112 @@ export async function generatePDFReport(
 
   const docDefinition: TDocumentDefinitions = {
     content: [
-      { text: farmName, style: "header", alignment: "center" },
+      { text: farmName, style: 'header', alignment: 'center' },
       {
         text: `${type.toUpperCase()} Report`,
-        style: "subheader",
-        alignment: "center",
+        style: 'subheader',
+        alignment: 'center',
         margin: [0, 0, 0, 20],
       },
       {
         text: `Period: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-        style: "period",
-        alignment: "center",
+        style: 'period',
+        alignment: 'center',
         margin: [0, 0, 0, 30],
       },
       {
         columns: [
           {
             text: `Total Milk: ${totalMilk.toFixed(2)} L`,
-            style: "summary",
+            style: 'summary',
           },
           {
             text: `Total Expenses: PKR ${totalExpenses.toLocaleString()}`,
-            style: "summary",
+            style: 'summary',
           },
           {
             text: `Total Sales: PKR ${totalSales.toLocaleString()}`,
-            style: "summary",
+            style: 'summary',
           },
           {
             text: `Net Profit: PKR ${profit.toLocaleString()}`,
-            style: "summary",
-            color: profit >= 0 ? "green" : "red",
+            style: 'summary',
+            color: profit >= 0 ? 'green' : 'red',
           },
         ],
         margin: [0, 0, 0, 30],
       },
       {
-        text: "Milk Production",
-        style: "sectionHeader",
+        text: 'Milk Production',
+        style: 'sectionHeader',
         margin: [0, 20, 0, 10],
       },
       {
         table: {
           headerRows: 1,
-          widths: ["*", "*", "*", "*"],
+          widths: ['*', '*', '*', '*'],
           body: [
-            ["Date", "Session", "Quantity (L)", "Animal ID"],
-            ...milkLogs.slice(0, 50).map((log) => [
-              log.date || "",
-              log.session || "",
-              (log.quantity || 0).toFixed(2),
-              log.animalId || "",
-            ]),
+            ['Date', 'Session', 'Quantity (L)', 'Animal ID'],
+            ...milkLogs
+              .slice(0, 50)
+              .map(log => [
+                log.date || '',
+                log.session || '',
+                (log.quantity || 0).toFixed(2),
+                log.animalId || '',
+              ]),
           ],
         },
         margin: [0, 0, 0, 20],
       },
       {
-        text: "Expenses",
-        style: "sectionHeader",
+        text: 'Expenses',
+        style: 'sectionHeader',
         margin: [0, 20, 0, 10],
       },
       {
         table: {
           headerRows: 1,
-          widths: ["*", "*", "*"],
+          widths: ['*', '*', '*'],
           body: [
-            ["Date", "Category", "Amount (PKR)"],
-            ...expenses.slice(0, 50).map((exp) => [
-              exp.date?.toLocaleDateString() || "",
-              exp.category || "",
-              (exp.amount || 0).toLocaleString(),
-            ]),
+            ['Date', 'Category', 'Amount (PKR)'],
+            ...expenses
+              .slice(0, 50)
+              .map(exp => [
+                exp.date?.toLocaleDateString() || '',
+                exp.category || '',
+                (exp.amount || 0).toLocaleString(),
+              ]),
           ],
         },
         margin: [0, 0, 0, 20],
       },
       {
-        text: "Sales",
-        style: "sectionHeader",
+        text: 'Sales',
+        style: 'sectionHeader',
         margin: [0, 20, 0, 10],
       },
       {
         table: {
           headerRows: 1,
-          widths: ["*", "*", "*", "*"],
+          widths: ['*', '*', '*', '*'],
           body: [
-            ["Date", "Type", "Quantity", "Total (PKR)"],
-            ...sales.slice(0, 50).map((sale) => [
-              sale.date?.toLocaleDateString() || "",
-              sale.type || "",
-              `${sale.quantity || 0} ${sale.unit || ""}`,
-              (sale.total || 0).toLocaleString(),
-            ]),
+            ['Date', 'Type', 'Quantity', 'Total (PKR)'],
+            ...sales
+              .slice(0, 50)
+              .map(sale => [
+                sale.date?.toLocaleDateString() || '',
+                sale.type || '',
+                `${sale.quantity || 0} ${sale.unit || ''}`,
+                (sale.total || 0).toLocaleString(),
+              ]),
           ],
         },
       },
       {
         text: `Generated on ${new Date().toLocaleString()}`,
-        style: "footer",
-        alignment: "center",
+        style: 'footer',
+        alignment: 'center',
         margin: [0, 30, 0, 0],
       },
     ],
@@ -203,7 +203,7 @@ export async function generatePDFReport(
       },
     },
     defaultStyle: {
-      font: "Roboto",
+      font: 'Roboto',
     },
   };
 
@@ -211,10 +211,9 @@ export async function generatePDFReport(
     const pdfDoc = printer.createPdfKitDocument(docDefinition);
     const chunks: Buffer[] = [];
 
-    pdfDoc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    pdfDoc.on("end", () => resolve(Buffer.concat(chunks)));
-    pdfDoc.on("error", reject);
+    pdfDoc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
+    pdfDoc.on('error', reject);
     pdfDoc.end();
   });
 }
-

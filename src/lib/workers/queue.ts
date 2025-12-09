@@ -1,6 +1,6 @@
 // BullMQ Queue Setup for Background Jobs
-import { Queue, Worker, QueueEvents } from "bullmq";
-import { Redis } from "@upstash/redis";
+import { Queue, Worker, QueueEvents } from 'bullmq';
+import { Redis } from '@upstash/redis';
 
 // Initialize Redis connection
 const redis = new Redis({
@@ -10,19 +10,20 @@ const redis = new Redis({
 
 // Create connection config for BullMQ
 const connection = {
-  host: process.env.UPSTASH_REDIS_REST_URL?.replace("https://", "").replace(".upstash.io", "") || "",
+  host:
+    process.env.UPSTASH_REDIS_REST_URL?.replace('https://', '').replace('.upstash.io', '') || '',
   port: 6379,
   password: process.env.UPSTASH_REDIS_REST_TOKEN,
 };
 
 // Queue names
 export const QUEUE_NAMES = {
-  REPORTS: "reports",
-  SMS: "sms",
-  EMAIL: "email",
-  PREDICTIONS: "predictions",
-  PAYMENT_RENEWAL: "payment_renewal",
-  MILK_LOGS: "milk_logs",
+  REPORTS: 'reports',
+  SMS: 'sms',
+  EMAIL: 'email',
+  PREDICTIONS: 'predictions',
+  PAYMENT_RENEWAL: 'payment_renewal',
+  MILK_LOGS: 'milk_logs',
 } as const;
 
 // Create queues
@@ -40,4 +41,3 @@ export const emailQueueEvents = new QueueEvents(QUEUE_NAMES.EMAIL, { connection 
 
 // Export Redis instance for direct use if needed
 export { redis };
-

@@ -1,8 +1,22 @@
 // Learn more: https://github.com/testing-library/jest-dom
-import "@testing-library/jest-dom";
+import '@testing-library/jest-dom';
+import { server } from './src/mocks/server';
+
+// ============================================================================
+// MSW Server Setup
+// ============================================================================
+
+// Establish API mocking before all tests
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+
+// Reset any request handlers that we may add during the tests
+afterEach(() => server.resetHandlers());
+
+// Clean up after the tests are finished
+afterAll(() => server.close());
 
 // Mock Next.js router
-jest.mock("next/navigation", () => ({
+jest.mock('next/navigation', () => ({
   useRouter() {
     return {
       push: jest.fn(),
@@ -12,7 +26,7 @@ jest.mock("next/navigation", () => ({
     };
   },
   usePathname() {
-    return "/";
+    return '/';
   },
   useSearchParams() {
     return new URLSearchParams();
@@ -20,27 +34,27 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock Clerk
-jest.mock("@clerk/nextjs", () => ({
+jest.mock('@clerk/nextjs', () => ({
   useAuth: jest.fn(() => ({
-    userId: "test-user-id",
+    userId: 'test-user-id',
     isLoaded: true,
   })),
   useOrganization: jest.fn(() => ({
     organization: {
-      id: "test-org-id",
-      slug: "test-org",
-      name: "Test Organization",
+      id: 'test-org-id',
+      slug: 'test-org',
+      name: 'Test Organization',
     },
     isLoaded: true,
   })),
   auth: jest.fn(() => ({
-    userId: "test-user-id",
-    orgId: "test-org-id",
+    userId: 'test-user-id',
+    orgId: 'test-org-id',
   })),
 }));
 
 // Mock PostHog
-jest.mock("posthog-js/react", () => ({
+jest.mock('posthog-js/react', () => ({
   usePostHog: jest.fn(() => ({
     capture: jest.fn(),
     identify: jest.fn(),
@@ -50,11 +64,11 @@ jest.mock("posthog-js/react", () => ({
 }));
 
 // Mock Sentry
-jest.mock("@sentry/nextjs", () => ({
+jest.mock('@sentry/nextjs', () => ({
   captureException: jest.fn(),
   captureMessage: jest.fn(),
   addBreadcrumb: jest.fn(),
-  withScope: jest.fn((callback) => {
+  withScope: jest.fn(callback => {
     const scope = {
       setTag: jest.fn(),
       setContext: jest.fn(),
@@ -70,8 +84,8 @@ const originalError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
     if (
-      typeof args[0] === "string" &&
-      (args[0].includes("Warning:") || args[0].includes("Error:"))
+      typeof args[0] === 'string' &&
+      (args[0].includes('Warning:') || args[0].includes('Error:'))
     ) {
       return;
     }
@@ -82,4 +96,3 @@ beforeAll(() => {
 afterAll(() => {
   console.error = originalError;
 });
-

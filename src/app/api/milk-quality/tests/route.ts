@@ -60,10 +60,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -209,10 +206,13 @@ export async function GET(request: NextRequest) {
       const finalScore = factors > 0 ? Math.round(qualityScore) : null;
 
       // Determine if test meets premium standards
-      const meetsPremiumStandards = 
-        fatPercentage !== null && fatPercentage >= 3.5 &&
-        proteinPercentage !== null && proteinPercentage >= 3.2 &&
-        snfPercentage !== null && snfPercentage >= 8.5 &&
+      const meetsPremiumStandards =
+        fatPercentage !== null &&
+        fatPercentage >= 3.5 &&
+        proteinPercentage !== null &&
+        proteinPercentage >= 3.2 &&
+        snfPercentage !== null &&
+        snfPercentage >= 8.5 &&
         !test.adulterationTest &&
         test.status === 'passed';
 
@@ -226,7 +226,9 @@ export async function GET(request: NextRequest) {
         phLevel,
         qualityScore: finalScore,
         meetsPremiumStandards,
-        daysSinceTest: Math.floor((new Date().getTime() - new Date(test.testDate).getTime()) / (1000 * 60 * 60 * 24)),
+        daysSinceTest: Math.floor(
+          (new Date().getTime() - new Date(test.testDate).getTime()) / (1000 * 60 * 60 * 24)
+        ),
       };
     });
 
@@ -247,16 +249,15 @@ export async function GET(request: NextRequest) {
           pendingTests: qualityTestsList.filter(t => t.status === 'pending').length,
           premiumGrade: qualityTestsList.filter(t => t.grade === 'premium').length,
           adulterationDetected: qualityTestsList.filter(t => t.adulterationTest).length,
-          averageQualityScore: testsWithMetrics.reduce((sum, t) => sum + (t.qualityScore || 0), 0) / (testsWithMetrics.filter(t => t.qualityScore !== null).length || 1),
+          averageQualityScore:
+            testsWithMetrics.reduce((sum, t) => sum + (t.qualityScore || 0), 0) /
+            (testsWithMetrics.filter(t => t.qualityScore !== null).length || 1),
         },
       },
     });
   } catch (error) {
     console.error('Error fetching milk quality tests:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -265,10 +266,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -286,10 +284,7 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!animal.length) {
-        return NextResponse.json(
-          { success: false, error: 'Animal not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
     }
 
@@ -302,20 +297,25 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!milkLog.length) {
-        return NextResponse.json(
-          { success: false, error: 'Milk log not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Milk log not found' }, { status: 404 });
       }
     }
 
     // Convert percentages to integers for storage
     const testData = {
       ...validatedData,
-      fatPercentage: validatedData.fatPercentage ? Math.round(validatedData.fatPercentage * 100) : null,
-      proteinPercentage: validatedData.proteinPercentage ? Math.round(validatedData.proteinPercentage * 100) : null,
-      snfPercentage: validatedData.snfPercentage ? Math.round(validatedData.snfPercentage * 100) : null,
-      lactosePercentage: validatedData.lactosePercentage ? Math.round(validatedData.lactosePercentage * 100) : null,
+      fatPercentage: validatedData.fatPercentage
+        ? Math.round(validatedData.fatPercentage * 100)
+        : null,
+      proteinPercentage: validatedData.proteinPercentage
+        ? Math.round(validatedData.proteinPercentage * 100)
+        : null,
+      snfPercentage: validatedData.snfPercentage
+        ? Math.round(validatedData.snfPercentage * 100)
+        : null,
+      lactosePercentage: validatedData.lactosePercentage
+        ? Math.round(validatedData.lactosePercentage * 100)
+        : null,
       temperature: validatedData.temperature ? Math.round(validatedData.temperature * 10) : null,
       phLevel: validatedData.phLevel ? Math.round(validatedData.phLevel * 100) : null,
     };
@@ -343,7 +343,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating milk quality test:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -351,28 +351,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PUT /api/milk-quality/tests/[id] - Update milk quality test
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// PUT /api/milk-quality/tests?id=xxx - Update milk quality test
+export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Test ID required' }, { status: 400 });
+    }
     const body = await request.json();
     const validatedData = updateMilkQualityTestSchema.parse(body);
 
@@ -386,10 +381,7 @@ export async function PUT(
       .limit(1);
 
     if (!existingTest.length) {
-      return NextResponse.json(
-        { success: false, error: 'Test not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Test not found' }, { status: 404 });
     }
 
     // Get tenant context for ownership validation
@@ -397,10 +389,7 @@ export async function PUT(
 
     // Validate tenant ownership to prevent cross-tenant updates
     if (existingTest[0].tenantId !== tenantContext.tenantId) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
     }
 
     // Convert percentages to integers for storage
@@ -439,11 +428,14 @@ export async function PUT(
       const adulteration = updateData.adulterationTest ?? test.adulterationTest;
 
       if (fat && protein && snf && !adulteration) {
-        if (fat >= 350 && protein >= 320 && snf >= 850) { // 3.5%, 3.2%, 8.5%
+        if (fat >= 350 && protein >= 320 && snf >= 850) {
+          // 3.5%, 3.2%, 8.5%
           grade = 'premium';
-        } else if (fat >= 320 && protein >= 300 && snf >= 820) { // 3.2%, 3.0%, 8.2%
+        } else if (fat >= 320 && protein >= 300 && snf >= 820) {
+          // 3.2%, 3.0%, 8.2%
           grade = 'grade_a';
-        } else if (fat >= 300 && protein >= 280 && snf >= 800) { // 3.0%, 2.8%, 8.0%
+        } else if (fat >= 300 && protein >= 280 && snf >= 800) {
+          // 3.0%, 2.8%, 8.0%
           grade = 'grade_b';
         }
       }
@@ -468,7 +460,7 @@ export async function PUT(
     });
   } catch (error) {
     console.error('Error updating milk quality test:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -476,9 +468,6 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

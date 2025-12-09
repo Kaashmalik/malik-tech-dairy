@@ -1,16 +1,16 @@
 // API Route: Create Payment Checkout
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { createJazzCashCheckout } from "@/lib/payments/jazzcash-server";
-import { createEasyPaisaCheckout } from "@/lib/payments/easypaisa-server";
-import { createXPayCheckout } from "@/lib/payments/xpay-server";
-import { validateCoupon } from "@/lib/coupons/validation";
-import { SUBSCRIPTION_PLANS } from "@/lib/constants";
-import { adminDb } from "@/lib/firebase/admin";
-import type { PaymentGateway, SubscriptionPlan } from "@/types";
-import { v4 as uuidv4 } from "uuid";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { createJazzCashCheckout } from '@/lib/payments/jazzcash-server';
+import { createEasyPaisaCheckout } from '@/lib/payments/easypaisa-server';
+import { createXPayCheckout } from '@/lib/payments/xpay-server';
+import { validateCoupon } from '@/lib/coupons/validation';
+import { SUBSCRIPTION_PLANS } from '@/lib/constants';
+import { adminDb } from '@/lib/firebase/admin';
+import type { PaymentGateway, SubscriptionPlan } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
@@ -20,19 +20,13 @@ export async function POST(request: NextRequest) {
 
       // Validate plan
       if (!plan || !SUBSCRIPTION_PLANS[plan as SubscriptionPlan]) {
-        return NextResponse.json(
-          { error: "Invalid subscription plan" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid subscription plan' }, { status: 400 });
       }
 
       // Validate gateway
-      const validGateways: PaymentGateway[] = ["jazzcash", "easypaisa", "xpay"];
+      const validGateways: PaymentGateway[] = ['jazzcash', 'easypaisa', 'xpay'];
       if (!gateway || !validGateways.includes(gateway)) {
-        return NextResponse.json(
-          { error: "Invalid payment gateway" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid payment gateway' }, { status: 400 });
       }
 
       const planDetails = SUBSCRIPTION_PLANS[plan as SubscriptionPlan];
@@ -51,7 +45,7 @@ export async function POST(request: NextRequest) {
 
         if (!couponResult.valid) {
           return NextResponse.json(
-            { error: couponResult.error || "Invalid coupon" },
+            { error: couponResult.error || 'Invalid coupon' },
             { status: 400 }
           );
         }
@@ -73,52 +67,49 @@ export async function POST(request: NextRequest) {
         orderId,
         description: `MTK Dairy - ${planDetails.name} Plan`,
         customerEmail: context.userId, // Will be replaced with actual email
-        customerPhone: "", // Will be replaced with actual phone
+        customerPhone: '', // Will be replaced with actual phone
       };
 
-      const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/callback/${gateway}`;
+      const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/callback/${gateway}`;
 
-      if (gateway === "jazzcash") {
+      if (gateway === 'jazzcash') {
         const config = {
           merchantId: process.env.JAZZCASH_MERCHANT_ID!,
           password: process.env.JAZZCASH_PASSWORD!,
           integritySalt: process.env.JAZZCASH_INTEGRETY_SALT!,
           returnUrl,
-          isSandbox: process.env.NODE_ENV !== "production",
+          isSandbox: process.env.NODE_ENV !== 'production',
         };
 
         const result = createJazzCashCheckout(config, paymentRequest);
         checkoutUrl = result.checkoutUrl;
-      } else if (gateway === "easypaisa") {
+      } else if (gateway === 'easypaisa') {
         const config = {
           storeId: process.env.EASYPAISA_STORE_ID!,
           hashKey: process.env.EASYPAISA_HASH_KEY!,
           returnUrl,
-          isSandbox: process.env.NODE_ENV !== "production",
+          isSandbox: process.env.NODE_ENV !== 'production',
         };
 
         const result = createEasyPaisaCheckout(config, paymentRequest);
         checkoutUrl = result.checkoutUrl;
-      } else if (gateway === "xpay") {
+      } else if (gateway === 'xpay') {
         const config = {
           merchantId: process.env.XPAY_MERCHANT_ID!,
           merchantKey: process.env.XPAY_MERCHANT_KEY!,
           returnUrl,
-          isSandbox: process.env.NODE_ENV !== "production",
+          isSandbox: process.env.NODE_ENV !== 'production',
         };
 
         const result = createXPayCheckout(config, paymentRequest);
         checkoutUrl = result.checkoutUrl;
       } else {
-        return NextResponse.json(
-          { error: "Unsupported payment gateway" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Unsupported payment gateway' }, { status: 400 });
       }
 
       // Store payment intent in database (for tracking)
       if (adminDb) {
-        await adminDb.collection("payment_intents").add({
+        await adminDb.collection('payment_intents').add({
           tenantId: context.tenantId,
           userId: context.userId,
           orderId,
@@ -128,7 +119,7 @@ export async function POST(request: NextRequest) {
           discountAmount: couponCalculation?.discountAmount || 0,
           couponCode: couponCode || null,
           couponId: couponCalculation?.coupon?.id || null,
-          status: "pending",
+          status: 'pending',
           createdAt: new Date(),
         });
       }
@@ -143,12 +134,8 @@ export async function POST(request: NextRequest) {
         couponCode: couponCode || null,
       });
     } catch (error) {
-      console.error("Error creating checkout:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error creating checkout:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

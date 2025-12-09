@@ -1,8 +1,8 @@
 // Coupon & Discount Types
 
-export type CouponType = "percentage" | "fixed" | "free_trial";
+export type CouponType = 'percentage' | 'fixed' | 'free_trial';
 
-export type DiscountTarget = "all" | "free" | "starter" | "professional" | "enterprise";
+export type DiscountTarget = 'all' | 'free' | 'starter' | 'professional' | 'enterprise';
 
 export interface Coupon {
   id: string;
@@ -39,4 +39,3 @@ export interface DiscountCalculation {
   finalAmount: number;
   coupon?: Coupon;
 }
-

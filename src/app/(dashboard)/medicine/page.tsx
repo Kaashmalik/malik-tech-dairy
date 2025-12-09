@@ -9,18 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Plus, 
-  Search, 
-  Pill, 
-  Package, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Plus,
+  Search,
+  Pill,
+  Package,
+  AlertTriangle,
+  CheckCircle,
   Clock,
   Filter,
   Calendar,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
 } from 'lucide-react';
 
 // Mock data for medicine inventory
@@ -89,133 +89,132 @@ export default function MedicinePage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'adequate': return 'bg-green-100 text-green-800';
-      case 'low': return 'bg-yellow-100 text-yellow-800';
-      case 'critical': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'adequate':
+        return 'bg-green-100 text-green-800';
+      case 'low':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'critical':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'adequate': return <CheckCircle className="w-4 h-4" />;
-      case 'low': return <AlertTriangle className="w-4 h-4" />;
-      case 'critical': return <AlertTriangle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      case 'adequate':
+        return <CheckCircle className='h-4 w-4' />;
+      case 'low':
+        return <AlertTriangle className='h-4 w-4' />;
+      case 'critical':
+        return <AlertTriangle className='h-4 w-4' />;
+      default:
+        return <Clock className='h-4 w-4' />;
     }
   };
 
   const filteredMedicines = mockMedicines.filter(medicine => {
-    const matchesSearch = medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         medicine.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      medicine.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || medicine.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   return (
-    <div className="space-y-6 p-6">
+    <div className='space-y-6 p-6'>
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className='flex items-center justify-between'>
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Pill className="w-8 h-8 text-emerald-600" />
+          <h1 className='flex items-center gap-2 text-3xl font-bold'>
+            <Pill className='h-8 w-8 text-emerald-600' />
             Medicine Management
           </h1>
-          <p className="text-gray-600 mt-1">
-            Track medications, inventory, and treatment records
-          </p>
+          <p className='mt-1 text-gray-600'>Track medications, inventory, and treatment records</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Package className="w-4 h-4 mr-2" />
+        <div className='flex gap-2'>
+          <Button variant='outline'>
+            <Package className='mr-2 h-4 w-4' />
             Order Medicine
           </Button>
           <Button>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className='mr-2 h-4 w-4' />
             Add Medicine
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Medicines</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Total Medicines</CardTitle>
+            <Package className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockMedicines.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Active medications
-            </p>
+            <div className='text-2xl font-bold'>{mockMedicines.length}</div>
+            <p className='text-muted-foreground text-xs'>Active medications</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Low Stock</CardTitle>
+            <AlertTriangle className='h-4 w-4 text-yellow-600' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className='text-2xl font-bold text-yellow-600'>
               {mockMedicines.filter(m => m.status === 'low').length}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Needs restocking
-            </p>
+            <p className='text-muted-foreground text-xs'>Needs restocking</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Expiring Soon</CardTitle>
+            <Clock className='h-4 w-4 text-orange-600' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">2</div>
-            <p className="text-xs text-muted-foreground">
-              Within 30 days
-            </p>
+            <div className='text-2xl font-bold text-orange-600'>2</div>
+            <p className='text-muted-foreground text-xs'>Within 30 days</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Treatments Today</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Treatments Today</CardTitle>
+            <CheckCircle className='h-4 w-4 text-green-600' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">5</div>
-            <p className="text-xs text-muted-foreground">
-              Completed treatments
-            </p>
+            <div className='text-2xl font-bold text-green-600'>5</div>
+            <p className='text-muted-foreground text-xs'>Completed treatments</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="inventory" className="space-y-4">
+      <Tabs defaultValue='inventory' className='space-y-4'>
         <TabsList>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="treatments">Treatment Records</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value='inventory'>Inventory</TabsTrigger>
+          <TabsTrigger value='treatments'>Treatment Records</TabsTrigger>
+          <TabsTrigger value='orders'>Orders</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="inventory" className="space-y-4">
+        <TabsContent value='inventory' className='space-y-4'>
           {/* Search and Filter */}
-          <div className="flex gap-4 items-center">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div className='flex items-center gap-4'>
+            <div className='relative max-w-sm flex-1'>
+              <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
               <Input
-                placeholder="Search medicines..."
+                placeholder='Search medicines...'
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                onChange={e => setSearchTerm(e.target.value)}
+                className='pl-10'
               />
             </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
+            <Button variant='outline'>
+              <Filter className='mr-2 h-4 w-4' />
               Filter
             </Button>
           </div>
@@ -224,31 +223,36 @@ export default function MedicinePage() {
           <Card>
             <CardHeader>
               <CardTitle>Medicine Inventory</CardTitle>
-              <CardDescription>
-                Current stock levels and expiration dates
-              </CardDescription>
+              <CardDescription>Current stock levels and expiration dates</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {filteredMedicines.map((medicine) => (
-                  <div key={medicine.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <Pill className="w-5 h-5 text-emerald-600" />
+              <div className='space-y-4'>
+                {filteredMedicines.map(medicine => (
+                  <div
+                    key={medicine.id}
+                    className='flex items-center justify-between rounded-lg border p-4'
+                  >
+                    <div className='flex items-center gap-4'>
+                      <div className='flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100'>
+                        <Pill className='h-5 w-5 text-emerald-600' />
                       </div>
                       <div>
-                        <h3 className="font-medium">{medicine.name}</h3>
-                        <p className="text-sm text-gray-500">{medicine.category} • {medicine.supplier}</p>
+                        <h3 className='font-medium'>{medicine.name}</h3>
+                        <p className='text-sm text-gray-500'>
+                          {medicine.category} • {medicine.supplier}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-medium">{medicine.stock} {medicine.unit}</p>
-                        <p className="text-sm text-gray-500">Expires: {medicine.expiryDate}</p>
+                    <div className='flex items-center gap-4'>
+                      <div className='text-right'>
+                        <p className='font-medium'>
+                          {medicine.stock} {medicine.unit}
+                        </p>
+                        <p className='text-sm text-gray-500'>Expires: {medicine.expiryDate}</p>
                       </div>
                       <Badge className={getStatusColor(medicine.status)}>
                         {getStatusIcon(medicine.status)}
-                        <span className="ml-1">{medicine.status}</span>
+                        <span className='ml-1'>{medicine.status}</span>
                       </Badge>
                     </div>
                   </div>
@@ -258,35 +262,36 @@ export default function MedicinePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="treatments" className="space-y-4">
+        <TabsContent value='treatments' className='space-y-4'>
           <Card>
             <CardHeader>
               <CardTitle>Recent Treatments</CardTitle>
-              <CardDescription>
-                Medicine administration records
-              </CardDescription>
+              <CardDescription>Medicine administration records</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockTreatments.map((treatment) => (
-                  <div key={treatment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Pill className="w-5 h-5 text-blue-600" />
+              <div className='space-y-4'>
+                {mockTreatments.map(treatment => (
+                  <div
+                    key={treatment.id}
+                    className='flex items-center justify-between rounded-lg border p-4'
+                  >
+                    <div className='flex items-center gap-4'>
+                      <div className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-100'>
+                        <Pill className='h-5 w-5 text-blue-600' />
                       </div>
                       <div>
-                        <h3 className="font-medium">{treatment.animalName}</h3>
-                        <p className="text-sm text-gray-500">{treatment.medicine} • {treatment.dosage}</p>
+                        <h3 className='font-medium'>{treatment.animalName}</h3>
+                        <p className='text-sm text-gray-500'>
+                          {treatment.medicine} • {treatment.dosage}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-medium">{treatment.administeredBy}</p>
-                        <p className="text-sm text-gray-500">{treatment.date}</p>
+                    <div className='flex items-center gap-4'>
+                      <div className='text-right'>
+                        <p className='font-medium'>{treatment.administeredBy}</p>
+                        <p className='text-sm text-gray-500'>{treatment.date}</p>
                       </div>
-                      <Badge variant="secondary">
-                        {treatment.status}
-                      </Badge>
+                      <Badge variant='secondary'>{treatment.status}</Badge>
                     </div>
                   </div>
                 ))}
@@ -295,20 +300,18 @@ export default function MedicinePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="orders" className="space-y-4">
+        <TabsContent value='orders' className='space-y-4'>
           <Card>
             <CardHeader>
               <CardTitle>Medicine Orders</CardTitle>
-              <CardDescription>
-                Track and manage medicine orders
-              </CardDescription>
+              <CardDescription>Track and manage medicine orders</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <div className='py-8 text-center text-gray-500'>
+                <Package className='mx-auto mb-4 h-12 w-12 text-gray-300' />
                 <p>No active orders</p>
-                <Button className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button className='mt-4'>
+                  <Plus className='mr-2 h-4 w-4' />
                   Place New Order
                 </Button>
               </div>

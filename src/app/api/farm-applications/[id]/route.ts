@@ -16,19 +16,13 @@ const uploadPaymentSchema = z.object({
 });
 
 // GET: Get application details
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     const { id } = await params;
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = getSupabaseClient();
@@ -40,10 +34,7 @@ export async function GET(
       .single();
 
     if (error || !application) {
-      return NextResponse.json(
-        { error: 'Application not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
 
     // Only allow owner or admin to view
@@ -56,10 +47,7 @@ export async function GET(
         .single();
 
       if (!user || user.platform_role !== 'super_admin') {
-        return NextResponse.json(
-          { error: 'Forbidden' },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
 
@@ -69,27 +57,18 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching application:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch application' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch application' }, { status: 500 });
   }
 }
 
 // PATCH: Upload payment slip
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     const { id } = await params;
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = getSupabaseClient();
@@ -102,17 +81,11 @@ export async function PATCH(
       .single();
 
     if (fetchError || !existing) {
-      return NextResponse.json(
-        { error: 'Application not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
 
     if (existing.applicant_id !== userId) {
-      return NextResponse.json(
-        { error: 'Access denied' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -136,10 +109,7 @@ export async function PATCH(
 
     if (updateError) {
       console.error('Error updating application:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to update application' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to update application' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -156,9 +126,6 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json(
-      { error: 'Failed to update application' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update application' }, { status: 500 });
   }
 }

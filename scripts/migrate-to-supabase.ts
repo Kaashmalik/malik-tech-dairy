@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 /**
  * Migration Script: Firestore → Supabase
- * 
+ *
  * One-time migration of tenant metadata from Firestore to Supabase
- * 
+ *
  * Usage:
  *   npx tsx scripts/migrate-to-supabase.ts [--dry-run] [--tenant-id=<id>]
- * 
+ *
  * Options:
  *   --dry-run: Preview changes without writing to Supabase
  *   --tenant-id: Migrate specific tenant only
@@ -14,7 +14,14 @@
 
 import { adminDb } from '../src/lib/firebase/admin';
 import { getDrizzle } from '../src/lib/supabase';
-import { tenants, subscriptions, payments, apiKeys, auditLogs, customFieldsConfig } from '../src/db/schema';
+import {
+  tenants,
+  subscriptions,
+  payments,
+  apiKeys,
+  auditLogs,
+  customFieldsConfig,
+} from '../src/db/schema';
 import { eq } from 'drizzle-orm';
 
 interface MigrationStats {
@@ -48,7 +55,7 @@ async function migrateTenant(tenantId: string, dryRun: boolean = false): Promise
     // 1. Migrate Tenant Config
     console.log(`[${tenantId}] Migrating tenant config...`);
     const tenantDoc = await adminDb.collection('tenants').doc(tenantId).get();
-    
+
     if (!tenantDoc.exists) {
       stats.errors.push(`Tenant ${tenantId} not found in Firestore`);
       return stats;
@@ -80,20 +87,23 @@ async function migrateTenant(tenantId: string, dryRun: boolean = false): Promise
       };
 
       if (!dryRun) {
-        await db.insert(tenants).values(tenantData).onConflictDoUpdate({
-          target: tenants.id,
-          set: {
-            farmName: tenantData.farmName,
-            logoUrl: tenantData.logoUrl,
-            primaryColor: tenantData.primaryColor,
-            accentColor: tenantData.accentColor,
-            language: tenantData.language,
-            currency: tenantData.currency,
-            timezone: tenantData.timezone,
-            animalTypes: tenantData.animalTypes,
-            updatedAt: new Date(),
-          },
-        });
+        await db
+          .insert(tenants)
+          .values(tenantData)
+          .onConflictDoUpdate({
+            target: tenants.id,
+            set: {
+              farmName: tenantData.farmName,
+              logoUrl: tenantData.logoUrl,
+              primaryColor: tenantData.primaryColor,
+              accentColor: tenantData.accentColor,
+              language: tenantData.language,
+              currency: tenantData.currency,
+              timezone: tenantData.timezone,
+              animalTypes: tenantData.animalTypes,
+              updatedAt: new Date(),
+            },
+          });
       }
       stats.tenants++;
     }
@@ -125,19 +135,22 @@ async function migrateTenant(tenantId: string, dryRun: boolean = false): Promise
       };
 
       if (!dryRun) {
-        await db.insert(subscriptions).values(subscriptionData).onConflictDoUpdate({
-          target: subscriptions.id,
-          set: {
-            plan: subscriptionData.plan,
-            status: subscriptionData.status,
-            gateway: subscriptionData.gateway,
-            renewDate: subscriptionData.renewDate,
-            token: subscriptionData.token,
-            amount: subscriptionData.amount,
-            trialEndsAt: subscriptionData.trialEndsAt,
-            updatedAt: new Date(),
-          },
-        });
+        await db
+          .insert(subscriptions)
+          .values(subscriptionData)
+          .onConflictDoUpdate({
+            target: subscriptions.id,
+            set: {
+              plan: subscriptionData.plan,
+              status: subscriptionData.status,
+              gateway: subscriptionData.gateway,
+              renewDate: subscriptionData.renewDate,
+              token: subscriptionData.token,
+              amount: subscriptionData.amount,
+              trialEndsAt: subscriptionData.trialEndsAt,
+              updatedAt: new Date(),
+            },
+          });
       }
       stats.subscriptions++;
     }
@@ -150,7 +163,7 @@ async function migrateTenant(tenantId: string, dryRun: boolean = false): Promise
       .get();
 
     if (!dryRun && !paymentsSnapshot.empty) {
-      const paymentsData = paymentsSnapshot.docs.map((doc) => {
+      const paymentsData = paymentsSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -182,7 +195,7 @@ async function migrateTenant(tenantId: string, dryRun: boolean = false): Promise
       .get();
 
     if (!dryRun && !apiKeysSnapshot.empty) {
-      const apiKeysData = apiKeysSnapshot.docs.map((doc) => {
+      const apiKeysData = apiKeysSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -223,13 +236,16 @@ async function migrateTenant(tenantId: string, dryRun: boolean = false): Promise
       };
 
       if (!dryRun) {
-        await db.insert(customFieldsConfig).values(customFieldsData).onConflictDoUpdate({
-          target: customFieldsConfig.tenantId,
-          set: {
-            fields: customFieldsData.fields,
-            updatedAt: new Date(),
-          },
-        });
+        await db
+          .insert(customFieldsConfig)
+          .values(customFieldsData)
+          .onConflictDoUpdate({
+            target: customFieldsConfig.tenantId,
+            set: {
+              fields: customFieldsData.fields,
+              updatedAt: new Date(),
+            },
+          });
       }
       stats.customFields++;
     }
@@ -249,7 +265,7 @@ async function migrateTenant(tenantId: string, dryRun: boolean = false): Promise
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
-  const tenantIdArg = args.find((arg) => arg.startsWith('--tenant-id='));
+  const tenantIdArg = args.find(arg => arg.startsWith('--tenant-id='));
   const specificTenantId = tenantIdArg?.split('=')[1];
 
   if (dryRun) {
@@ -276,7 +292,7 @@ async function main() {
       // Migrate specific tenant
       console.log(`Migrating tenant: ${specificTenantId}\n`);
       const stats = await migrateTenant(specificTenantId, dryRun);
-      Object.keys(totalStats).forEach((key) => {
+      Object.keys(totalStats).forEach(key => {
         if (key === 'errors') {
           totalStats.errors.push(...stats.errors);
         } else {
@@ -287,12 +303,12 @@ async function main() {
       // Migrate all tenants
       console.log('Fetching all tenants from Firestore...\n');
       const tenantsSnapshot = await adminDb.collection('tenants').get();
-      
+
       console.log(`Found ${tenantsSnapshot.size} tenants to migrate\n`);
 
       for (const doc of tenantsSnapshot.docs) {
         const stats = await migrateTenant(doc.id, dryRun);
-        Object.keys(totalStats).forEach((key) => {
+        Object.keys(totalStats).forEach(key => {
           if (key === 'errors') {
             totalStats.errors.push(...stats.errors);
           } else {
@@ -312,10 +328,10 @@ async function main() {
     console.log(`API Keys: ${totalStats.apiKeys}`);
     console.log(`Custom Fields Configs: ${totalStats.customFields}`);
     console.log(`Errors: ${totalStats.errors.length}`);
-    
+
     if (totalStats.errors.length > 0) {
       console.log('\nErrors:');
-      totalStats.errors.forEach((error) => console.log(`  - ${error}`));
+      totalStats.errors.forEach(error => console.log(`  - ${error}`));
     }
 
     if (dryRun) {
@@ -330,4 +346,3 @@ async function main() {
 }
 
 main();
-

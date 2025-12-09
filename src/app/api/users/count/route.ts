@@ -1,9 +1,9 @@
 // API Route: Get User Count for Tenant
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { adminDb } from "@/lib/firebase/admin";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { adminDb } from '@/lib/firebase/admin';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
 
       // Count users belonging to this tenant
       const usersSnapshot = await adminDb
-        .collection("users")
-        .where("tenantId", "==", context.tenantId)
+        .collection('users')
+        .where('tenantId', '==', context.tenantId)
         .count()
         .get();
 
@@ -23,9 +23,8 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ count });
     } catch (error) {
-      console.error("Error counting users:", error);
+      console.error('Error counting users:', error);
       return NextResponse.json({ count: 0 });
     }
   })(request);
 }
-

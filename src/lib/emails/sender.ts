@@ -1,9 +1,9 @@
 // Email Sender using Resend API
-import { Resend } from "resend";
-import type { EmailTemplate } from "./templates";
+import { Resend } from 'resend';
+import type { EmailTemplate } from './templates';
 
 if (!process.env.RESEND_API_KEY) {
-  console.warn("RESEND_API_KEY not configured. Email sending will be disabled.");
+  console.warn('RESEND_API_KEY not configured. Email sending will be disabled.');
 }
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -19,29 +19,32 @@ export interface SendEmailOptions {
 /**
  * Send email using Resend
  */
-export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
+export async function sendEmail(
+  options: SendEmailOptions
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
   if (!resend) {
-    console.warn("Resend not configured. Email not sent:", options.to);
-    return { success: false, error: "Email service not configured" };
+    console.warn('Resend not configured. Email not sent:', options.to);
+    return { success: false, error: 'Email service not configured' };
   }
 
   try {
     const result = await resend.emails.send({
-      from: options.from || process.env.RESEND_FROM_EMAIL || "MTK Dairy <noreply@maliktechdairy.com>",
+      from:
+        options.from || process.env.RESEND_FROM_EMAIL || 'MTK Dairy <noreply@maliktechdairy.com>',
       to: options.to,
       subject: options.subject,
       html: options.html,
-      text: options.text || options.html.replace(/<[^>]*>/g, ""), // Strip HTML for text version
+      text: options.text || options.html.replace(/<[^>]*>/g, ''), // Strip HTML for text version
     });
 
     if (result.error) {
-      console.error("Resend API error:", result.error);
+      console.error('Resend API error:', result.error);
       return { success: false, error: result.error.message };
     }
 
     return { success: true, messageId: result.data?.id };
   } catch (error: any) {
-    console.error("Error sending email:", error);
+    console.error('Error sending email:', error);
     return { success: false, error: error.message };
   }
 }
@@ -62,4 +65,3 @@ export async function sendEmailTemplate(
     text: template.text,
   });
 }
-

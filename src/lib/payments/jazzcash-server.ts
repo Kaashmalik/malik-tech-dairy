@@ -1,5 +1,5 @@
 // JazzCash Payment Gateway - Server-Side Implementation
-import crypto from "crypto";
+import crypto from 'crypto';
 
 export interface JazzCashConfig {
   merchantId: string;
@@ -26,7 +26,7 @@ export interface JazzCashCheckoutResponse {
  * Generate SHA256 hash for JazzCash
  */
 function generateHash(data: string): string {
-  return crypto.createHash("sha256").update(data).digest("hex");
+  return crypto.createHash('sha256').update(data).digest('hex');
 }
 
 /**
@@ -37,8 +37,8 @@ export function createJazzCashCheckout(
   request: JazzCashPaymentRequest
 ): JazzCashCheckoutResponse {
   const baseUrl = config.isSandbox
-    ? "https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/PostTransaction"
-    : "https://jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/PostTransaction";
+    ? 'https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/PostTransaction'
+    : 'https://jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/PostTransaction';
 
   // JazzCash hash string format
   const hashString = `${config.merchantId}|${request.orderId}|${request.amount}|${config.returnUrl}|${config.integritySalt}`;
@@ -52,9 +52,9 @@ export function createJazzCashCheckout(
     pp_Password: config.password,
     pp_ReturnURL: config.returnUrl,
     pp_TxnRefNo: request.orderId,
-    pp_TxnType: "MPAY",
-    ppmpf_1: request.customerEmail || "",
-    ppmpf_2: request.customerPhone || "",
+    pp_TxnType: 'MPAY',
+    ppmpf_1: request.customerEmail || '',
+    ppmpf_2: request.customerPhone || '',
     pp_SecureHash: hash,
   });
 
@@ -89,8 +89,7 @@ export function verifyJazzCashResponse(
   return {
     valid,
     transactionId: pp_TxnRefNo,
-    amount: parseFloat(pp_Amount || "0"),
-    status: pp_ResponseCode === "000" ? "success" : "failed",
+    amount: parseFloat(pp_Amount || '0'),
+    status: pp_ResponseCode === '000' ? 'success' : 'failed',
   };
 }
-

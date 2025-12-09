@@ -19,7 +19,10 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching payments:', error);
-      return NextResponse.json({ success: false, error: 'Failed to fetch payments' }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch payments' },
+        { status: 500 }
+      );
     }
 
     const formattedPayments = (payments || []).map((payment: Record<string, unknown>) => ({

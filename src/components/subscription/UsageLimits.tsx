@@ -1,38 +1,38 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { AlertCircle, Users, Beef, TrendingUp } from "lucide-react";
-import { SUBSCRIPTION_PLANS } from "@/lib/constants";
-import type { SubscriptionPlan } from "@/types";
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { AlertCircle, Users, Beef, TrendingUp } from 'lucide-react';
+import { SUBSCRIPTION_PLANS } from '@/lib/constants';
+import type { SubscriptionPlan } from '@/types';
 
 // Alias for semantic clarity
 const Cow = Beef;
 
 export function UsageLimits() {
   const { data: limits, isLoading } = useQuery({
-    queryKey: ["usage-limits"],
+    queryKey: ['usage-limits'],
     queryFn: async () => {
-      const res = await fetch("/api/tenants/limits");
+      const res = await fetch('/api/tenants/limits');
       if (!res.ok) return null;
       return res.json();
     },
   });
 
   const { data: subscription } = useQuery({
-    queryKey: ["subscription"],
+    queryKey: ['subscription'],
     queryFn: async () => {
-      const res = await fetch("/api/subscription");
+      const res = await fetch('/api/subscription');
       if (!res.ok) return null;
       return res.json();
     },
   });
 
   if (isLoading || !limits || !subscription) {
-    return <div className="text-center py-4">Loading usage limits...</div>;
+    return <div className='py-4 text-center'>Loading usage limits...</div>;
   }
 
   const currentPlan = subscription.plan as SubscriptionPlan;
@@ -56,27 +56,27 @@ export function UsageLimits() {
     isNearLimit(userPercentage);
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+          <CardTitle className='flex items-center gap-2'>
+            <TrendingUp className='h-5 w-5' />
             Usage & Limits
           </CardTitle>
           <CardDescription>
-            Current plan: <span className="font-semibold capitalize">{planConfig.name}</span>
+            Current plan: <span className='font-semibold capitalize'>{planConfig.name}</span>
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className='space-y-6'>
           {/* Animals Usage */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Cow className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Animals</span>
+            <div className='mb-2 flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <Cow className='text-muted-foreground h-4 w-4' />
+                <span className='text-sm font-medium'>Animals</span>
               </div>
-              <span className="text-sm text-muted-foreground">
-                {animalUsage} / {maxAnimals === Infinity ? "∞" : maxAnimals}
+              <span className='text-muted-foreground text-sm'>
+                {animalUsage} / {maxAnimals === Infinity ? '∞' : maxAnimals}
               </span>
             </div>
             {maxAnimals !== Infinity && (
@@ -85,20 +85,20 @@ export function UsageLimits() {
                   value={Math.min(animalPercentage, 100)}
                   className={`h-2 ${
                     isAtLimit(animalUsage, maxAnimals)
-                      ? "bg-red-500"
+                      ? 'bg-red-500'
                       : isNearLimit(animalPercentage)
-                      ? "bg-yellow-500"
-                      : ""
+                        ? 'bg-yellow-500'
+                        : ''
                   }`}
                 />
                 {isAtLimit(animalUsage, maxAnimals) && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
+                  <p className='mt-1 flex items-center gap-1 text-xs text-red-500'>
+                    <AlertCircle className='h-3 w-3' />
                     Limit reached! Upgrade to add more animals.
                   </p>
                 )}
                 {isNearLimit(animalPercentage) && !isAtLimit(animalUsage, maxAnimals) && (
-                  <p className="text-xs text-yellow-600 mt-1">
+                  <p className='mt-1 text-xs text-yellow-600'>
                     You're using {Math.round(animalPercentage)}% of your limit.
                   </p>
                 )}
@@ -108,13 +108,13 @@ export function UsageLimits() {
 
           {/* Users Usage */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Users</span>
+            <div className='mb-2 flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <Users className='text-muted-foreground h-4 w-4' />
+                <span className='text-sm font-medium'>Users</span>
               </div>
-              <span className="text-sm text-muted-foreground">
-                {userUsage} / {maxUsers === Infinity ? "∞" : maxUsers}
+              <span className='text-muted-foreground text-sm'>
+                {userUsage} / {maxUsers === Infinity ? '∞' : maxUsers}
               </span>
             </div>
             {maxUsers !== Infinity && (
@@ -123,20 +123,20 @@ export function UsageLimits() {
                   value={Math.min(userPercentage, 100)}
                   className={`h-2 ${
                     isAtLimit(userUsage, maxUsers)
-                      ? "bg-red-500"
+                      ? 'bg-red-500'
                       : isNearLimit(userPercentage)
-                      ? "bg-yellow-500"
-                      : ""
+                        ? 'bg-yellow-500'
+                        : ''
                   }`}
                 />
                 {isAtLimit(userUsage, maxUsers) && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
+                  <p className='mt-1 flex items-center gap-1 text-xs text-red-500'>
+                    <AlertCircle className='h-3 w-3' />
                     Limit reached! Upgrade to add more users.
                   </p>
                 )}
                 {isNearLimit(userPercentage) && !isAtLimit(userUsage, maxUsers) && (
-                  <p className="text-xs text-yellow-600 mt-1">
+                  <p className='mt-1 text-xs text-yellow-600'>
                     You're using {Math.round(userPercentage)}% of your limit.
                   </p>
                 )}
@@ -145,21 +145,21 @@ export function UsageLimits() {
           </div>
 
           {/* Upgrade Prompt */}
-          {needsUpgrade && currentPlan !== "enterprise" && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-yellow-900">
+          {needsUpgrade && currentPlan !== 'enterprise' && (
+            <div className='rounded-lg border border-yellow-200 bg-yellow-50 p-4'>
+              <div className='flex items-start gap-3'>
+                <AlertCircle className='mt-0.5 h-5 w-5 text-yellow-600' />
+                <div className='flex-1'>
+                  <p className='text-sm font-medium text-yellow-900'>
                     {isAtLimit(animalUsage, maxAnimals) || isAtLimit(userUsage, maxUsers)
                       ? "You've reached your plan limits"
                       : "You're approaching your plan limits"}
                   </p>
-                  <p className="text-xs text-yellow-700 mt-1">
+                  <p className='mt-1 text-xs text-yellow-700'>
                     Upgrade to a higher plan to continue growing your farm.
                   </p>
-                  <Link href="/dashboard/subscription">
-                    <Button size="sm" className="mt-3" variant="outline">
+                  <Link href='/dashboard/subscription'>
+                    <Button size='sm' className='mt-3' variant='outline'>
                       View Plans & Upgrade
                     </Button>
                   </Link>
@@ -172,4 +172,3 @@ export function UsageLimits() {
     </div>
   );
 }
-

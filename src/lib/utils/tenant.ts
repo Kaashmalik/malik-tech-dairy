@@ -19,9 +19,9 @@ export function sanitizeSubdomain(input: string): string {
   return input
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9-]/g, "-") // Replace invalid chars with hyphen
-    .replace(/-+/g, "-") // Replace multiple hyphens with single
-    .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+    .replace(/[^a-z0-9-]/g, '-') // Replace invalid chars with hyphen
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 }
 
 /**
@@ -29,17 +29,17 @@ export function sanitizeSubdomain(input: string): string {
  */
 export function generateSubdomain(farmName: string): string {
   const sanitized = sanitizeSubdomain(farmName);
-  
+
   // Ensure minimum length
   if (sanitized.length < 3) {
-    return sanitized + "-farm";
+    return sanitized + '-farm';
   }
-  
+
   // Ensure maximum length
   if (sanitized.length > 63) {
     return sanitized.substring(0, 63);
   }
-  
+
   return sanitized;
 }
 
@@ -47,7 +47,6 @@ export function generateSubdomain(farmName: string): string {
  * Get tenant URL from subdomain
  */
 export function getTenantUrl(subdomain: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://maliktechdairy.com";
-  return `https://${subdomain}.${baseUrl.replace("https://", "")}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://maliktechdairy.com';
+  return `https://${subdomain}.${baseUrl.replace('https://', '')}`;
 }
-

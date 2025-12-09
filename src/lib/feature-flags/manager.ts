@@ -56,15 +56,11 @@ export class FeatureFlagManager {
     };
   }
 
-  private async getFlag(
-    key: string, 
-    userId?: string, 
-    tenantId?: string
-  ): Promise<FeatureFlag> {
+  private async getFlag(key: string, userId?: string, tenantId?: string): Promise<FeatureFlag> {
     // Check cache first
     const cacheKey = `${key}:${userId || 'global'}:${tenantId || 'global'}`;
     const cached = this.cache.get(cacheKey);
-    
+
     if (cached && Date.now() < (this.cacheExpiry.get(cacheKey) || 0)) {
       return cached;
     }
@@ -87,7 +83,7 @@ export class FeatureFlagManager {
 
       // Check if user/tenant is specifically targeted
       let enabled = flag.enabled;
-      
+
       if (flag.target_users && userId) {
         enabled = flag.target_users.includes(userId);
       } else if (flag.target_tenants && tenantId) {
@@ -120,31 +116,31 @@ export class FeatureFlagManager {
 
   private getDefaultFlag(key: string): FeatureFlag {
     const defaults: Record<string, FeatureFlag> = {
-      'use_supabase_apis': {
+      use_supabase_apis: {
         key: 'use_supabase_apis',
         enabled: false,
         rolloutPercentage: 0,
         description: 'Use Supabase APIs instead of Firebase',
       },
-      'enable_dual_write': {
+      enable_dual_write: {
         key: 'enable_dual_write',
         enabled: false,
         rolloutPercentage: 0,
         description: 'Write to both Firebase and Supabase',
       },
-      'read_from_supabase': {
+      read_from_supabase: {
         key: 'read_from_supabase',
         enabled: false,
         rolloutPercentage: 0,
         description: 'Read data from Supabase instead of Firebase',
       },
-      'write_to_firebase': {
+      write_to_firebase: {
         key: 'write_to_firebase',
         enabled: true,
         rolloutPercentage: 100,
         description: 'Continue writing to Firebase during migration',
       },
-      'enable_v2_endpoints': {
+      enable_v2_endpoints: {
         key: 'enable_v2_endpoints',
         enabled: false,
         rolloutPercentage: 0,
@@ -152,12 +148,14 @@ export class FeatureFlagManager {
       },
     };
 
-    return defaults[key] || {
-      key,
-      enabled: false,
-      rolloutPercentage: 0,
-      description: 'Unknown feature flag',
-    };
+    return (
+      defaults[key] || {
+        key,
+        enabled: false,
+        rolloutPercentage: 0,
+        description: 'Unknown feature flag',
+      }
+    );
   }
 
   private hashUser(identifier: string): number {
@@ -165,25 +163,20 @@ export class FeatureFlagManager {
     let hash = 0;
     for (let i = 0; i < identifier.length; i++) {
       const char = identifier.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash) % 100;
   }
 
-  async updateFlag(
-    key: string, 
-    updates: Partial<FeatureFlag>
-  ): Promise<void> {
+  async updateFlag(key: string, updates: Partial<FeatureFlag>): Promise<void> {
     try {
-      await this.supabase
-        .from('feature_flags')
-        .upsert({
-          key,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        });
-      
+      await this.supabase.from('feature_flags').upsert({
+        key,
+        ...updates,
+        updated_at: new Date().toISOString(),
+      });
+
       // Clear cache for this flag
       this.clearCacheForFlag(key);
     } catch (error) {
@@ -192,32 +185,23 @@ export class FeatureFlagManager {
     }
   }
 
-  async rolloutPercentage(
-    key: string, 
-    percentage: number
-  ): Promise<void> {
+  async rolloutPercentage(key: string, percentage: number): Promise<void> {
     await this.updateFlag(key, { rolloutPercentage: percentage });
   }
 
-  async enableForUsers(
-    key: string, 
-    userIds: string[]
-  ): Promise<void> {
-    await this.updateFlag(key, { 
-      enabled: true, 
+  async enableForUsers(key: string, userIds: string[]): Promise<void> {
+    await this.updateFlag(key, {
+      enabled: true,
       targetUsers: userIds,
-      rolloutPercentage: 100 
+      rolloutPercentage: 100,
     });
   }
 
-  async enableForTenants(
-    key: string, 
-    tenantIds: string[]
-  ): Promise<void> {
-    await this.updateFlag(key, { 
-      enabled: true, 
+  async enableForTenants(key: string, tenantIds: string[]): Promise<void> {
+    await this.updateFlag(key, {
+      enabled: true,
       targetTenants: tenantIds,
-      rolloutPercentage: 100 
+      rolloutPercentage: 100,
     });
   }
 
@@ -261,15 +245,13 @@ export function useFeatureFlags(userId?: string, tenantId?: string) {
 }
 
 // Server-side helper for API routes
-export async function getFeatureFlagsForRequest(
-  request: Request
-): Promise<FeatureFlags> {
+export async function getFeatureFlagsForRequest(request: Request): Promise<FeatureFlags> {
   const manager = FeatureFlagManager.getInstance();
-  
+
   try {
     const { userId } = auth();
     const tenantId = request.headers.get('x-tenant-id') || undefined;
-    
+
     return await manager.getFeatureFlags(userId, tenantId);
   } catch (error) {
     console.error('Error getting feature flags for request:', error);

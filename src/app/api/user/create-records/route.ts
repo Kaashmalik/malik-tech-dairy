@@ -9,21 +9,15 @@ export async function POST(request: NextRequest) {
   try {
     // Authenticate the user with Clerk
     const { userId } = auth();
-    
+
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { tenantId, role = TenantRole.FARM_OWNER } = await request.json();
 
     if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Missing tenantId' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
     console.log('Creating user records...', { userId, tenantId, role });
@@ -84,7 +78,6 @@ export async function POST(request: NextRequest) {
         tenantMemberCreated: existingMember.length === 0,
       },
     });
-
   } catch (error) {
     console.error('Error creating user records:', error);
     return NextResponse.json(

@@ -1,13 +1,10 @@
 // Tenant Limits Enforcement Utilities
-import type { TenantLimits } from "@/types";
+import type { TenantLimits } from '@/types';
 
 /**
  * Check if tenant can add more animals
  */
-export function canAddAnimal(
-  limits: TenantLimits | null,
-  currentAnimalCount: number
-): boolean {
+export function canAddAnimal(limits: TenantLimits | null, currentAnimalCount: number): boolean {
   if (!limits) return false;
   if (limits.maxAnimals === -1) return true; // Unlimited
   return currentAnimalCount < limits.maxAnimals;
@@ -16,10 +13,7 @@ export function canAddAnimal(
 /**
  * Check if tenant can add more users
  */
-export function canAddUser(
-  limits: TenantLimits | null,
-  currentUserCount: number
-): boolean {
+export function canAddUser(limits: TenantLimits | null, currentUserCount: number): boolean {
   if (!limits) return false;
   if (limits.maxUsers === -1) return true; // Unlimited
   return currentUserCount < limits.maxUsers;
@@ -28,10 +22,7 @@ export function canAddUser(
 /**
  * Check if tenant has a specific feature enabled
  */
-export function hasFeature(
-  limits: TenantLimits | null,
-  feature: string
-): boolean {
+export function hasFeature(limits: TenantLimits | null, feature: string): boolean {
   if (!limits) return false;
   return limits.features.includes(feature);
 }
@@ -59,4 +50,3 @@ export function getRemainingUserSlots(
   if (limits.maxUsers === -1) return null; // Unlimited
   return Math.max(0, limits.maxUsers - currentUserCount);
 }
-

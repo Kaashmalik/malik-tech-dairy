@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
+import {
+  Users,
+  Search,
   Filter,
   MoreVertical,
   Mail,
@@ -15,7 +15,7 @@ import {
   Loader2,
   ChevronDown,
   Calendar,
-  Building2
+  Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,7 +81,7 @@ export default function UsersPage() {
     try {
       const response = await fetch('/api/admin/users');
       const data = await response.json();
-      
+
       if (data.success) {
         setUsers(data.data || []);
       } else {
@@ -120,7 +120,7 @@ export default function UsersPage() {
 
   async function updateUserRole() {
     if (!selectedUser || !newRole) return;
-    
+
     try {
       const response = await fetch(`/api/admin/users/${selectedUser.id}/role`, {
         method: 'PATCH',
@@ -158,181 +158,190 @@ export default function UsersPage() {
   }
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.platformRole === roleFilter;
     return matchesSearch && matchesRole;
   });
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className='space-y-4 md:space-y-6'>
       {/* Page Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-xl md:text-2xl font-bold dark:text-white">Users</h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400">
+      <div className='flex flex-col gap-2'>
+        <h1 className='text-xl font-bold md:text-2xl dark:text-white'>Users</h1>
+        <p className='text-sm text-gray-500 dark:text-slate-400'>
           Manage platform users and their roles
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="w-5 h-5 text-blue-600" />
+      <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-blue-100 p-2'>
+              <Users className='h-5 w-5 text-blue-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">{users.length}</p>
-              <p className="text-xs text-gray-500">Total Users</p>
+              <p className='text-2xl font-bold dark:text-white'>{users.length}</p>
+              <p className='text-xs text-gray-500'>Total Users</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <UserCheck className="w-5 h-5 text-emerald-600" />
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-emerald-100 p-2'>
+              <UserCheck className='h-5 w-5 text-emerald-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">
+              <p className='text-2xl font-bold dark:text-white'>
                 {users.filter(u => u.isActive).length}
               </p>
-              <p className="text-xs text-gray-500">Active</p>
+              <p className='text-xs text-gray-500'>Active</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <ShieldCheck className="w-5 h-5 text-purple-600" />
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-purple-100 p-2'>
+              <ShieldCheck className='h-5 w-5 text-purple-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">
+              <p className='text-2xl font-bold dark:text-white'>
                 {users.filter(u => u.platformRole === 'super_admin').length}
               </p>
-              <p className="text-xs text-gray-500">Super Admins</p>
+              <p className='text-xs text-gray-500'>Super Admins</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <Mail className="w-5 h-5 text-amber-600" />
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-amber-100 p-2'>
+              <Mail className='h-5 w-5 text-amber-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">
+              <p className='text-2xl font-bold dark:text-white'>
                 {users.filter(u => u.emailVerified).length}
               </p>
-              <p className="text-xs text-gray-500">Verified</p>
+              <p className='text-xs text-gray-500'>Verified</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className='flex flex-col gap-3 sm:flex-row'>
+        <div className='relative flex-1'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
           <Input
-            placeholder="Search users..."
+            placeholder='Search users...'
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11"
+            onChange={e => setSearchQuery(e.target.value)}
+            className='h-11 pl-10'
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-full sm:w-44 h-11">
-            <Shield className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Role" />
+          <SelectTrigger className='h-11 w-full sm:w-44'>
+            <Shield className='mr-2 h-4 w-4' />
+            <SelectValue placeholder='Role' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="super_admin">Super Admin</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="user">User</SelectItem>
+            <SelectItem value='all'>All Roles</SelectItem>
+            <SelectItem value='super_admin'>Super Admin</SelectItem>
+            <SelectItem value='admin'>Admin</SelectItem>
+            <SelectItem value='user'>User</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Users List */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+      <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
         {loading ? (
-          <div className="p-12 text-center">
-            <Loader2 className="w-8 h-8 mx-auto animate-spin text-gray-400" />
-            <p className="mt-2 text-gray-500">Loading users...</p>
+          <div className='p-12 text-center'>
+            <Loader2 className='mx-auto h-8 w-8 animate-spin text-gray-400' />
+            <p className='mt-2 text-gray-500'>Loading users...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="p-12 text-center">
-            <Users className="w-12 h-12 mx-auto text-gray-300" />
-            <p className="mt-2 text-gray-500">No users found</p>
+          <div className='p-12 text-center'>
+            <Users className='mx-auto h-12 w-12 text-gray-300' />
+            <p className='mt-2 text-gray-500'>No users found</p>
           </div>
         ) : (
           <>
             {/* Mobile Card View */}
-            <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-700">
-              {filteredUsers.map((user) => {
+            <div className='divide-y divide-gray-100 md:hidden dark:divide-slate-700'>
+              {filteredUsers.map(user => {
                 const role = roleConfig[user.platformRole];
                 const RoleIcon = role.icon;
-                
+
                 return (
-                  <div key={user.id} className="p-4 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-medium">
+                  <div key={user.id} className='space-y-3 p-4'>
+                    <div className='flex items-start gap-3'>
+                      <div className='flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 font-medium text-white'>
                         {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium truncate dark:text-white">{user.name}</h3>
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex items-center gap-2'>
+                          <h3 className='truncate font-medium dark:text-white'>{user.name}</h3>
                           {!user.isActive && (
-                            <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded">
+                            <span className='rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600'>
                               Inactive
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                        <p className='truncate text-sm text-gray-500'>{user.email}</p>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="w-4 h-4" />
+                          <Button variant='ghost' size='icon' className='h-8 w-8'>
+                            <MoreVertical className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedUser(user);
-                            setNewRole(user.platformRole);
-                            setShowRoleDialog(true);
-                          }}>
-                            <Shield className="w-4 h-4 mr-2" /> Change Role
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setNewRole(user.platformRole);
+                              setShowRoleDialog(true);
+                            }}
+                          >
+                            <Shield className='mr-2 h-4 w-4' /> Change Role
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => toggleUserStatus(user)}>
                             {user.isActive ? (
-                              <><UserX className="w-4 h-4 mr-2" /> Deactivate</>
+                              <>
+                                <UserX className='mr-2 h-4 w-4' /> Deactivate
+                              </>
                             ) : (
-                              <><UserCheck className="w-4 h-4 mr-2" /> Activate</>
+                              <>
+                                <UserCheck className='mr-2 h-4 w-4' /> Activate
+                              </>
                             )}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${role.color}`}>
-                        <RoleIcon className="w-3 h-3" />
+
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${role.color}`}
+                      >
+                        <RoleIcon className='h-3 w-3' />
                         {role.label}
                       </span>
                       {user.emailVerified && (
-                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs">
+                        <span className='rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700'>
                           ✓ Verified
                         </span>
                       )}
-                      <span className="flex items-center gap-1 text-xs text-gray-500">
-                        <Building2 className="w-3 h-3" /> {user.farmCount} farms
+                      <span className='flex items-center gap-1 text-xs text-gray-500'>
+                        <Building2 className='h-3 w-3' /> {user.farmCount} farms
                       </span>
                     </div>
-                    
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
+
+                    <div className='flex items-center gap-4 text-xs text-gray-500'>
+                      <span className='flex items-center gap-1'>
+                        <Calendar className='h-3 w-3' />
                         Joined {format(new Date(user.createdAt), 'MMM d, yyyy')}
                       </span>
                     </div>
@@ -342,77 +351,103 @@ export default function UsersPage() {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-700/50">
+            <div className='hidden overflow-x-auto md:block'>
+              <table className='w-full'>
+                <thead className='bg-gray-50 dark:bg-slate-700/50'>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Farms</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      User
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Role
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Status
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Farms
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Last Login
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Joined
+                    </th>
+                    <th className='px-6 py-4 text-right text-xs font-medium uppercase text-gray-500'>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                  {filteredUsers.map((user) => {
+                <tbody className='divide-y divide-gray-100 dark:divide-slate-700'>
+                  {filteredUsers.map(user => {
                     const role = roleConfig[user.platformRole];
                     const RoleIcon = role.icon;
-                    
+
                     return (
-                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-medium">
+                      <tr key={user.id} className='hover:bg-gray-50 dark:hover:bg-slate-700/30'>
+                        <td className='px-6 py-4'>
+                          <div className='flex items-center gap-3'>
+                            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 font-medium text-white'>
                               {user.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium dark:text-white">{user.name}</p>
-                              <p className="text-sm text-gray-500">{user.email}</p>
+                              <p className='font-medium dark:text-white'>{user.name}</p>
+                              <p className='text-sm text-gray-500'>{user.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${role.color}`}>
-                            <RoleIcon className="w-3.5 h-3.5" />
+                        <td className='px-6 py-4'>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${role.color}`}
+                          >
+                            <RoleIcon className='h-3.5 w-3.5' />
                             {role.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-gray-300'}`} />
-                            <span className="text-sm">{user.isActive ? 'Active' : 'Inactive'}</span>
+                        <td className='px-6 py-4'>
+                          <div className='flex items-center gap-2'>
+                            <span
+                              className={`h-2 w-2 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                            />
+                            <span className='text-sm'>{user.isActive ? 'Active' : 'Inactive'}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm">{user.farmCount}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {user.lastLoginAt ? format(new Date(user.lastLoginAt), 'MMM d, yyyy') : '-'}
+                        <td className='px-6 py-4 text-sm'>{user.farmCount}</td>
+                        <td className='px-6 py-4 text-sm text-gray-500'>
+                          {user.lastLoginAt
+                            ? format(new Date(user.lastLoginAt), 'MMM d, yyyy')
+                            : '-'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className='px-6 py-4 text-sm text-gray-500'>
                           {format(new Date(user.createdAt), 'MMM d, yyyy')}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className='px-6 py-4 text-right'>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                Actions <ChevronDown className="w-4 h-4 ml-1" />
+                              <Button variant='ghost' size='sm'>
+                                Actions <ChevronDown className='ml-1 h-4 w-4' />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedUser(user);
-                                setNewRole(user.platformRole);
-                                setShowRoleDialog(true);
-                              }}>
-                                <Shield className="w-4 h-4 mr-2" /> Change Role
+                            <DropdownMenuContent align='end'>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewRole(user.platformRole);
+                                  setShowRoleDialog(true);
+                                }}
+                              >
+                                <Shield className='mr-2 h-4 w-4' /> Change Role
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => toggleUserStatus(user)}>
                                 {user.isActive ? (
-                                  <><UserX className="w-4 h-4 mr-2" /> Deactivate</>
+                                  <>
+                                    <UserX className='mr-2 h-4 w-4' /> Deactivate
+                                  </>
                                 ) : (
-                                  <><UserCheck className="w-4 h-4 mr-2" /> Activate</>
+                                  <>
+                                    <UserCheck className='mr-2 h-4 w-4' /> Activate
+                                  </>
                                 )}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -430,30 +465,28 @@ export default function UsersPage() {
 
       {/* Change Role Dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className='sm:max-w-[400px]'>
           <DialogHeader>
             <DialogTitle>Change User Role</DialogTitle>
-            <DialogDescription>
-              Update the platform role for {selectedUser?.name}
-            </DialogDescription>
+            <DialogDescription>Update the platform role for {selectedUser?.name}</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className='py-4'>
             <Select value={newRole} onValueChange={setNewRole}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select role" />
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Select role' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
+                <SelectItem value='user'>User</SelectItem>
+                <SelectItem value='admin'>Admin</SelectItem>
+                <SelectItem value='super_admin'>Super Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
+            <Button variant='outline' onClick={() => setShowRoleDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={updateUserRole} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={updateUserRole} className='bg-emerald-600 hover:bg-emerald-700'>
               Update Role
             </Button>
           </DialogFooter>

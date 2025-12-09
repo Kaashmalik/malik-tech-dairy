@@ -12,7 +12,7 @@ export function subscribeToMilkLogs(
   callback: (payload: any) => void
 ): () => void {
   const supabase = getSupabaseClient();
-  
+
   // Subscribe to changes in milk_logs table (via Supabase Realtime)
   // Note: This requires enabling replication on the milk_logs table in Supabase
   const channel = supabase
@@ -25,7 +25,7 @@ export function subscribeToMilkLogs(
         table: 'milk_logs',
         filter: `tenant_id=eq.${tenantId}`,
       },
-      (payload) => {
+      payload => {
         callback(payload);
       }
     )
@@ -44,7 +44,7 @@ export function subscribeToHealthEvents(
   callback: (payload: any) => void
 ): () => void {
   const supabase = getSupabaseClient();
-  
+
   const channel = supabase
     .channel(`health_events:${tenantId}`)
     .on(
@@ -55,7 +55,7 @@ export function subscribeToHealthEvents(
         table: 'health_events',
         filter: `tenant_id=eq.${tenantId}`,
       },
-      (payload) => {
+      payload => {
         callback(payload);
       }
     )
@@ -74,7 +74,7 @@ export function subscribeToSubscription(
   callback: (payload: any) => void
 ): () => void {
   const supabase = getSupabaseClient();
-  
+
   const channel = supabase
     .channel(`subscription:${tenantId}`)
     .on(
@@ -85,7 +85,7 @@ export function subscribeToSubscription(
         table: 'subscriptions',
         filter: `tenant_id=eq.${tenantId}`,
       },
-      (payload) => {
+      payload => {
         callback(payload);
       }
     )
@@ -95,4 +95,3 @@ export function subscribeToSubscription(
     supabase.removeChannel(channel);
   };
 }
-

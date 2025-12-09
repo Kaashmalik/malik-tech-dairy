@@ -64,11 +64,17 @@ export async function POST(request: Request) {
     const { farmName, ownerName, email, phone, city, province, plan } = body;
 
     if (!farmName || !ownerName || !email) {
-      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     // Generate slug from farm name
-    const slug = farmName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = farmName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
     const farmId = `MTD-${Date.now().toString(36).toUpperCase()}`;
 
     const { getSupabaseClient } = await import('@/lib/supabase');
@@ -118,14 +124,14 @@ export async function POST(request: Request) {
       // Continue anyway - farm is created in Supabase
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      data: { 
+    return NextResponse.json({
+      success: true,
+      data: {
         id: farmId,
         farmName: farmName,
         slug: slug,
       },
-      message: 'Farm created successfully'
+      message: 'Farm created successfully',
     });
   } catch (error) {
     console.error('Error creating farm:', error);

@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Search, 
+import {
+  FileText,
+  Search,
   Filter,
   Eye,
   CheckCircle2,
@@ -12,7 +12,7 @@ import {
   Clock,
   Upload,
   ExternalLink,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,9 +52,16 @@ interface FarmApplication {
   createdAt: string;
 }
 
-const statusConfig: Record<ApplicationStatus, { label: string; color: string; icon: typeof Clock }> = {
+const statusConfig: Record<
+  ApplicationStatus,
+  { label: string; color: string; icon: typeof Clock }
+> = {
   pending: { label: 'Pending', color: 'bg-gray-100 text-gray-700', icon: Clock },
-  payment_uploaded: { label: 'Payment Uploaded', color: 'bg-amber-100 text-amber-700', icon: Upload },
+  payment_uploaded: {
+    label: 'Payment Uploaded',
+    color: 'bg-amber-100 text-amber-700',
+    icon: Upload,
+  },
   under_review: { label: 'Under Review', color: 'bg-blue-100 text-blue-700', icon: Eye },
   approved: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
   rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle },
@@ -80,15 +87,18 @@ export default function ApplicationsPage() {
   async function fetchApplications() {
     setLoading(true);
     try {
-      const url = statusFilter === 'all' 
-        ? '/api/admin/applications'
-        : `/api/admin/applications?status=${statusFilter}`;
-      
+      const url =
+        statusFilter === 'all'
+          ? '/api/admin/applications'
+          : `/api/admin/applications?status=${statusFilter}`;
+
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.success) {
-        setApplications(data.data.applications.map((item: { application: FarmApplication }) => item.application));
+        setApplications(
+          data.data.applications.map((item: { application: FarmApplication }) => item.application)
+        );
       }
     } catch (error) {
       toast.error('Failed to fetch applications');
@@ -124,8 +134,8 @@ export default function ApplicationsPage() {
         fetchApplications();
       } else {
         // Show detailed error message
-        const errorMsg = data.details 
-          ? `${data.error}: ${data.details}` 
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
           : data.error || 'Failed to review application';
         toast.error(errorMsg);
         console.error('Review error:', data);
@@ -141,82 +151,95 @@ export default function ApplicationsPage() {
   // Filter applications by search query (robust with null checks)
   const filteredApplications = applications.filter(app => {
     if (!searchQuery.trim()) return true;
-    
+
     const query = searchQuery.toLowerCase().trim();
     const farmName = (app.farmName || '').toLowerCase();
     const ownerName = (app.ownerName || '').toLowerCase();
     const email = (app.email || '').toLowerCase();
     const phone = (app.phone || '').toLowerCase();
     const farmId = (app.assignedFarmId || '').toLowerCase();
-    
-    return farmName.includes(query) ||
-           ownerName.includes(query) ||
-           email.includes(query) ||
-           phone.includes(query) ||
-           farmId.includes(query);
+
+    return (
+      farmName.includes(query) ||
+      ownerName.includes(query) ||
+      email.includes(query) ||
+      phone.includes(query) ||
+      farmId.includes(query)
+    );
   });
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className="text-2xl font-bold dark:text-white">Farm Applications</h1>
-          <p className="text-gray-500 dark:text-slate-400">
+          <h1 className='text-2xl font-bold dark:text-white'>Farm Applications</h1>
+          <p className='text-gray-500 dark:text-slate-400'>
             Review and manage farm registration applications
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className='flex flex-col gap-3 sm:flex-row'>
+        <div className='relative flex-1'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
           <Input
-            placeholder="Search farm, owner, email, phone..."
+            placeholder='Search farm, owner, email, phone...'
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10"
+            onChange={e => setSearchQuery(e.target.value)}
+            className='h-10 pl-10'
           />
           {searchQuery && (
-            <button 
+            <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
             >
-              <XCircle className="w-4 h-4" />
+              <XCircle className='h-4 w-4' />
             </button>
           )}
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-44 h-10">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filter status" />
+          <SelectTrigger className='h-10 w-full sm:w-44'>
+            <Filter className='mr-2 h-4 w-4' />
+            <SelectValue placeholder='Filter status' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Applications</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="payment_uploaded">Payment Uploaded</SelectItem>
-            <SelectItem value="under_review">Under Review</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value='all'>All Applications</SelectItem>
+            <SelectItem value='pending'>Pending</SelectItem>
+            <SelectItem value='payment_uploaded'>Payment Uploaded</SelectItem>
+            <SelectItem value='under_review'>Under Review</SelectItem>
+            <SelectItem value='approved'>Approved</SelectItem>
+            <SelectItem value='rejected'>Rejected</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Results Count */}
       {!loading && (
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-slate-400">
+        <div className='flex items-center justify-between text-sm text-gray-500 dark:text-slate-400'>
           <span>
             {searchQuery ? (
-              <>Showing <strong className="text-gray-700 dark:text-white">{filteredApplications.length}</strong> of {applications.length} applications</>
+              <>
+                Showing{' '}
+                <strong className='text-gray-700 dark:text-white'>
+                  {filteredApplications.length}
+                </strong>{' '}
+                of {applications.length} applications
+              </>
             ) : (
-              <><strong className="text-gray-700 dark:text-white">{filteredApplications.length}</strong> applications</>
+              <>
+                <strong className='text-gray-700 dark:text-white'>
+                  {filteredApplications.length}
+                </strong>{' '}
+                applications
+              </>
             )}
           </span>
           {searchQuery && (
-            <button 
+            <button
               onClick={() => setSearchQuery('')}
-              className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+              className='text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
             >
               Clear search
             </button>
@@ -225,114 +248,126 @@ export default function ApplicationsPage() {
       )}
 
       {/* Applications Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+      <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
         {loading ? (
-          <div className="p-12 text-center">
-            <Loader2 className="w-8 h-8 mx-auto animate-spin text-gray-400" />
-            <p className="mt-2 text-gray-500">Loading applications...</p>
+          <div className='p-12 text-center'>
+            <Loader2 className='mx-auto h-8 w-8 animate-spin text-gray-400' />
+            <p className='mt-2 text-gray-500'>Loading applications...</p>
           </div>
         ) : filteredApplications.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileText className="w-12 h-12 mx-auto text-gray-300" />
-            <p className="mt-2 text-gray-500">No applications found</p>
+          <div className='p-12 text-center'>
+            <FileText className='mx-auto h-12 w-12 text-gray-300' />
+            <p className='mt-2 text-gray-500'>No applications found</p>
           </div>
         ) : (
           <>
             {/* Mobile Card View - Enhanced */}
-            <div className="lg:hidden">
+            <div className='lg:hidden'>
               {filteredApplications.map((app, index) => {
                 const status = statusConfig[app.status];
                 const StatusIcon = status.icon;
-                
+
                 return (
-                  <div 
-                    key={app.id} 
+                  <div
+                    key={app.id}
                     className={`p-4 ${index !== 0 ? 'border-t border-gray-100 dark:border-slate-700' : ''}`}
                   >
                     {/* Header with status badge */}
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                    <div className='mb-3 flex items-start justify-between gap-3'>
+                      <div className='min-w-0 flex-1'>
+                        <h3 className='truncate font-semibold text-gray-900 dark:text-white'>
                           {app.farmName}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-slate-300">{app.ownerName}</p>
+                        <p className='text-sm text-gray-600 dark:text-slate-300'>{app.ownerName}</p>
                         {app.assignedFarmId && (
-                          <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30">
-                            <span className="text-xs text-emerald-700 dark:text-emerald-400 font-mono font-medium">
+                          <div className='mt-1 inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 dark:bg-emerald-900/30'>
+                            <span className='font-mono text-xs font-medium text-emerald-700 dark:text-emerald-400'>
                               {app.assignedFarmId}
                             </span>
                           </div>
                         )}
                       </div>
-                      <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
-                        <StatusIcon className="w-3.5 h-3.5" />
-                        <span className="hidden xs:inline">{status.label}</span>
+                      <span
+                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}
+                      >
+                        <StatusIcon className='h-3.5 w-3.5' />
+                        <span className='xs:inline hidden'>{status.label}</span>
                       </span>
                     </div>
-                    
+
                     {/* Info Grid */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
-                      <div className="col-span-2 sm:col-span-1">
-                        <p className="text-gray-400 dark:text-slate-500 text-xs uppercase tracking-wide">Email</p>
-                        <p className="text-gray-700 dark:text-slate-300 truncate">{app.email}</p>
+                    <div className='mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm'>
+                      <div className='col-span-2 sm:col-span-1'>
+                        <p className='text-xs uppercase tracking-wide text-gray-400 dark:text-slate-500'>
+                          Email
+                        </p>
+                        <p className='truncate text-gray-700 dark:text-slate-300'>{app.email}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400 dark:text-slate-500 text-xs uppercase tracking-wide">Phone</p>
-                        <p className="text-gray-700 dark:text-slate-300">{app.phone}</p>
+                        <p className='text-xs uppercase tracking-wide text-gray-400 dark:text-slate-500'>
+                          Phone
+                        </p>
+                        <p className='text-gray-700 dark:text-slate-300'>{app.phone}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400 dark:text-slate-500 text-xs uppercase tracking-wide">Plan</p>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 capitalize">
+                        <p className='text-xs uppercase tracking-wide text-gray-400 dark:text-slate-500'>
+                          Plan
+                        </p>
+                        <span className='inline-flex items-center rounded bg-purple-100 px-2 py-0.5 text-xs font-medium capitalize text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'>
                           {app.requestedPlan}
                         </span>
                       </div>
                       <div>
-                        <p className="text-gray-400 dark:text-slate-500 text-xs uppercase tracking-wide">Applied</p>
-                        <p className="text-gray-700 dark:text-slate-300">{format(new Date(app.createdAt), 'MMM d, yyyy')}</p>
+                        <p className='text-xs uppercase tracking-wide text-gray-400 dark:text-slate-500'>
+                          Applied
+                        </p>
+                        <p className='text-gray-700 dark:text-slate-300'>
+                          {format(new Date(app.createdAt), 'MMM d, yyyy')}
+                        </p>
                       </div>
                     </div>
 
                     {/* Payment slip link */}
                     {app.paymentSlipUrl && (
-                      <div className="mb-3">
+                      <div className='mb-3'>
                         <a
                           href={app.paymentSlipUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline dark:text-blue-400'
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className='h-3.5 w-3.5' />
                           View Payment Slip
                         </a>
                       </div>
                     )}
-                    
+
                     {/* Action Buttons */}
                     {(app.status === 'pending' || app.status === 'payment_uploaded') && (
-                      <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-slate-700">
+                      <div className='flex gap-2 border-t border-gray-100 pt-2 dark:border-slate-700'>
                         <Button
-                          size="sm"
+                          size='sm'
                           onClick={() => {
                             setSelectedApplication(app);
                             setReviewAction('approve');
                             setShowReviewDialog(true);
                           }}
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          className='flex-1 bg-emerald-600 text-white hover:bg-emerald-700'
                         >
-                          <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                          <CheckCircle2 className='mr-1.5 h-4 w-4' />
                           Approve
                         </Button>
                         <Button
-                          size="sm"
-                          variant="outline"
+                          size='sm'
+                          variant='outline'
                           onClick={() => {
                             setSelectedApplication(app);
                             setReviewAction('reject');
                             setShowReviewDialog(true);
                           }}
-                          className="flex-1 text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
+                          className='flex-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20'
                         >
-                          <XCircle className="w-4 h-4 mr-1.5" />
+                          <XCircle className='mr-1.5 h-4 w-4' />
                           Reject
                         </Button>
                       </div>
@@ -343,118 +378,122 @@ export default function ApplicationsPage() {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-700/50">
+            <div className='hidden overflow-x-auto lg:block'>
+              <table className='w-full'>
+                <thead className='bg-gray-50 dark:bg-slate-700/50'>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400'>
                       Farm Details
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400'>
                       Contact
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400'>
                       Plan
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400'>
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400'>
                       Payment
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400'>
                       Date
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className='px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-slate-400'>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                  {filteredApplications.map((app) => {
+                <tbody className='divide-y divide-gray-100 dark:divide-slate-700'>
+                  {filteredApplications.map(app => {
                     const status = statusConfig[app.status];
                     const StatusIcon = status.icon;
-                    
+
                     return (
-                      <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30">
-                        <td className="px-6 py-4">
+                      <tr key={app.id} className='hover:bg-gray-50 dark:hover:bg-slate-700/30'>
+                        <td className='px-6 py-4'>
                           <div>
-                            <p className="font-medium dark:text-white">{app.farmName}</p>
-                            <p className="text-sm text-gray-500 dark:text-slate-400">{app.ownerName}</p>
+                            <p className='font-medium dark:text-white'>{app.farmName}</p>
+                            <p className='text-sm text-gray-500 dark:text-slate-400'>
+                              {app.ownerName}
+                            </p>
                             {app.assignedFarmId && (
-                              <p className="text-xs text-emerald-600 font-mono mt-1">
+                              <p className='mt-1 font-mono text-xs text-emerald-600'>
                                 {app.assignedFarmId}
                               </p>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm">
-                            <p className="dark:text-white">{app.email}</p>
-                            <p className="text-gray-500 dark:text-slate-400">{app.phone}</p>
+                        <td className='px-6 py-4'>
+                          <div className='text-sm'>
+                            <p className='dark:text-white'>{app.email}</p>
+                            <p className='text-gray-500 dark:text-slate-400'>{app.phone}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 capitalize">
+                        <td className='px-6 py-4'>
+                          <span className='inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium capitalize text-purple-800'>
                             {app.requestedPlan}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
-                            <StatusIcon className="w-3.5 h-3.5" />
+                        <td className='px-6 py-4'>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}
+                          >
+                            <StatusIcon className='h-3.5 w-3.5' />
                             {status.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className='px-6 py-4'>
                           {app.paymentSlipUrl ? (
                             <a
                               href={app.paymentSlipUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              className='inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800'
                             >
                               View Slip
-                              <ExternalLink className="w-3.5 h-3.5" />
+                              <ExternalLink className='h-3.5 w-3.5' />
                             </a>
                           ) : (
-                            <span className="text-sm text-gray-400">Not uploaded</span>
+                            <span className='text-sm text-gray-400'>Not uploaded</span>
                           )}
                           {app.paymentAmount && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className='mt-1 text-xs text-gray-500'>
                               Rs. {(app.paymentAmount / 100).toLocaleString()}
                             </p>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                        <td className='px-6 py-4 text-sm text-gray-500 dark:text-slate-400'>
                           {format(new Date(app.createdAt), 'MMM d, yyyy')}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className='px-6 py-4 text-right'>
                           {(app.status === 'pending' || app.status === 'payment_uploaded') && (
-                            <div className="flex items-center justify-end gap-2">
+                            <div className='flex items-center justify-end gap-2'>
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size='sm'
+                                variant='outline'
                                 onClick={() => {
                                   setSelectedApplication(app);
                                   setReviewAction('approve');
                                   setShowReviewDialog(true);
                                 }}
-                                className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                className='border-emerald-200 text-emerald-600 hover:bg-emerald-50'
                               >
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
+                                <CheckCircle2 className='mr-1 h-4 w-4' />
                                 Approve
                               </Button>
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size='sm'
+                                variant='outline'
                                 onClick={() => {
                                   setSelectedApplication(app);
                                   setReviewAction('reject');
                                   setShowReviewDialog(true);
                                 }}
-                                className="text-red-600 border-red-200 hover:bg-red-50"
+                                className='border-red-200 text-red-600 hover:bg-red-50'
                               >
-                                <XCircle className="w-4 h-4 mr-1" />
+                                <XCircle className='mr-1 h-4 w-4' />
                                 Reject
                               </Button>
                             </div>
@@ -463,69 +502,69 @@ export default function ApplicationsPage() {
                       </tr>
                     );
                   })}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </div>
 
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className='sm:max-w-[500px]'>
           <DialogHeader>
             <DialogTitle>
               {reviewAction === 'approve' ? '✅ Approve Application' : '❌ Reject Application'}
             </DialogTitle>
             <DialogDescription>
-              {reviewAction === 'approve' 
+              {reviewAction === 'approve'
                 ? 'Confirm approval and assign Farm ID to this application.'
                 : 'Provide a reason for rejecting this application.'}
             </DialogDescription>
           </DialogHeader>
 
           {selectedApplication && (
-            <div className="space-y-4 py-4">
-              <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-                <p className="font-medium">{selectedApplication.farmName}</p>
-                <p className="text-sm text-gray-500">{selectedApplication.ownerName}</p>
-                <p className="text-sm text-gray-500">{selectedApplication.email}</p>
+            <div className='space-y-4 py-4'>
+              <div className='rounded-lg bg-gray-50 p-4 dark:bg-slate-700/50'>
+                <p className='font-medium'>{selectedApplication.farmName}</p>
+                <p className='text-sm text-gray-500'>{selectedApplication.ownerName}</p>
+                <p className='text-sm text-gray-500'>{selectedApplication.email}</p>
               </div>
 
               {selectedApplication.paymentSlipUrl && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Payment Slip</label>
+                  <label className='mb-1 block text-sm font-medium'>Payment Slip</label>
                   <a
                     href={selectedApplication.paymentSlipUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='inline-flex items-center gap-2 text-blue-600 hover:text-blue-800'
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className='h-4 w-4' />
                     View Payment Slip
                   </a>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className='mb-1 block text-sm font-medium'>
                   {reviewAction === 'approve' ? 'Notes (optional)' : 'Rejection Reason *'}
                 </label>
                 {reviewAction === 'approve' ? (
                   <textarea
                     value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    onChange={e => setReviewNotes(e.target.value)}
+                    className='w-full rounded-lg border px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500'
                     rows={3}
-                    placeholder="Add any notes about this approval..."
+                    placeholder='Add any notes about this approval...'
                   />
                 ) : (
                   <textarea
                     value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    onChange={e => setRejectionReason(e.target.value)}
+                    className='w-full rounded-lg border px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500'
                     rows={3}
-                    placeholder="Explain why this application is being rejected..."
+                    placeholder='Explain why this application is being rejected...'
                     required
                   />
                 )}
@@ -535,7 +574,7 @@ export default function ApplicationsPage() {
 
           <DialogFooter>
             <Button
-              variant="outline"
+              variant='outline'
               onClick={() => setShowReviewDialog(false)}
               disabled={submitting}
             >
@@ -544,9 +583,13 @@ export default function ApplicationsPage() {
             <Button
               onClick={handleReview}
               disabled={submitting || (reviewAction === 'reject' && !rejectionReason)}
-              className={reviewAction === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}
+              className={
+                reviewAction === 'approve'
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }
             >
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {submitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
               {reviewAction === 'approve' ? 'Approve & Assign Farm ID' : 'Reject Application'}
             </Button>
           </DialogFooter>

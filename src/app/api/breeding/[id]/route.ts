@@ -1,114 +1,127 @@
-// API Route: Get/Update/Delete Breeding Record
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import type { BreedingRecord } from "@/types";
+// API Route: Get/Update/Delete Breeding Record (Supabase-based)
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSupabaseClient } from '@/lib/supabase';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // GET: Get breeding record by ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
-      const breedingRef = getTenantSubcollection(
-        context.tenantId,
-        "breeding",
-        "records"
-      );
+      const supabase = getSupabaseClient();
 
-      const doc = await breedingRef.doc(id).get();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: record, error } = await (supabase.from('breeding_records') as any)
+        .select('*')
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .single();
 
-      if (!doc.exists) {
+      if (error || !record) {
         return NextResponse.json(
-          { error: "Breeding record not found" },
+          { success: false, error: 'Breeding record not found' },
           { status: 404 }
         );
       }
 
-      const data = doc.data();
       return NextResponse.json({
-        id: doc.id,
-        ...data,
-        breedingDate: data?.breedingDate?.toDate(),
-        expectedCalvingDate: data?.expectedCalvingDate?.toDate(),
-        actualCalvingDate: data?.actualCalvingDate?.toDate(),
-        createdAt: data?.createdAt?.toDate(),
+        success: true,
+        record: {
+          id: record?.id,
+          tenantId: record?.tenant_id,
+          animalId: record?.animal_id,
+          breedingDate: record?.breeding_date,
+          expectedCalvingDate: record?.expected_calving_date,
+          actualCalvingDate: record?.actual_calving_date,
+          sireId: record?.sire_id,
+          status: record?.status,
+          notes: record?.notes,
+          createdAt: record?.created_at,
+        },
       });
     } catch (error) {
-      console.error("Error fetching breeding record:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error fetching breeding record:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
 
 // PUT: Update breeding record
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
+      const supabase = getSupabaseClient();
       const body = await req.json();
 
-      const breedingRef = getTenantSubcollection(
-        context.tenantId,
-        "breeding",
-        "records"
-      );
+      // Check if record exists
+      const { data: existing } = await supabase
+        .from('breeding_records')
+        .select('id')
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .single();
 
-      const docRef = breedingRef.doc(id);
-      const doc = await docRef.get();
-
-      if (!doc.exists) {
+      if (!existing) {
         return NextResponse.json(
-          { error: "Breeding record not found" },
+          { success: false, error: 'Breeding record not found' },
           { status: 404 }
         );
       }
 
-      const updates: Partial<BreedingRecord> = {};
-      if (body.breedingDate) updates.breedingDate = new Date(body.breedingDate);
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (body.breedingDate !== undefined) {
+        updateData.breeding_date = body.breedingDate;
+      }
       if (body.expectedCalvingDate !== undefined) {
-        updates.expectedCalvingDate = body.expectedCalvingDate
-          ? new Date(body.expectedCalvingDate)
-          : undefined;
+        updateData.expected_calving_date = body.expectedCalvingDate || null;
       }
       if (body.actualCalvingDate !== undefined) {
-        updates.actualCalvingDate = body.actualCalvingDate
-          ? new Date(body.actualCalvingDate)
-          : undefined;
+        updateData.actual_calving_date = body.actualCalvingDate || null;
       }
-      if (body.sireId !== undefined) updates.sireId = body.sireId;
-      if (body.status) updates.status = body.status;
-      if (body.notes !== undefined) updates.notes = body.notes;
+      if (body.sireId !== undefined) updateData.sire_id = body.sireId;
+      if (body.status !== undefined) updateData.status = body.status;
+      if (body.notes !== undefined) updateData.notes = body.notes;
 
-      await docRef.update(updates);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updatedRecord, error } = await (supabase.from('breeding_records') as any)
+        .update(updateData)
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .select()
+        .single();
 
-      const updated = await docRef.get();
-      const data = updated.data();
+      if (error) {
+        console.error('Error updating breeding record:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to update breeding record' },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
-        id: updated.id,
-        ...data,
-        breedingDate: data?.breedingDate?.toDate(),
-        expectedCalvingDate: data?.expectedCalvingDate?.toDate(),
-        actualCalvingDate: data?.actualCalvingDate?.toDate(),
-        createdAt: data?.createdAt?.toDate(),
+        success: true,
+        record: {
+          id: updatedRecord?.id,
+          tenantId: updatedRecord?.tenant_id,
+          animalId: updatedRecord?.animal_id,
+          breedingDate: updatedRecord?.breeding_date,
+          expectedCalvingDate: updatedRecord?.expected_calving_date,
+          actualCalvingDate: updatedRecord?.actual_calving_date,
+          sireId: updatedRecord?.sire_id,
+          status: updatedRecord?.status,
+          notes: updatedRecord?.notes,
+          createdAt: updatedRecord?.created_at,
+        },
       });
     } catch (error) {
-      console.error("Error updating breeding record:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error updating breeding record:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
@@ -121,32 +134,41 @@ export async function DELETE(
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
-      const breedingRef = getTenantSubcollection(
-        context.tenantId,
-        "breeding",
-        "records"
-      );
+      const supabase = getSupabaseClient();
 
-      const docRef = breedingRef.doc(id);
-      const doc = await docRef.get();
+      // Check if record exists
+      const { data: existing } = await supabase
+        .from('breeding_records')
+        .select('id')
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .single();
 
-      if (!doc.exists) {
+      if (!existing) {
         return NextResponse.json(
-          { error: "Breeding record not found" },
+          { success: false, error: 'Breeding record not found' },
           { status: 404 }
         );
       }
 
-      await docRef.delete();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('breeding_records') as any)
+        .delete()
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId);
+
+      if (error) {
+        console.error('Error deleting breeding record:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to delete breeding record' },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error("Error deleting breeding record:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error deleting breeding record:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

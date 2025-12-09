@@ -30,13 +30,15 @@ const createFeedInventorySchema = z.object({
   batchNumber: z.string().max(100).optional(),
   storageLocation: z.string().max(255).optional(),
   minimumStock: z.number().min(0).default(100),
-  nutritionalInfo: z.object({
-    protein: z.number(),
-    fat: z.number(),
-    fiber: z.number(),
-    moisture: z.number(),
-    energy: z.number(),
-  }).optional(),
+  nutritionalInfo: z
+    .object({
+      protein: z.number(),
+      fat: z.number(),
+      fiber: z.number(),
+      moisture: z.number(),
+      energy: z.number(),
+    })
+    .optional(),
 });
 
 // GET /api/feed-management/inventory - List feed inventory with filtering
@@ -44,10 +46,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Build where conditions - ALWAYS include tenant filtering for tenant-specific tables
     const whereConditions = [
       eq(feedInventory.tenantId, tenantContext.tenantId),
-      eq(feedInventory.isActive, query.isActive)
+      eq(feedInventory.isActive, query.isActive),
     ];
 
     if (query.feedType) {
@@ -70,21 +69,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (query.supplier) {
-      whereConditions.push(
-        ilike(feedInventory.supplier, `%${query.supplier}%`)
-      );
+      whereConditions.push(ilike(feedInventory.supplier, `%${query.supplier}%`));
     }
 
     if (query.search) {
-      whereConditions.push(
-        ilike(feedInventory.feedName, `%${query.search}%`)
-      );
+      whereConditions.push(ilike(feedInventory.feedName, `%${query.search}%`));
     }
 
     if (query.lowStock === true) {
-      whereConditions.push(
-        sql`${feedInventory.quantity} <= ${feedInventory.minimumStock}`
-      );
+      whereConditions.push(sql`${feedInventory.quantity} <= ${feedInventory.minimumStock}`);
     }
 
     if (query.expiringSoon === true) {
@@ -92,10 +85,7 @@ export async function GET(request: NextRequest) {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       whereConditions.push(
-        and(
-          lte(feedInventory.expiryDate, thirtyDaysFromNow),
-          isNotNull(feedInventory.expiryDate)
-        )
+        and(lte(feedInventory.expiryDate, thirtyDaysFromNow), isNotNull(feedInventory.expiryDate))
       );
     }
 
@@ -120,8 +110,14 @@ export async function GET(request: NextRequest) {
     const inventoryWithStatus = inventoryList.map(item => ({
       ...item,
       stockStatus: item.minimumStock && item.quantity <= item.minimumStock ? 'low' : 'adequate',
-      daysToExpiry: item.expiryDate ? Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null,
-      isExpiringSoon: item.expiryDate ? new Date(item.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : false,
+      daysToExpiry: item.expiryDate
+        ? Math.ceil(
+            (new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+          )
+        : null,
+      isExpiringSoon: item.expiryDate
+        ? new Date(item.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        : false,
     }));
 
     return NextResponse.json({
@@ -137,18 +133,17 @@ export async function GET(request: NextRequest) {
         summary: {
           totalItems: inventoryList.length,
           lowStockItems: inventoryList.filter(item => item.quantity <= item.minimumStock).length,
-          expiringSoonItems: inventoryList.filter(item => 
-            item.expiryDate && new Date(item.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          expiringSoonItems: inventoryList.filter(
+            item =>
+              item.expiryDate &&
+              new Date(item.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
           ).length,
         },
       },
     });
   } catch (error) {
     console.error('Error fetching feed inventory:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -157,10 +152,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -191,7 +183,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error adding feed inventory:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -199,9 +191,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

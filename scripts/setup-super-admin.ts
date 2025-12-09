@@ -13,7 +13,7 @@ const SUPER_ADMIN_EMAIL = 'mtkdairy@gmail.com';
 
 async function setupSuperAdmin() {
   console.log('Setting up super admin...');
-  
+
   const connectionString = process.env.SUPABASE_DATABASE_URL;
   if (!connectionString) {
     console.error('SUPABASE_DATABASE_URL not found in .env.local');
@@ -35,13 +35,13 @@ async function setupSuperAdmin() {
       // Update to super admin
       await db
         .update(platformUsers)
-        .set({ 
+        .set({
           platformRole: 'super_admin',
           isActive: true,
           updatedAt: new Date(),
         })
         .where(eq(platformUsers.email, SUPER_ADMIN_EMAIL));
-      
+
       console.log(`✅ Updated ${SUPER_ADMIN_EMAIL} to super_admin`);
       console.log(`   User ID: ${existingUser.id}`);
     } else {

@@ -1,22 +1,22 @@
 // API Route: List & Create Milk Logs (Supabase-based)
 // Migrated from Firebase to Supabase with enterprise middleware
 
-import { NextRequest, NextResponse } from "next/server";
-import { withApiMiddleware, createSuccessResponse, ErrorCode } from "@/lib/api/middleware-v2";
-import { getSupabaseClient } from "@/lib/supabase";
-import { z } from "zod";
-import { logApiEvent } from "@/lib/api/middleware-v2";
+import { NextRequest, NextResponse } from 'next/server';
+import { withApiMiddleware, createSuccessResponse, ErrorCode } from '@/lib/api/middleware-v2';
+import { getSupabaseClient } from '@/lib/supabase';
+import { z } from 'zod';
+import { logApiEvent } from '@/lib/api/middleware-v2';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // Validation schemas
 const createMilkLogSchema = z.object({
-  animalId: z.string().min(1, "Animal ID is required"),
-  date: z.string().min(1, "Date is required"),
-  session: z.enum(["morning", "evening"]),
-  yield: z.number().min(0, "Yield must be positive").max(100, "Yield seems too high"),
+  animalId: z.string().min(1, 'Animal ID is required'),
+  date: z.string().min(1, 'Date is required'),
+  session: z.enum(['morning', 'evening']),
+  yield: z.number().min(0, 'Yield must be positive').max(100, 'Yield seems too high'),
   quality: z.string().optional(),
-  notes: z.string().max(500, "Notes too long").optional(),
+  notes: z.string().max(500, 'Notes too long').optional(),
 });
 
 const listMilkLogsSchema = z.object({
@@ -41,43 +41,45 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(req.url);
       const params = Object.fromEntries(searchParams.entries());
       const validatedParams = listMilkLogsSchema.parse(params);
-      
+
       const supabase = getSupabaseClient();
       const { tenantId } = context;
-      
+
       // Build query
       let query = supabase
         .from('milk_logs')
         .select('*', { count: 'exact' })
         .eq('tenant_id', tenantId);
-      
+
       // Apply filters
       if (validatedParams.animalId) {
         query = query.eq('animal_id', validatedParams.animalId);
       }
-      
+
       if (validatedParams.date) {
         query = query.eq('date', validatedParams.date);
       } else if (validatedParams.startDate && validatedParams.endDate) {
-        query = query
-          .gte('date', validatedParams.startDate)
-          .lte('date', validatedParams.endDate);
+        query = query.gte('date', validatedParams.startDate).lte('date', validatedParams.endDate);
       }
-      
+
       // Apply pagination
       const offset = (validatedParams.page - 1) * validatedParams.limit;
       query = query
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
         .range(offset, offset + validatedParams.limit - 1);
-      
-      const { data: logs, error, count } = await query as { data: any[] | null; error: any; count: number | null };
-      
+
+      const {
+        data: logs,
+        error,
+        count,
+      } = (await query) as { data: any[] | null; error: any; count: number | null };
+
       if (error) {
-        console.error("Error fetching milk logs:", error);
-        throw new Error("Failed to fetch milk logs");
+        console.error('Error fetching milk logs:', error);
+        throw new Error('Failed to fetch milk logs');
       }
-      
+
       // Transform to camelCase for frontend
       const transformedLogs = (logs || []).map((log: any) => ({
         id: log.id,
@@ -91,10 +93,10 @@ export async function GET(request: NextRequest) {
         createdAt: log.created_at,
         updatedAt: log.updated_at,
       }));
-      
+
       // Calculate pagination metadata
       const totalPages = count ? Math.ceil(count / validatedParams.limit) : 0;
-      
+
       // Log the API event
       await logApiEvent({
         userId: context.userId,
@@ -104,19 +106,21 @@ export async function GET(request: NextRequest) {
         details: { filters: validatedParams, count: logs?.length },
         requestId: context.requestId,
       });
-      
-      return createSuccessResponse({
-        logs: transformedLogs,
-        pagination: {
-          page: validatedParams.page,
-          limit: validatedParams.limit,
-          total: count || 0,
-          totalPages,
+
+      return createSuccessResponse(
+        {
+          logs: transformedLogs,
+          pagination: {
+            page: validatedParams.page,
+            limit: validatedParams.limit,
+            total: count || 0,
+            totalPages,
+          },
         },
-      }, `Found ${logs?.length || 0} milk logs`);
-      
+        `Found ${logs?.length || 0} milk logs`
+      );
     } catch (error) {
-      console.error("GET milk logs error:", error);
+      console.error('GET milk logs error:', error);
       throw error;
     }
   });
@@ -135,10 +139,10 @@ export async function POST(request: NextRequest) {
     try {
       const body = await req.json();
       const validatedData = createMilkLogSchema.parse(body);
-      
+
       const supabase = getSupabaseClient();
       const { tenantId } = context;
-      
+
       // Verify the animal belongs to this tenant
       const { data: animal, error: animalError } = await supabase
         .from('animals')
@@ -146,11 +150,11 @@ export async function POST(request: NextRequest) {
         .eq('id', validatedData.animalId)
         .eq('tenant_id', tenantId)
         .single();
-      
+
       if (animalError || !animal) {
         throw new Error("Animal not found or doesn't belong to your farm");
       }
-      
+
       // Check for duplicate entry (same animal, date, session)
       const { data: existing } = await supabase
         .from('milk_logs')
@@ -160,13 +164,15 @@ export async function POST(request: NextRequest) {
         .eq('date', validatedData.date)
         .eq('session', validatedData.session)
         .single();
-      
+
       if (existing) {
-        throw new Error(`Milk log already exists for ${animal.tag} on ${validatedData.date} (${validatedData.session})`);
+        throw new Error(
+          `Milk log already exists for ${animal.tag} on ${validatedData.date} (${validatedData.session})`
+        );
       }
-      
+
       // Create milk log
-      const { data: milkLog, error } = await supabase
+      const { data: milkLog, error } = (await supabase
         .from('milk_logs')
         .insert({
           tenant_id: tenantId,
@@ -180,13 +186,13 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .select()
-        .single() as { data: any; error: any };
-      
+        .single()) as { data: any; error: any };
+
       if (error) {
-        console.error("Error creating milk log:", error);
-        throw new Error("Failed to create milk log");
+        console.error('Error creating milk log:', error);
+        throw new Error('Failed to create milk log');
       }
-      
+
       // Transform to camelCase
       const transformedLog = {
         id: milkLog.id,
@@ -200,28 +206,27 @@ export async function POST(request: NextRequest) {
         createdAt: milkLog.created_at,
         updatedAt: milkLog.updated_at,
       };
-      
+
       // Log the API event
       await logApiEvent({
         userId: context.userId,
         tenantId: context.tenantId,
         action: 'create',
         resource: 'milk_logs',
-        details: { 
+        details: {
           milkLogId: milkLog.id,
           animalId: validatedData.animalId,
-          yield: validatedData.yield 
+          yield: validatedData.yield,
         },
         requestId: context.requestId,
       });
-      
+
       return createSuccessResponse(
         transformedLog,
         `Milk log created for ${animal.name || animal.tag}`
       );
-      
     } catch (error) {
-      console.error("POST milk logs error:", error);
+      console.error('POST milk logs error:', error);
       throw error;
     }
   });

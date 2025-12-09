@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, useCallback } from "react";
-import { OfflineDB } from "./database";
-import { syncService } from "./sync-service";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState, useCallback } from 'react';
+import { OfflineDB } from './database';
+import { syncService } from './sync-service';
 
 // Generic offline query hook
 export function useOfflineQuery<T>(
@@ -31,39 +31,39 @@ export function useOfflineQuery<T>(
           return offlineData;
         }
       } catch (error) {
-        console.error("Offline fetch failed:", error);
+        console.error('Offline fetch failed:', error);
       }
 
       // Then try network if online
       if (navigator.onLine) {
         try {
           const networkData = await networkFetcher(tenantId);
-          
+
           // Reset offline flag when we get fresh network data
           setHasUsedOfflineData(false);
-          
+
           // Update offline cache with fresh data
           if (networkData.length > 0) {
             // This would be implemented in each specific service
             // For now, just return network data
           }
-          
+
           return networkData;
         } catch (error) {
-          console.error("Network fetch failed:", error);
-          
+          console.error('Network fetch failed:', error);
+
           // Fallback to offline data if network fails
           try {
             const fallbackData = await offlineFetcher(tenantId);
             return fallbackData;
           } catch (fallbackError) {
-            throw new Error("Both offline and network data unavailable");
+            throw new Error('Both offline and network data unavailable');
           }
         }
       }
 
       // If offline and no cached data, throw error
-      throw new Error("No internet connection and no cached data available");
+      throw new Error('No internet connection and no cached data available');
     },
     enabled: options?.enabled !== false,
     staleTime: options?.staleTime || 1000 * 60 * 5, // 5 minutes
@@ -79,13 +79,13 @@ export function useOfflineQuery<T>(
           // Refetch data after sync
           queryClient.invalidateQueries({ queryKey });
         } catch (error) {
-          console.error("Auto-sync failed:", error);
+          console.error('Auto-sync failed:', error);
         }
       }
     };
 
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, [tenantId, queryClient, queryKey]);
 
   return {
@@ -98,11 +98,11 @@ export function useOfflineQuery<T>(
 export function useOfflineAnimals(tenantId: string) {
   return useOfflineQuery(
     tenantId,
-    ["animals", tenantId],
-    (tenantId) => OfflineDB.getAnimals(tenantId),
-    async (tenantId) => {
+    ['animals', tenantId],
+    tenantId => OfflineDB.getAnimals(tenantId),
+    async tenantId => {
       const response = await fetch(`/api/animals?tenantId=${tenantId}`);
-      if (!response.ok) throw new Error("Failed to fetch animals");
+      if (!response.ok) throw new Error('Failed to fetch animals');
       const data = await response.json();
       return data.animals || [];
     }
@@ -112,14 +112,14 @@ export function useOfflineAnimals(tenantId: string) {
 export function useOfflineMilkLogs(tenantId: string, animalId?: string, limit = 30) {
   return useOfflineQuery(
     tenantId,
-    ["milkLogs", tenantId, animalId, limit],
-    (tenantId) => OfflineDB.getMilkLogs(tenantId, animalId, limit),
-    async (tenantId) => {
-      const url = animalId 
+    ['milkLogs', tenantId, animalId, limit],
+    tenantId => OfflineDB.getMilkLogs(tenantId, animalId, limit),
+    async tenantId => {
+      const url = animalId
         ? `/api/milk?animalId=${animalId}&limit=${limit}`
         : `/api/milk?limit=${limit}`;
       const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch milk logs");
+      if (!response.ok) throw new Error('Failed to fetch milk logs');
       const data = await response.json();
       return data.logs || [];
     }
@@ -129,14 +129,14 @@ export function useOfflineMilkLogs(tenantId: string, animalId?: string, limit = 
 export function useOfflineHealthRecords(tenantId: string, animalId?: string, limit = 30) {
   return useOfflineQuery(
     tenantId,
-    ["healthRecords", tenantId, animalId, limit],
-    (tenantId) => OfflineDB.getHealthRecords(tenantId, animalId, limit),
-    async (tenantId) => {
-      const url = animalId 
+    ['healthRecords', tenantId, animalId, limit],
+    tenantId => OfflineDB.getHealthRecords(tenantId, animalId, limit),
+    async tenantId => {
+      const url = animalId
         ? `/api/health?animalId=${animalId}&limit=${limit}`
         : `/api/health?limit=${limit}`;
       const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch health records");
+      if (!response.ok) throw new Error('Failed to fetch health records');
       const data = await response.json();
       return data.records || [];
     }
@@ -162,7 +162,7 @@ export function useOfflineMutation<T, V>(
       try {
         await offlineAction(variables, tenantId);
       } catch (error) {
-        console.error("Offline action failed:", error);
+        console.error('Offline action failed:', error);
         // Continue with network action even if offline fails
       }
 
@@ -170,13 +170,13 @@ export function useOfflineMutation<T, V>(
       if (navigator.onLine) {
         try {
           const result = await mutationFn(variables);
-          
+
           // Update offline cache with server response
           // This would be implemented based on the specific mutation type
-          
+
           return result;
         } catch (error) {
-          console.error("Network mutation failed, will sync later:", error);
+          console.error('Network mutation failed, will sync later:', error);
           // Return a success response anyway since offline action succeeded
           return { success: true, offline: true } as T;
         }
@@ -192,11 +192,11 @@ export function useOfflineMutation<T, V>(
           queryClient.invalidateQueries({ queryKey });
         });
       }
-      
+
       options?.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {
-      console.error("Mutation failed:", error);
+      console.error('Mutation failed:', error);
       options?.onError?.(error, variables);
     },
   });
@@ -209,19 +209,19 @@ export function useOfflineCreateAnimal(tenantId: string) {
   return useOfflineMutation(
     tenantId,
     async (animalData: any) => {
-      const response = await fetch("/api/animals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/animals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(animalData),
       });
-      if (!response.ok) throw new Error("Failed to create animal");
+      if (!response.ok) throw new Error('Failed to create animal');
       return response.json();
     },
     async (animalData: any, tenantId: string) => {
       return await OfflineDB.addAnimal(animalData, tenantId);
     },
     {
-      invalidateQueries: [["animals", tenantId]],
+      invalidateQueries: [['animals', tenantId]],
     }
   );
 }
@@ -231,11 +231,11 @@ export function useOfflineUpdateAnimal(tenantId: string) {
     tenantId,
     async ({ id, ...updates }: any) => {
       const response = await fetch(`/api/animals/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      if (!response.ok) throw new Error("Failed to update animal");
+      if (!response.ok) throw new Error('Failed to update animal');
       return response.json();
     },
     async ({ id, ...updates }: any, tenantId: string) => {
@@ -243,7 +243,7 @@ export function useOfflineUpdateAnimal(tenantId: string) {
       return id;
     },
     {
-      invalidateQueries: [["animals", tenantId]],
+      invalidateQueries: [['animals', tenantId]],
     }
   );
 }
@@ -253,9 +253,9 @@ export function useOfflineDeleteAnimal(tenantId: string) {
     tenantId,
     async (id: string) => {
       const response = await fetch(`/api/animals/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
-      if (!response.ok) throw new Error("Failed to delete animal");
+      if (!response.ok) throw new Error('Failed to delete animal');
       return response.json();
     },
     async (id: string, tenantId: string) => {
@@ -263,7 +263,7 @@ export function useOfflineDeleteAnimal(tenantId: string) {
       return id;
     },
     {
-      invalidateQueries: [["animals", tenantId]],
+      invalidateQueries: [['animals', tenantId]],
     }
   );
 }
@@ -272,19 +272,19 @@ export function useOfflineCreateMilkLog(tenantId: string) {
   return useOfflineMutation(
     tenantId,
     async (logData: any) => {
-      const response = await fetch("/api/milk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/milk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(logData),
       });
-      if (!response.ok) throw new Error("Failed to create milk log");
+      if (!response.ok) throw new Error('Failed to create milk log');
       return response.json();
     },
     async (logData: any, tenantId: string) => {
       return await OfflineDB.addMilkLog(logData, tenantId);
     },
     {
-      invalidateQueries: [["milkLogs", tenantId]],
+      invalidateQueries: [['milkLogs', tenantId]],
     }
   );
 }
@@ -303,7 +303,7 @@ export function useSyncStatus(tenantId: string) {
       try {
         const status = await OfflineDB.getSyncStatus(tenantId);
         const mutations = await OfflineDB.getQueuedMutations(tenantId);
-        
+
         setSyncStatus({
           isOnline: navigator.onLine,
           pendingMutations: mutations.length,
@@ -311,24 +311,24 @@ export function useSyncStatus(tenantId: string) {
           syncInProgress: status?.syncInProgress || false,
         });
       } catch (error) {
-        console.error("Failed to get sync status:", error);
+        console.error('Failed to get sync status:', error);
       }
     };
 
     updateStatus();
-    
+
     const interval = setInterval(updateStatus, 5000); // Update every 5 seconds
-    
+
     const handleOnline = updateStatus;
     const handleOffline = updateStatus;
-    
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
       clearInterval(interval);
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, [tenantId]);
 
@@ -339,7 +339,7 @@ export function useSyncStatus(tenantId: string) {
         // Update status after sync
         const status = await OfflineDB.getSyncStatus(tenantId);
         const mutations = await OfflineDB.getQueuedMutations(tenantId);
-        
+
         setSyncStatus(prev => ({
           ...prev,
           pendingMutations: mutations.length,
@@ -347,7 +347,7 @@ export function useSyncStatus(tenantId: string) {
           syncInProgress: false,
         }));
       } catch (error) {
-        console.error("Manual sync failed:", error);
+        console.error('Manual sync failed:', error);
       }
     }
   }, [tenantId]);

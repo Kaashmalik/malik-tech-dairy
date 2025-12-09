@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { usePostHogAnalytics } from "@/hooks/usePostHog";
+import { useEffect } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { usePostHogAnalytics } from '@/hooks/usePostHog';
 
 /**
  * Component to automatically track page views
@@ -15,10 +15,8 @@ export function PostHogPageView() {
 
   useEffect(() => {
     if (pathname) {
-      const url = searchParams?.toString()
-        ? `${pathname}?${searchParams.toString()}`
-        : pathname;
-      
+      const url = searchParams?.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+
       trackPageView(pathname, {
         url,
       });
@@ -27,4 +25,3 @@ export function PostHogPageView() {
 
   return null;
 }
-

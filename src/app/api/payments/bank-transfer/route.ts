@@ -1,14 +1,14 @@
 // API Route: Bank Transfer Payment
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { createBankTransferPayment, getBankAccountDetails } from "@/lib/payments/bank-transfer";
-import { updateTenantSubscription } from "@/lib/subscriptions/management";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { createBankTransferPayment, getBankAccountDetails } from '@/lib/payments/bank-transfer';
+import { updateTenantSubscription } from '@/lib/subscriptions/management';
+import { z } from 'zod';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const bankTransferSchema = z.object({
-  plan: z.enum(["free", "professional", "farm", "enterprise"]),
+  plan: z.enum(['free', 'professional', 'farm', 'enterprise']),
   amount: z.number().positive(),
   bankName: z.string().optional(),
   accountNumber: z.string().optional(),
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const { userId, orgId } = await auth();
 
     if (!userId || !orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -51,17 +51,14 @@ export async function POST(request: NextRequest) {
       instructions: `Please transfer PKR ${payment.amount.toLocaleString()} to the account above and include reference code: ${payment.referenceCode} in the transfer description.`,
     });
   } catch (error: any) {
-    console.error("Error creating bank transfer payment:", error);
-    if (error.name === "ZodError") {
+    console.error('Error creating bank transfer payment:', error);
+    if (error.name === 'ZodError') {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: 'Validation failed', details: error.errors },
         { status: 400 }
       );
     }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -70,4 +67,3 @@ export async function GET() {
   const bankDetails = getBankAccountDetails();
   return NextResponse.json({ bankDetails });
 }
-

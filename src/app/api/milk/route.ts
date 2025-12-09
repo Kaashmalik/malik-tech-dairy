@@ -1,61 +1,72 @@
-// API Route: List & Create Milk Logs
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import { adminDb } from "@/lib/firebase/admin";
-import type { MilkLog } from "@/types";
-import { createMilkLogSchema, listMilkLogsSchema } from "@/lib/validations/milk";
+// API Route: List & Create Milk Logs (Supabase-based)
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSupabaseClient } from '@/lib/supabase';
+import { createMilkLogSchema } from '@/lib/validations/milk';
+import { v4 as uuidv4 } from 'uuid';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // GET: List milk logs (with optional filters)
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      if (!adminDb) {
-        return NextResponse.json({ error: "Database not available" }, { status: 500 });
-      }
+      const supabase = getSupabaseClient();
 
       const { searchParams } = new URL(req.url);
-      const date = searchParams.get("date");
-      const animalId = searchParams.get("animalId");
-      const startDate = searchParams.get("startDate");
-      const endDate = searchParams.get("endDate");
+      const date = searchParams.get('date');
+      const animalId = searchParams.get('animalId');
+      const startDate = searchParams.get('startDate');
+      const endDate = searchParams.get('endDate');
 
-      const milkLogsRef = getTenantSubcollection(
-        context.tenantId,
-        "milkLogs",
-        "logs"
-      );
-
-      let query: any = milkLogsRef;
+      let query = supabase
+        .from('milk_logs')
+        .select('*')
+        .eq('tenant_id', context.tenantId)
+        .order('date', { ascending: false })
+        .order('session', { ascending: false })
+        .limit(100);
 
       if (date) {
-        // Get logs for specific date
-        query = query.where("date", "==", date);
+        query = query.eq('date', date);
       } else if (startDate && endDate) {
-        // Get logs for date range
-        query = query.where("date", ">=", startDate).where("date", "<=", endDate);
+        query = query.gte('date', startDate).lte('date', endDate);
       }
 
       if (animalId) {
-        query = query.where("animalId", "==", animalId);
+        query = query.eq('animal_id', animalId);
       }
 
-      query = query.orderBy("date", "desc").orderBy("session", "desc");
+      const { data: logs, error } = await query;
 
-      const snapshot = await query.limit(100).get();
-      const logs = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
+      if (error) {
+        console.error('Error fetching milk logs:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch milk logs', logs: [] },
+          { status: 500 }
+        );
+      }
+
+      // Transform to camelCase for frontend
+      const transformedLogs = (logs || []).map((log: any) => ({
+        id: log.id,
+        tenantId: log.tenant_id,
+        animalId: log.animal_id,
+        date: log.date,
+        session: log.session,
+        quantity: log.quantity,
+        quality: log.quality,
+        fat: log.fat,
+        notes: log.notes,
+        recordedBy: log.recorded_by,
+        createdAt: log.created_at,
       }));
 
-      return NextResponse.json({ logs });
+      return NextResponse.json({ success: true, logs: transformedLogs });
     } catch (error) {
-      console.error("Error fetching milk logs:", error);
+      console.error('Error fetching milk logs:', error);
       return NextResponse.json(
-        { error: "Internal server error" },
+        { success: false, error: 'Internal server error', logs: [] },
         { status: 500 }
       );
     }
@@ -66,19 +77,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      if (!adminDb) {
-        return NextResponse.json({ error: "Database not available" }, { status: 500 });
-      }
-
+      const supabase = getSupabaseClient();
       const body = await req.json();
-      
+
       // Validate with Zod
       let validated;
       try {
         validated = createMilkLogSchema.parse(body);
       } catch (error: any) {
         return NextResponse.json(
-          { error: "Validation failed", details: error.errors },
+          { success: false, error: 'Validation failed', details: error.errors },
           { status: 400 }
         );
       }
@@ -86,51 +94,71 @@ export async function POST(request: NextRequest) {
       const { animalId, date, session, quantity, quality, notes } = validated;
 
       // Check if log already exists for this animal/date/session
-      const milkLogsRef = getTenantSubcollection(
-        context.tenantId,
-        "milkLogs",
-        "logs"
-      );
-
-      const existing = await milkLogsRef
-        .where("animalId", "==", animalId)
-        .where("date", "==", date)
-        .where("session", "==", session)
+      const { data: existing } = await supabase
+        .from('milk_logs')
+        .select('id')
+        .eq('tenant_id', context.tenantId)
+        .eq('animal_id', animalId)
+        .eq('date', date)
+        .eq('session', session)
         .limit(1)
-        .get();
+        .single();
 
-      if (!existing.empty) {
+      if (existing) {
         return NextResponse.json(
-          { error: "Milk log already exists for this animal, date, and session" },
+          { success: false, error: 'Milk log already exists for this animal, date, and session' },
           { status: 409 }
         );
       }
 
-      const milkLogData: Omit<MilkLog, "id"> = {
-        tenantId: context.tenantId,
-        animalId,
+      const now = new Date().toISOString();
+      const logId = uuidv4();
+
+      const milkLogData = {
+        id: logId,
+        tenant_id: context.tenantId,
+        animal_id: animalId,
         date,
         session,
         quantity,
-        quality: quality || undefined,
-        notes: notes || undefined,
-        recordedBy: context.userId,
-        createdAt: new Date(),
+        quality: quality || null,
+        notes: notes || null,
+        recorded_by: context.userId,
+        created_at: now,
       };
 
-      const docRef = await milkLogsRef.add(milkLogData);
+      const { data: newLog, error } = await supabase
+        .from('milk_logs')
+        .insert(milkLogData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating milk log:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to create milk log', details: error.message },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
         success: true,
-        log: { id: docRef.id, ...milkLogData },
+        log: {
+          id: newLog.id,
+          tenantId: newLog.tenant_id,
+          animalId: newLog.animal_id,
+          date: newLog.date,
+          session: newLog.session,
+          quantity: newLog.quantity,
+          quality: newLog.quality,
+          notes: newLog.notes,
+          recordedBy: newLog.recorded_by,
+          createdAt: newLog.created_at,
+        },
       });
     } catch (error) {
-      console.error("Error creating milk log:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error creating milk log:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

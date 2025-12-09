@@ -127,7 +127,7 @@ export async function invalidateTenantCache(tenantId: string): Promise<void> {
     cacheKeys.lowYieldAnimals(tenantId),
   ];
 
-  await Promise.all(keys.map((key) => deleteCache(key)));
+  await Promise.all(keys.map(key => deleteCache(key)));
 }
 
 /**
@@ -146,10 +146,9 @@ export async function withCache<T>(
 
   // Cache miss - execute function
   const result = await fn();
-  
+
   // Cache result
   await setCache(key, result, ttlSeconds);
-  
+
   return result;
 }
-

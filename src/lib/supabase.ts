@@ -19,7 +19,7 @@ export function getSupabasePool() {
 
   if (!connectionPool) {
     const connectionString = process.env.SUPABASE_DATABASE_URL;
-    
+
     if (!connectionString) {
       throw new Error('SUPABASE_DATABASE_URL is not set');
     }
@@ -80,4 +80,3 @@ export async function closeSupabaseConnections() {
     connectionPool = null;
   }
 }
-

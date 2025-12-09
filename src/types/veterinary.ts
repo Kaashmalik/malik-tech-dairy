@@ -108,46 +108,42 @@ export interface ProtocolStep {
 }
 
 // Enums
-export type DiseaseCategory = 
-  | 'metabolic' 
-  | 'infectious' 
-  | 'reproductive' 
-  | 'nutritional' 
-  | 'parasitic' 
-  | 'respiratory' 
-  | 'digestive' 
+export type DiseaseCategory =
+  | 'metabolic'
+  | 'infectious'
+  | 'reproductive'
+  | 'nutritional'
+  | 'parasitic'
+  | 'respiratory'
+  | 'digestive'
   | 'musculoskeletal';
 
 export type DiseaseSeverity = 'mild' | 'moderate' | 'severe' | 'critical';
 
-export type TreatmentOutcome = 
-  | 'pending' 
-  | 'recovering' 
-  | 'recovered' 
-  | 'chronic' 
-  | 'deceased' 
+export type TreatmentOutcome =
+  | 'pending'
+  | 'recovering'
+  | 'recovered'
+  | 'chronic'
+  | 'deceased'
   | 'euthanized';
 
-export type VaccineType = 
-  | 'live_attenuated' 
-  | 'inactivated' 
-  | 'subunit' 
-  | 'toxoid' 
-  | 'conjugate' 
+export type VaccineType =
+  | 'live_attenuated'
+  | 'inactivated'
+  | 'subunit'
+  | 'toxoid'
+  | 'conjugate'
   | 'mrna';
 
-export type VaccinationStatus = 
-  | 'scheduled' 
-  | 'administered' 
-  | 'overdue' 
-  | 'skipped' 
+export type VaccinationStatus =
+  | 'scheduled'
+  | 'administered'
+  | 'overdue'
+  | 'skipped'
   | 'reaction_recorded';
 
-export type ProtocolType = 
-  | 'diagnosis' 
-  | 'treatment' 
-  | 'prevention' 
-  | 'emergency_care';
+export type ProtocolType = 'diagnosis' | 'treatment' | 'prevention' | 'emergency_care';
 
 export type SeasonalPattern = {
   season: 'spring' | 'summer' | 'monsoon' | 'autumn' | 'winter';
@@ -260,8 +256,8 @@ export interface DiseaseAnalytics {
   treatmentEffectiveness: Array<{
     diseaseName: string;
     totalCases: number;
-  successRate: number;
-  averageTreatmentDuration: number;
+    successRate: number;
+    averageTreatmentDuration: number;
   }>;
 }
 
@@ -269,10 +265,22 @@ export interface DiseaseAnalytics {
 export const diseaseValidationSchema = {
   nameEn: { required: true, minLength: 2, maxLength: 100 },
   nameUr: { required: false, minLength: 2, maxLength: 100 },
-  category: { required: true, enum: ['metabolic', 'infectious', 'reproductive', 'nutritional', 'parasitic', 'respiratory', 'digestive', 'musculoskeletal'] },
+  category: {
+    required: true,
+    enum: [
+      'metabolic',
+      'infectious',
+      'reproductive',
+      'nutritional',
+      'parasitic',
+      'respiratory',
+      'digestive',
+      'musculoskeletal',
+    ],
+  },
   severity: { required: true, enum: ['mild', 'moderate', 'severe', 'critical'] },
   symptoms: { required: true, minItems: 1 },
-  zoonoticRisk: { required: true, type: 'boolean' }
+  zoonoticRisk: { required: true, type: 'boolean' },
 };
 
 export const treatmentRecordValidationSchema = {
@@ -282,5 +290,5 @@ export const treatmentRecordValidationSchema = {
   diagnosis: { required: true, minLength: 5 },
   veterinarianName: { required: true, minLength: 2 },
   cost: { required: true, min: 0 },
-  startDate: { required: true, type: 'date' }
+  startDate: { required: true, type: 'date' },
 };

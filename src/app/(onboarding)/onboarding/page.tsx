@@ -1,21 +1,21 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { getDrizzle } from "@/lib/supabase";
-import { farmApplications } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { getDrizzle } from '@/lib/supabase';
+import { farmApplications } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export default async function OnboardingPage() {
   const { userId, orgId } = await auth();
 
   if (!userId) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   // If user already has an organization, go to dashboard
   if (orgId) {
-    redirect("/dashboard");
+    redirect('/dashboard');
   }
 
   // Check if user has a pending application
@@ -33,10 +33,9 @@ export default async function OnboardingPage() {
       redirect(`/apply/status?id=${application.id}`);
     }
   } catch (error) {
-    console.error("Error checking application:", error);
+    console.error('Error checking application:', error);
   }
 
   // No application - redirect to apply page
-  redirect("/apply");
+  redirect('/apply');
 }
-

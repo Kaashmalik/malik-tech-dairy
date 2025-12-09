@@ -1,11 +1,11 @@
 // Background job processor for sending SMS alerts
-import type { Job } from "bullmq";
+import type { Job } from 'bullmq';
 
 interface SMSJobData {
   tenantId: string;
   phone: string;
   message: string;
-  type: "alert" | "notification" | "reminder";
+  type: 'alert' | 'notification' | 'reminder';
 }
 
 export async function processSMSJob(job: Job<SMSJobData>) {
@@ -17,7 +17,7 @@ export async function processSMSJob(job: Job<SMSJobData>) {
 
     if (!process.env.TWILIO_ACCOUNT_SID) {
       console.log(`[SMS] Would send to ${phone}: ${message}`);
-      return { success: true, sent: false, reason: "Twilio not configured" };
+      return { success: true, sent: false, reason: 'Twilio not configured' };
     }
 
     // Actual Twilio implementation would go here
@@ -32,4 +32,3 @@ export async function processSMSJob(job: Job<SMSJobData>) {
     throw new Error(`SMS sending failed: ${error}`);
   }
 }
-

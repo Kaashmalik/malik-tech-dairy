@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { usePermissions } from "@/hooks/usePermissions";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { UserRole } from "@/types/roles";
+import { usePermissions } from '@/hooks/usePermissions';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { UserRole } from '@/types/roles';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export function ProtectedRoute({
   children,
   requiredRole,
   requiredPermission,
-  fallbackUrl = "/unauthorized",
+  fallbackUrl = '/unauthorized',
 }: ProtectedRouteProps) {
   const { userRole, hasPermission, hasRole, loading } = usePermissions();
   const router = useRouter();
@@ -33,22 +33,28 @@ export function ProtectedRoute({
     // Check permission requirement
     if (
       requiredPermission &&
-      !hasPermission(
-        requiredPermission.resource,
-        requiredPermission.action
-      )
+      !hasPermission(requiredPermission.resource, requiredPermission.action)
     ) {
       router.push(fallbackUrl);
       return;
     }
-  }, [loading, userRole, requiredRole, requiredPermission, hasRole, hasPermission, router, fallbackUrl]);
+  }, [
+    loading,
+    userRole,
+    requiredRole,
+    requiredPermission,
+    hasRole,
+    hasPermission,
+    router,
+    fallbackUrl,
+  ]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className='flex min-h-screen items-center justify-center'>
+        <div className='text-center'>
+          <div className='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900'></div>
+          <p className='mt-4 text-gray-600'>Loading...</p>
         </div>
       </div>
     );
@@ -56,4 +62,3 @@ export function ProtectedRoute({
 
   return <>{children}</>;
 }
-

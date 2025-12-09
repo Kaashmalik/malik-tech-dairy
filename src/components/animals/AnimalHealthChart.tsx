@@ -2,7 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts';
 import { Heart, TrendingUp, Calendar, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,13 +44,62 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
       setLoading(true);
       // Mock data for demonstration - replace with actual API call
       const mockData: HealthData[] = [
-        { date: '2024-11-01', healthScore: 85, temperature: 38.5, heartRate: 72, weight: 450, event: 'Checkup' },
-        { date: '2024-11-05', healthScore: 88, temperature: 38.3, heartRate: 70, weight: 452, event: 'Vaccination' },
-        { date: '2024-11-10', healthScore: 82, temperature: 38.8, heartRate: 75, weight: 448, event: 'Treatment' },
-        { date: '2024-11-15', healthScore: 90, temperature: 38.4, heartRate: 68, weight: 455, event: 'Checkup' },
-        { date: '2024-11-20', healthScore: 87, temperature: 38.6, heartRate: 71, weight: 453, event: 'Normal' },
-        { date: '2024-11-25', healthScore: 92, temperature: 38.2, heartRate: 66, weight: 458, event: 'Checkup' },
-        { date: '2024-11-30', healthScore: 89, temperature: 38.5, heartRate: 69, weight: 456, event: 'Normal' },
+        {
+          date: '2024-11-01',
+          healthScore: 85,
+          temperature: 38.5,
+          heartRate: 72,
+          weight: 450,
+          event: 'Checkup',
+        },
+        {
+          date: '2024-11-05',
+          healthScore: 88,
+          temperature: 38.3,
+          heartRate: 70,
+          weight: 452,
+          event: 'Vaccination',
+        },
+        {
+          date: '2024-11-10',
+          healthScore: 82,
+          temperature: 38.8,
+          heartRate: 75,
+          weight: 448,
+          event: 'Treatment',
+        },
+        {
+          date: '2024-11-15',
+          healthScore: 90,
+          temperature: 38.4,
+          heartRate: 68,
+          weight: 455,
+          event: 'Checkup',
+        },
+        {
+          date: '2024-11-20',
+          healthScore: 87,
+          temperature: 38.6,
+          heartRate: 71,
+          weight: 453,
+          event: 'Normal',
+        },
+        {
+          date: '2024-11-25',
+          healthScore: 92,
+          temperature: 38.2,
+          heartRate: 66,
+          weight: 458,
+          event: 'Checkup',
+        },
+        {
+          date: '2024-11-30',
+          healthScore: 89,
+          temperature: 38.5,
+          heartRate: 69,
+          weight: 456,
+          event: 'Normal',
+        },
       ];
 
       // Filter data based on time range
@@ -55,17 +114,21 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
 
   const getTimeRangeDays = (range: string) => {
     switch (range) {
-      case '7d': return 7;
-      case '30d': return 30;
-      case '90d': return 90;
-      default: return 30;
+      case '7d':
+        return 7;
+      case '30d':
+        return 30;
+      case '90d':
+        return 90;
+      default:
+        return 30;
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
     });
   };
 
@@ -78,10 +141,10 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="text-sm font-medium text-gray-900">{formatDate(label)}</p>
+        <div className='rounded-lg border border-gray-200 bg-white p-3 shadow-lg'>
+          <p className='text-sm font-medium text-gray-900'>{formatDate(label)}</p>
           {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
+            <p key={index} className='text-sm' style={{ color: entry.color }}>
               {entry.name}: {entry.value}
               {entry.name === 'Health Score' && ' / 100'}
               {entry.name === 'Temperature' && '°C'}
@@ -99,14 +162,14 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
     return (
       <Card className={cn('w-full', className)}>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Heart className="h-5 w-5 mr-2" />
+          <CardTitle className='flex items-center'>
+            <Heart className='mr-2 h-5 w-5' />
             Health Trends
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-64 bg-gray-200 rounded"></div>
+          <div className='animate-pulse space-y-4'>
+            <div className='h-64 rounded bg-gray-200'></div>
           </div>
         </CardContent>
       </Card>
@@ -116,18 +179,18 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center">
-            <Heart className="h-5 w-5 mr-2" />
+        <div className='flex items-center justify-between'>
+          <CardTitle className='flex items-center'>
+            <Heart className='mr-2 h-5 w-5' />
             Health Trends
           </CardTitle>
-          <div className="flex items-center space-x-2">
+          <div className='flex items-center space-x-2'>
             <button
               onClick={() => setTimeRange('7d')}
               className={cn(
-                'px-3 py-1 text-sm rounded-md',
-                timeRange === '7d' 
-                  ? 'bg-blue-100 text-blue-800' 
+                'rounded-md px-3 py-1 text-sm',
+                timeRange === '7d'
+                  ? 'bg-blue-100 text-blue-800'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               )}
             >
@@ -136,9 +199,9 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
             <button
               onClick={() => setTimeRange('30d')}
               className={cn(
-                'px-3 py-1 text-sm rounded-md',
-                timeRange === '30d' 
-                  ? 'bg-blue-100 text-blue-800' 
+                'rounded-md px-3 py-1 text-sm',
+                timeRange === '30d'
+                  ? 'bg-blue-100 text-blue-800'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               )}
             >
@@ -147,9 +210,9 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
             <button
               onClick={() => setTimeRange('90d')}
               className={cn(
-                'px-3 py-1 text-sm rounded-md',
-                timeRange === '90d' 
-                  ? 'bg-blue-100 text-blue-800' 
+                'rounded-md px-3 py-1 text-sm',
+                timeRange === '90d'
+                  ? 'bg-blue-100 text-blue-800'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               )}
             >
@@ -159,39 +222,30 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
+        <div className='space-y-6'>
           {/* Health Score Chart */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-700">Health Score</h3>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <TrendingUp className="h-4 w-4" />
+            <div className='mb-4 flex items-center justify-between'>
+              <h3 className='text-sm font-medium text-gray-700'>Health Score</h3>
+              <div className='flex items-center space-x-2 text-sm text-gray-500'>
+                <TrendingUp className='h-4 w-4' />
                 <span>Current: {healthData[healthData.length - 1]?.healthScore || 0}/100</span>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width='100%' height={200}>
               <AreaChart data={healthData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={formatDate}
-                  stroke="#6b7280"
-                  fontSize={12}
-                />
-                <YAxis 
-                  domain={[0, 100]}
-                  stroke="#6b7280"
-                  fontSize={12}
-                />
+                <CartesianGrid strokeDasharray='3 3' stroke='#f0f0f0' />
+                <XAxis dataKey='date' tickFormatter={formatDate} stroke='#6b7280' fontSize={12} />
+                <YAxis domain={[0, 100]} stroke='#6b7280' fontSize={12} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
-                  type="monotone"
-                  dataKey="healthScore"
+                  type='monotone'
+                  dataKey='healthScore'
                   stroke={getHealthScoreColor(healthData[healthData.length - 1]?.healthScore || 0)}
                   fill={getHealthScoreColor(healthData[healthData.length - 1]?.healthScore || 0)}
                   fillOpacity={0.3}
                   strokeWidth={2}
-                  name="Health Score"
+                  name='Health Score'
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -199,33 +253,28 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
 
           {/* Vital Signs Chart */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-4">Vital Signs</h3>
-            <ResponsiveContainer width="100%" height={200}>
+            <h3 className='mb-4 text-sm font-medium text-gray-700'>Vital Signs</h3>
+            <ResponsiveContainer width='100%' height={200}>
               <LineChart data={healthData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={formatDate}
-                  stroke="#6b7280"
-                  fontSize={12}
-                />
-                <YAxis stroke="#6b7280" fontSize={12} />
+                <CartesianGrid strokeDasharray='3 3' stroke='#f0f0f0' />
+                <XAxis dataKey='date' tickFormatter={formatDate} stroke='#6b7280' fontSize={12} />
+                <YAxis stroke='#6b7280' fontSize={12} />
                 <Tooltip content={<CustomTooltip />} />
                 <Line
-                  type="monotone"
-                  dataKey="temperature"
-                  stroke="#ef4444"
+                  type='monotone'
+                  dataKey='temperature'
+                  stroke='#ef4444'
                   strokeWidth={2}
                   dot={{ fill: '#ef4444', r: 3 }}
-                  name="Temperature"
+                  name='Temperature'
                 />
                 <Line
-                  type="monotone"
-                  dataKey="heartRate"
-                  stroke="#3b82f6"
+                  type='monotone'
+                  dataKey='heartRate'
+                  stroke='#3b82f6'
                   strokeWidth={2}
                   dot={{ fill: '#3b82f6', r: 3 }}
-                  name="Heart Rate"
+                  name='Heart Rate'
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -233,31 +282,26 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
 
           {/* Weight Tracking */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-700">Weight Tracking</h3>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <Activity className="h-4 w-4" />
+            <div className='mb-4 flex items-center justify-between'>
+              <h3 className='text-sm font-medium text-gray-700'>Weight Tracking</h3>
+              <div className='flex items-center space-x-2 text-sm text-gray-500'>
+                <Activity className='h-4 w-4' />
                 <span>Current: {healthData[healthData.length - 1]?.weight || 0} kg</span>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={150}>
+            <ResponsiveContainer width='100%' height={150}>
               <LineChart data={healthData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={formatDate}
-                  stroke="#6b7280"
-                  fontSize={12}
-                />
-                <YAxis stroke="#6b7280" fontSize={12} />
+                <CartesianGrid strokeDasharray='3 3' stroke='#f0f0f0' />
+                <XAxis dataKey='date' tickFormatter={formatDate} stroke='#6b7280' fontSize={12} />
+                <YAxis stroke='#6b7280' fontSize={12} />
                 <Tooltip content={<CustomTooltip />} />
                 <Line
-                  type="monotone"
-                  dataKey="weight"
-                  stroke="#10b981"
+                  type='monotone'
+                  dataKey='weight'
+                  stroke='#10b981'
                   strokeWidth={2}
                   dot={{ fill: '#10b981', r: 3 }}
-                  name="Weight"
+                  name='Weight'
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -265,19 +309,22 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
 
           {/* Health Events */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Recent Health Events</h3>
-            <div className="space-y-2">
+            <h3 className='mb-3 text-sm font-medium text-gray-700'>Recent Health Events</h3>
+            <div className='space-y-2'>
               {healthData
                 .filter(d => d.event !== 'Normal')
                 .slice(-5)
                 .reverse()
                 .map((event, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">{formatDate(event.date)}</span>
+                  <div
+                    key={index}
+                    className='flex items-center justify-between rounded bg-gray-50 p-2'
+                  >
+                    <div className='flex items-center space-x-2'>
+                      <Calendar className='h-4 w-4 text-gray-500' />
+                      <span className='text-sm text-gray-600'>{formatDate(event.date)}</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{event.event}</span>
+                    <span className='text-sm font-medium text-gray-900'>{event.event}</span>
                   </div>
                 ))}
             </div>

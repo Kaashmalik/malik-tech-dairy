@@ -1,83 +1,85 @@
-// API Route: Health Records (Vaccination, Treatment, Checkup, Disease)
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { adminDb } from "@/lib/firebase/admin";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import type { HealthRecord } from "@/types";
-import { createHealthRecordSchema, listHealthRecordsSchema } from "@/lib/validations/health";
-import { encrypt } from "@/lib/encryption";
+// API Route: Health Records (Vaccination, Treatment, Checkup, Disease) - Supabase-based
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSupabaseClient } from '@/lib/supabase';
+import { createHealthRecordSchema } from '@/lib/validations/health';
+import { encrypt, decrypt } from '@/lib/encryption';
+import { v4 as uuidv4 } from 'uuid';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // GET: List health records
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      if (!adminDb) {
-        return NextResponse.json({ error: "Database not available" }, { status: 500 });
-      }
+      const supabase = getSupabaseClient();
 
       const { searchParams } = new URL(req.url);
-      const animalId = searchParams.get("animalId");
-      const type = searchParams.get("type");
-      const startDate = searchParams.get("startDate");
-      const endDate = searchParams.get("endDate");
+      const animalId = searchParams.get('animalId');
+      const type = searchParams.get('type');
+      const startDate = searchParams.get('startDate');
+      const endDate = searchParams.get('endDate');
 
-      const healthRef = getTenantSubcollection(
-        context.tenantId,
-        "health",
-        "records"
-      );
-
-      let query: any = healthRef;
+      let query = supabase
+        .from('health_records')
+        .select('*')
+        .eq('tenant_id', context.tenantId)
+        .order('date', { ascending: false })
+        .limit(100);
 
       if (animalId) {
-        query = query.where("animalId", "==", animalId);
+        query = query.eq('animal_id', animalId);
       }
 
       if (type) {
-        query = query.where("type", "==", type);
+        query = query.eq('type', type);
       }
 
       if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        query = query.where("date", ">=", start).where("date", "<=", end);
+        query = query.gte('date', startDate).lte('date', endDate);
       }
 
-      query = query.orderBy("date", "desc");
+      const { data: records, error } = await query;
 
-      const snapshot = await query.limit(100).get();
-      const { decrypt } = await import("@/lib/encryption");
-      
-      const records = snapshot.docs.map((doc: any) => {
-        const data = doc.data();
-        // Decrypt notes if encrypted
-        let notes = data?.notes;
-        if (notes && typeof notes === "string") {
+      if (error) {
+        console.error('Error fetching health records:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch health records', records: [] },
+          { status: 500 }
+        );
+      }
+
+      // Transform and decrypt notes
+      const transformedRecords = (records || []).map((record: any) => {
+        let notes = record.notes;
+        if (notes && typeof notes === 'string') {
           try {
             notes = decrypt(notes);
-          } catch (error) {
-            // If decryption fails, return as-is (might be unencrypted legacy data)
-            console.warn("Failed to decrypt notes, returning as-is");
+          } catch {
+            console.warn('Failed to decrypt notes, returning as-is');
           }
         }
-        
+
         return {
-          id: doc.id,
-          ...data,
-          notes, // Decrypted notes
-          date: data.date?.toDate(),
-          nextDueDate: data.nextDueDate?.toDate(),
-          createdAt: data.createdAt?.toDate(),
+          id: record.id,
+          tenantId: record.tenant_id,
+          animalId: record.animal_id,
+          type: record.type,
+          date: record.date,
+          description: record.description,
+          veterinarian: record.veterinarian,
+          cost: record.cost,
+          nextDueDate: record.next_due_date,
+          notes,
+          createdAt: record.created_at,
         };
       });
 
-      return NextResponse.json({ records });
+      return NextResponse.json({ success: true, records: transformedRecords });
     } catch (error) {
-      console.error("Error fetching health records:", error);
+      console.error('Error fetching health records:', error);
       return NextResponse.json(
-        { error: "Internal server error" },
+        { success: false, error: 'Internal server error', records: [] },
         { status: 500 }
       );
     }
@@ -88,71 +90,79 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      if (!adminDb) {
-        return NextResponse.json({ error: "Database not available" }, { status: 500 });
-      }
-
+      const supabase = getSupabaseClient();
       const body = await req.json();
-      
+
       // Validate with Zod
       let validated;
       try {
         validated = createHealthRecordSchema.parse(body);
       } catch (error: any) {
         return NextResponse.json(
-          { error: "Validation failed", details: error.errors },
+          { success: false, error: 'Validation failed', details: error.errors },
           { status: 400 }
         );
       }
 
-      const {
-        animalId,
-        type,
-        date,
-        description,
-        veterinarian,
-        cost,
-        nextDueDate,
-        notes,
-      } = validated;
-
-      const healthRef = getTenantSubcollection(
-        context.tenantId,
-        "health",
-        "records"
-      );
+      const { animalId, type, date, description, veterinarian, cost, nextDueDate, notes } =
+        validated;
 
       // Encrypt sensitive notes
-      const encryptedNotes = notes ? encrypt(notes) : undefined;
+      const encryptedNotes = notes ? encrypt(notes) : null;
 
-      const recordData: Omit<HealthRecord, "id" | "tenantId" | "createdAt"> = {
-        animalId,
-        type: type as HealthRecord["type"],
-        date: typeof date === "string" ? new Date(date) : date,
-        description,
-        veterinarian,
-        cost,
-        nextDueDate: nextDueDate ? (typeof nextDueDate === "string" ? new Date(nextDueDate) : nextDueDate) : undefined,
+      const now = new Date().toISOString();
+      const recordId = uuidv4();
+
+      const recordData = {
+        id: recordId,
+        tenant_id: context.tenantId,
+        animal_id: animalId,
+        type,
+        date: typeof date === 'string' ? date : date.toISOString(),
+        description: description || null,
+        veterinarian: veterinarian || null,
+        cost: cost || null,
+        next_due_date: nextDueDate
+          ? typeof nextDueDate === 'string'
+            ? nextDueDate
+            : nextDueDate.toISOString()
+          : null,
+        notes: encryptedNotes,
+        created_at: now,
       };
 
-      const docRef = await healthRef.add({
-        ...recordData,
-        notes: encryptedNotes, // Store encrypted notes
-        createdAt: new Date(),
-      });
+      const { data: newRecord, error } = await supabase
+        .from('health_records')
+        .insert(recordData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating health record:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to create health record', details: error.message },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
-        id: docRef.id,
-        ...recordData,
-        createdAt: new Date(),
+        success: true,
+        record: {
+          id: newRecord.id,
+          tenantId: newRecord.tenant_id,
+          animalId: newRecord.animal_id,
+          type: newRecord.type,
+          date: newRecord.date,
+          description: newRecord.description,
+          veterinarian: newRecord.veterinarian,
+          cost: newRecord.cost,
+          nextDueDate: newRecord.next_due_date,
+          createdAt: newRecord.created_at,
+        },
       });
     } catch (error) {
-      console.error("Error creating health record:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error creating health record:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

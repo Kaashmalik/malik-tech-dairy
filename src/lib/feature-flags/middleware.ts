@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractUserContext, isFeatureEnabled, EnterpriseFeatureFlag } from '@/lib/feature-flags/service';
+import {
+  extractUserContext,
+  isFeatureEnabled,
+  EnterpriseFeatureFlag,
+} from '@/lib/feature-flags/service';
 
 // Extend NextRequest to include feature flag context
 declare global {
@@ -21,7 +25,7 @@ export async function featureFlagMiddleware(request: NextRequest) {
   try {
     // Extract user context from auth headers or session
     const userContext = extractUserContext(request);
-    
+
     // Add feature context to request
     (request as any).featureContext = {
       ...userContext,
@@ -77,11 +81,11 @@ export function withFeatureFlag<T extends any[]>(
       const context = getFeatureContext(request);
       if (!isFeatureEnabled(featureKey, context)) {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'Feature not available',
             featureKey,
-            message: `Feature ${featureKey} is not enabled for your account`
+            message: `Feature ${featureKey} is not enabled for your account`,
           },
           { status: 403 }
         );
@@ -91,13 +95,13 @@ export function withFeatureFlag<T extends any[]>(
       return await handler(request, { ...context, featureKey }, ...args);
     } catch (error) {
       console.error(`Feature flag error for ${featureKey}:`, error);
-      
+
       // Fail-safe: return feature not available on errors
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Feature temporarily unavailable',
-          featureKey
+          featureKey,
         },
         { status: 503 }
       );
@@ -118,31 +122,35 @@ export function withAnyFeature<T extends any[]>(
     try {
       const context = getFeatureContext(request);
       const enabledFeatures = featureKeys.filter(key => isFeatureEnabled(key, context));
-      
+
       if (enabledFeatures.length === 0) {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'No required features available',
             requiredFeatures: featureKeys,
-            message: 'None of the required features are enabled for your account'
+            message: 'None of the required features are enabled for your account',
           },
           { status: 403 }
         );
       }
 
-      return await handler(request, { 
-        ...context, 
-        enabledFeatures,
-        requiredFeatures: featureKeys 
-      }, ...args);
+      return await handler(
+        request,
+        {
+          ...context,
+          enabledFeatures,
+          requiredFeatures: featureKeys,
+        },
+        ...args
+      );
     } catch (error) {
       console.error('Multiple feature flag error:', error);
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Features temporarily unavailable',
-          requiredFeatures: featureKeys
+          requiredFeatures: featureKeys,
         },
         { status: 503 }
       );
@@ -158,31 +166,35 @@ export function withAllFeatures<T extends any[]>(
     try {
       const context = getFeatureContext(request);
       const disabledFeatures = featureKeys.filter(key => !isFeatureEnabled(key, context));
-      
+
       if (disabledFeatures.length > 0) {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'Some required features not available',
             disabledFeatures,
-            message: `${disabledFeatures.length} feature(s) are not enabled for your account`
+            message: `${disabledFeatures.length} feature(s) are not enabled for your account`,
           },
           { status: 403 }
         );
       }
 
-      return await handler(request, { 
-        ...context, 
-        enabledFeatures: featureKeys,
-        requiredFeatures: featureKeys 
-      }, ...args);
+      return await handler(
+        request,
+        {
+          ...context,
+          enabledFeatures: featureKeys,
+          requiredFeatures: featureKeys,
+        },
+        ...args
+      );
     } catch (error) {
       console.error('Multiple feature flag error:', error);
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Features temporarily unavailable',
-          requiredFeatures: featureKeys
+          requiredFeatures: featureKeys,
         },
         { status: 503 }
       );
@@ -201,14 +213,14 @@ export function withTenantFeature<T extends any[]>(
   return async (request: NextRequest, ...args: T): Promise<NextResponse> => {
     try {
       const context = getFeatureContext(request);
-      
+
       // Ensure tenant context exists
       if (!context.tenantId) {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'Tenant context required',
-            message: 'This feature requires tenant authentication'
+            message: 'This feature requires tenant authentication',
           },
           { status: 401 }
         );
@@ -217,12 +229,12 @@ export function withTenantFeature<T extends any[]>(
       // Check feature flag
       if (!isFeatureEnabled(featureKey, context)) {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'Feature not available',
             featureKey,
             tenantId: context.tenantId,
-            message: `Feature ${featureKey} is not enabled for your tenant`
+            message: `Feature ${featureKey} is not enabled for your tenant`,
           },
           { status: 403 }
         );
@@ -232,10 +244,10 @@ export function withTenantFeature<T extends any[]>(
     } catch (error) {
       console.error(`Tenant feature flag error for ${featureKey}:`, error);
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Feature temporarily unavailable',
-          featureKey
+          featureKey,
         },
         { status: 503 }
       );

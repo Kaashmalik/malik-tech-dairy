@@ -1,5 +1,5 @@
 // EasyPaisa Payment Gateway - Server-Side Implementation
-import crypto from "crypto";
+import crypto from 'crypto';
 
 export interface EasyPaisaConfig {
   storeId: string;
@@ -25,7 +25,7 @@ export interface EasyPaisaCheckoutResponse {
  * Generate hash for EasyPaisa
  */
 function generateHash(data: string): string {
-  return crypto.createHash("sha256").update(data).digest("hex");
+  return crypto.createHash('sha256').update(data).digest('hex');
 }
 
 /**
@@ -36,8 +36,8 @@ export function createEasyPaisaCheckout(
   request: EasyPaisaPaymentRequest
 ): EasyPaisaCheckoutResponse {
   const baseUrl = config.isSandbox
-    ? "https://easypay.easypaisa.com.pk/easypay/Index.jsf"
-    : "https://easypay.easypaisa.com.pk/easypay/Index.jsf";
+    ? 'https://easypay.easypaisa.com.pk/easypay/Index.jsf'
+    : 'https://easypay.easypaisa.com.pk/easypay/Index.jsf';
 
   // EasyPaisa hash format
   const hashString = `${config.storeId}|${request.orderId}|${request.amount}|${config.returnUrl}|${config.hashKey}`;
@@ -47,7 +47,7 @@ export function createEasyPaisaCheckout(
     storeId: config.storeId,
     orderId: request.orderId,
     transactionAmount: request.amount.toString(),
-    transactionType: "MA",
+    transactionType: 'MA',
     merchantHashedReq: hash,
     postBackURL: config.returnUrl,
   });
@@ -76,8 +76,7 @@ export function verifyEasyPaisaResponse(
   return {
     valid,
     transactionId: orderId,
-    amount: parseFloat(amount || "0"),
-    status: status === "Success" ? "success" : "failed",
+    amount: parseFloat(amount || '0'),
+    status: status === 'Success' ? 'success' : 'failed',
   };
 }
-

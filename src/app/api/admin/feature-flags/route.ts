@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDrizzle } from '@/lib/supabase';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { 
-  ENTERPRISE_FEATURE_FLAGS, 
-  EnterpriseFeatureFlag, 
+import {
+  ENTERPRISE_FEATURE_FLAGS,
+  EnterpriseFeatureFlag,
   DEFAULT_FEATURE_FLAGS,
   getRolloutStats,
-  clearFeatureFlagCache 
+  clearFeatureFlagCache,
 } from '@/lib/feature-flags/service';
 import { hasRole } from '@/lib/tenant/context';
 
@@ -31,10 +31,7 @@ export async function GET(request: NextRequest) {
     // Check if user is super admin
     const isAdmin = await hasRole('super_admin');
     if (!isAdmin) {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -51,7 +48,9 @@ export async function GET(request: NextRequest) {
     // Filter by phase if specified
     if (phase) {
       const { PHASE_ROLLOUT_ORDER } = require('@/lib/feature-flags/config');
-      features = features.filter(f => PHASE_ROLLOUT_ORDER[phase].includes(f.key as EnterpriseFeatureFlag));
+      features = features.filter(f =>
+        PHASE_ROLLOUT_ORDER[phase].includes(f.key as EnterpriseFeatureFlag)
+      );
     }
 
     // Filter by enabled status if specified
@@ -74,10 +73,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching feature flags:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -87,10 +83,7 @@ export async function PUT(request: NextRequest) {
     // Check if user is super admin
     const isAdmin = await hasRole('super_admin');
     if (!isAdmin) {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -99,12 +92,12 @@ export async function PUT(request: NextRequest) {
     // In a real implementation, this would update a database table
     // For now, we'll simulate by updating environment variables
     // and logging the change for audit purposes
-    
+
     const db = getDrizzle();
-    
+
     // Create audit log entry
     const auditLogId = `feature_flag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // TODO: Implement proper audit logging
     console.log('Feature flag update:', {
       id: auditLogId,
@@ -128,7 +121,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error updating feature flag:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -136,10 +129,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -149,17 +139,14 @@ export async function POST(request: NextRequest) {
     // Check if user is super admin
     const isAdmin = await hasRole('super_admin');
     if (!isAdmin) {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
     const body = await request.json();
     const validatedData = bulkUpdateSchema.parse(body);
 
     const results = [];
-    
+
     for (const update of validatedData.updates) {
       try {
         // TODO: Implement proper database updates and audit logging
@@ -168,7 +155,7 @@ export async function POST(request: NextRequest) {
           changes: update,
           timestamp: new Date().toISOString(),
         });
-        
+
         results.push({
           featureKey: update.featureKey,
           success: true,
@@ -197,7 +184,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in bulk feature flag update:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -205,36 +192,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// DELETE /api/admin/feature-flags/[featureKey] - Reset feature flag to default
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { featureKey: string } }
-) {
+// DELETE /api/admin/feature-flags - Reset feature flag to default
+// Note: featureKey should be passed as query param since this route doesn't have [featureKey] segment
+export async function DELETE(request: NextRequest) {
   try {
     // Check if user is super admin
     const isAdmin = await hasRole('super_admin');
     if (!isAdmin) {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const featureKey = searchParams.get('featureKey');
+
+    if (!featureKey) {
       return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
+        { success: false, error: 'featureKey query param required' },
+        { status: 400 }
       );
     }
 
-    const { featureKey } = params;
-    
     // Validate feature key
     if (!Object.values(ENTERPRISE_FEATURE_FLAGS).includes(featureKey as EnterpriseFeatureFlag)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid feature key' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid feature key' }, { status: 400 });
     }
 
     // TODO: Implement proper database reset and audit logging
@@ -257,9 +241,6 @@ export async function DELETE(
     });
   } catch (error) {
     console.error('Error resetting feature flag:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

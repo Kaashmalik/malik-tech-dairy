@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  Search, 
+import {
+  Building2,
+  Search,
   Filter,
   Eye,
   MoreVertical,
@@ -18,7 +18,7 @@ import {
   Pause,
   Play,
   Trash2,
-  Plus
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -82,7 +82,7 @@ export default function FarmsPage() {
     try {
       const response = await fetch('/api/admin/farms');
       const data = await response.json();
-      
+
       if (data.success) {
         setFarms(data.data || []);
       } else {
@@ -125,7 +125,8 @@ export default function FarmsPage() {
   }
 
   const filteredFarms = farms.filter(farm => {
-    const matchesSearch = farm.farmName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      farm.farmName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       farm.ownerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       farm.email?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlan = planFilter === 'all' || farm.plan === planFilter;
@@ -133,169 +134,171 @@ export default function FarmsPage() {
   });
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className='space-y-4 md:space-y-6'>
       {/* Page Header - Mobile Optimized */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold dark:text-white">All Farms</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
+          <h1 className='text-xl font-bold md:text-2xl dark:text-white'>All Farms</h1>
+          <p className='text-sm text-gray-500 dark:text-slate-400'>
             Manage all registered farms on the platform
           </p>
         </div>
-        <Link href="/super-admin/farms/new">
-          <Button className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
-            <Plus className="w-4 h-4 mr-2" />
+        <Link href='/super-admin/farms/new'>
+          <Button className='w-full bg-emerald-600 hover:bg-emerald-700 sm:w-auto'>
+            <Plus className='mr-2 h-4 w-4' />
             Create Farm
           </Button>
         </Link>
       </div>
 
       {/* Stats Cards - Scrollable on Mobile */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <Building2 className="w-5 h-5 text-emerald-600" />
+      <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-emerald-100 p-2'>
+              <Building2 className='h-5 w-5 text-emerald-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">{farms.length}</p>
-              <p className="text-xs text-gray-500">Total Farms</p>
+              <p className='text-2xl font-bold dark:text-white'>{farms.length}</p>
+              <p className='text-xs text-gray-500'>Total Farms</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-blue-100 p-2'>
+              <TrendingUp className='h-5 w-5 text-blue-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">
+              <p className='text-2xl font-bold dark:text-white'>
                 {farms.filter(f => f.status === 'active').length}
               </p>
-              <p className="text-xs text-gray-500">Active</p>
+              <p className='text-xs text-gray-500'>Active</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Users className="w-5 h-5 text-purple-600" />
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-purple-100 p-2'>
+              <Users className='h-5 w-5 text-purple-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">
+              <p className='text-2xl font-bold dark:text-white'>
                 {farms.reduce((acc, f) => acc + f.userCount, 0)}
               </p>
-              <p className="text-xs text-gray-500">Total Users</p>
+              <p className='text-xs text-gray-500'>Total Users</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <Calendar className="w-5 h-5 text-amber-600" />
+        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-amber-100 p-2'>
+              <Calendar className='h-5 w-5 text-amber-600' />
             </div>
             <div>
-              <p className="text-2xl font-bold dark:text-white">
+              <p className='text-2xl font-bold dark:text-white'>
                 {farms.reduce((acc, f) => acc + f.animalCount, 0)}
               </p>
-              <p className="text-xs text-gray-500">Animals</p>
+              <p className='text-xs text-gray-500'>Animals</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters - Stacked on Mobile */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className='flex flex-col gap-3 sm:flex-row'>
+        <div className='relative flex-1'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
           <Input
-            placeholder="Search farms..."
+            placeholder='Search farms...'
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11"
+            onChange={e => setSearchQuery(e.target.value)}
+            className='h-11 pl-10'
           />
         </div>
         <Select value={planFilter} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-full sm:w-40 h-11">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Plan" />
+          <SelectTrigger className='h-11 w-full sm:w-40'>
+            <Filter className='mr-2 h-4 w-4' />
+            <SelectValue placeholder='Plan' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Plans</SelectItem>
-            <SelectItem value="free">Free</SelectItem>
-            <SelectItem value="professional">Professional</SelectItem>
-            <SelectItem value="farm">Farm</SelectItem>
-            <SelectItem value="enterprise">Enterprise</SelectItem>
+            <SelectItem value='all'>All Plans</SelectItem>
+            <SelectItem value='free'>Free</SelectItem>
+            <SelectItem value='professional'>Professional</SelectItem>
+            <SelectItem value='farm'>Farm</SelectItem>
+            <SelectItem value='enterprise'>Enterprise</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Farms List - Card Layout for Mobile, Table for Desktop */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+      <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
         {loading ? (
-          <div className="p-12 text-center">
-            <Loader2 className="w-8 h-8 mx-auto animate-spin text-gray-400" />
-            <p className="mt-2 text-gray-500">Loading farms...</p>
+          <div className='p-12 text-center'>
+            <Loader2 className='mx-auto h-8 w-8 animate-spin text-gray-400' />
+            <p className='mt-2 text-gray-500'>Loading farms...</p>
           </div>
         ) : filteredFarms.length === 0 ? (
-          <div className="p-12 text-center">
-            <Building2 className="w-12 h-12 mx-auto text-gray-300" />
-            <p className="mt-2 text-gray-500">No farms found</p>
+          <div className='p-12 text-center'>
+            <Building2 className='mx-auto h-12 w-12 text-gray-300' />
+            <p className='mt-2 text-gray-500'>No farms found</p>
           </div>
         ) : (
           <>
             {/* Mobile Card View */}
-            <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-700">
-              {filteredFarms.map((farm) => (
-                <div key={farm.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate dark:text-white">{farm.farmName}</h3>
-                      <p className="text-sm text-gray-500 truncate">{farm.ownerName}</p>
+            <div className='divide-y divide-gray-100 md:hidden dark:divide-slate-700'>
+              {filteredFarms.map(farm => (
+                <div key={farm.id} className='space-y-3 p-4'>
+                  <div className='flex items-start justify-between'>
+                    <div className='min-w-0 flex-1'>
+                      <h3 className='truncate font-medium dark:text-white'>{farm.farmName}</h3>
+                      <p className='truncate text-sm text-gray-500'>{farm.ownerName}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="w-4 h-4" />
+                        <Button variant='ghost' size='icon' className='h-8 w-8'>
+                          <MoreVertical className='h-4 w-4' />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align='end'>
                         <DropdownMenuItem>
-                          <Eye className="w-4 h-4 mr-2" /> View Details
+                          <Eye className='mr-2 h-4 w-4' /> View Details
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                          <ExternalLink className="w-4 h-4 mr-2" /> Open Dashboard
+                          <ExternalLink className='mr-2 h-4 w-4' /> Open Dashboard
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
-                          <Pause className="w-4 h-4 mr-2" /> Pause Farm
+                          <Pause className='mr-2 h-4 w-4' /> Pause Farm
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="w-4 h-4 mr-2" /> Delete
+                        <DropdownMenuItem className='text-red-600'>
+                          <Trash2 className='mr-2 h-4 w-4' /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${planColors[farm.plan]}`}>
+
+                  <div className='flex flex-wrap gap-2'>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${planColors[farm.plan]}`}
+                    >
                       {farm.plan}
                     </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${statusColors[farm.status]}`}>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${statusColors[farm.status]}`}
+                    >
                       {farm.status}
                     </span>
                   </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-4 h-4" /> {farm.userCount}
+
+                  <div className='flex items-center gap-4 text-sm text-gray-500'>
+                    <span className='flex items-center gap-1'>
+                      <Users className='h-4 w-4' /> {farm.userCount}
                     </span>
-                    <span className="flex items-center gap-1">
-                      🐄 {farm.animalCount}
-                    </span>
+                    <span className='flex items-center gap-1'>🐄 {farm.animalCount}</span>
                     {farm.city && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" /> {farm.city}
+                      <span className='flex items-center gap-1'>
+                        <MapPin className='h-4 w-4' /> {farm.city}
                       </span>
                     )}
                   </div>
@@ -304,75 +307,93 @@ export default function FarmsPage() {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-700/50">
+            <div className='hidden overflow-x-auto md:block'>
+              <table className='w-full'>
+                <thead className='bg-gray-50 dark:bg-slate-700/50'>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Farm</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Owner</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Stats</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Farm
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Owner
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Plan
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Status
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Stats
+                    </th>
+                    <th className='px-6 py-4 text-left text-xs font-medium uppercase text-gray-500'>
+                      Created
+                    </th>
+                    <th className='px-6 py-4 text-right text-xs font-medium uppercase text-gray-500'>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                  {filteredFarms.map((farm) => (
-                    <tr key={farm.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30">
-                      <td className="px-6 py-4">
+                <tbody className='divide-y divide-gray-100 dark:divide-slate-700'>
+                  {filteredFarms.map(farm => (
+                    <tr key={farm.id} className='hover:bg-gray-50 dark:hover:bg-slate-700/30'>
+                      <td className='px-6 py-4'>
                         <div>
-                          <p className="font-medium dark:text-white">{farm.farmName}</p>
-                          <p className="text-sm text-gray-500">{farm.slug}</p>
+                          <p className='font-medium dark:text-white'>{farm.farmName}</p>
+                          <p className='text-sm text-gray-500'>{farm.slug}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className='px-6 py-4'>
                         <div>
-                          <p className="dark:text-white">{farm.ownerName || '-'}</p>
-                          <p className="text-sm text-gray-500">{farm.email}</p>
+                          <p className='dark:text-white'>{farm.ownerName || '-'}</p>
+                          <p className='text-sm text-gray-500'>{farm.email}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${planColors[farm.plan]}`}>
+                      <td className='px-6 py-4'>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${planColors[farm.plan]}`}
+                        >
                           {farm.plan}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusColors[farm.status]}`}>
+                      <td className='px-6 py-4'>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusColors[farm.status]}`}
+                        >
                           {farm.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4 text-sm">
-                          <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4 text-gray-400" /> {farm.userCount}
+                      <td className='px-6 py-4'>
+                        <div className='flex items-center gap-4 text-sm'>
+                          <span className='flex items-center gap-1'>
+                            <Users className='h-4 w-4 text-gray-400' /> {farm.userCount}
                           </span>
                           <span>🐄 {farm.animalCount}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className='px-6 py-4 text-sm text-gray-500'>
                         {format(new Date(farm.createdAt), 'MMM d, yyyy')}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className='px-6 py-4 text-right'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              Actions <ChevronDown className="w-4 h-4 ml-1" />
+                            <Button variant='ghost' size='sm'>
+                              Actions <ChevronDown className='ml-1 h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align='end'>
                             <DropdownMenuItem>
-                              <Eye className="w-4 h-4 mr-2" /> View Details
+                              <Eye className='mr-2 h-4 w-4' /> View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem>
-                              <ExternalLink className="w-4 h-4 mr-2" /> Open Dashboard
+                              <ExternalLink className='mr-2 h-4 w-4' /> Open Dashboard
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>
-                              <Pause className="w-4 h-4 mr-2" /> Pause Farm
+                              <Pause className='mr-2 h-4 w-4' /> Pause Farm
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            <DropdownMenuItem className='text-red-600'>
+                              <Trash2 className='mr-2 h-4 w-4' /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

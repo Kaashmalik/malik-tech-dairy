@@ -1,38 +1,107 @@
-import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
+import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 
-const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+// Content Security Policy - Secure headers for production
+const ContentSecurityPolicy = `
+  default-src 'self';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://js.sentry-cdn.com https://*.posthog.com https://challenges.cloudflare.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  img-src 'self' data: blob: https: http:;
+  font-src 'self' https://fonts.gstatic.com data:;
+  connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://*.supabase.co wss://*.supabase.co https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://api.cloudinary.com https://res.cloudinary.com https://*.upstash.io;
+  frame-src 'self' https://clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+  upgrade-insecure-requests;
+`
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+// Security headers configuration
+const securityHeaders = [
+  {
+    key: 'Content-Security-Policy',
+    value: ContentSecurityPolicy,
+  },
+  {
+    key: 'X-DNS-Prefetch-Control',
+    value: 'on',
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+  },
+  {
+    key: 'X-Frame-Options',
+    value: 'DENY',
+  },
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff',
+  },
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block',
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin',
+  },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+  },
+];
 
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "**.firebaseapp.com",
+        protocol: 'https',
+        hostname: '**.firebaseapp.com',
       },
       {
-        protocol: "https",
-        hostname: "**.googleapis.com",
+        protocol: 'https',
+        hostname: '**.googleapis.com',
       },
       {
-        protocol: "https",
-        hostname: "**.clerk.com",
+        protocol: 'https',
+        hostname: '**.clerk.com',
       },
       {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
       },
     ],
   },
-  
+
+  // Security headers
+  async headers() {
+    return [
+      {
+        // Apply security headers to all routes
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+    ];
+  },
+
   // Experimental features
   experimental: {
-    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons", "date-fns"],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'date-fns'],
   },
-  
+
   // Suppress warnings for lockfile detection
   outputFileTracingRoot: process.cwd(),
-  
+
   // Reduce memory usage during development
   webpack: (config, { dev }) => {
     if (dev) {
@@ -51,8 +120,8 @@ let exportedConfig = withNextIntl(nextConfig);
 
 if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
   // Only import and use Sentry if DSN is configured
-  const { withSentryConfig } = require("@sentry/nextjs");
-  
+  const { withSentryConfig } = require('@sentry/nextjs');
+
   exportedConfig = withSentryConfig(exportedConfig, {
     silent: true,
     org: process.env.SENTRY_ORG,

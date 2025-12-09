@@ -46,7 +46,7 @@ class OfflineDatabase extends Dexie {
 
   constructor() {
     super('MTKDairyOffline');
-    
+
     // Define schema
     this.version(1).stores({
       animals: 'id, tenant_id, tag, species, _synced, _lastModified, _deleted',
@@ -79,10 +79,13 @@ export class OfflineDB {
       .first();
   }
 
-  static async addAnimal(animal: Omit<OfflineAnimal, 'id' | '_synced' | '_lastModified'>, tenantId: string): Promise<string> {
+  static async addAnimal(
+    animal: Omit<OfflineAnimal, 'id' | '_synced' | '_lastModified'>,
+    tenantId: string
+  ): Promise<string> {
     const id = crypto.randomUUID();
     const now = Date.now();
-    
+
     await db.animals.add({
       ...animal,
       id,
@@ -105,9 +108,13 @@ export class OfflineDB {
     return id;
   }
 
-  static async updateAnimal(id: string, updates: Partial<OfflineAnimal>, tenantId: string): Promise<void> {
+  static async updateAnimal(
+    id: string,
+    updates: Partial<OfflineAnimal>,
+    tenantId: string
+  ): Promise<void> {
     const now = Date.now();
-    
+
     await db.animals.update([id, tenantId], {
       ...updates,
       _synced: false,
@@ -128,7 +135,7 @@ export class OfflineDB {
 
   static async deleteAnimal(id: string, tenantId: string): Promise<void> {
     const now = Date.now();
-    
+
     // Soft delete
     await db.animals.update([id, tenantId], {
       _deleted: true,
@@ -149,7 +156,11 @@ export class OfflineDB {
   }
 
   // MILK LOGS
-  static async getMilkLogs(tenantId: string, animalId?: string, limit = 30): Promise<OfflineMilkLog[]> {
+  static async getMilkLogs(
+    tenantId: string,
+    animalId?: string,
+    limit = 30
+  ): Promise<OfflineMilkLog[]> {
     let query = db.milkLogs
       .where('tenant_id')
       .equals(tenantId)
@@ -165,10 +176,13 @@ export class OfflineDB {
       .then(logs => logs.slice(-limit));
   }
 
-  static async addMilkLog(log: Omit<OfflineMilkLog, 'id' | '_synced' | '_lastModified'>, tenantId: string): Promise<string> {
+  static async addMilkLog(
+    log: Omit<OfflineMilkLog, 'id' | '_synced' | '_lastModified'>,
+    tenantId: string
+  ): Promise<string> {
     const id = crypto.randomUUID();
     const now = Date.now();
-    
+
     await db.milkLogs.add({
       ...log,
       id,
@@ -192,7 +206,11 @@ export class OfflineDB {
   }
 
   // HEALTH RECORDS
-  static async getHealthRecords(tenantId: string, animalId?: string, limit = 30): Promise<OfflineHealthRecord[]> {
+  static async getHealthRecords(
+    tenantId: string,
+    animalId?: string,
+    limit = 30
+  ): Promise<OfflineHealthRecord[]> {
     let query = db.healthRecords
       .where('tenant_id')
       .equals(tenantId)
@@ -217,10 +235,13 @@ export class OfflineDB {
     await db.healthRecords.update([id, tenantId], updates);
   }
 
-  static async addHealthRecord(record: Omit<OfflineHealthRecord, 'id' | '_synced' | '_lastModified'>, tenantId: string): Promise<string> {
+  static async addHealthRecord(
+    record: Omit<OfflineHealthRecord, 'id' | '_synced' | '_lastModified'>,
+    tenantId: string
+  ): Promise<string> {
     const id = crypto.randomUUID();
     const now = Date.now();
-    
+
     await db.healthRecords.add({
       ...record,
       id,
@@ -249,10 +270,7 @@ export class OfflineDB {
   }
 
   static async getQueuedMutations(tenantId: string): Promise<QueuedMutation[]> {
-    return await db.queuedMutations
-      .where('tenantId')
-      .equals(tenantId)
-      .toArray();
+    return await db.queuedMutations.where('tenantId').equals(tenantId).toArray();
   }
 
   static async removeQueuedMutation(id: string): Promise<void> {
@@ -296,7 +314,7 @@ export class OfflineDB {
       .delete();
 
     // Delete old queued mutations (older than 7 days)
-    const mutationCutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const mutationCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
     await db.queuedMutations
       .where('tenantId')
       .equals(tenantId)

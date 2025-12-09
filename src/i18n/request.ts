@@ -1,7 +1,7 @@
-import { getRequestConfig } from "next-intl/server";
-import { routing } from "./routing";
-import { headers } from "next/headers";
-import { getTenantConfig } from "@/lib/supabase/tenant";
+import { getRequestConfig } from 'next-intl/server';
+import { routing } from './routing';
+import { headers } from 'next/headers';
+import { getTenantConfig } from '@/lib/supabase/tenant';
 
 /**
  * Auto-detect language from:
@@ -29,10 +29,10 @@ function detectLocale(
   if (acceptLanguage) {
     // Parse Accept-Language header (e.g., "en-US,en;q=0.9,ur;q=0.8")
     const languages = acceptLanguage
-      .split(",")
-      .map((lang) => {
-        const [code, q = "1.0"] = lang.trim().split(";q=");
-        return { code: code.split("-")[0].toLowerCase(), quality: parseFloat(q) };
+      .split(',')
+      .map(lang => {
+        const [code, q = '1.0'] = lang.trim().split(';q=');
+        return { code: code.split('-')[0].toLowerCase(), quality: parseFloat(q) };
       })
       .sort((a, b) => b.quality - a.quality);
 
@@ -49,8 +49,8 @@ function detectLocale(
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const headersList = await headers();
-  const acceptLanguage = headersList.get("accept-language");
-  const tenantId = headersList.get("x-tenant-id");
+  const acceptLanguage = headersList.get('accept-language');
+  const tenantId = headersList.get('x-tenant-id');
 
   // Try to get tenant language if tenant context is available
   let tenantLanguage: string | undefined;
@@ -60,7 +60,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       tenantLanguage = tenantConfig?.language;
     } catch (error) {
       // Fail silently if tenant config not available
-      console.error("Error fetching tenant config for language detection:", error);
+      console.error('Error fetching tenant config for language detection:', error);
     }
   }
 
@@ -71,4 +71,3 @@ export default getRequestConfig(async ({ requestLocale }) => {
     messages: (await import(`../../messages/${locale}.json`)).default,
   };
 });
-

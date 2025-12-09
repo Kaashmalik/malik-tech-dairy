@@ -19,13 +19,13 @@ export interface SubscriptionWithLimits {
 export async function getTenantLimitsFromSupabase(tenantId: string): Promise<TenantLimits | null> {
   try {
     const supabase = getSupabaseClient();
-    
+
     // Get subscription from Supabase
-    const { data: subscription, error } = await supabase
+    const { data: subscription, error } = (await supabase
       .from('subscriptions')
       .select('plan, status, trial_ends_at, renew_date')
       .eq('tenant_id', tenantId)
-      .single() as { data: any; error: any };
+      .single()) as { data: any; error: any };
 
     if (error) {
       console.error('Error fetching subscription:', error);
@@ -50,15 +50,17 @@ export async function getTenantLimitsFromSupabase(tenantId: string): Promise<Ten
 /**
  * Get full subscription with limits
  */
-export async function getSubscriptionWithLimits(tenantId: string): Promise<SubscriptionWithLimits | null> {
+export async function getSubscriptionWithLimits(
+  tenantId: string
+): Promise<SubscriptionWithLimits | null> {
   try {
     const supabase = getSupabaseClient();
-    
-    const { data: subscription, error } = await supabase
+
+    const { data: subscription, error } = (await supabase
       .from('subscriptions')
       .select('plan, status, trial_ends_at, renew_date')
       .eq('tenant_id', tenantId)
-      .single() as { data: any; error: any };
+      .single()) as { data: any; error: any };
 
     if (error || !subscription) {
       // Return default free subscription
@@ -72,7 +74,7 @@ export async function getSubscriptionWithLimits(tenantId: string): Promise<Subsc
     }
 
     const plan = (subscription.plan as SubscriptionPlanKey) || 'free';
-    
+
     return {
       plan,
       status: subscription.status,
@@ -91,7 +93,7 @@ export async function getSubscriptionWithLimits(tenantId: string): Promise<Subsc
  */
 export function getDefaultLimits(plan: SubscriptionPlanKey): TenantLimits {
   const planConfig = SUBSCRIPTION_PLANS[plan];
-  
+
   if (!planConfig) {
     // Fallback to free tier
     return {
@@ -114,12 +116,12 @@ export function getDefaultLimits(plan: SubscriptionPlanKey): TenantLimits {
 export async function getAnimalCount(tenantId: string): Promise<number> {
   try {
     const supabase = getSupabaseClient();
-    
-    const { count, error } = await supabase
+
+    const { count, error } = (await supabase
       .from('animals')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
-      .neq('status', 'deceased') as { count: number | null; error: any };
+      .neq('status', 'deceased')) as { count: number | null; error: any };
 
     if (error) {
       console.error('Error counting animals:', error);
@@ -139,12 +141,12 @@ export async function getAnimalCount(tenantId: string): Promise<number> {
 export async function getUserCount(tenantId: string): Promise<number> {
   try {
     const supabase = getSupabaseClient();
-    
-    const { count, error } = await supabase
+
+    const { count, error } = (await supabase
       .from('tenant_members')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
-      .eq('status', 'active') as { count: number | null; error: any };
+      .eq('status', 'active')) as { count: number | null; error: any };
 
     if (error) {
       console.error('Error counting users:', error);
@@ -174,7 +176,7 @@ export async function canAddAnimalSupabase(tenantId: string): Promise<{
 
   const maxAnimals = limits?.maxAnimals ?? 5;
   const isUnlimited = maxAnimals === -1;
-  
+
   return {
     allowed: isUnlimited || currentCount < maxAnimals,
     currentCount,
@@ -198,7 +200,7 @@ export async function canAddUserSupabase(tenantId: string): Promise<{
 
   const maxUsers = limits?.maxUsers ?? 1;
   const isUnlimited = maxUsers === -1;
-  
+
   return {
     allowed: isUnlimited || currentCount < maxUsers,
     currentCount,

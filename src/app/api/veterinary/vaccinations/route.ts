@@ -11,8 +11,12 @@ const vaccinationQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
   animalId: z.string().optional(),
-  status: z.enum(['scheduled', 'administered', 'overdue', 'skipped', 'reaction_recorded']).optional(),
-  vaccineType: z.enum(['live_attenuated', 'inactivated', 'subunit', 'toxoid', 'conjugate', 'mrna']).optional(),
+  status: z
+    .enum(['scheduled', 'administered', 'overdue', 'skipped', 'reaction_recorded'])
+    .optional(),
+  vaccineType: z
+    .enum(['live_attenuated', 'inactivated', 'subunit', 'toxoid', 'conjugate', 'mrna'])
+    .optional(),
   scheduledDate: z.string().datetime().optional(),
   nextDueDate: z.string().datetime().optional(),
   herdWide: z.coerce.boolean().optional(), // Filter for herd-wide vs individual vaccinations
@@ -32,12 +36,16 @@ const createVaccinationSchema = z.object({
 
 const updateVaccinationSchema = z.object({
   vaccineName: z.string().min(2).optional(),
-  vaccineType: z.enum(['live_attenuated', 'inactivated', 'subunit', 'toxoid', 'conjugate', 'mrna']).optional(),
+  vaccineType: z
+    .enum(['live_attenuated', 'inactivated', 'subunit', 'toxoid', 'conjugate', 'mrna'])
+    .optional(),
   targetDiseases: z.array(z.string()).min(1).optional(),
   scheduledDate: z.string().datetime().optional(),
   administeredDate: z.string().datetime().optional(),
   nextDueDate: z.string().datetime().optional(),
-  status: z.enum(['scheduled', 'administered', 'overdue', 'skipped', 'reaction_recorded']).optional(),
+  status: z
+    .enum(['scheduled', 'administered', 'overdue', 'skipped', 'reaction_recorded'])
+    .optional(),
   administeredBy: z.string().min(2).optional(),
   batchNumber: z.string().min(2).optional(),
   expiryDate: z.string().datetime().optional(),
@@ -52,10 +60,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -157,10 +162,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching vaccination schedules:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -169,10 +171,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -186,7 +185,7 @@ export async function POST(request: NextRequest) {
 
     // Create vaccination records
     const vaccinationRecords = [];
-    
+
     if (validatedData.animalIds && validatedData.animalIds.length > 0) {
       // Individual vaccinations for each animal
       for (const animalId of validatedData.animalIds) {
@@ -202,7 +201,7 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
           })
           .returning();
-        
+
         vaccinationRecords.push(newVaccination[0]);
       }
     } else {
@@ -218,7 +217,7 @@ export async function POST(request: NextRequest) {
           updatedAt: new Date(),
         })
         .returning();
-      
+
       vaccinationRecords.push(newVaccination[0]);
     }
 
@@ -229,7 +228,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating vaccination schedule:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -237,9 +236,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,16 +1,12 @@
 // API Key Management Routes
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { TenantRole, PlatformRole } from "@/types/roles";
-import {
-  createApiKey,
-  listApiKeys,
-  revokeApiKey,
-} from "@/lib/api-keys";
-import { createApiKeySchema, listApiKeysSchema } from "@/lib/validations/api-keys";
-import { withMFAEnforcement } from "@/lib/middleware/mfaMiddleware";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { TenantRole, PlatformRole } from '@/types/roles';
+import { createApiKey, listApiKeys, revokeApiKey } from '@/lib/api-keys';
+import { createApiKeySchema, listApiKeysSchema } from '@/lib/validations/api-keys';
+import { withMFAEnforcement } from '@/lib/middleware/mfaMiddleware';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // GET: List API keys
 export async function GET(request: NextRequest) {
@@ -18,7 +14,7 @@ export async function GET(request: NextRequest) {
     try {
       const { searchParams } = new URL(req.url);
       const query = listApiKeysSchema.parse({
-        isActive: searchParams.get("isActive"),
+        isActive: searchParams.get('isActive'),
       });
 
       const keys = await listApiKeys(tenantId, {
@@ -33,17 +29,14 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ keys: safeKeys });
     } catch (error: any) {
-      if (error.name === "ZodError") {
+      if (error.name === 'ZodError') {
         return NextResponse.json(
-          { error: "Invalid request parameters", details: error.errors },
+          { error: 'Invalid request parameters', details: error.errors },
           { status: 400 }
         );
       }
-      console.error("Error listing API keys:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error listing API keys:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
@@ -75,21 +68,17 @@ export async function POST(request: NextRequest) {
           createdAt: apiKey.createdAt,
         },
         key: plainKey, // Only returned once!
-        warning: "Save this key securely. It will not be shown again.",
+        warning: 'Save this key securely. It will not be shown again.',
       });
     } catch (error: any) {
-      if (error.name === "ZodError") {
+      if (error.name === 'ZodError') {
         return NextResponse.json(
-          { error: "Invalid request data", details: error.errors },
+          { error: 'Invalid request data', details: error.errors },
           { status: 400 }
         );
       }
-      console.error("Error creating API key:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error creating API key:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

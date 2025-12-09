@@ -1,9 +1,9 @@
 # MTK Dairy - Complete System Flow Documentation
 
 > **Enterprise-Level Multi-Tenant Dairy Farm SaaS Platform**
-> 
+>
 > Version: 1.0.0 | Last Updated: December 2024
-> 
+>
 > Real-World Example: `kaash0542@gmail.com` → `Green Valley Farm` → `FARM-N669KHLF`
 
 ---
@@ -66,17 +66,17 @@
 
 ## 2. Technology Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | Next.js 15 (App Router) | React framework with SSR |
-| **UI** | Tailwind CSS + shadcn/ui | Styling & components |
-| **Auth** | Clerk | Authentication & Organizations |
-| **Primary DB** | Supabase PostgreSQL | Relational data storage |
-| **ORM** | Drizzle ORM | Type-safe database queries |
-| **Storage** | Cloudinary | Images & payment slips |
-| **State** | TanStack Query + Zustand | Client state management |
-| **Email** | Resend | Transactional emails |
-| **i18n** | next-intl | English + Urdu (RTL) |
+| Layer          | Technology               | Purpose                        |
+| -------------- | ------------------------ | ------------------------------ |
+| **Frontend**   | Next.js 15 (App Router)  | React framework with SSR       |
+| **UI**         | Tailwind CSS + shadcn/ui | Styling & components           |
+| **Auth**       | Clerk                    | Authentication & Organizations |
+| **Primary DB** | Supabase PostgreSQL      | Relational data storage        |
+| **ORM**        | Drizzle ORM              | Type-safe database queries     |
+| **Storage**    | Cloudinary               | Images & payment slips         |
+| **State**      | TanStack Query + Zustand | Client state management        |
+| **Email**      | Resend                   | Transactional emails           |
+| **i18n**       | next-intl                | English + Urdu (RTL)           |
 
 ---
 
@@ -136,22 +136,22 @@ subscriptions
 
 ### Platform Roles
 
-| Role | Description | Access |
-|------|-------------|--------|
+| Role          | Description            | Access                                  |
+| ------------- | ---------------------- | --------------------------------------- |
 | `super_admin` | Platform administrator | Full access to all farms & applications |
-| `admin` | Limited admin | Specific admin functions |
-| `user` | Regular user | Own farms only |
+| `admin`       | Limited admin          | Specific admin functions                |
+| `user`        | Regular user           | Own farms only                          |
 
 ### Tenant (Farm) Roles
 
-| Role | Description | Permissions |
-|------|-------------|-------------|
-| `farm_owner` | Farm owner | Full access to farm |
-| `farm_manager` | Manager | Most operations except billing |
-| `veterinarian` | Vet | Health records, breeding |
-| `milking_staff` | Staff | Milk logs only |
-| `accountant` | Finance | Expenses, sales, reports |
-| `guest` | Read-only | View only |
+| Role            | Description | Permissions                    |
+| --------------- | ----------- | ------------------------------ |
+| `farm_owner`    | Farm owner  | Full access to farm            |
+| `farm_manager`  | Manager     | Most operations except billing |
+| `veterinarian`  | Vet         | Health records, breeding       |
+| `milking_staff` | Staff       | Milk logs only                 |
+| `accountant`    | Finance     | Expenses, sales, reports       |
+| `guest`         | Read-only   | View only                      |
 
 ---
 
@@ -444,41 +444,41 @@ subscriptions
 
 ### Authentication & User Routes
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/user/farms` | Get user's farms and applications |
-| POST | `/api/user/join-org` | Join user to their approved organization |
+| Method | Route                | Description                              |
+| ------ | -------------------- | ---------------------------------------- |
+| GET    | `/api/user/farms`    | Get user's farms and applications        |
+| POST   | `/api/user/join-org` | Join user to their approved organization |
 
 ### Farm Application Routes
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/farm-applications` | Submit new application |
-| GET | `/api/farm-applications` | List user's applications |
-| GET | `/api/farm-applications/{id}` | Get application details |
-| PATCH | `/api/farm-applications/{id}` | Upload payment slip |
+| Method | Route                         | Description              |
+| ------ | ----------------------------- | ------------------------ |
+| POST   | `/api/farm-applications`      | Submit new application   |
+| GET    | `/api/farm-applications`      | List user's applications |
+| GET    | `/api/farm-applications/{id}` | Get application details  |
+| PATCH  | `/api/farm-applications/{id}` | Upload payment slip      |
 
 ### Super Admin Routes
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/admin/applications` | List all applications |
-| POST | `/api/admin/applications/{id}/review` | Approve/reject application |
-| GET | `/api/admin/stats` | Dashboard statistics |
-| GET | `/api/admin/tenants` | List all tenants |
-| GET | `/api/admin/users` | List all users |
+| Method | Route                                 | Description                |
+| ------ | ------------------------------------- | -------------------------- |
+| GET    | `/api/admin/applications`             | List all applications      |
+| POST   | `/api/admin/applications/{id}/review` | Approve/reject application |
+| GET    | `/api/admin/stats`                    | Dashboard statistics       |
+| GET    | `/api/admin/tenants`                  | List all tenants           |
+| GET    | `/api/admin/users`                    | List all users             |
 
 ### Tenant (Farm) Routes
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET/POST | `/api/animals` | Animal CRUD |
-| GET/POST | `/api/milk` | Milk log CRUD |
-| GET/POST | `/api/health/records` | Health records |
-| GET/POST | `/api/breeding` | Breeding records |
-| GET/POST | `/api/expenses` | Expense tracking |
-| GET/POST | `/api/sales` | Sales tracking |
-| GET | `/api/analytics` | Farm analytics |
+| Method   | Route                 | Description      |
+| -------- | --------------------- | ---------------- |
+| GET/POST | `/api/animals`        | Animal CRUD      |
+| GET/POST | `/api/milk`           | Milk log CRUD    |
+| GET/POST | `/api/health/records` | Health records   |
+| GET/POST | `/api/breeding`       | Breeding records |
+| GET/POST | `/api/expenses`       | Expense tracking |
+| GET/POST | `/api/sales`          | Sales tracking   |
+| GET      | `/api/analytics`      | Farm analytics   |
 
 ---
 
@@ -497,7 +497,7 @@ subscriptions
 }
 
 // Clerk webhook creates platform_users record
-INSERT INTO platform_users (id, email, name, platform_role) 
+INSERT INTO platform_users (id, email, name, platform_role)
 VALUES ('user_2qXXXX', 'kaash0542@gmail.com', 'Malik Kashif', 'user');
 ```
 
@@ -568,7 +568,7 @@ INSERT INTO tenant_members (tenant_id, user_id, role, status) VALUES (
 );
 
 // 7. Update application
-UPDATE farm_applications SET 
+UPDATE farm_applications SET
   status = 'approved',
   assigned_farm_id = 'FARM-N669KHLF',
   assigned_tenant_id = 'org_2qYYYYYYYYYY',
@@ -670,10 +670,7 @@ currency: PKR (Pakistan Rupees)
 
 ```typescript
 // ✅ CORRECT
-const { data, error } = await (supabase
-  .from('tenants')
-  .select('*')
-  .eq('id', tenantId) as any);
+const { data, error } = await (supabase.from('tenants').select('*').eq('id', tenantId) as any);
 
 // ❌ WRONG - direct Drizzle in API routes
 const result = await db.select().from(tenants);

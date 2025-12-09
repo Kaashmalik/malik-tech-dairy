@@ -20,13 +20,15 @@ export async function GET(request: NextRequest) {
 
     // Collect current metrics
     const metrics = await migrationMonitor.collectMetrics();
-    
+
     // Perform data reconciliation
     const reconciliationResult = await dualWriteAPI.performDataReconciliation();
-    
+
     // If discrepancies found, attempt automatic sync
     if (reconciliationResult.discrepancies.length > 0) {
-      console.log(`🔄 Found ${reconciliationResult.discrepancies.length} discrepancies, starting auto-sync`);
+      console.log(
+        `🔄 Found ${reconciliationResult.discrepancies.length} discrepancies, starting auto-sync`
+      );
       await dualWriteAPI.syncDiscrepancies(reconciliationResult.discrepancies);
     }
 
@@ -40,16 +42,15 @@ export async function GET(request: NextRequest) {
         reconciliation: reconciliationResult,
         timestamp: new Date().toISOString(),
       },
-      message: 'Scheduled migration tasks completed successfully'
+      message: 'Scheduled migration tasks completed successfully',
     });
-
   } catch (error) {
     console.error('Scheduled migration job error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Scheduled job failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -66,21 +67,31 @@ async function checkAutomatedRollbackConditions(metrics: any) {
 
   // Get recent metrics to check for sustained issues
   const recentMetrics = await getRecentMetrics(60); // Last hour
-  
+
   if (recentMetrics.length < 10) return; // Need enough data points
 
-  const avgErrorRate = recentMetrics.reduce((sum: number, m: any) => sum + m.error_rate, 0) / recentMetrics.length;
-  const avgDataIntegrity = recentMetrics.reduce((sum: number, m: any) => sum + m.data_integrity_score, 0) / recentMetrics.length;
-  
-  const totalOperations = recentMetrics.reduce((sum: number, m: any) => sum + m.dual_write_success + m.dual_write_failures, 0);
-  const totalFailures = recentMetrics.reduce((sum: number, m: any) => sum + m.dual_write_failures, 0);
+  const avgErrorRate =
+    recentMetrics.reduce((sum: number, m: any) => sum + m.error_rate, 0) / recentMetrics.length;
+  const avgDataIntegrity =
+    recentMetrics.reduce((sum: number, m: any) => sum + m.data_integrity_score, 0) /
+    recentMetrics.length;
+
+  const totalOperations = recentMetrics.reduce(
+    (sum: number, m: any) => sum + m.dual_write_success + m.dual_write_failures,
+    0
+  );
+  const totalFailures = recentMetrics.reduce(
+    (sum: number, m: any) => sum + m.dual_write_failures,
+    0
+  );
   const failureRate = totalOperations > 0 ? (totalFailures / totalOperations) * 100 : 0;
 
   // Trigger automated rollback if thresholds exceeded
-  if (avgErrorRate > rollbackThresholds.errorRate || 
-      avgDataIntegrity < rollbackThresholds.dataIntegrity || 
-      failureRate > rollbackThresholds.failureRate) {
-    
+  if (
+    avgErrorRate > rollbackThresholds.errorRate ||
+    avgDataIntegrity < rollbackThresholds.dataIntegrity ||
+    failureRate > rollbackThresholds.failureRate
+  ) {
     console.warn('🚨 Automated rollback triggered due to sustained issues');
     await triggerAutomatedRollback({
       reason: 'SUSTAINED_ISSUES',
@@ -101,14 +112,14 @@ async function getRecentMetrics(minutes: number) {
 
 async function triggerAutomatedRollback(details: any) {
   console.log('🔄 Executing automated rollback:', details);
-  
+
   try {
     // Revert to previous migration phase
     await dualWriteAPI.setMigrationPhase('PHASE_1_DUAL_WRITE');
-    
+
     // Send alert notification
     await migrationMonitor.triggerAlert('AUTOMATED_ROLLBACK', details);
-    
+
     console.log('✅ Automated rollback completed successfully');
   } catch (error) {
     console.error('❌ Automated rollback failed:', error);

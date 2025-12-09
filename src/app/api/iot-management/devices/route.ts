@@ -10,7 +10,16 @@ import { getTenantContext } from '@/lib/tenant/context';
 const deviceQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  deviceType: z.enum(['milk_meter', 'activity_monitor', 'temperature_sensor', 'automatic_feeder', 'water_meter', 'gps_tracker']).optional(),
+  deviceType: z
+    .enum([
+      'milk_meter',
+      'activity_monitor',
+      'temperature_sensor',
+      'automatic_feeder',
+      'water_meter',
+      'gps_tracker',
+    ])
+    .optional(),
   status: z.enum(['active', 'inactive', 'maintenance', 'error', 'offline']).optional(),
   animalId: z.string().optional(),
   manufacturer: z.string().optional(),
@@ -20,7 +29,14 @@ const deviceQuerySchema = z.object({
 });
 
 const createDeviceSchema = z.object({
-  deviceType: z.enum(['milk_meter', 'activity_monitor', 'temperature_sensor', 'automatic_feeder', 'water_meter', 'gps_tracker']),
+  deviceType: z.enum([
+    'milk_meter',
+    'activity_monitor',
+    'temperature_sensor',
+    'automatic_feeder',
+    'water_meter',
+    'gps_tracker',
+  ]),
   deviceName: z.string().min(2).max(255),
   deviceId: z.string().min(2).max(255),
   animalId: z.string().optional(),
@@ -47,10 +63,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -65,7 +78,7 @@ export async function GET(request: NextRequest) {
     // Build where conditions - ALWAYS include tenant filtering for tenant-specific tables
     const whereConditions = [
       eq(iotDevices.tenantId, tenantContext.tenantId),
-      eq(iotDevices.isActive, query.isActive)
+      eq(iotDevices.isActive, query.isActive),
     ];
 
     if (query.deviceType) {
@@ -81,21 +94,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (query.manufacturer) {
-      whereConditions.push(
-        ilike(iotDevices.manufacturer, `%${query.manufacturer}%`)
-      );
+      whereConditions.push(ilike(iotDevices.manufacturer, `%${query.manufacturer}%`));
     }
 
     if (query.search) {
-      whereConditions.push(
-        ilike(iotDevices.deviceName, `%${query.search}%`)
-      );
+      whereConditions.push(ilike(iotDevices.deviceName, `%${query.search}%`));
     }
 
     if (query.lowBattery === true) {
-      whereConditions.push(
-        sql`${iotDevices.batteryLevel} < 20`
-      );
+      whereConditions.push(sql`${iotDevices.batteryLevel} < 20`);
     }
 
     // Get total count
@@ -149,8 +156,10 @@ export async function GET(request: NextRequest) {
     const devicesWithHealth = devicesList.map(device => {
       const now = new Date();
       const lastSync = device.lastSync ? new Date(device.lastSync) : null;
-      const hoursSinceLastSync = lastSync ? Math.floor((now.getTime() - lastSync.getTime()) / (1000 * 60 * 60)) : null;
-      
+      const hoursSinceLastSync = lastSync
+        ? Math.floor((now.getTime() - lastSync.getTime()) / (1000 * 60 * 60))
+        : null;
+
       let healthStatus = 'healthy';
       if (device.status === 'error' || device.status === 'offline') {
         healthStatus = 'critical';
@@ -193,10 +202,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching IoT devices:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -205,10 +211,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -240,10 +243,7 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!animal.length) {
-        return NextResponse.json(
-          { success: false, error: 'Animal not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
     }
 
@@ -258,7 +258,9 @@ export async function POST(request: NextRequest) {
         status: 'active',
         ...validatedData,
         installationDate: new Date(validatedData.installationDate),
-        warrantyExpiry: validatedData.warrantyExpiry ? new Date(validatedData.warrantyExpiry) : null,
+        warrantyExpiry: validatedData.warrantyExpiry
+          ? new Date(validatedData.warrantyExpiry)
+          : null,
         createdBy: tenantContext.userId,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -272,7 +274,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error registering IoT device:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -280,45 +282,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PUT /api/iot-management/devices/[id] - Update IoT device
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// PUT /api/iot-management/devices?id=xxx - Update IoT device
+export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Device ID required' }, { status: 400 });
+    }
     const body = await request.json();
     const validatedData = updateDeviceSchema.parse(body);
 
     const db = getDrizzle();
 
     // Check if device exists and validate tenant ownership
-    const existingDevice = await db
-      .select()
-      .from(iotDevices)
-      .where(eq(iotDevices.id, id))
-      .limit(1);
+    const existingDevice = await db.select().from(iotDevices).where(eq(iotDevices.id, id)).limit(1);
 
     if (!existingDevice.length) {
-      return NextResponse.json(
-        { success: false, error: 'Device not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Device not found' }, { status: 404 });
     }
 
     // Get tenant context for ownership validation
@@ -326,10 +316,7 @@ export async function PUT(
 
     // Validate tenant ownership to prevent cross-tenant updates
     if (existingDevice[0].tenantId !== tenantContext.tenantId) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
     }
 
     // Verify animal exists if provided
@@ -341,10 +328,7 @@ export async function PUT(
         .limit(1);
 
       if (!animal.length) {
-        return NextResponse.json(
-          { success: false, error: 'Animal not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
     }
 
@@ -364,7 +348,7 @@ export async function PUT(
     });
   } catch (error) {
     console.error('Error updating IoT device:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -372,9 +356,6 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

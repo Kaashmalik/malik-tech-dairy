@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { usePermissions } from "@/hooks/usePermissions";
-import { UserRole } from "@/types/roles";
+import { usePermissions } from '@/hooks/usePermissions';
+import { UserRole } from '@/types/roles';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -10,12 +10,7 @@ interface RoleGuardProps {
   fallback?: React.ReactNode;
 }
 
-export function RoleGuard({
-  children,
-  roles,
-  permission,
-  fallback = null,
-}: RoleGuardProps) {
+export function RoleGuard({ children, roles, permission, fallback = null }: RoleGuardProps) {
   const { hasRole, hasPermission, loading } = usePermissions();
 
   if (loading) return null;
@@ -32,4 +27,3 @@ export function RoleGuard({
 
   return <>{children}</>;
 }
-

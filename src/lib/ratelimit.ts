@@ -1,9 +1,11 @@
 // Rate Limiting using Upstash Redis
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 // Check if Redis is configured
-const isRedisConfigured = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+const isRedisConfigured = !!(
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+);
 
 // Create a mock rate limiter for when Redis is not configured
 const createMockRateLimiter = () => ({
@@ -22,9 +24,9 @@ if (isRedisConfigured) {
 export const ipRateLimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(100, "1 m"),
+      limiter: Ratelimit.slidingWindow(100, '1 m'),
       analytics: true,
-      prefix: "ratelimit:ip",
+      prefix: 'ratelimit:ip',
     })
   : createMockRateLimiter();
 
@@ -32,9 +34,9 @@ export const ipRateLimit = redis
 export const tenantRateLimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(1000, "1 m"),
+      limiter: Ratelimit.slidingWindow(1000, '1 m'),
       analytics: true,
-      prefix: "ratelimit:tenant",
+      prefix: 'ratelimit:tenant',
     })
   : createMockRateLimiter();
 
@@ -44,17 +46,17 @@ export const apiRateLimit = ipRateLimit;
 export const authRateLimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(5, "1 m"), // 5 requests per minute for auth
+      limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 requests per minute for auth
       analytics: true,
-      prefix: "ratelimit:auth",
+      prefix: 'ratelimit:auth',
     })
   : createMockRateLimiter();
 
 export const uploadRateLimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(10, "1 h"), // 10 uploads per hour
+      limiter: Ratelimit.slidingWindow(10, '1 h'), // 10 uploads per hour
       analytics: true,
-      prefix: "ratelimit:upload",
+      prefix: 'ratelimit:upload',
     })
   : createMockRateLimiter();

@@ -36,26 +36,26 @@ export class MigrationMonitor {
   // Real-time Metrics Collection
   async collectMetrics(): Promise<MigrationMetrics> {
     const startTime = Date.now();
-    
+
     try {
       // Get current migration status
       const migrationStatus = await dualWriteAPI.getMigrationStatus();
-      
+
       // Get dual-write statistics
       const dualWriteStats = await this.getDualWriteStats();
-      
+
       // Get data reconciliation status
       const reconciliationResult = await dualWriteAPI.performDataReconciliation();
-      
+
       // Calculate data integrity score
       const integrityScore = this.calculateDataIntegrityScore(reconciliationResult);
-      
+
       // Get active users
       const activeUsers = await this.getActiveUserCount();
-      
+
       // Calculate throughput
       const throughput = await this.calculateThroughput();
-      
+
       const metrics: MigrationMetrics = {
         timestamp: new Date().toISOString(),
         phase: migrationStatus.phase,
@@ -70,10 +70,10 @@ export class MigrationMonitor {
 
       // Store metrics
       await this.storeMetrics(metrics);
-      
+
       // Check for alerts
       await this.checkAlerts(metrics);
-      
+
       return metrics;
     } catch (error) {
       console.error('Error collecting migration metrics:', error);
@@ -96,7 +96,7 @@ export class MigrationMonitor {
   }> {
     // Get statistics from the last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    
+
     const { data: logs } = await this.supabase
       .from('migration_logs')
       .select('success, failure')
@@ -112,15 +112,15 @@ export class MigrationMonitor {
 
   private calculateDataIntegrityScore(reconciliationResult: any): number {
     const totalRecords = reconciliationResult.discrepancies.reduce(
-      (sum: number, d: any) => sum + d.supabaseCount + d.firebaseCount, 
+      (sum: number, d: any) => sum + d.supabaseCount + d.firebaseCount,
       0
     );
-    
+
     const discrepancyCount = reconciliationResult.discrepancies.reduce(
-      (sum: number, d: any) => sum + d.difference, 
+      (sum: number, d: any) => sum + d.difference,
       0
     );
-    
+
     return totalRecords > 0 ? ((totalRecords - discrepancyCount) / totalRecords) * 100 : 100;
   }
 
@@ -129,29 +129,27 @@ export class MigrationMonitor {
       .from('platform_users')
       .select('*', { count: 'exact', head: true })
       .eq('active', true);
-    
+
     return count || 0;
   }
 
   private async calculateThroughput(): Promise<number> {
     // Calculate operations per minute
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
-    
+
     const { count } = await this.supabase
       .from('migration_logs')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', oneMinuteAgo);
-    
+
     return count || 0;
   }
 
   private async storeMetrics(metrics: MigrationMetrics): Promise<void> {
-    await this.supabase
-      .from('migration_metrics')
-      .insert({
-        ...metrics,
-        created_at: new Date().toISOString(),
-      });
+    await this.supabase.from('migration_metrics').insert({
+      ...metrics,
+      created_at: new Date().toISOString(),
+    });
   }
 
   private async checkAlerts(metrics: MigrationMetrics): Promise<void> {
@@ -173,8 +171,9 @@ export class MigrationMonitor {
 
     // Check failure rate threshold
     const totalOperations = metrics.dualWriteSuccess + metrics.dualWriteFailures;
-    const failureRate = totalOperations > 0 ? (metrics.dualWriteFailures / totalOperations) * 100 : 0;
-    
+    const failureRate =
+      totalOperations > 0 ? (metrics.dualWriteFailures / totalOperations) * 100 : 0;
+
     if (failureRate > this.alertThresholds.failureRateThreshold) {
       await this.triggerAlert('FAILURE_RATE_HIGH', {
         current: failureRate,
@@ -185,17 +184,15 @@ export class MigrationMonitor {
 
   async triggerAlert(alertType: string, details: any): Promise<void> {
     console.warn(`🚨 MIGRATION ALERT: ${alertType}`, details);
-    
+
     // Store alert in database
-    await this.supabase
-      .from('migration_alerts')
-      .insert({
-        alert_type: alertType,
-        details,
-        severity: this.getAlertSeverity(alertType),
-        created_at: new Date().toISOString(),
-        resolved: false,
-      });
+    await this.supabase.from('migration_alerts').insert({
+      alert_type: alertType,
+      details,
+      severity: this.getAlertSeverity(alertType),
+      created_at: new Date().toISOString(),
+      resolved: false,
+    });
 
     // Send notification (implement based on your notification system)
     await this.sendNotification(alertType, details);
@@ -203,12 +200,12 @@ export class MigrationMonitor {
 
   private getAlertSeverity(alertType: string): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' {
     const severityMap: Record<string, 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'> = {
-      'ERROR_RATE_HIGH': 'HIGH',
-      'DATA_INTEGRITY_LOW': 'CRITICAL',
-      'FAILURE_RATE_HIGH': 'HIGH',
-      'RESPONSE_TIME_HIGH': 'MEDIUM',
+      ERROR_RATE_HIGH: 'HIGH',
+      DATA_INTEGRITY_LOW: 'CRITICAL',
+      FAILURE_RATE_HIGH: 'HIGH',
+      RESPONSE_TIME_HIGH: 'MEDIUM',
     };
-    
+
     return severityMap[alertType] || 'MEDIUM';
   }
 
@@ -270,18 +267,18 @@ export class MigrationMonitor {
     estimatedTimeRemaining: number;
   }> {
     const migrationStatus = await dualWriteAPI.getMigrationStatus();
-    
+
     // Calculate completion based on phase and data sync status
     const phaseProgress: Record<string, number> = {
-      'UNKNOWN': 0,
-      'PHASE_1_DUAL_WRITE': 25,
-      'PHASE_2_READ_MIGRATION': 50,
-      'PHASE_3_WRITE_MIGRATION': 75,
-      'PHASE_4_CLEANUP': 100,
+      UNKNOWN: 0,
+      PHASE_1_DUAL_WRITE: 25,
+      PHASE_2_READ_MIGRATION: 50,
+      PHASE_3_WRITE_MIGRATION: 75,
+      PHASE_4_CLEANUP: 100,
     };
 
     const completion = phaseProgress[migrationStatus.phase] || 0;
-    
+
     // Estimate time remaining based on current throughput
     const remainingWork = 100 - completion;
     const estimatedTimeRemaining = remainingWork > 0 ? (remainingWork / 10) * 60 : 0; // minutes
@@ -300,13 +297,13 @@ export class MigrationMonitor {
     switch (alertType) {
       case 'DATA_INTEGRITY_LOW':
         return await this.reconcileData();
-      
+
       case 'ERROR_RATE_HIGH':
         return await this.adjustThrottling();
-      
+
       case 'FAILURE_RATE_HIGH':
         return await this.enableRetryMode();
-      
+
       default:
         return false;
     }
@@ -315,13 +312,13 @@ export class MigrationMonitor {
   private async reconcileData(): Promise<boolean> {
     try {
       const reconciliationResult = await dualWriteAPI.performDataReconciliation();
-      
+
       if (reconciliationResult.discrepancies.length > 0) {
         await dualWriteAPI.syncDiscrepancies(reconciliationResult.discrepancies);
         console.log('✅ Automated data reconciliation completed');
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('❌ Automated data reconciliation failed:', error);
@@ -399,7 +396,7 @@ export class MigrationMonitor {
       .select('success')
       .order('created_at', { ascending: false })
       .limit(10);
-    
+
     return recentLogs?.length > 0;
   }
 

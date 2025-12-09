@@ -1,8 +1,8 @@
 // MFA Enforcement Middleware for Owner/Admin Roles
-import { auth, clerkClient } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
-import { TenantRole, PlatformRole } from "@/types/roles";
-import { adminDb } from "@/lib/firebase/admin";
+import { auth, clerkClient } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { TenantRole, PlatformRole } from '@/types/roles';
+import { adminDb } from '@/lib/firebase/admin';
 
 /**
  * Check if user has MFA enabled via Clerk
@@ -11,16 +11,15 @@ async function checkMFAStatus(userId: string): Promise<boolean> {
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    
+
     // Check if user has MFA enabled
     // Clerk stores MFA status in user's publicMetadata or we check backup codes
-    const mfaEnabled = user.twoFactorEnabled || 
-                      (user.publicMetadata?.mfaEnabled as boolean) || 
-                      false;
-    
+    const mfaEnabled =
+      user.twoFactorEnabled || (user.publicMetadata?.mfaEnabled as boolean) || false;
+
     return mfaEnabled;
   } catch (error) {
-    console.error("Error checking MFA status:", error);
+    console.error('Error checking MFA status:', error);
     return false;
   }
 }
@@ -35,7 +34,7 @@ async function getUserRole(tenantId: string, userId: string): Promise<string | n
 
   try {
     // Check for super admin
-    const userDoc = await adminDb.collection("users").doc(userId).get();
+    const userDoc = await adminDb.collection('users').doc(userId).get();
     if (userDoc.exists) {
       const userData = userDoc.data();
       if (userData?.platformRole === PlatformRole.SUPER_ADMIN) {
@@ -45,9 +44,9 @@ async function getUserRole(tenantId: string, userId: string): Promise<string | n
 
     // Check tenant member role
     const memberDoc = await adminDb
-      .collection("tenants")
+      .collection('tenants')
       .doc(tenantId)
-      .collection("members")
+      .collection('members')
       .doc(userId)
       .get();
 
@@ -65,7 +64,7 @@ async function getUserRole(tenantId: string, userId: string): Promise<string | n
 
     return null;
   } catch (error) {
-    console.error("Error fetching user role:", error);
+    console.error('Error fetching user role:', error);
     return null;
   }
 }
@@ -89,24 +88,21 @@ export async function enforceMFA(
 ): Promise<NextResponse | null> {
   try {
     const userRole = await getUserRole(tenantId, userId);
-    
+
     if (!userRole) {
-      return NextResponse.json(
-        { error: "User role not found" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'User role not found' }, { status: 403 });
     }
 
     // Check if role requires MFA
     if (MFA_REQUIRED_ROLES.includes(userRole as any)) {
       const hasMFA = await checkMFAStatus(userId);
-      
+
       if (!hasMFA) {
         return NextResponse.json(
           {
-            error: "Multi-factor authentication (MFA) is required for this role",
-            code: "MFA_REQUIRED",
-            message: "Please enable MFA in your account settings to access this resource.",
+            error: 'Multi-factor authentication (MFA) is required for this role',
+            code: 'MFA_REQUIRED',
+            message: 'Please enable MFA in your account settings to access this resource.',
           },
           { status: 403 }
         );
@@ -115,11 +111,8 @@ export async function enforceMFA(
 
     return null; // MFA check passed
   } catch (error) {
-    console.error("Error in MFA enforcement:", error);
-    return NextResponse.json(
-      { error: "Failed to verify MFA status" },
-      { status: 500 }
-    );
+    console.error('Error in MFA enforcement:', error);
+    return NextResponse.json({ error: 'Failed to verify MFA status' }, { status: 500 });
   }
 }
 
@@ -127,16 +120,16 @@ export async function enforceMFA(
  * Wrapper for API routes that require MFA
  */
 export function withMFAEnforcement(
-  handler: (req: NextRequest, context: { tenantId: string; userId: string }) => Promise<NextResponse>
+  handler: (
+    req: NextRequest,
+    context: { tenantId: string; userId: string }
+  ) => Promise<NextResponse>
 ) {
   return async (req: NextRequest) => {
     const { userId, orgId } = await auth();
 
     if (!userId || !orgId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Enforce MFA
@@ -148,4 +141,3 @@ export function withMFAEnforcement(
     return handler(req, { tenantId: orgId, userId });
   };
 }
-

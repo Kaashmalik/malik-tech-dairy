@@ -27,10 +27,7 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -47,16 +44,18 @@ export async function POST(request: NextRequest) {
 
     if (!existingUser) {
       // Create platform user
-      await supabase.from('platform_users').insert([{
-        id: userId,
-        email: validatedData.email,
-        name: validatedData.ownerName,
-        phone: validatedData.phone,
-        platform_role: 'user',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }]);
+      await supabase.from('platform_users').insert([
+        {
+          id: userId,
+          email: validatedData.email,
+          name: validatedData.ownerName,
+          phone: validatedData.phone,
+          platform_role: 'user',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ]);
     }
 
     // Generate application ID
@@ -64,51 +63,55 @@ export async function POST(request: NextRequest) {
 
     // Determine initial status based on plan
     const isPaidPlan = validatedData.requestedPlan !== 'free';
-    const status = isPaidPlan && validatedData.paymentSlipUrl 
-      ? 'payment_uploaded' 
-      : isPaidPlan 
-        ? 'pending_payment'
-        : 'pending';
+    const status =
+      isPaidPlan && validatedData.paymentSlipUrl
+        ? 'payment_uploaded'
+        : isPaidPlan
+          ? 'pending_payment'
+          : 'pending';
 
     // Create application
     const { data: application, error } = await supabase
       .from('farm_applications')
-      .insert([{
-        id: applicationId,
-        applicant_id: userId,
-        farm_name: validatedData.farmName,
-        owner_name: validatedData.ownerName,
-        email: validatedData.email,
-        phone: validatedData.phone,
-        address: validatedData.address || null,
-        city: validatedData.city || null,
-        province: validatedData.province || null,
-        animal_types: validatedData.animalTypes || [],
-        estimated_animals: validatedData.estimatedAnimals || 0,
-        requested_plan: validatedData.requestedPlan,
-        payment_slip_url: validatedData.paymentSlipUrl || null,
-        status: status,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }])
+      .insert([
+        {
+          id: applicationId,
+          applicant_id: userId,
+          farm_name: validatedData.farmName,
+          owner_name: validatedData.ownerName,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          address: validatedData.address || null,
+          city: validatedData.city || null,
+          province: validatedData.province || null,
+          animal_types: validatedData.animalTypes || [],
+          estimated_animals: validatedData.estimatedAnimals || 0,
+          requested_plan: validatedData.requestedPlan,
+          payment_slip_url: validatedData.paymentSlipUrl || null,
+          status: status,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ])
       .select()
       .single();
 
     if (error) {
       console.error('Error creating application:', error);
-      return NextResponse.json(
-        { error: 'Failed to create application' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: application,
-      message: isPaidPlan && !validatedData.paymentSlipUrl 
-        ? 'Application submitted. Please upload payment slip to complete.'
-        : 'Application submitted successfully!',
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: application,
+        message:
+          isPaidPlan && !validatedData.paymentSlipUrl
+            ? 'Application submitted. Please upload payment slip to complete.'
+            : 'Application submitted successfully!',
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error creating farm application:', error);
 
@@ -119,10 +122,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: 'Failed to create application' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
   }
 }
 
@@ -132,10 +132,7 @@ export async function GET() {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = getSupabaseClient();
@@ -148,10 +145,7 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching applications:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch applications' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -160,9 +154,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching farm applications:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch applications' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
   }
 }

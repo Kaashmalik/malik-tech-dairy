@@ -32,23 +32,26 @@ interface CacheConfig {
 
 // Default cache TTLs for different data types
 const CACHE_TTL = {
-  'animal_list': 300, // 5 minutes
-  'milk_stats': 600, // 10 minutes
-  'health_records': 300, // 5 minutes
-  'dashboard_data': 180, // 3 minutes
-  'analytics': 900, // 15 minutes
-  'user_profile': 3600, // 1 hour
+  animal_list: 300, // 5 minutes
+  milk_stats: 600, // 10 minutes
+  health_records: 300, // 5 minutes
+  dashboard_data: 180, // 3 minutes
+  analytics: 900, // 15 minutes
+  user_profile: 3600, // 1 hour
 } as const;
 
 // Performance monitoring
 class PerformanceMonitor {
-  private static metrics = new Map<string, {
-    count: number;
-    totalTime: number;
-    avgTime: number;
-    minTime: number;
-    maxTime: number;
-  }>();
+  private static metrics = new Map<
+    string,
+    {
+      count: number;
+      totalTime: number;
+      avgTime: number;
+      minTime: number;
+      maxTime: number;
+    }
+  >();
 
   static startTimer(operation: string): () => void {
     const startTime = performance.now();
@@ -194,7 +197,7 @@ class OptimizedQueryBuilder {
 
   async execute(): Promise<any> {
     const endTimer = PerformanceMonitor.startTimer('db_query');
-    
+
     try {
       // Check cache first
       if (this.cacheConfig) {
@@ -208,7 +211,7 @@ class OptimizedQueryBuilder {
 
       // Execute query
       const result = await this.query;
-      
+
       // Cache result if configured
       if (this.cacheConfig && !result.error) {
         const cacheKey = this.cacheConfig.key || this.generateCacheKey();
@@ -232,11 +235,14 @@ class OptimizedQueryBuilder {
 
 // Optimized service functions
 export class OptimizedDataService {
-  static async getAnimalsWithCache(tenantId: string, options: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}) {
+  static async getAnimalsWithCache(
+    tenantId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+    } = {}
+  ) {
     const cacheKey = CacheManager.generateKey(
       tenantId,
       'animals',
@@ -244,18 +250,16 @@ export class OptimizedDataService {
     );
 
     return new OptimizedQueryBuilder('animals')
-      .select('id, tag, name, species, breed, date_of_birth, gender, photo_url, status, current_weight')
+      .select(
+        'id, tag, name, species, breed, date_of_birth, gender, photo_url, status, current_weight'
+      )
       .eq('tenant_id', tenantId)
       .cache({ key: cacheKey, ttl: CACHE_TTL.animal_list })
       .execute();
   }
 
   static async getMilkStatsWithCache(tenantId: string, days: number = 30) {
-    const cacheKey = CacheManager.generateKey(
-      tenantId,
-      'milk_stats',
-      `days:${days}`
-    );
+    const cacheKey = CacheManager.generateKey(tenantId, 'milk_stats', `days:${days}`);
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - days);
@@ -277,13 +281,13 @@ export class OptimizedDataService {
         .select('id, status', { count: 'exact' })
         .eq('tenant_id', tenantId)
         .execute(),
-      
+
       new OptimizedQueryBuilder('milk_logs')
         .select('yield', { count: 'exact' })
         .eq('tenant_id', tenantId)
         .gte('date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .execute(),
-      
+
       new OptimizedQueryBuilder('health_records')
         .select('id', { count: 'exact' })
         .eq('tenant_id', tenantId)

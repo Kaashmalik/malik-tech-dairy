@@ -1,11 +1,10 @@
 // Health check endpoint
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   return NextResponse.json({
-    status: "ok",
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    service: "MTK Dairy API",
+    service: 'MTK Dairy API',
   });
 }
-

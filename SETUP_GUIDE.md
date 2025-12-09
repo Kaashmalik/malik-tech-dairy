@@ -1,9 +1,9 @@
 # 🚀 MTK Dairy - Complete Setup Guide
 
 > **Comprehensive guide to set up the entire project from scratch**
-> 
+>
 > Estimated Time: 45-60 minutes
-> 
+>
 > Cost: $0/month (All free tiers)
 
 ---
@@ -34,12 +34,12 @@
 
 ### Required Software
 
-| Software | Version | Download Link |
-|----------|---------|---------------|
-| **Node.js** | 18.x or 20.x | [nodejs.org](https://nodejs.org/) |
-| **npm** | 9.x+ | Comes with Node.js |
-| **Git** | Latest | [git-scm.com](https://git-scm.com/) |
-| **VS Code** | Latest | [code.visualstudio.com](https://code.visualstudio.com/) |
+| Software    | Version      | Download Link                                           |
+| ----------- | ------------ | ------------------------------------------------------- |
+| **Node.js** | 18.x or 20.x | [nodejs.org](https://nodejs.org/)                       |
+| **npm**     | 9.x+         | Comes with Node.js                                      |
+| **Git**     | Latest       | [git-scm.com](https://git-scm.com/)                     |
+| **VS Code** | Latest       | [code.visualstudio.com](https://code.visualstudio.com/) |
 
 ### Verify Installation
 
@@ -111,11 +111,13 @@ Copy-Item env.example .env.local
 **Free Tier:** 10,000 Monthly Active Users
 
 #### Step 1: Create Account
+
 1. Go to [clerk.com](https://clerk.com)
 2. Click **"Start Building for Free"**
 3. Sign up with GitHub, Google, or Email
 
 #### Step 2: Create Application
+
 1. Click **"Create Application"**
 2. Enter Application Name: `MTK Dairy`
 3. Select sign-in options:
@@ -125,6 +127,7 @@ Copy-Item env.example .env.local
 4. Click **"Create Application"**
 
 #### Step 3: Get API Keys
+
 1. Go to **"API Keys"** in the sidebar
 2. Copy the following keys:
 
@@ -134,6 +137,7 @@ CLERK_SECRET_KEY=sk_test_xxxxxxxxxx
 ```
 
 #### Step 4: Configure Webhooks (Optional but Recommended)
+
 1. Go to **"Webhooks"** in sidebar
 2. Click **"Add Endpoint"**
 3. Enter URL: `https://your-domain.com/api/webhooks/clerk`
@@ -148,15 +152,16 @@ CLERK_WEBHOOK_SECRET=whsec_xxxxxxxxxx
 ```
 
 #### Step 5: Configure URLs
+
 1. Go to **"Paths"** in sidebar
 2. Set the following:
 
-| Setting | Value |
-|---------|-------|
-| Sign-in URL | `/sign-in` |
-| Sign-up URL | `/sign-up` |
+| Setting           | Value        |
+| ----------------- | ------------ |
+| Sign-in URL       | `/sign-in`   |
+| Sign-up URL       | `/sign-up`   |
 | After sign-in URL | `/dashboard` |
-| After sign-up URL | `/apply` |
+| After sign-up URL | `/apply`     |
 
 ---
 
@@ -165,11 +170,13 @@ CLERK_WEBHOOK_SECRET=whsec_xxxxxxxxxx
 **Free Tier:** 500MB Database, 1GB File Storage, 50MB File Uploads
 
 #### Step 1: Create Account
+
 1. Go to [supabase.com](https://supabase.com)
 2. Click **"Start your project"**
 3. Sign up with GitHub
 
 #### Step 2: Create Project
+
 1. Click **"New Project"**
 2. Fill in details:
    - **Name:** `malik-tech-dairy`
@@ -179,6 +186,7 @@ CLERK_WEBHOOK_SECRET=whsec_xxxxxxxxxx
 4. Wait 2-3 minutes for project setup
 
 #### Step 3: Get Connection Details
+
 1. Go to **"Settings"** → **"API"**
 2. Copy the following:
 
@@ -197,6 +205,7 @@ SUPABASE_DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxx.supaba
 > ⚠️ **Important:** Replace `[YOUR-PASSWORD]` with your actual database password
 
 #### Step 4: Run Database Migration
+
 1. Go to **"SQL Editor"** in sidebar
 2. Click **"New Query"**
 3. Copy and paste the contents of `scripts/supabase-schema-update.sql`
@@ -212,16 +221,19 @@ SUPABASE_DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxx.supaba
 > ⚠️ **Important:** Firebase is ONLY used for real-time activity feeds. All other data is stored in Supabase.
 
 #### Step 1: Create Account
+
 1. Go to [console.firebase.google.com](https://console.firebase.google.com)
 2. Sign in with Google account
 
 #### Step 2: Create Project
+
 1. Click **"Create a project"**
 2. Enter Project Name: `malik-tech-dairy`
 3. Disable Google Analytics (optional, saves complexity)
 4. Click **"Create Project"**
 
 #### Step 3: Enable Firestore
+
 1. In sidebar, click **"Firestore Database"**
 2. Click **"Create database"**
 3. Select **"Start in production mode"**
@@ -229,6 +241,7 @@ SUPABASE_DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxx.supaba
 5. Click **"Enable"**
 
 #### Step 4: Get Web App Credentials
+
 1. Click the gear icon → **"Project settings"**
 2. Scroll down to **"Your apps"**
 3. Click **"Web"** icon (`</>`)
@@ -245,6 +258,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:xxxxxxxxxx
 ```
 
 #### Step 5: Set Up Firestore Rules
+
 1. Go to **"Firestore Database"** → **"Rules"**
 2. Replace with:
 
@@ -264,6 +278,7 @@ service cloud.firestore {
 3. Click **"Publish"**
 
 #### Step 6: Get Admin SDK Credentials (Server-side)
+
 1. Go to **"Project settings"** → **"Service accounts"**
 2. Click **"Generate new private key"**
 3. Download the JSON file
@@ -284,11 +299,13 @@ FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBg...\n----
 **Free Tier:** 25GB Storage, 25GB Bandwidth/month
 
 #### Step 1: Create Account
+
 1. Go to [cloudinary.com](https://cloudinary.com)
 2. Click **"Sign Up For Free"**
 3. Sign up with Google or Email
 
 #### Step 2: Get API Credentials
+
 1. After login, you'll see the Dashboard
 2. Copy the credentials from **"Account Details"**:
 
@@ -300,6 +317,7 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dxxxxxxxxx
 ```
 
 #### Step 3: Create Upload Preset (Optional)
+
 1. Go to **"Settings"** → **"Upload"**
 2. Scroll to **"Upload presets"**
 3. Click **"Add upload preset"**
@@ -316,11 +334,13 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dxxxxxxxxx
 **Free Tier:** 10,000 commands/day, 256MB storage
 
 #### Step 1: Create Account
+
 1. Go to [upstash.com](https://upstash.com)
 2. Click **"Start for Free"**
 3. Sign up with GitHub, Google, or Email
 
 #### Step 2: Create Database
+
 1. Click **"Create Database"**
 2. Configure:
    - **Name:** `malik-tech-dairy`
@@ -329,6 +349,7 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dxxxxxxxxx
 3. Click **"Create"**
 
 #### Step 3: Get Credentials
+
 1. In the database dashboard, find **"REST API"** section
 2. Copy:
 
@@ -344,28 +365,34 @@ UPSTASH_REDIS_REST_TOKEN=Axxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 **Free Tier:** 100 emails/day, 3,000 emails/month
 
 #### Step 1: Create Account
+
 1. Go to [resend.com](https://resend.com)
 2. Click **"Get Started"**
 3. Sign up with GitHub or Google
 
 #### Step 2: Verify Domain (Recommended) or Use Default
+
 **Option A: Use Default (Quick Start)**
+
 ```env
 RESEND_FROM_EMAIL=onboarding@resend.dev
 ```
 
 **Option B: Verify Your Domain (Production)**
+
 1. Go to **"Domains"** in sidebar
 2. Click **"Add Domain"**
 3. Enter your domain: `maliktechdairy.com`
 4. Add the DNS records shown to your domain provider
 5. Wait for verification (usually 5-10 minutes)
 6. Set:
+
 ```env
 RESEND_FROM_EMAIL=MTK Dairy <noreply@maliktechdairy.com>
 ```
 
 #### Step 3: Get API Key
+
 1. Go to **"API Keys"** in sidebar
 2. Click **"Create API Key"**
 3. Name: `malik-tech-dairy-production`
@@ -383,16 +410,19 @@ RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxx
 **Free Tier:** 1 Million events/month
 
 #### Step 1: Create Account
+
 1. Go to [posthog.com](https://posthog.com)
 2. Click **"Get Started - Free"**
 3. Sign up with Google or GitHub
 
 #### Step 2: Create Project
+
 1. Enter Organization name: `Malik Tech`
 2. Enter Project name: `MTK Dairy`
 3. Select region: **EU** or **US**
 
 #### Step 3: Get API Key
+
 1. Go to **"Settings"** → **"Project"**
 2. Copy the **Project API Key**:
 
@@ -410,17 +440,20 @@ NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 **Free Tier:** 5,000 errors/month
 
 #### Step 1: Create Account
+
 1. Go to [sentry.io](https://sentry.io)
 2. Click **"Start for Free"**
 3. Sign up with GitHub or Google
 
 #### Step 2: Create Project
+
 1. Click **"Create Project"**
 2. Select platform: **Next.js**
 3. Project name: `malik-tech-dairy`
 4. Click **"Create Project"**
 
 #### Step 3: Get DSN
+
 1. Go to **"Settings"** → **"Projects"** → **"malik-tech-dairy"**
 2. Click **"Client Keys (DSN)"**
 3. Copy the DSN:
@@ -431,6 +464,7 @@ SENTRY_DSN=https://xxxxxxxxxx@o123456.ingest.sentry.io/1234567
 ```
 
 #### Step 4: Get Auth Token (For Source Maps)
+
 1. Go to **"Settings"** → **"Auth Tokens"**
 2. Click **"Create New Token"**
 3. Select scopes: `project:releases`, `org:read`
@@ -604,13 +638,14 @@ In Supabase SQL Editor, run:
 
 ```sql
 -- Check all tables were created
-SELECT table_name 
-FROM information_schema.tables 
+SELECT table_name
+FROM information_schema.tables
 WHERE table_schema = 'public'
 ORDER BY table_name;
 ```
 
 You should see these tables:
+
 - `animals`
 - `api_keys`
 - `audit_logs`
@@ -650,13 +685,13 @@ SELECT * FROM platform_users WHERE email = 'your-email@example.com';
 
 -- If not exists, the user will be created on first login
 -- After signing in once, run this to promote to super admin:
-UPDATE platform_users 
-SET platform_role = 'super_admin' 
+UPDATE platform_users
+SET platform_role = 'super_admin'
 WHERE email = 'your-email@example.com';
 
 -- Verify the update
-SELECT id, email, name, platform_role 
-FROM platform_users 
+SELECT id, email, name, platform_role
+FROM platform_users
 WHERE email = 'your-email@example.com';
 ```
 
@@ -682,19 +717,19 @@ npm run dev
 
 ### Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint errors |
-| `npm run type-check` | Run TypeScript check |
+| Command               | Description                 |
+| --------------------- | --------------------------- |
+| `npm run dev`         | Start development server    |
+| `npm run build`       | Build for production        |
+| `npm run start`       | Start production server     |
+| `npm run lint`        | Run ESLint                  |
+| `npm run lint:fix`    | Fix ESLint errors           |
+| `npm run type-check`  | Run TypeScript check        |
 | `npm run db:generate` | Generate Drizzle migrations |
-| `npm run db:push` | Push schema to database |
-| `npm run db:studio` | Open Drizzle Studio |
-| `npm run test` | Run tests |
-| `npm run test:e2e` | Run E2E tests |
+| `npm run db:push`     | Push schema to database     |
+| `npm run db:studio`   | Open Drizzle Studio         |
+| `npm run test`        | Run tests                   |
+| `npm run test:e2e`    | Run E2E tests               |
 
 ### Test the Application
 
@@ -849,5 +884,5 @@ You've successfully set up MTK Dairy. Your application should now be fully funct
 
 ---
 
-*Last Updated: November 2024*
-*Version: 1.0.0*
+_Last Updated: November 2024_
+_Version: 1.0.0_

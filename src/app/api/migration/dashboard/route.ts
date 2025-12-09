@@ -11,28 +11,24 @@ export async function GET(request: NextRequest) {
     // Verify user is super admin
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get dashboard data
     const dashboardData = await migrationMonitor.getDashboardData();
-    
+
     return NextResponse.json({
       success: true,
       data: dashboardData,
-      message: 'Dashboard data retrieved successfully'
+      message: 'Dashboard data retrieved successfully',
     });
-
   } catch (error) {
     console.error('Dashboard API error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to retrieve dashboard data',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

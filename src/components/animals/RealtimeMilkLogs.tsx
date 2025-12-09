@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useTenantContext } from "@/components/tenant/TenantProvider";
-import { subscribeToMilkLogs } from "@/lib/firebase/realtime";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
+import { useEffect, useState } from 'react';
+import { useTenantContext } from '@/components/tenant/TenantProvider';
+import { subscribeToMilkLogs } from '@/lib/firebase/realtime';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from 'date-fns';
 
 interface RealtimeMilkLogsProps {
   animalId: string;
@@ -18,10 +18,10 @@ export function RealtimeMilkLogs({ animalId }: RealtimeMilkLogsProps) {
     if (!config?.tenantId) return;
 
     // Subscribe to real-time milk logs
-    const unsubscribe = subscribeToMilkLogs(config.tenantId, (logs) => {
+    const unsubscribe = subscribeToMilkLogs(config.tenantId, logs => {
       // Filter logs for this animal and get recent ones
       const animalLogs = logs
-        .filter((log) => log.animalId === animalId)
+        .filter(log => log.animalId === animalId)
         .sort((a, b) => {
           const dateA = a.timestamp || a.createdAt;
           const dateB = b.timestamp || b.createdAt;
@@ -48,24 +48,24 @@ export function RealtimeMilkLogs({ animalId }: RealtimeMilkLogsProps) {
         <CardDescription>Real-time updates when staff logs milk</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {recentLogs.map((log, index) => (
             <div
               key={log.id || index}
-              className="flex items-center justify-between p-2 border rounded"
+              className='flex items-center justify-between rounded border p-2'
             >
               <div>
-                <p className="font-medium">{log.date || "N/A"}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className='font-medium'>{log.date || 'N/A'}</p>
+                <p className='text-muted-foreground text-sm'>
                   {log.session} - {log.quantity}L
                 </p>
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className='text-muted-foreground text-xs'>
                 {log.timestamp
-                  ? format(new Date(log.timestamp), "HH:mm")
+                  ? format(new Date(log.timestamp), 'HH:mm')
                   : log.createdAt
-                  ? format(new Date(log.createdAt), "HH:mm")
-                  : ""}
+                    ? format(new Date(log.createdAt), 'HH:mm')
+                    : ''}
               </div>
             </div>
           ))}
@@ -74,4 +74,3 @@ export function RealtimeMilkLogs({ animalId }: RealtimeMilkLogsProps) {
     </Card>
   );
 }
-

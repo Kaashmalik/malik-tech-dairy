@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     // Authenticate the user with Clerk
     let authUserId: string | null;
-    
+
     try {
       const authResult = auth();
       authUserId = authResult.userId;
@@ -16,19 +16,16 @@ export async function GET(request: NextRequest) {
       console.log('Clerk auth error:', error);
       authUserId = null;
     }
-    
+
     // Development bypass - allow requests with userId from query params
     if (!authUserId && process.env.NODE_ENV === 'development') {
       const { searchParams } = new URL(request.url);
       authUserId = searchParams.get('userId');
       console.log('Development mode: using userId from query params:', authUserId);
     }
-    
+
     if (!authUserId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant ID from query params (but use authenticated user ID)
@@ -36,10 +33,7 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenantId');
 
     if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Missing tenantId' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
     // Use authenticated user ID instead of passed userId for security
@@ -60,7 +54,7 @@ export async function GET(request: NextRequest) {
     if (platformUserResult.length > 0) {
       const platformUser = platformUserResult[0];
       console.log('Platform user found:', platformUser);
-      
+
       // Check for platform-level super admin
       if (platformUser.platformRole === 'super_admin') {
         console.log('User is super admin');
@@ -76,10 +70,7 @@ export async function GET(request: NextRequest) {
     const memberResult = await db
       .select()
       .from(tenantMembers)
-      .where(and(
-        eq(tenantMembers.userId, userId),
-        eq(tenantMembers.tenantId, tenantId)
-      ))
+      .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.tenantId, tenantId)))
       .limit(1);
 
     console.log('Tenant member result:', memberResult);
@@ -102,9 +93,6 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error fetching permissions from server:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -2,7 +2,20 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+} from 'recharts';
 import { BarChart3, TrendingUp, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -57,23 +70,23 @@ export function FeedAnalyticsChart({ analytics, className }: FeedAnalyticsChartP
       {/* Category Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <BarChart3 className="h-5 w-5 mr-2" />
+          <CardTitle className='flex items-center'>
+            <BarChart3 className='mr-2 h-5 w-5' />
             Inventory Distribution by Category
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-4">Value Distribution</h4>
-              <ResponsiveContainer width="100%" height={300}>
+              <h4 className='mb-4 text-sm font-medium text-gray-700'>Value Distribution</h4>
+              <ResponsiveContainer width='100%' height={300}>
                 <PieChart>
                   <Pie
                     data={analytics.categoryBreakdown}
-                    dataKey="totalValue"
-                    nameKey="category"
-                    cx="50%"
-                    cy="50%"
+                    dataKey='totalValue'
+                    nameKey='category'
+                    cx='50%'
+                    cy='50%'
                     outerRadius={80}
                     label={({ category, percentage }) => `${category}: ${percentage.toFixed(1)}%`}
                   >
@@ -87,14 +100,14 @@ export function FeedAnalyticsChart({ analytics, className }: FeedAnalyticsChartP
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-4">Stock Levels</h4>
-              <ResponsiveContainer width="100%" height={300}>
+              <h4 className='mb-4 text-sm font-medium text-gray-700'>Stock Levels</h4>
+              <ResponsiveContainer width='100%' height={300}>
                 <BarChart data={analytics.categoryBreakdown}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" />
+                  <CartesianGrid strokeDasharray='3 3' />
+                  <XAxis dataKey='category' />
                   <YAxis />
                   <Tooltip formatter={(value: number) => `${value} kg`} />
-                  <Bar dataKey="totalStock" fill="#8884d8" />
+                  <Bar dataKey='totalStock' fill='#8884d8' />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -105,21 +118,28 @@ export function FeedAnalyticsChart({ analytics, className }: FeedAnalyticsChartP
       {/* Consumption Trends */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2" />
+          <CardTitle className='flex items-center'>
+            <TrendingUp className='mr-2 h-5 w-5' />
             Consumption & Cost Trends (Last 6 Months)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width='100%' height={300}>
             <LineChart data={consumptionTrend}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis dataKey='month' />
+              <YAxis yAxisId='left' />
+              <YAxis yAxisId='right' orientation='right' />
               <Tooltip />
-              <Bar yAxisId="left" dataKey="consumption" fill="#8884d8" name="Consumption (kg)" />
-              <Line yAxisId="right" type="monotone" dataKey="cost" stroke="#82ca9d" strokeWidth={2} name="Cost (PKR)" />
+              <Bar yAxisId='left' dataKey='consumption' fill='#8884d8' name='Consumption (kg)' />
+              <Line
+                yAxisId='right'
+                type='monotone'
+                dataKey='cost'
+                stroke='#82ca9d'
+                strokeWidth={2}
+                name='Cost (PKR)'
+              />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -128,36 +148,36 @@ export function FeedAnalyticsChart({ analytics, className }: FeedAnalyticsChartP
       {/* Efficiency Metrics */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
+          <CardTitle className='flex items-center'>
+            <Calendar className='mr-2 h-5 w-5' />
             Efficiency Metrics Overview
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-900">
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
+            <div className='rounded-lg bg-blue-50 p-4 text-center'>
+              <div className='text-2xl font-bold text-blue-900'>
                 {analytics.efficiencyMetrics.averageDaysOfSupply}
               </div>
-              <div className="text-sm text-blue-700">Avg Days of Supply</div>
+              <div className='text-sm text-blue-700'>Avg Days of Supply</div>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-900">
+            <div className='rounded-lg bg-green-50 p-4 text-center'>
+              <div className='text-2xl font-bold text-green-900'>
                 {analytics.efficiencyMetrics.stockTurnoverRate}
               </div>
-              <div className="text-sm text-green-700">Turnover Rate/Year</div>
+              <div className='text-sm text-green-700'>Turnover Rate/Year</div>
             </div>
-            <div className="p-4 bg-red-50 rounded-lg text-center">
-              <div className="text-2xl font-bold text-red-900">
+            <div className='rounded-lg bg-red-50 p-4 text-center'>
+              <div className='text-2xl font-bold text-red-900'>
                 {analytics.efficiencyMetrics.wastePercentage}%
               </div>
-              <div className="text-sm text-red-700">Waste Percentage</div>
+              <div className='text-sm text-red-700'>Waste Percentage</div>
             </div>
-            <div className="p-4 bg-purple-50 rounded-lg text-center">
-              <div className="text-2xl font-bold text-purple-900">
+            <div className='rounded-lg bg-purple-50 p-4 text-center'>
+              <div className='text-2xl font-bold text-purple-900'>
                 {formatCurrency(analytics.efficiencyMetrics.costPerDay)}
               </div>
-              <div className="text-sm text-purple-700">Daily Cost</div>
+              <div className='text-sm text-purple-700'>Daily Cost</div>
             </div>
           </div>
         </CardContent>

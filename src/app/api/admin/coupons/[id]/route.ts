@@ -1,39 +1,36 @@
 // API Route: Super Admin - Update/Delete Coupon
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { adminDb } from "@/lib/firebase/admin";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { adminDb } from '@/lib/firebase/admin';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 async function isSuperAdmin(userId: string): Promise<boolean> {
   if (!adminDb) return false;
   try {
-    const userDoc = await adminDb.collection("users").doc(userId).get();
+    const userDoc = await adminDb.collection('users').doc(userId).get();
     const userData = userDoc.data();
-    return userData?.role === "super_admin" || userData?.isSuperAdmin === true;
+    return userData?.role === 'super_admin' || userData?.isSuperAdmin === true;
   } catch {
     return false;
   }
 }
 
 // PUT: Update coupon
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     const { id } = await params;
 
     if (!userId || !(await isSuperAdmin(userId))) {
       return NextResponse.json(
-        { error: "Unauthorized - Super admin access required" },
+        { error: 'Unauthorized - Super admin access required' },
         { status: 403 }
       );
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "Database not available" }, { status: 500 });
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
     const body = await request.json();
@@ -54,15 +51,12 @@ export async function PUT(
     if (body.isActive !== undefined) updates.isActive = body.isActive;
     if (body.description !== undefined) updates.description = body.description;
 
-    await adminDb.collection("coupons").doc(id).update(updates);
+    await adminDb.collection('coupons').doc(id).update(updates);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error updating coupon:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error updating coupon:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -77,27 +71,23 @@ export async function DELETE(
 
     if (!userId || !(await isSuperAdmin(userId))) {
       return NextResponse.json(
-        { error: "Unauthorized - Super admin access required" },
+        { error: 'Unauthorized - Super admin access required' },
         { status: 403 }
       );
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "Database not available" }, { status: 500 });
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
-    await adminDb.collection("coupons").doc(id).update({
+    await adminDb.collection('coupons').doc(id).update({
       isActive: false,
       updatedAt: new Date(),
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting coupon:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error deleting coupon:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

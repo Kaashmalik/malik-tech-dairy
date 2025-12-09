@@ -1,8 +1,8 @@
 // Bank Transfer Payment Method for Enterprise Customers
 // Generates payment reference codes and handles manual verification
-import crypto from "crypto";
-import { adminDb } from "@/lib/firebase/admin";
-import type { SubscriptionPlan } from "@/types";
+import crypto from 'crypto';
+import { adminDb } from '@/lib/firebase/admin';
+import type { SubscriptionPlan } from '@/types';
 
 export interface BankTransferPayment {
   id: string;
@@ -14,8 +14,8 @@ export interface BankTransferPayment {
   bankName?: string;
   accountNumber?: string;
   transactionId?: string;
-  status: "pending" | "verified" | "rejected";
-  verificationMethod?: "manual" | "ocr";
+  status: 'pending' | 'verified' | 'rejected';
+  verificationMethod?: 'manual' | 'ocr';
   verifiedBy?: string;
   verifiedAt?: Date;
   createdAt: Date;
@@ -27,8 +27,8 @@ export interface BankTransferPayment {
  * Format: MT-{YYYYMMDD}-{8char-random}
  */
 export function generatePaymentReference(tenantId: string): string {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const random = crypto.randomBytes(4).toString("hex").toUpperCase();
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const random = crypto.randomBytes(4).toString('hex').toUpperCase();
   const tenantPrefix = tenantId.slice(0, 4).toUpperCase();
   return `MT-${date}-${tenantPrefix}-${random}`;
 }
@@ -45,29 +45,29 @@ export async function createBankTransferPayment(
   accountNumber?: string
 ): Promise<BankTransferPayment> {
   if (!adminDb) {
-    throw new Error("Database not initialized");
+    throw new Error('Database not initialized');
   }
 
   const referenceCode = generatePaymentReference(tenantId);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-  const paymentData: Omit<BankTransferPayment, "id"> = {
+  const paymentData: Omit<BankTransferPayment, 'id'> = {
     tenantId,
     userId,
     plan,
     amount,
     referenceCode,
-    bankName: bankName || "Any Bank",
+    bankName: bankName || 'Any Bank',
     accountNumber: accountNumber || undefined,
-    status: "pending",
+    status: 'pending',
     createdAt: new Date(),
     expiresAt,
   };
 
   const docRef = await adminDb
-    .collection("tenants")
+    .collection('tenants')
     .doc(tenantId)
-    .collection("bank_transfers")
+    .collection('bank_transfers')
     .add(paymentData);
 
   return {
@@ -83,31 +83,31 @@ export async function verifyBankTransferPayment(
   paymentId: string,
   tenantId: string,
   verifiedBy: string,
-  method: "manual" | "ocr" = "manual",
+  method: 'manual' | 'ocr' = 'manual',
   transactionId?: string
 ): Promise<void> {
   if (!adminDb) {
-    throw new Error("Database not initialized");
+    throw new Error('Database not initialized');
   }
 
   const paymentRef = adminDb
-    .collection("tenants")
+    .collection('tenants')
     .doc(tenantId)
-    .collection("bank_transfers")
+    .collection('bank_transfers')
     .doc(paymentId);
 
   const paymentDoc = await paymentRef.get();
   if (!paymentDoc.exists) {
-    throw new Error("Payment not found");
+    throw new Error('Payment not found');
   }
 
   const payment = paymentDoc.data() as BankTransferPayment;
-  if (payment.status !== "pending") {
-    throw new Error("Payment already processed");
+  if (payment.status !== 'pending') {
+    throw new Error('Payment already processed');
   }
 
   await paymentRef.update({
-    status: "verified",
+    status: 'verified',
     verificationMethod: method,
     verifiedBy,
     verifiedAt: new Date(),
@@ -122,13 +122,13 @@ export async function getBankTransferByReference(
   referenceCode: string
 ): Promise<BankTransferPayment | null> {
   if (!adminDb) {
-    throw new Error("Database not initialized");
+    throw new Error('Database not initialized');
   }
 
   const snapshot = await adminDb
-    .collectionGroup("bank_transfers")
-    .where("referenceCode", "==", referenceCode)
-    .where("status", "==", "pending")
+    .collectionGroup('bank_transfers')
+    .where('referenceCode', '==', referenceCode)
+    .where('status', '==', 'pending')
     .limit(1)
     .get();
 
@@ -151,11 +151,10 @@ export async function getBankTransferByReference(
  */
 export function getBankAccountDetails() {
   return {
-    accountName: process.env.BANK_ACCOUNT_NAME || "MTK Dairy Pvt Ltd",
-    accountNumber: process.env.BANK_ACCOUNT_NUMBER || "1234567890123",
-    bankName: process.env.BANK_NAME || "Bank Alfalah",
-    iban: process.env.BANK_IBAN || "PK12ALFH1234567890123456",
-    branch: process.env.BANK_BRANCH || "Main Branch, Lahore",
+    accountName: process.env.BANK_ACCOUNT_NAME || 'MTK Dairy Pvt Ltd',
+    accountNumber: process.env.BANK_ACCOUNT_NUMBER || '1234567890123',
+    bankName: process.env.BANK_NAME || 'Bank Alfalah',
+    iban: process.env.BANK_IBAN || 'PK12ALFH1234567890123456',
+    branch: process.env.BANK_BRANCH || 'Main Branch, Lahore',
   };
 }
-

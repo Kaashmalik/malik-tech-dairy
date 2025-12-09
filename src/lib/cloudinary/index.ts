@@ -10,7 +10,7 @@ cloudinary.config({
   secure: true,
 });
 
-export type CloudinaryFolder = 
+export type CloudinaryFolder =
   | 'payment-slips'
   | 'animals'
   | 'logos'
@@ -139,7 +139,7 @@ export function generateSignedUploadParams(
 } {
   const timestamp = Math.round(new Date().getTime() / 1000);
   const folderPath = `malik-tech-dairy/${folder}`;
-  
+
   const paramsToSign = {
     timestamp,
     folder: folderPath,
@@ -197,25 +197,13 @@ export function getOptimizedUrl(
 /**
  * Validate file type before upload
  */
-export function validateFileType(
-  mimeType: string,
-  allowedTypes: string[]
-): boolean {
+export function validateFileType(mimeType: string, allowedTypes: string[]): boolean {
   return allowedTypes.includes(mimeType);
 }
 
-export const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-];
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-export const ALLOWED_DOCUMENT_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-];
+export const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
 export const MAX_FILE_SIZES = {
   image: 5 * 1024 * 1024, // 5MB

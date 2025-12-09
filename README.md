@@ -70,6 +70,7 @@
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui
@@ -77,8 +78,9 @@
 - **i18n**: next-intl (English + Urdu)
 
 ### Backend
+
 - **Authentication**: Clerk (Organizations = Tenants)
-- **Database**: 
+- **Database**:
   - Firebase Firestore (document data)
   - Supabase PostgreSQL (relational data)
 - **Storage**: Firebase Storage
@@ -86,6 +88,7 @@
 - **Cache**: Redis (Upstash)
 
 ### Integrations
+
 - **Payments**: JazzCash, EasyPaisa, XPay (Bank Alfalah)
 - **Email**: Resend API
 - **SMS**: Twilio
@@ -131,16 +134,16 @@ cp env.example .env.local
 
 ### 3. Set Up Accounts (All Free Tier)
 
-| Service | Purpose | Free Tier |
-|---------|---------|-----------|
-| [Clerk](https://clerk.com) | Authentication | 10K MAU |
-| [Supabase](https://supabase.com) | Primary Database | 500MB |
-| [Firebase](https://firebase.google.com) | Activity Feeds | 50K reads/day |
-| [Cloudinary](https://cloudinary.com) | File Storage | 25GB |
-| [Upstash](https://upstash.com) | Redis Cache | 10K commands/day |
-| [Resend](https://resend.com) | Email | 100 emails/day |
-| [PostHog](https://posthog.com) | Analytics | 1M events/mo |
-| [Sentry](https://sentry.io) | Error Tracking | 5K errors/mo |
+| Service                                 | Purpose          | Free Tier        |
+| --------------------------------------- | ---------------- | ---------------- |
+| [Clerk](https://clerk.com)              | Authentication   | 10K MAU          |
+| [Supabase](https://supabase.com)        | Primary Database | 500MB            |
+| [Firebase](https://firebase.google.com) | Activity Feeds   | 50K reads/day    |
+| [Cloudinary](https://cloudinary.com)    | File Storage     | 25GB             |
+| [Upstash](https://upstash.com)          | Redis Cache      | 10K commands/day |
+| [Resend](https://resend.com)            | Email            | 100 emails/day   |
+| [PostHog](https://posthog.com)          | Analytics        | 1M events/mo     |
+| [Sentry](https://sentry.io)             | Error Tracking   | 5K errors/mo     |
 
 **Total Monthly Cost: $0** 🎉
 
@@ -226,11 +229,11 @@ malik-tech-dairy/
 
 ### Supported Gateways
 
-| Gateway | Type | Features | Transaction Fee |
-|---------|------|----------|----------------|
-| **JazzCash** | Primary | Direct API, Recurring, Instant Settlement | 1.5-2% |
-| **EasyPaisa** | Secondary | Mobile-first, Backup Gateway | 1.5-2% |
-| **Bank Transfer** | Enterprise | Manual Verification, OCR Ready | N/A |
+| Gateway           | Type       | Features                                  | Transaction Fee |
+| ----------------- | ---------- | ----------------------------------------- | --------------- |
+| **JazzCash**      | Primary    | Direct API, Recurring, Instant Settlement | 1.5-2%          |
+| **EasyPaisa**     | Secondary  | Mobile-first, Backup Gateway              | 1.5-2%          |
+| **Bank Transfer** | Enterprise | Manual Verification, OCR Ready            | N/A             |
 
 ### Pricing Tiers
 
@@ -287,27 +290,64 @@ Response: 202 Accepted
 
 ---
 
-## 📊 Testing
+## 📊 Development Scripts
 
-### Unit Tests
+### Code Quality
 
 ```bash
-npm test
+# Linting
+npm run lint              # Run ESLint
+npm run lint:fix          # Fix linting issues
+
+# Formatting
+npm run format            # Format code with Prettier
+npm run format:check      # Check formatting
+
+# Type checking
+npm run typecheck         # Run TypeScript compiler
+
+# Security audit
+npm run audit             # Check for vulnerabilities
+npm run audit:fix         # Auto-fix vulnerabilities
 ```
 
-### E2E Tests
+### Testing
 
 ```bash
-npm run cypress:open
+# Unit tests
+npm test                  # Run Jest tests
+npm run test:watch        # Watch mode
+npm run test:coverage     # With coverage report
+npm run test:ci           # CI mode with coverage
+
+# E2E tests
+npm run cypress:open      # Open Cypress GUI
+npm run cypress:run       # Run in headless mode
+npm run cypress:ci        # CI mode
+
+# All tests
+npm run test:all          # Run all test suites
 ```
 
 ### Load Testing
 
 ```bash
 k6 run k6-load-test.js --env BASE_URL=https://yourdomain.com
+npm run load-test:animals # Enhanced animals API load test
+npm run load-test:batch   # Batch operations load test
+```
+
+### Database
+
+```bash
+npm run db:generate       # Generate Drizzle migrations
+npm run db:migrate        # Run migrations
+npm run db:push           # Push schema to Supabase
+npm run db:studio         # Open Drizzle Studio
 ```
 
 **Target Metrics:**
+
 - 95% of requests < 2s
 - Error rate < 1%
 - Support 500+ concurrent users
@@ -363,7 +403,7 @@ This software is proprietary and confidential. Unauthorized copying, modificatio
 ## 👨‍💻 Author
 
 **Muhammad Kashif**  
-*Founder & Lead Developer*  
+_Founder & Lead Developer_  
 Malik Tech
 
 ---

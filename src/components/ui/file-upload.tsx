@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { Upload, X, FileText, AlertCircle, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
+import { useState, useCallback } from 'react';
+import { Upload, X, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
 
 interface FileUploadProps {
   onUpload: (file: File) => Promise<void>;
@@ -17,7 +17,7 @@ interface FileUploadProps {
 
 export function FileUpload({
   onUpload,
-  accept = ".csv,.xlsx,.xls",
+  accept = '.csv,.xlsx,.xls',
   maxSize = 10,
   disabled = false,
   className,
@@ -30,9 +30,9 @@ export function FileUpload({
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
+    if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
-    } else if (e.type === "dragleave") {
+    } else if (e.type === 'dragleave') {
       setDragActive(false);
     }
   }, []);
@@ -67,10 +67,10 @@ export function FileUpload({
     // Validate file type
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     const validExtensions = ['csv', 'xlsx', 'xls'];
-    
+
     if (!fileExtension || !validExtensions.includes(fileExtension)) {
-      setError("Please upload a CSV or Excel file");
-      toast.error("Invalid file type. Please upload CSV or Excel file.");
+      setError('Please upload a CSV or Excel file');
+      toast.error('Invalid file type. Please upload CSV or Excel file.');
       return;
     }
 
@@ -87,7 +87,7 @@ export function FileUpload({
     try {
       // Simulate progress updates
       const progressInterval = setInterval(() => {
-        setProgress((prev) => {
+        setProgress(prev => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
@@ -100,7 +100,7 @@ export function FileUpload({
 
       clearInterval(progressInterval);
       setProgress(100);
-      toast.success("File uploaded successfully!");
+      toast.success('File uploaded successfully!');
 
       // Reset after success
       setTimeout(() => {
@@ -108,9 +108,9 @@ export function FileUpload({
         setProgress(0);
       }, 1000);
     } catch (error) {
-      console.error("Upload error:", error);
-      setError(error instanceof Error ? error.message : "Upload failed");
-      toast.error(error instanceof Error ? error.message : "Failed to upload file");
+      console.error('Upload error:', error);
+      setError(error instanceof Error ? error.message : 'Upload failed');
+      toast.error(error instanceof Error ? error.message : 'Failed to upload file');
       setUploading(false);
       setProgress(0);
     }
@@ -118,51 +118,47 @@ export function FileUpload({
 
   return (
     <Card className={className}>
-      <CardContent className="p-6">
+      <CardContent className='p-6'>
         <div
-          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragActive
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50"
-          } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+          className={`relative rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+            dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+          } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
         >
           <input
-            type="file"
+            type='file'
             accept={accept}
             onChange={handleFileInput}
             disabled={disabled || uploading}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+            className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
           />
 
           {uploading ? (
-            <div className="space-y-4">
-              <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                <FileText className="w-6 h-6 text-primary animate-pulse" />
+            <div className='space-y-4'>
+              <div className='bg-primary/10 mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
+                <FileText className='text-primary h-6 w-6 animate-pulse' />
               </div>
               <div>
-                <p className="font-medium">Uploading file...</p>
-                <Progress value={progress} className="mt-2" />
-                <p className="text-sm text-muted-foreground mt-1">{progress}%</p>
+                <p className='font-medium'>Uploading file...</p>
+                <Progress value={progress} className='mt-2' />
+                <p className='text-muted-foreground mt-1 text-sm'>{progress}%</p>
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="w-12 h-12 mx-auto bg-muted rounded-full flex items-center justify-center">
-                <Upload className="w-6 h-6 text-muted-foreground" />
+            <div className='space-y-4'>
+              <div className='bg-muted mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
+                <Upload className='text-muted-foreground h-6 w-6' />
               </div>
               <div>
-                <p className="font-medium">
-                  Drop your file here, or click to browse
-                </p>
-                <p className="text-sm text-muted-foreground">
+                <p className='font-medium'>Drop your file here, or click to browse</p>
+                <p className='text-muted-foreground text-sm'>
                   Supports CSV, Excel files up to {maxSize}MB
                 </p>
               </div>
-              <Button variant="outline" disabled={disabled}>
+              <Button variant='outline' disabled={disabled}>
                 Choose File
               </Button>
             </div>
@@ -170,9 +166,9 @@ export function FileUpload({
         </div>
 
         {error && (
-          <div className="mt-4 flex items-center gap-2 text-destructive">
-            <AlertCircle className="w-4 h-4" />
-            <span className="text-sm">{error}</span>
+          <div className='text-destructive mt-4 flex items-center gap-2'>
+            <AlertCircle className='h-4 w-4' />
+            <span className='text-sm'>{error}</span>
           </div>
         )}
       </CardContent>
@@ -200,33 +196,33 @@ export function ValidationResults({
 }: ValidationResultsProps) {
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              <span className="font-medium">{results.valid} valid records</span>
+      <CardContent className='p-6'>
+        <div className='space-y-4'>
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-2'>
+              <CheckCircle className='h-5 w-5 text-green-500' />
+              <span className='font-medium'>{results.valid} valid records</span>
             </div>
             {results.invalid > 0 && (
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-destructive" />
-                <span className="font-medium">{results.invalid} invalid records</span>
+              <div className='flex items-center gap-2'>
+                <AlertCircle className='text-destructive h-5 w-5' />
+                <span className='font-medium'>{results.invalid} invalid records</span>
               </div>
             )}
           </div>
 
           {results.errors.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-destructive">Errors found:</p>
-              <ul className="text-sm text-muted-foreground space-y-1">
+            <div className='space-y-2'>
+              <p className='text-destructive text-sm font-medium'>Errors found:</p>
+              <ul className='text-muted-foreground space-y-1 text-sm'>
                 {results.errors.slice(0, 5).map((error, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="text-destructive">•</span>
+                  <li key={index} className='flex items-start gap-2'>
+                    <span className='text-destructive'>•</span>
                     <span>{error}</span>
                   </li>
                 ))}
                 {results.errors.length > 5 && (
-                  <li className="text-muted-foreground">
+                  <li className='text-muted-foreground'>
                     ... and {results.errors.length - 5} more errors
                   </li>
                 )}
@@ -234,15 +230,15 @@ export function ValidationResults({
             </div>
           )}
 
-          <div className="flex gap-2 pt-4 border-t">
+          <div className='flex gap-2 border-t pt-4'>
             {onCancel && (
-              <Button variant="outline" onClick={onCancel} disabled={loading}>
+              <Button variant='outline' onClick={onCancel} disabled={loading}>
                 Cancel
               </Button>
             )}
             {onConfirm && (
-              <Button 
-                onClick={onConfirm} 
+              <Button
+                onClick={onConfirm}
                 disabled={results.valid === 0 || loading}
                 loading={loading}
               >

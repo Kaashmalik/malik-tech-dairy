@@ -1,8 +1,8 @@
 // BullMQ Processor: Milk Production Forecasting with Prophet.js
-import { Job } from "bullmq";
-import { adminDb } from "@/lib/firebase/admin";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import { format, subDays, addDays, parseISO } from "date-fns";
+import { Job } from 'bullmq';
+import { adminDb } from '@/lib/firebase/admin';
+import { getTenantSubcollection } from '@/lib/firebase/tenant';
+import { format, subDays, addDays, parseISO } from 'date-fns';
 
 interface MilkLogData {
   date: string;
@@ -36,17 +36,18 @@ function forecastMilkProduction(
 
     for (let i = 1; i <= days; i++) {
       const date = addDays(today, i);
-      const avg = historicalData.length > 0
-        ? historicalData.reduce((sum, d) => sum + d.quantity, 0) / historicalData.length
-        : 0;
-      
+      const avg =
+        historicalData.length > 0
+          ? historicalData.reduce((sum, d) => sum + d.quantity, 0) / historicalData.length
+          : 0;
+
       predictions.push({
-        date: format(date, "yyyy-MM-dd"),
+        date: format(date, 'yyyy-MM-dd'),
         value: avg,
       });
-      
+
       confidenceBand.push({
-        date: format(date, "yyyy-MM-dd"),
+        date: format(date, 'yyyy-MM-dd'),
         lower: avg * 0.85,
         upper: avg * 1.15,
       });
@@ -75,17 +76,17 @@ function forecastMilkProduction(
 
   for (let i = 1; i <= days; i++) {
     const date = addDays(today, i);
-    const predictedValue = avg + (trend * i);
-    
+    const predictedValue = avg + trend * i;
+
     predictions.push({
-      date: format(date, "yyyy-MM-dd"),
+      date: format(date, 'yyyy-MM-dd'),
       value: Math.max(0, predictedValue), // Ensure non-negative
     });
-    
+
     // Confidence band: ±15% with trend adjustment
     const confidence = 0.15;
     confidenceBand.push({
-      date: format(date, "yyyy-MM-dd"),
+      date: format(date, 'yyyy-MM-dd'),
       lower: Math.max(0, predictedValue * (1 - confidence)),
       upper: predictedValue * (1 + confidence),
     });
@@ -98,26 +99,26 @@ export async function processMilkForecast(job: Job) {
   const { tenantId } = job.data;
 
   if (!adminDb) {
-    throw new Error("Database not available");
+    throw new Error('Database not available');
   }
 
   try {
     console.log(`Processing milk forecast for tenant: ${tenantId}`);
 
     // Fetch last 365 days of milk logs
-    const milkLogsRef = getTenantSubcollection(tenantId, "milkLogs", "logs");
-    const startDate = format(subDays(new Date(), 365), "yyyy-MM-dd");
-    const endDate = format(new Date(), "yyyy-MM-dd");
+    const milkLogsRef = getTenantSubcollection(tenantId, 'milkLogs', 'logs');
+    const startDate = format(subDays(new Date(), 365), 'yyyy-MM-dd');
+    const endDate = format(new Date(), 'yyyy-MM-dd');
 
     const snapshot = await milkLogsRef
-      .where("date", ">=", startDate)
-      .where("date", "<=", endDate)
-      .orderBy("date", "asc")
+      .where('date', '>=', startDate)
+      .where('date', '<=', endDate)
+      .orderBy('date', 'asc')
       .get();
 
     // Aggregate by date (sum morning + evening sessions)
     const dailyTotals: Record<string, number> = {};
-    snapshot.docs.forEach((doc) => {
+    snapshot.docs.forEach(doc => {
       const log = doc.data();
       const date = log.date;
       dailyTotals[date] = (dailyTotals[date] || 0) + (log.quantity || 0);
@@ -133,18 +134,21 @@ export async function processMilkForecast(job: Job) {
 
     // Store predictions in Firestore
     const predictionsRef = adminDb
-      .collection("tenants")
+      .collection('tenants')
       .doc(tenantId)
-      .collection("predictions")
-      .doc("milk_7d");
+      .collection('predictions')
+      .doc('milk_7d');
 
-    await predictionsRef.set({
-      predictions,
-      confidenceBand,
-      lastUpdated: new Date(),
-      modelVersion: "1.0",
-      historicalDataPoints: historicalData.length,
-    }, { merge: true });
+    await predictionsRef.set(
+      {
+        predictions,
+        confidenceBand,
+        lastUpdated: new Date(),
+        modelVersion: '1.0',
+        historicalDataPoints: historicalData.length,
+      },
+      { merge: true }
+    );
 
     console.log(`Forecast generated for tenant ${tenantId}: ${predictions.length} predictions`);
 
@@ -158,4 +162,3 @@ export async function processMilkForecast(job: Job) {
     throw error;
   }
 }
-

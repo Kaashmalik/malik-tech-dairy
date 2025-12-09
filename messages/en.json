@@ -95,19 +95,42 @@
       "name": "Professional",
       "price": "₨4,999",
       "description": "For growing farms with advanced needs",
-      "features": ["Up to 100 animals", "Full analytics", "5 users", "Mobile app", "Breeding management", "Health records", "Email support"]
+      "features": [
+        "Up to 100 animals",
+        "Full analytics",
+        "5 users",
+        "Mobile app",
+        "Breeding management",
+        "Health records",
+        "Email support"
+      ]
     },
     "farm": {
       "name": "Farm",
       "price": "₨12,999",
       "description": "For established farms with IoT integration",
-      "features": ["Up to 500 animals", "IoT integration", "15 users", "API access", "Advanced analytics", "SMS alerts", "Priority support"]
+      "features": [
+        "Up to 500 animals",
+        "IoT integration",
+        "15 users",
+        "API access",
+        "Advanced analytics",
+        "SMS alerts",
+        "Priority support"
+      ]
     },
     "enterprise": {
       "name": "Enterprise",
       "price": "Custom",
       "description": "For large farms with custom requirements",
-      "features": ["Unlimited animals", "White-label", "Dedicated support", "On-premise option", "Custom integrations", "SLA guarantee"]
+      "features": [
+        "Unlimited animals",
+        "White-label",
+        "Dedicated support",
+        "On-premise option",
+        "Custom integrations",
+        "SLA guarantee"
+      ]
     }
   },
   "iot": {
@@ -146,4 +169,3 @@
     "rejected": "Rejected"
   }
 }
-

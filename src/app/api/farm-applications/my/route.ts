@@ -1,21 +1,18 @@
 // API Route: Get current user's farm applications
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { getDrizzle } from "@/lib/supabase";
-import { farmApplications } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { getDrizzle } from '@/lib/supabase';
+import { farmApplications } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const db = getDrizzle();
@@ -29,10 +26,7 @@ export async function GET() {
       .limit(1);
 
     if (!application) {
-      return NextResponse.json(
-        { success: true, data: null },
-        { status: 200 }
-      );
+      return NextResponse.json({ success: true, data: null }, { status: 200 });
     }
 
     return NextResponse.json({
@@ -40,9 +34,9 @@ export async function GET() {
       data: application,
     });
   } catch (error) {
-    console.error("Error fetching user applications:", error);
+    console.error('Error fetching user applications:', error);
     return NextResponse.json(
-      { success: false, error: "Failed to fetch applications" },
+      { success: false, error: 'Failed to fetch applications' },
       { status: 500 }
     );
   }

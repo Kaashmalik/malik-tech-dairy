@@ -1,21 +1,42 @@
 // Core Types for MTK Dairy SaaS
+// This file re-exports all type definitions for easy importing
 
-export type AnimalSpecies = "cow" | "buffalo" | "chicken" | "goat" | "sheep" | "horse";
+// Re-export API types
+export * from './api';
 
-export type SubscriptionPlan = "free" | "professional" | "farm" | "enterprise";
+// Re-export environment variable types
+export * from './env';
 
-export type SubscriptionStatus = "active" | "trial" | "expired" | "cancelled" | "past_due" | "pending_approval";
+// Re-export veterinary types
+export * from './veterinary';
+
+// Re-export role types
+export * from './roles';
+
+// ============================================================================
+// Core Entity Types
+// ============================================================================
+
+export type AnimalSpecies = 'cow' | 'buffalo' | 'chicken' | 'goat' | 'sheep' | 'horse';
+
+export type SubscriptionPlan = 'free' | 'professional' | 'farm' | 'enterprise';
+
+export type SubscriptionStatus =
+  | 'active'
+  | 'trial'
+  | 'expired'
+  | 'cancelled'
+  | 'past_due'
+  | 'pending_approval';
 
 // Legacy UserRole type - use types/roles.ts for new role system
-export type UserRole = "owner" | "manager" | "vet" | "worker" | "viewer";
+export type UserRole = 'owner' | 'manager' | 'vet' | 'worker' | 'viewer';
 
-// Re-export new role types
-export type { UserRole as NewUserRole, TenantRole, PlatformRole } from "./roles";
-export { ROLE_PERMISSIONS, MODULE_ACCESS, ROLE_DISPLAY_NAMES } from "./roles";
+// Note: Role types are now exported via './roles' at the top of this file
 
-export type PaymentGateway = "jazzcash" | "easypaisa" | "xpay" | "bank_transfer";
+export type PaymentGateway = 'jazzcash' | 'easypaisa' | 'xpay' | 'bank_transfer';
 
-export type Language = "en" | "ur";
+export type Language = 'en' | 'ur';
 
 export interface TenantConfig {
   farmName: string;
@@ -24,7 +45,7 @@ export interface TenantConfig {
   primaryColor: string;
   accentColor: string;
   language: Language;
-  currency: "PKR" | "USD";
+  currency: 'PKR' | 'USD';
   timezone: string;
   animalTypes: AnimalSpecies[];
   createdAt: Date;
@@ -38,7 +59,7 @@ export interface TenantSubscription {
   renewDate: Date;
   token?: string; // Payment token for recurring billing
   amount: number;
-  currency: "PKR";
+  currency: 'PKR';
   trialEndsAt?: Date;
 }
 
@@ -51,7 +72,7 @@ export interface TenantLimits {
 export interface CustomField {
   id: string;
   name: string;
-  type: "text" | "number" | "date" | "dropdown";
+  type: 'text' | 'number' | 'date' | 'dropdown';
   required?: boolean;
   options?: string[]; // For dropdown type
   defaultValue?: string | number;
@@ -65,9 +86,9 @@ export interface Animal {
   species: AnimalSpecies;
   breed: string;
   dateOfBirth: Date;
-  gender: "male" | "female";
+  gender: 'male' | 'female';
   photoUrl?: string;
-  status: "active" | "sold" | "deceased" | "sick";
+  status: 'active' | 'sold' | 'deceased' | 'sick';
   purchaseDate?: Date;
   purchasePrice?: number;
   customFields?: Record<string, string | number | Date>; // Custom field values
@@ -80,7 +101,7 @@ export interface MilkLog {
   tenantId: string;
   animalId: string;
   date: string; // YYYY-MM-DD
-  session: "morning" | "evening";
+  session: 'morning' | 'evening';
   quantity: number; // in liters
   quality?: number; // 1-10 scale
   notes?: string;
@@ -103,7 +124,7 @@ export interface HealthRecord {
   id: string;
   tenantId: string;
   animalId: string;
-  type: "vaccination" | "treatment" | "checkup" | "disease";
+  type: 'vaccination' | 'treatment' | 'checkup' | 'disease';
   date: Date;
   description: string;
   veterinarian?: string;
@@ -120,7 +141,7 @@ export interface BreedingRecord {
   expectedCalvingDate?: Date;
   actualCalvingDate?: Date;
   sireId?: string;
-  status: "pregnant" | "calved" | "failed" | "in_progress";
+  status: 'pregnant' | 'calved' | 'failed' | 'in_progress';
   notes?: string;
   createdAt: Date;
 }
@@ -129,10 +150,10 @@ export interface Expense {
   id: string;
   tenantId: string;
   date: Date;
-  category: "feed" | "medicine" | "labor" | "equipment" | "utilities" | "other";
+  category: 'feed' | 'medicine' | 'labor' | 'equipment' | 'utilities' | 'other';
   description: string;
   amount: number;
-  currency: "PKR";
+  currency: 'PKR';
   recordedBy: string;
   createdAt: Date;
 }
@@ -141,12 +162,12 @@ export interface Sale {
   id: string;
   tenantId: string;
   date: Date;
-  type: "milk" | "animal" | "egg" | "other";
+  type: 'milk' | 'animal' | 'egg' | 'other';
   quantity: number;
   unit: string;
   price: number;
   total: number;
-  currency: "PKR";
+  currency: 'PKR';
   buyer?: string;
   notes?: string;
   recordedBy: string;
@@ -160,7 +181,7 @@ export interface Staff {
   role: UserRole;
   salary?: number;
   joinDate: Date;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
   createdAt: Date;
 }
 
@@ -180,12 +201,11 @@ export interface Payment {
   id: string;
   tenantId: string;
   amount: number;
-  currency: "PKR";
+  currency: 'PKR';
   gateway: PaymentGateway;
-  status: "pending" | "completed" | "failed" | "refunded";
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
   transactionId?: string;
   plan: SubscriptionPlan;
   createdAt: Date;
   updatedAt: Date;
 }
-

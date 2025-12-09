@@ -2,23 +2,23 @@
 // LIMITED USE: Only for real-time activity feeds (50K reads/day limit)
 // All other data is stored in Supabase PostgreSQL
 
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
   Timestamp,
   DocumentData,
   QueryDocumentSnapshot,
-  Unsubscribe
+  Unsubscribe,
 } from 'firebase/firestore';
 import { getFirestoreDb } from './client';
 
-export type ActivityType = 
+export type ActivityType =
   | 'animal_added'
   | 'animal_updated'
   | 'animal_sold'
@@ -54,7 +54,9 @@ const ACTIVITY_COLLECTION = 'activity_feeds';
  * Add a new activity to the feed
  * Use sparingly to stay within 50K reads/day limit
  */
-export async function addActivity(activity: Omit<ActivityFeedItem, 'id' | 'createdAt'>): Promise<string> {
+export async function addActivity(
+  activity: Omit<ActivityFeedItem, 'id' | 'createdAt'>
+): Promise<string> {
   try {
     const db = getFirestoreDb();
     const docRef = await addDoc(collection(db, ACTIVITY_COLLECTION), {
@@ -85,7 +87,7 @@ export function subscribeToActivityFeed(
     limit(maxItems)
   );
 
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(q, snapshot => {
     const activities: ActivityFeedItem[] = [];
     snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       activities.push({
@@ -121,7 +123,7 @@ export function subscribeToPlatformActivityFeed(
     limit(maxItems)
   );
 
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(q, snapshot => {
     const activities: ActivityFeedItem[] = [];
     snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       activities.push({
@@ -136,64 +138,67 @@ export function subscribeToPlatformActivityFeed(
 /**
  * Helper to create activity messages
  */
-export const activityMessages: Record<ActivityType, (metadata?: Record<string, unknown>) => { title: string; description: string }> = {
-  animal_added: (m) => ({
+export const activityMessages: Record<
+  ActivityType,
+  (metadata?: Record<string, unknown>) => { title: string; description: string }
+> = {
+  animal_added: m => ({
     title: 'New Animal Added',
     description: `${m?.name || 'An animal'} (${m?.species || 'unknown'}) was added to the farm`,
   }),
-  animal_updated: (m) => ({
+  animal_updated: m => ({
     title: 'Animal Updated',
     description: `${m?.name || 'An animal'}'s information was updated`,
   }),
-  animal_sold: (m) => ({
+  animal_sold: m => ({
     title: 'Animal Sold',
     description: `${m?.name || 'An animal'} was marked as sold`,
   }),
-  milk_logged: (m) => ({
+  milk_logged: m => ({
     title: 'Milk Production Logged',
     description: `${m?.quantity || 0}L recorded for ${m?.session || 'session'}`,
   }),
-  health_record_added: (m) => ({
+  health_record_added: m => ({
     title: 'Health Record Added',
     description: `${m?.type || 'Health'} record added for ${m?.animalName || 'an animal'}`,
   }),
-  breeding_record_added: (m) => ({
+  breeding_record_added: m => ({
     title: 'Breeding Record Added',
     description: `Breeding record added for ${m?.animalName || 'an animal'}`,
   }),
-  expense_added: (m) => ({
+  expense_added: m => ({
     title: 'Expense Recorded',
     description: `Rs. ${m?.amount || 0} expense added for ${m?.category || 'misc'}`,
   }),
-  sale_recorded: (m) => ({
+  sale_recorded: m => ({
     title: 'Sale Recorded',
     description: `Rs. ${m?.total || 0} sale recorded for ${m?.type || 'products'}`,
   }),
-  staff_invited: (m) => ({
+  staff_invited: m => ({
     title: 'Staff Invited',
     description: `Invitation sent to ${m?.email || 'a user'} as ${m?.role || 'staff'}`,
   }),
-  staff_joined: (m) => ({
+  staff_joined: m => ({
     title: 'Staff Joined',
     description: `${m?.name || 'A user'} joined as ${m?.role || 'staff'}`,
   }),
-  payment_received: (m) => ({
+  payment_received: m => ({
     title: 'Payment Received',
     description: `Rs. ${m?.amount || 0} payment received via ${m?.gateway || 'bank'}`,
   }),
-  subscription_updated: (m) => ({
+  subscription_updated: m => ({
     title: 'Subscription Updated',
     description: `Subscription changed to ${m?.plan || 'new plan'}`,
   }),
-  farm_application_submitted: (m) => ({
+  farm_application_submitted: m => ({
     title: 'New Farm Application',
     description: `${m?.farmName || 'A farm'} applied for registration`,
   }),
-  farm_application_approved: (m) => ({
+  farm_application_approved: m => ({
     title: 'Farm Application Approved',
     description: `${m?.farmName || 'A farm'} was approved with ID: ${m?.farmId || 'N/A'}`,
   }),
-  farm_application_rejected: (m) => ({
+  farm_application_rejected: m => ({
     title: 'Farm Application Rejected',
     description: `${m?.farmName || 'A farm'} application was rejected`,
   }),
@@ -211,7 +216,7 @@ export async function logActivity(
   userAvatar?: string
 ): Promise<string> {
   const { title, description } = activityMessages[type](metadata);
-  
+
   return addActivity({
     tenantId,
     userId,

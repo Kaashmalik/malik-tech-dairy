@@ -44,10 +44,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -71,9 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (query.taskType) {
-      whereConditions.push(
-        ilike(taskAssignments.taskType, `%${query.taskType}%`)
-      );
+      whereConditions.push(ilike(taskAssignments.taskType, `%${query.taskType}%`));
     }
 
     if (query.priority) {
@@ -165,7 +160,7 @@ export async function GET(request: NextRequest) {
       const dueDate = new Date(task.dueDate);
       const isOverdue = dueDate < now && ['pending', 'in_progress'].includes(task.status);
       const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // Calculate efficiency if task is completed
       let efficiency = null;
       if (task.status === 'completed' && task.estimatedDuration && task.actualDuration) {
@@ -177,7 +172,14 @@ export async function GET(request: NextRequest) {
         isOverdue,
         daysUntilDue,
         efficiency,
-        priorityWeight: task.priority === 'urgent' ? 4 : task.priority === 'high' ? 3 : task.priority === 'medium' ? 2 : 1,
+        priorityWeight:
+          task.priority === 'urgent'
+            ? 4
+            : task.priority === 'high'
+              ? 3
+              : task.priority === 'medium'
+                ? 2
+                : 1,
       };
     });
 
@@ -203,10 +205,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching task assignments:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -215,10 +214,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -250,10 +246,7 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!animal.length) {
-        return NextResponse.json(
-          { success: false, error: 'Animal not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
     }
 
@@ -280,7 +273,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating task assignment:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -288,28 +281,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PUT /api/staff-management/tasks/[id] - Update task assignment
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// PUT /api/staff-management/tasks?id=xxx - Update task assignment
+export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Task ID required' }, { status: 400 });
+    }
     const body = await request.json();
     const validatedData = updateTaskSchema.parse(body);
 
@@ -323,10 +311,7 @@ export async function PUT(
       .limit(1);
 
     if (!existingTask.length) {
-      return NextResponse.json(
-        { success: false, error: 'Task not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Task not found' }, { status: 404 });
     }
 
     // Get tenant context for ownership validation
@@ -334,10 +319,7 @@ export async function PUT(
 
     // Validate tenant ownership to prevent cross-tenant updates
     if (existingTask[0].tenantId !== tenantContext.tenantId) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
     }
 
     // Prepare update data
@@ -364,7 +346,7 @@ export async function PUT(
     });
   } catch (error) {
     console.error('Error updating task assignment:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -372,9 +354,6 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

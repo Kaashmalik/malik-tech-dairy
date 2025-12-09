@@ -2,19 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import { db } from '@/lib/supabase';
-import { 
-  animals, 
-  health_records, 
-  breeding_records, 
+import {
+  animals,
+  health_records,
+  breeding_records,
   taskAssignments,
-  genetic_profiles
+  genetic_profiles,
 } from '@/db/schema';
 import { getTenantContext } from '@/lib/tenant/context';
 import { z } from 'zod';
 
 // Batch operation schema
 const batchOperationSchema = z.object({
-  operation: z.enum(['vaccination', 'treatment', 'movement', 'feeding', 'health_check', 'genetic_test']),
+  operation: z.enum([
+    'vaccination',
+    'treatment',
+    'movement',
+    'feeding',
+    'health_check',
+    'genetic_test',
+  ]),
   animalIds: z.array(z.string()).min(1, 'At least one animal ID is required'),
   operationData: z.object({
     // Vaccination data
@@ -25,7 +32,7 @@ const batchOperationSchema = z.object({
     manufacturer: z.string().optional(),
     administeredBy: z.string().optional(),
     notes: z.string().optional(),
-    
+
     // Treatment data
     treatmentId: z.string().optional(),
     treatmentName: z.string().optional(),
@@ -33,29 +40,32 @@ const batchOperationSchema = z.object({
     frequency: z.string().optional(),
     duration: z.number().optional(),
     prescribedBy: z.string().optional(),
-    
+
     // Movement data
     fromLocation: z.string().optional(),
     toLocation: z.string().optional(),
     transportMethod: z.string().optional(),
-    
+
     // Feeding data
     feedScheduleId: z.string().optional(),
     feedType: z.string().optional(),
     quantity: z.number().optional(),
     unit: z.string().optional(),
-    
+
     // Health check data
     checkType: z.string().optional(),
     veterinarianId: z.string().optional(),
     findings: z.string().optional(),
-    
+
     // Genetic test data
     testType: z.string().optional(),
     laboratory: z.string().optional(),
     sampleType: z.string().optional(),
   }),
-  scheduledDate: z.string().optional().transform(val => val ? new Date(val) : undefined),
+  scheduledDate: z
+    .string()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   assignedTo: z.string().optional(),
   estimatedDuration: z.number().optional(),
@@ -67,18 +77,12 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const tenantContext = await getTenantContext(userId);
     if (!tenantContext) {
-      return NextResponse.json(
-        { success: false, error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -92,27 +96,29 @@ export async function POST(request: NextRequest) {
       priority,
       assignedTo,
       estimatedDuration,
-      createTask
+      createTask,
     } = validatedData;
 
     // Verify all animals belong to the tenant
     const animalsResult = await db
       .select({ id: animals.id, name: animals.name, tag: animals.tag })
       .from(animals)
-      .where(and(
-        eq(animals.tenantId, tenantContext.tenantId),
-        inArray(animals.id, animalIds),
-        sql`${animals.deletedAt} IS NULL`
-      ));
+      .where(
+        and(
+          eq(animals.tenantId, tenantContext.tenantId),
+          inArray(animals.id, animalIds),
+          sql`${animals.deletedAt} IS NULL`
+        )
+      );
 
     if (animalsResult.length !== animalIds.length) {
       const foundIds = animalsResult.map(a => a.id);
       const missingIds = animalIds.filter(id => !foundIds.includes(id));
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Some animals not found or do not belong to your tenant',
-          details: { missingIds }
+          details: { missingIds },
         },
         { status: 404 }
       );
@@ -124,29 +130,59 @@ export async function POST(request: NextRequest) {
     // Execute operation based on type
     switch (operation) {
       case 'vaccination':
-        operationResults = await executeVaccination(animalsResult, operationData, userId, tenantContext.tenantId);
+        operationResults = await executeVaccination(
+          animalsResult,
+          operationData,
+          userId,
+          tenantContext.tenantId
+        );
         break;
-      
+
       case 'treatment':
-        operationResults = await executeTreatment(animalsResult, operationData, userId, tenantContext.tenantId);
+        operationResults = await executeTreatment(
+          animalsResult,
+          operationData,
+          userId,
+          tenantContext.tenantId
+        );
         break;
-      
+
       case 'movement':
-        operationResults = await executeMovement(animalsResult, operationData, userId, tenantContext.tenantId);
+        operationResults = await executeMovement(
+          animalsResult,
+          operationData,
+          userId,
+          tenantContext.tenantId
+        );
         break;
-      
+
       case 'feeding':
-        operationResults = await executeFeeding(animalsResult, operationData, userId, tenantContext.tenantId);
+        operationResults = await executeFeeding(
+          animalsResult,
+          operationData,
+          userId,
+          tenantContext.tenantId
+        );
         break;
-      
+
       case 'health_check':
-        operationResults = await executeHealthCheck(animalsResult, operationData, userId, tenantContext.tenantId);
+        operationResults = await executeHealthCheck(
+          animalsResult,
+          operationData,
+          userId,
+          tenantContext.tenantId
+        );
         break;
-      
+
       case 'genetic_test':
-        operationResults = await executeGeneticTest(animalsResult, operationData, userId, tenantContext.tenantId);
+        operationResults = await executeGeneticTest(
+          animalsResult,
+          operationData,
+          userId,
+          tenantContext.tenantId
+        );
         break;
-      
+
       default:
         return NextResponse.json(
           { success: false, error: 'Unsupported operation type' },
@@ -179,16 +215,19 @@ export async function POST(request: NextRequest) {
         summary: {
           successful: operationResults.filter(r => r.success).length,
           failed: operationResults.filter(r => !r.success).length,
-          total: animalsResult.length
-        }
+          total: animalsResult.length,
+        },
       },
-      message: `Successfully processed ${operationResults.filter(r => r.success).length} out of ${animalsResult.length} animals`
+      message: `Successfully processed ${operationResults.filter(r => r.success).length} out of ${animalsResult.length} animals`,
     });
-
   } catch (error) {
     console.error('Batch operations error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to execute batch operation', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        success: false,
+        error: 'Failed to execute batch operation',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
@@ -197,7 +236,7 @@ export async function POST(request: NextRequest) {
 // Execute vaccination batch operation
 async function executeVaccination(animals: any[], data: any, userId: string, tenantId: string) {
   const results = [];
-  
+
   for (const animal of animals) {
     try {
       const vaccinationRecord = await db
@@ -226,25 +265,25 @@ async function executeVaccination(animals: any[], data: any, userId: string, ten
         animalName: animal.name,
         success: true,
         recordId: vaccinationRecord[0].id,
-        message: 'Vaccination recorded successfully'
+        message: 'Vaccination recorded successfully',
       });
     } catch (error) {
       results.push({
         animalId: animal.id,
         animalName: animal.name,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
-  
+
   return results;
 }
 
 // Execute treatment batch operation
 async function executeTreatment(animals: any[], data: any, userId: string, tenantId: string) {
   const results = [];
-  
+
   for (const animal of animals) {
     try {
       const treatmentRecord = await db
@@ -272,25 +311,25 @@ async function executeTreatment(animals: any[], data: any, userId: string, tenan
         animalName: animal.name,
         success: true,
         recordId: treatmentRecord[0].id,
-        message: 'Treatment recorded successfully'
+        message: 'Treatment recorded successfully',
       });
     } catch (error) {
       results.push({
         animalId: animal.id,
         animalName: animal.name,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
-  
+
   return results;
 }
 
 // Execute movement batch operation
 async function executeMovement(animals: any[], data: any, userId: string, tenantId: string) {
   const results = [];
-  
+
   for (const animal of animals) {
     try {
       await db
@@ -299,10 +338,7 @@ async function executeMovement(animals: any[], data: any, userId: string, tenant
           location: data.toLocation,
           updatedAt: new Date(),
         })
-        .where(and(
-          eq(animals.id, animal.id),
-          eq(animals.tenantId, tenantId)
-        ));
+        .where(and(eq(animals.id, animal.id), eq(animals.tenantId, tenantId)));
 
       // Create movement record in health records
       const movementRecord = await db
@@ -328,25 +364,25 @@ async function executeMovement(animals: any[], data: any, userId: string, tenant
         animalName: animal.name,
         success: true,
         recordId: movementRecord[0].id,
-        message: `Moved from ${data.fromLocation} to ${data.toLocation}`
+        message: `Moved from ${data.fromLocation} to ${data.toLocation}`,
       });
     } catch (error) {
       results.push({
         animalId: animal.id,
         animalName: animal.name,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
-  
+
   return results;
 }
 
 // Execute feeding batch operation
 async function executeFeeding(animals: any[], data: any, userId: string, tenantId: string) {
   const results = [];
-  
+
   for (const animal of animals) {
     try {
       // Create feeding record in health records
@@ -374,25 +410,25 @@ async function executeFeeding(animals: any[], data: any, userId: string, tenantI
         animalName: animal.name,
         success: true,
         recordId: feedingRecord[0].id,
-        message: `Feeding schedule updated: ${data.quantity} ${data.unit} of ${data.feedType}`
+        message: `Feeding schedule updated: ${data.quantity} ${data.unit} of ${data.feedType}`,
       });
     } catch (error) {
       results.push({
         animalId: animal.id,
         animalName: animal.name,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
-  
+
   return results;
 }
 
 // Execute health check batch operation
 async function executeHealthCheck(animals: any[], data: any, userId: string, tenantId: string) {
   const results = [];
-  
+
   for (const animal of animals) {
     try {
       const healthCheckRecord = await db
@@ -418,25 +454,25 @@ async function executeHealthCheck(animals: any[], data: any, userId: string, ten
         animalName: animal.name,
         success: true,
         recordId: healthCheckRecord[0].id,
-        message: 'Health check recorded successfully'
+        message: 'Health check recorded successfully',
       });
     } catch (error) {
       results.push({
         animalId: animal.id,
         animalName: animal.name,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
-  
+
   return results;
 }
 
 // Execute genetic test batch operation
 async function executeGeneticTest(animals: any[], data: any, userId: string, tenantId: string) {
   const results = [];
-  
+
   for (const animal of animals) {
     try {
       // Create genetic profile if it doesn't exist
@@ -447,19 +483,17 @@ async function executeGeneticTest(animals: any[], data: any, userId: string, ten
         .limit(1);
 
       if (existingProfile.length === 0) {
-        await db
-          .insert(genetic_profiles)
-          .values({
-            id: `genetic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            tenantId,
-            animalId: animal.id,
-            breedScore: 0,
-            milkYieldPotential: 0,
-            geneticValueIndex: 0,
-            laboratory: data.laboratory,
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
+        await db.insert(genetic_profiles).values({
+          id: `genetic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          tenantId,
+          animalId: animal.id,
+          breedScore: 0,
+          milkYieldPotential: 0,
+          geneticValueIndex: 0,
+          laboratory: data.laboratory,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
       }
 
       // Create genetic test record in health records
@@ -486,18 +520,18 @@ async function executeGeneticTest(animals: any[], data: any, userId: string, ten
         animalName: animal.name,
         success: true,
         recordId: geneticTestRecord[0].id,
-        message: 'Genetic test scheduled successfully'
+        message: 'Genetic test scheduled successfully',
       });
     } catch (error) {
       results.push({
         animalId: animal.id,
         animalName: animal.name,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
-  
+
   return results;
 }
 
@@ -527,7 +561,7 @@ async function createBatchTask(
         description: `Perform ${operation} on animals: ${animals.map(a => `${a.name} (${a.tag})`).join(', ')}`,
         animalId: animals.length === 1 ? animals[0].id : null, // Only set if single animal
         dueDate: scheduledDate || new Date(),
-        estimatedDuration: estimatedDuration || (animals.length * 5), // 5 minutes per animal default
+        estimatedDuration: estimatedDuration || animals.length * 5, // 5 minutes per animal default
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -539,12 +573,12 @@ async function createBatchTask(
       assignedTo,
       dueDate: task[0].dueDate,
       estimatedDuration: task[0].estimatedDuration,
-      message: 'Task created successfully'
+      message: 'Task created successfully',
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create task'
+      error: error instanceof Error ? error.message : 'Failed to create task',
     };
   }
 }

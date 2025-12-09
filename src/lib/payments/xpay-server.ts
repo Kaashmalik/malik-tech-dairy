@@ -1,5 +1,5 @@
 // XPay (Bank Alfalah) Payment Gateway - Server-Side Implementation
-import crypto from "crypto";
+import crypto from 'crypto';
 
 export interface XPayConfig {
   merchantId: string;
@@ -25,7 +25,7 @@ export interface XPayCheckoutResponse {
  * Generate signature for XPay
  */
 function generateSignature(data: string, key: string): string {
-  return crypto.createHmac("sha256", key).update(data).digest("hex");
+  return crypto.createHmac('sha256', key).update(data).digest('hex');
 }
 
 /**
@@ -36,8 +36,8 @@ export function createXPayCheckout(
   request: XPayPaymentRequest
 ): XPayCheckoutResponse {
   const baseUrl = config.isSandbox
-    ? "https://sandbox.bankalfalah.com/HS/api/Checkout"
-    : "https://xpay.bankalfalah.com/HS/api/Checkout";
+    ? 'https://sandbox.bankalfalah.com/HS/api/Checkout'
+    : 'https://xpay.bankalfalah.com/HS/api/Checkout';
 
   // XPay signature format
   const signatureData = `${config.merchantId}|${request.orderId}|${request.amount}|${config.returnUrl}`;
@@ -76,8 +76,7 @@ export function verifyXPayResponse(
   return {
     valid,
     transactionId: orderId,
-    amount: parseFloat(amount || "0"),
-    status: status === "Success" ? "success" : "failed",
+    amount: parseFloat(amount || '0'),
+    status: status === 'Success' ? 'success' : 'failed',
   };
 }
-

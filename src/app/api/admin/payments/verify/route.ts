@@ -1,16 +1,16 @@
 // Admin API: Verify Bank Transfer Payment
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { verifyBankTransferPayment } from "@/lib/payments/bank-transfer";
-import { updateTenantSubscription } from "@/lib/subscriptions/management";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { verifyBankTransferPayment } from '@/lib/payments/bank-transfer';
+import { updateTenantSubscription } from '@/lib/subscriptions/management';
+import { z } from 'zod';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const verifySchema = z.object({
   paymentId: z.string(),
   tenantId: z.string(),
-  method: z.enum(["manual", "ocr"]).default("manual"),
+  method: z.enum(['manual', 'ocr']).default('manual'),
   transactionId: z.string().optional(),
 });
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // TODO: Check if user is admin/super-admin
@@ -44,20 +44,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Payment verified successfully",
+      message: 'Payment verified successfully',
     });
   } catch (error: any) {
-    console.error("Error verifying bank transfer:", error);
-    if (error.name === "ZodError") {
+    console.error('Error verifying bank transfer:', error);
+    if (error.name === 'ZodError') {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: 'Validation failed', details: error.errors },
         { status: 400 }
       );
     }
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }
-

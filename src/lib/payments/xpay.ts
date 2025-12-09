@@ -29,7 +29,7 @@ export async function createXPayCheckout(
 ): Promise<XPayCheckoutResponse> {
   // XPay uses signature-based authentication
   // Implementation requires server-side signature generation
-  const signature = "PLACEHOLDER_SIGNATURE"; // Replace with actual signature
+  const signature = 'PLACEHOLDER_SIGNATURE'; // Replace with actual signature
 
   const checkoutUrl = `https://xpay.bankalfalah.com/Checkout?merchantId=${config.merchantId}&orderId=${request.orderId}&amount=${request.amount}&description=${request.description}&returnUrl=${config.returnUrl}&signature=${signature}`;
 
@@ -42,10 +42,7 @@ export async function createXPayCheckout(
 /**
  * Verify XPay payment response
  */
-export function verifyXPayResponse(
-  config: XPayConfig,
-  response: Record<string, string>
-): boolean {
+export function verifyXPayResponse(config: XPayConfig, response: Record<string, string>): boolean {
   // Verify signature from XPay response
   return true; // Placeholder
 }
@@ -58,6 +55,5 @@ export async function createXPayRecurringToken(
   customerData: { email: string; phone: string }
 ): Promise<string> {
   // Placeholder - requires XPay tokenization API
-  return "xpay_token_placeholder";
+  return 'xpay_token_placeholder';
 }
-

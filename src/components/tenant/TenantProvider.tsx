@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useOrganization } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
-import type { TenantConfig, TenantSubscription, TenantLimits } from "@/types";
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useOrganization } from '@clerk/nextjs';
+import { useQuery } from '@tanstack/react-query';
+import type { TenantConfig, TenantSubscription, TenantLimits } from '@/types';
 
 interface TenantContextValue {
   config: TenantConfig | null;
@@ -30,11 +30,11 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch tenant config
   const { data: config, isLoading: configLoading } = useQuery({
-    queryKey: ["tenant-config", tenantId],
+    queryKey: ['tenant-config', tenantId],
     queryFn: async () => {
       if (!tenantId) return null;
 
-      const res = await fetch("/api/tenants/config");
+      const res = await fetch('/api/tenants/config');
       if (!res.ok) return null;
       return res.json() as Promise<TenantConfig>;
     },
@@ -43,11 +43,11 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch tenant subscription
   const { data: subscription, isLoading: subLoading } = useQuery({
-    queryKey: ["tenant-subscription", tenantId],
+    queryKey: ['tenant-subscription', tenantId],
     queryFn: async () => {
       if (!tenantId) return null;
 
-      const res = await fetch("/api/tenants/subscription");
+      const res = await fetch('/api/tenants/subscription');
       if (!res.ok) return null;
       return res.json() as Promise<TenantSubscription>;
     },
@@ -56,11 +56,11 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch tenant limits
   const { data: limits, isLoading: limitsLoading } = useQuery({
-    queryKey: ["tenant-limits", tenantId],
+    queryKey: ['tenant-limits', tenantId],
     queryFn: async () => {
       if (!tenantId) return null;
 
-      const res = await fetch("/api/tenants/limits");
+      const res = await fetch('/api/tenants/limits');
       if (!res.ok) return null;
       return res.json() as Promise<TenantLimits>;
     },
@@ -88,8 +88,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 export function useTenantContext() {
   const context = useContext(TenantContext);
   if (!context) {
-    throw new Error("useTenantContext must be used within TenantProvider");
+    throw new Error('useTenantContext must be used within TenantProvider');
   }
   return context;
 }
-

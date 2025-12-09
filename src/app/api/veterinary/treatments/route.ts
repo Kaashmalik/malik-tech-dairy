@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDrizzle } from '@/lib/supabase';
-import { treatmentRecords, diseases, animals, tenants, treatmentRecordsRelations } from '@/db/schema';
+import {
+  treatmentRecords,
+  diseases,
+  animals,
+  tenants,
+  treatmentRecordsRelations,
+} from '@/db/schema';
 import { eq, and, ilike, desc, gte, lte, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
@@ -12,7 +18,9 @@ const treatmentQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   animalId: z.string().optional(),
   diseaseId: z.string().optional(),
-  outcome: z.enum(['pending', 'recovering', 'recovered', 'chronic', 'deceased', 'euthanized']).optional(),
+  outcome: z
+    .enum(['pending', 'recovering', 'recovered', 'chronic', 'deceased', 'euthanized'])
+    .optional(),
   veterinarianName: z.string().optional(),
   status: z.enum(['active', 'completed']).optional(),
   startDate: z.string().datetime().optional(),
@@ -24,20 +32,28 @@ const createTreatmentRecordSchema = z.object({
   diseaseId: z.string().min(1),
   symptomsObserved: z.array(z.string()).min(1),
   diagnosis: z.string().min(5),
-  treatmentGiven: z.array(z.object({
-    medication: z.string(),
-    dosage: z.string(),
-    duration: z.string(),
-    administrationRoute: z.string(),
-  })).min(1),
-  medications: z.array(z.object({
-    medicationName: z.string(),
-    dosage: z.string(),
-    administeredAt: z.string(),
-    administeredBy: z.string(),
-    batchNumber: z.string().optional(),
-    expiryDate: z.string().optional(),
-  })).min(1),
+  treatmentGiven: z
+    .array(
+      z.object({
+        medication: z.string(),
+        dosage: z.string(),
+        duration: z.string(),
+        administrationRoute: z.string(),
+      })
+    )
+    .min(1),
+  medications: z
+    .array(
+      z.object({
+        medicationName: z.string(),
+        dosage: z.string(),
+        administeredAt: z.string(),
+        administeredBy: z.string(),
+        batchNumber: z.string().optional(),
+        expiryDate: z.string().optional(),
+      })
+    )
+    .min(1),
   veterinarianName: z.string().min(2),
   veterinarianLicense: z.string().optional(),
   cost: z.number().min(0),
@@ -53,10 +69,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -84,15 +97,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (query.veterinarianName) {
-      whereConditions.push(
-        ilike(treatmentRecords.veterinarianName, `%${query.veterinarianName}%`)
-      );
+      whereConditions.push(ilike(treatmentRecords.veterinarianName, `%${query.veterinarianName}%`));
     }
 
     if (query.status === 'active') {
-      whereConditions.push(
-        eq(treatmentRecords.outcome, 'pending')
-      );
+      whereConditions.push(eq(treatmentRecords.outcome, 'pending'));
     } else if (query.status === 'completed') {
       whereConditions.push(
         inArray(treatmentRecords.outcome, ['recovered', 'chronic', 'deceased', 'euthanized'])
@@ -177,10 +186,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching treatment records:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -189,10 +195,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -209,10 +212,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!animal.length) {
-      return NextResponse.json(
-        { success: false, error: 'Animal not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
     }
 
     // Verify disease exists
@@ -223,10 +223,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!disease.length) {
-      return NextResponse.json(
-        { success: false, error: 'Disease not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Disease not found' }, { status: 404 });
     }
 
     // Get tenant context
@@ -251,7 +248,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating treatment record:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -259,9 +256,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

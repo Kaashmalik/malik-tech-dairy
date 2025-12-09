@@ -2,19 +2,24 @@
 // Handles farm ID applications, payment verification, and approval workflow
 
 import { getDrizzle } from '@/lib/supabase';
-import { 
-  farmApplications, 
-  platformUsers, 
-  tenants, 
-  subscriptions, 
+import {
+  farmApplications,
+  platformUsers,
+  tenants,
+  subscriptions,
   tenantMembers,
-  farmIdSequence 
+  farmIdSequence,
 } from '@/db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { logActivity } from '@/lib/firebase/activity-feed';
 
-export type FarmApplicationStatus = 'pending' | 'payment_uploaded' | 'under_review' | 'approved' | 'rejected';
+export type FarmApplicationStatus =
+  | 'pending'
+  | 'payment_uploaded'
+  | 'under_review'
+  | 'approved'
+  | 'rejected';
 export type SubscriptionPlan = 'free' | 'professional' | 'farm' | 'enterprise';
 
 export interface CreateFarmApplicationInput {
@@ -219,7 +224,7 @@ async function autoApproveFreeApplication(applicationId: string, applicantId: st
   try {
     const { clerkClient } = await import('@clerk/nextjs/server');
     const client = await clerkClient();
-    
+
     const org = await client.organizations.createOrganization({
       name: application.farmName,
       slug: `${slug}-${farmId.split('-').pop()}`,
@@ -262,13 +267,11 @@ async function autoApproveFreeApplication(applicationId: string, applicantId: st
   }
 
   // Log activity
-  await logActivity(
-    'platform',
-    'system',
-    'System',
-    'farm_application_auto_approved',
-    { farmName: application.farmName, farmId, plan: 'free' }
-  );
+  await logActivity('platform', 'system', 'System', 'farm_application_auto_approved', {
+    farmName: application.farmName,
+    farmId,
+    plan: 'free',
+  });
 
   return {
     application: updatedApplication,
@@ -379,13 +382,10 @@ export async function reviewFarmApplication(input: ReviewApplicationInput) {
       .returning();
 
     // Log activity
-    await logActivity(
-      'platform',
-      input.reviewerId,
-      'Super Admin',
-      'farm_application_approved',
-      { farmName: application.farmName, farmId }
-    );
+    await logActivity('platform', input.reviewerId, 'Super Admin', 'farm_application_approved', {
+      farmName: application.farmName,
+      farmId,
+    });
 
     return {
       application: updatedApplication,
@@ -407,13 +407,10 @@ export async function reviewFarmApplication(input: ReviewApplicationInput) {
       .returning();
 
     // Log activity
-    await logActivity(
-      'platform',
-      input.reviewerId,
-      'Super Admin',
-      'farm_application_rejected',
-      { farmName: application.farmName, reason: input.rejectionReason }
-    );
+    await logActivity('platform', input.reviewerId, 'Super Admin', 'farm_application_rejected', {
+      farmName: application.farmName,
+      reason: input.rejectionReason,
+    });
 
     return { application: updatedApplication };
   }

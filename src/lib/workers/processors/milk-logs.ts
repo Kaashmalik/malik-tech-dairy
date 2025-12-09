@@ -1,35 +1,36 @@
 // Background job processor for IoT milk logs
-import type { Job } from "bullmq";
-import { adminDb } from "@/lib/firebase/admin";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import type { MilkLog } from "@/types";
+import type { Job } from 'bullmq';
+import { adminDb } from '@/lib/firebase/admin';
+import { getTenantSubcollection } from '@/lib/firebase/tenant';
+import type { MilkLog } from '@/types';
 
 interface MilkLogJobData {
   tenantId: string;
   animalId: string;
   date: string;
-  session: "morning" | "evening";
+  session: 'morning' | 'evening';
   quantity: number;
   quality?: number;
   notes?: string;
   recordedBy: string;
-  source: "iot" | "manual";
+  source: 'iot' | 'manual';
 }
 
 export async function processMilkLogJob(job: Job<MilkLogJobData>) {
-  const { tenantId, animalId, date, session, quantity, quality, notes, recordedBy, source } = job.data;
+  const { tenantId, animalId, date, session, quantity, quality, notes, recordedBy, source } =
+    job.data;
 
   try {
     if (!adminDb) {
-      throw new Error("Database not initialized");
+      throw new Error('Database not initialized');
     }
 
     // Check if log already exists
-    const milkLogsRef = getTenantSubcollection(tenantId, "milkLogs", "logs");
+    const milkLogsRef = getTenantSubcollection(tenantId, 'milkLogs', 'logs');
     const existing = await milkLogsRef
-      .where("animalId", "==", animalId)
-      .where("date", "==", date)
-      .where("session", "==", session)
+      .where('animalId', '==', animalId)
+      .where('date', '==', date)
+      .where('session', '==', session)
       .limit(1)
       .get();
 
@@ -47,12 +48,12 @@ export async function processMilkLogJob(job: Job<MilkLogJobData>) {
       return {
         success: true,
         logId: existingDoc.id,
-        action: "updated",
+        action: 'updated',
       };
     }
 
     // Create new milk log
-    const milkLogData: Omit<MilkLog, "id"> = {
+    const milkLogData: Omit<MilkLog, 'id'> = {
       tenantId,
       animalId,
       date,
@@ -71,11 +72,10 @@ export async function processMilkLogJob(job: Job<MilkLogJobData>) {
     return {
       success: true,
       logId: docRef.id,
-      action: "created",
+      action: 'created',
     };
   } catch (error) {
-    console.error("Error processing milk log job:", error);
+    console.error('Error processing milk log job:', error);
     throw new Error(`Milk log processing failed: ${error}`);
   }
 }
-

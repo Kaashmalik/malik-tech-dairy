@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { useTenantContext } from "@/components/tenant/TenantProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useTenantContext } from '@/components/tenant/TenantProvider';
+import { useQuery } from '@tanstack/react-query';
 import {
   canAddAnimal,
   canAddUser,
   hasFeature,
   getRemainingAnimalSlots,
   getRemainingUserSlots,
-} from "@/lib/utils/limits";
+} from '@/lib/utils/limits';
 
 export function useTenantLimits() {
   const { limits, tenantId } = useTenantContext();
 
   // Fetch current animal count
   const { data: animalCount = 0 } = useQuery({
-    queryKey: ["animal-count", tenantId],
+    queryKey: ['animal-count', tenantId],
     queryFn: async () => {
       if (!tenantId) return 0;
-      const res = await fetch("/api/animals/count");
+      const res = await fetch('/api/animals/count');
       if (!res.ok) return 0;
       const data = await res.json();
       return data.count || 0;
@@ -28,10 +28,10 @@ export function useTenantLimits() {
 
   // Fetch current user count
   const { data: userCount = 0 } = useQuery({
-    queryKey: ["user-count", tenantId],
+    queryKey: ['user-count', tenantId],
     queryFn: async () => {
       if (!tenantId) return 0;
-      const res = await fetch("/api/users/count");
+      const res = await fetch('/api/users/count');
       if (!res.ok) return 0;
       const data = await res.json();
       return data.count || 0;
@@ -50,4 +50,3 @@ export function useTenantLimits() {
     remainingUserSlots: getRemainingUserSlots(limits, userCount),
   };
 }
-

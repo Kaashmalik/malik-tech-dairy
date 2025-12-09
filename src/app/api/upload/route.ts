@@ -12,13 +12,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const ALLOWED_TYPES = [
-  'image/jpeg',
-  'image/png', 
-  'image/gif',
-  'image/webp',
-  'application/pdf',
-];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -28,21 +22,15 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const type = formData.get('type') as string || 'general';
+    const type = (formData.get('type') as string) || 'general';
 
     if (!file) {
-      return NextResponse.json(
-        { success: false, error: 'No file provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
 
     // Validate file type
@@ -69,9 +57,9 @@ export async function POST(request: NextRequest) {
     // Determine folder based on type
     const folderMap: Record<string, string> = {
       'payment-slip': 'mtk-dairy/payment-slips',
-      'animal': 'mtk-dairy/animals',
-      'document': 'mtk-dairy/documents',
-      'general': 'mtk-dairy/uploads',
+      animal: 'mtk-dairy/animals',
+      document: 'mtk-dairy/documents',
+      general: 'mtk-dairy/uploads',
     };
     const folder = folderMap[type] || folderMap.general;
 
@@ -99,9 +87,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error uploading file:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to upload file' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to upload file' }, { status: 500 });
   }
 }

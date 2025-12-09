@@ -28,19 +28,19 @@ async function checkAndSetupSuperAdmin(userId: string): Promise<boolean> {
   const clerkUser = await client.users.getUser(userId);
   const email = clerkUser.emailAddresses[0]?.emailAddress || '';
   const isSuperAdminEmail = SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
-  
+
   try {
     // Use Supabase REST API instead of direct postgres
     const { getSupabaseClient } = await import('@/lib/supabase');
     const supabase = getSupabaseClient();
-    
+
     // Check if user exists in DB
     const { data, error: fetchError } = await supabase
       .from('platform_users')
       .select('*')
       .eq('id', userId)
       .single();
-    
+
     const user = data as PlatformUser | null;
 
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -59,10 +59,12 @@ async function checkAndSetupSuperAdmin(userId: string): Promise<boolean> {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insertError } = await (supabase.from('platform_users') as any).insert([newUser]);
-      
+      const { error: insertError } = await (supabase.from('platform_users') as any).insert([
+        newUser,
+      ]);
+
       if (insertError) {
         console.error('Error creating user:', insertError);
       }
@@ -75,7 +77,7 @@ async function checkAndSetupSuperAdmin(userId: string): Promise<boolean> {
       const { error: updateError } = await (supabase.from('platform_users') as any)
         .update({ platform_role: 'super_admin', updated_at: new Date().toISOString() })
         .eq('id', userId);
-      
+
       if (updateError) {
         console.error('Error upgrading user:', updateError);
       }
@@ -89,11 +91,7 @@ async function checkAndSetupSuperAdmin(userId: string): Promise<boolean> {
   }
 }
 
-export default async function SuperAdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
 
   if (!userId) {
@@ -108,19 +106,17 @@ export default async function SuperAdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+    <div className='flex h-screen bg-gray-100 dark:bg-gray-900'>
       {/* Sidebar */}
       <SuperAdminSidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Header */}
         <SuperAdminHeader />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+        <main className='flex-1 overflow-y-auto p-6'>{children}</main>
       </div>
     </div>
   );

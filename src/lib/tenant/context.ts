@@ -21,22 +21,22 @@ export interface TenantContext {
 export async function getTenantContext(): Promise<TenantContext> {
   const { userId } = auth();
   const { orgId, orgRole } = auth();
-  
+
   if (!userId) {
     throw new Error('User authentication required');
   }
-  
+
   if (!orgId) {
     throw new Error('Organization selection required');
   }
-  
+
   // In Clerk, orgId is the same as tenantId in our system
   const tenantId = orgId;
   const organizationId = orgId;
-  
+
   // Map Clerk roles to our system roles
   let userRole = 'guest'; // Default role
-  
+
   switch (orgRole) {
     case 'org:admin':
       userRole = 'farm_owner';
@@ -50,7 +50,7 @@ export async function getTenantContext(): Promise<TenantContext> {
       userRole = await resolveUserRoleFromDatabase(userId, tenantId);
       break;
   }
-  
+
   return {
     tenantId,
     userId,
@@ -66,30 +66,24 @@ export async function getTenantContext(): Promise<TenantContext> {
 async function resolveUserRoleFromDatabase(userId: string, tenantId: string): Promise<string> {
   try {
     const db = getDrizzle();
-    
+
     const membership = await db
       .select()
       .from(tenantMembers)
-      .where(
-        eq(tenantMembers.userId, userId)
-      )
+      .where(eq(tenantMembers.userId, userId))
       .limit(1);
-    
+
     if (membership.length > 0) {
       return membership[0].role;
     }
-    
+
     // If no membership found, check if user is super admin
-    const user = await db
-      .select()
-      .from(platformUsers)
-      .where(eq(platformUsers.id, userId))
-      .limit(1);
-    
+    const user = await db.select().from(platformUsers).where(eq(platformUsers.id, userId)).limit(1);
+
     if (user.length > 0 && user[0].role === 'super_admin') {
       return 'super_admin';
     }
-    
+
     return 'guest';
   } catch (error) {
     console.error('Error resolving user role:', error);
@@ -103,13 +97,9 @@ async function resolveUserRoleFromDatabase(userId: string, tenantId: string): Pr
 export async function getTenantInfo(tenantId: string) {
   try {
     const db = getDrizzle();
-    
-    const tenant = await db
-      .select()
-      .from(tenants)
-      .where(eq(tenants.id, tenantId))
-      .limit(1);
-    
+
+    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+
     return tenant[0] || null;
   } catch (error) {
     console.error('Error getting tenant info:', error);
@@ -123,23 +113,23 @@ export async function getTenantInfo(tenantId: string) {
 export async function hasRole(requiredRole: string): Promise<boolean> {
   try {
     const context = await getTenantContext();
-    
+
     // Role hierarchy: super_admin > farm_owner > farm_manager > others
     const roleHierarchy = {
-      'super_admin': 4,
-      'farm_owner': 3,
-      'farm_manager': 2,
-      'veterinarian': 2,
-      'feed_manager': 2,
-      'accountant': 2,
-      'breeder': 1,
-      'milking_staff': 1,
-      'guest': 0,
+      super_admin: 4,
+      farm_owner: 3,
+      farm_manager: 2,
+      veterinarian: 2,
+      feed_manager: 2,
+      accountant: 2,
+      breeder: 1,
+      milking_staff: 1,
+      guest: 0,
     };
-    
+
     const userLevel = roleHierarchy[context.userRole as keyof typeof roleHierarchy] || 0;
     const requiredLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 0;
-    
+
     return userLevel >= requiredLevel;
   } catch (error) {
     console.error('Error checking role:', error);
@@ -179,13 +169,13 @@ export async function validateTenantAccess(resourceTenantId: string): Promise<bo
 export async function getUserTenants() {
   try {
     const { userId } = auth();
-    
+
     if (!userId) {
       return [];
     }
-    
+
     const db = getDrizzle();
-    
+
     const memberships = await db
       .select({
         tenant: tenants,
@@ -194,7 +184,7 @@ export async function getUserTenants() {
       .from(tenantMembers)
       .innerJoin(tenants, eq(tenantMembers.tenantId, tenants.id))
       .where(eq(tenantMembers.userId, userId));
-    
+
     return memberships.map(m => ({
       ...m.tenant,
       role: m.membership.role,
@@ -213,7 +203,7 @@ export async function checkTenantSubscription(planName: string): Promise<boolean
   try {
     const context = await getTenantContext();
     const db = getDrizzle();
-    
+
     // This would need to be implemented based on your subscription table structure
     // For now, return true as placeholder
     return true;
@@ -230,7 +220,7 @@ export async function checkTenantSubscription(planName: string): Promise<boolean
 export async function getTenantFeatureOverrides(): Promise<Record<string, boolean>> {
   try {
     const context = await getTenantContext();
-    
+
     // This could be stored in a tenant_settings table
     // For now, return empty object
     return {};

@@ -19,14 +19,15 @@ describe('Enhanced Animals API', () => {
         new Request('http://localhost:3000/api/animals/enhanced?ageMin=0&ageMax=365')
       );
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.animals).toBeDefined();
-      
+
       // Verify all returned animals are under 1 year old
       data.data.animals.forEach(animal => {
-        const ageInDays = (Date.now() - new Date(animal.birthDate).getTime()) / (1000 * 60 * 60 * 24);
+        const ageInDays =
+          (Date.now() - new Date(animal.birthDate).getTime()) / (1000 * 60 * 60 * 24);
         expect(ageInDays).toBeLessThanOrEqual(365);
       });
     });
@@ -36,7 +37,7 @@ describe('Enhanced Animals API', () => {
         new Request('http://localhost:3000/api/animals/enhanced?healthStatus=healthy')
       );
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       data.data.animals.forEach(animal => {
         expect(animal.healthStatus).toBe('healthy');
@@ -48,7 +49,7 @@ describe('Enhanced Animals API', () => {
         new Request('http://localhost:3000/api/animals/enhanced?search=nonexistent_animal')
       );
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.data.animals).toHaveLength(0);
       expect(data.data.pagination.totalCount).toBe(0);
@@ -58,17 +59,15 @@ describe('Enhanced Animals API', () => {
       // Test that users can only access their own animals
       const mockUserId = 'user_123';
       const mockTenantId = 'tenant_456';
-      
+
       jest.mocked(getTenantContext).mockResolvedValue({
         tenantId: mockTenantId,
-        userId: mockUserId
+        userId: mockUserId,
       });
 
-      const response = await GET(
-        new Request('http://localhost:3000/api/animals/enhanced')
-      );
+      const response = await GET(new Request('http://localhost:3000/api/animals/enhanced'));
       const data = await response.json();
-      
+
       // Verify all animals belong to the correct tenant
       data.data.animals.forEach(animal => {
         expect(animal.tenantId).toBe(mockTenantId);
@@ -83,11 +82,9 @@ describe('Enhanced Animals API', () => {
 describe('Enhanced Feed Management API', () => {
   describe('GET /api/feed-management/enhanced', () => {
     it('should calculate inventory analytics correctly', async () => {
-      const response = await GET(
-        new Request('http://localhost:3000/api/feed-management/enhanced')
-      );
+      const response = await GET(new Request('http://localhost:3000/api/feed-management/enhanced'));
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.data.analytics).toBeDefined();
       expect(data.data.analytics.totalValue).toBeGreaterThanOrEqual(0);
@@ -100,7 +97,7 @@ describe('Enhanced Feed Management API', () => {
         new Request('http://localhost:3000/api/feed-management/enhanced?lowStock=true')
       );
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       data.data.feedItems.forEach(item => {
         expect(item.currentStock).toBeLessThanOrEqual(item.reorderLevel);
@@ -112,10 +109,12 @@ describe('Enhanced Feed Management API', () => {
         new Request('http://localhost:3000/api/feed-management/enhanced?expiringSoon=true')
       );
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       data.data.feedItems.forEach(item => {
-        const daysUntilExpiry = Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const daysUntilExpiry = Math.ceil(
+          (new Date(item.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        );
         expect(daysUntilExpiry).toBeLessThanOrEqual(30);
       });
     });
@@ -136,19 +135,19 @@ describe('Batch Operations API', () => {
           vaccineType: 'test',
           batchNumber: 'TEST001',
           manufacturer: 'Test Lab',
-          administeredBy: 'vet_123'
+          administeredBy: 'vet_123',
         },
         priority: 'medium',
-        createTask: true
+        createTask: true,
       };
 
       const response = await POST(
         new Request('http://localhost:3000/api/animals/batch-operations', {
           method: 'POST',
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
         })
       );
-      
+
       const data = await response.json();
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -169,17 +168,17 @@ describe('Batch Operations API', () => {
         operationData: {
           treatmentName: 'Test Treatment',
           dosage: '10ml',
-          prescribedBy: 'vet_123'
-        }
+          prescribedBy: 'vet_123',
+        },
       };
 
       const response = await POST(
         new Request('http://localhost:3000/api/animals/batch-operations', {
           method: 'POST',
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
         })
       );
-      
+
       const data = await response.json();
       expect(data.success).toBe(true); // Partial success
       expect(data.data.summary.successful).toBe(1);
@@ -191,17 +190,17 @@ describe('Batch Operations API', () => {
         operation: 'vaccination',
         animalIds: ['animal_from_other_tenant'],
         operationData: {
-          vaccineName: 'Test Vaccine'
-        }
+          vaccineName: 'Test Vaccine',
+        },
       };
 
       const response = await POST(
         new Request('http://localhost:3000/api/animals/batch-operations', {
           method: 'POST',
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
         })
       );
-      
+
       expect(response.status).toBe(404);
       const data = await response.json();
       expect(data.success).toBe(false);
@@ -232,7 +231,7 @@ describe('EnhancedAnimalProfile', () => {
     } as Response);
 
     render(<EnhancedAnimalProfile animalId="animal_1" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('85/100')).toBeInTheDocument();
       expect(screen.getByText('85/100')).toHaveClass('text-green-600');
@@ -241,7 +240,7 @@ describe('EnhancedAnimalProfile', () => {
 
   it('should handle loading state correctly', () => {
     render(<EnhancedAnimalProfile animalId="animal_1" />);
-    
+
     expect(screen.getByText('Animal not found')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toBeInTheDocument(); // Loading indicator
   });
@@ -255,7 +254,7 @@ describe('EnhancedAnimalProfile', () => {
     } as Response);
 
     render(<EnhancedAnimalProfile animalId="nonexistent" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Animal not found')).toBeInTheDocument();
     });
@@ -277,21 +276,21 @@ describe('Database Integration', () => {
       animalId: 'animal_123',
       breedScore: 85,
       milkYieldPotential: 90,
-      geneticValueIndex: 88
+      geneticValueIndex: 88,
     };
 
     // Insert test data
     await db.insert(genetic_profiles).values(testProfile);
-    
+
     // Retrieve data
     const result = await db
       .select()
       .from(genetic_profiles)
       .where(eq(genetic_profiles.id, testProfile.id));
-    
+
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject(testProfile);
-    
+
     // Cleanup
     await db.delete(genetic_profiles).where(eq(genetic_profiles.id, testProfile.id));
   });
@@ -301,12 +300,10 @@ describe('Database Integration', () => {
       id: 'genetic_invalid',
       tenantId: 'nonexistent_tenant',
       animalId: 'nonexistent_animal',
-      breedScore: 80
+      breedScore: 80,
     };
 
-    await expect(
-      db.insert(genetic_profiles).values(invalidProfile)
-    ).rejects.toThrow();
+    await expect(db.insert(genetic_profiles).values(invalidProfile)).rejects.toThrow();
   });
 
   it('should handle tenant isolation correctly', async () => {
@@ -317,13 +314,13 @@ describe('Database Integration', () => {
     await db.insert(feed_inventory).values({
       id: 'feed_1',
       tenantId: tenant1Id,
-      ingredientName: 'Test Feed 1'
+      ingredientName: 'Test Feed 1',
     });
 
     await db.insert(feed_inventory).values({
       id: 'feed_2',
       tenantId: tenant2Id,
-      ingredientName: 'Test Feed 2'
+      ingredientName: 'Test Feed 2',
     });
 
     // Query tenant 1 data
@@ -355,8 +352,8 @@ describe('API Integration', () => {
         name: 'Integration Test Cow',
         tag: 'INT001',
         species: 'cow',
-        breed: 'Holstein'
-      })
+        breed: 'Holstein',
+      }),
     });
 
     const createData = await createResponse.json();
@@ -378,9 +375,9 @@ describe('API Integration', () => {
         animalIds: [animalId],
         operationData: {
           vaccineName: 'Integration Test Vaccine',
-          vaccineType: 'test'
-        }
-      })
+          vaccineType: 'test',
+        },
+      }),
     });
 
     const batchData = await batchResponse.json();
@@ -406,23 +403,23 @@ describe('Enhanced Animal Management E2E', () => {
   it('should display enhanced animal profile with all tabs', () => {
     // Navigate to animal profile
     cy.get('[data-testid="animal-row"]').first().click();
-    
+
     // Verify overview tab
     cy.get('[data-testid="overview-tab"]').should('be.visible');
     cy.get('[data-testid="health-score"]').should('contain.text', '/100');
-    
+
     // Test health tab
     cy.get('[data-testid="health-tab"]').click();
     cy.get('[data-testid="health-chart"]').should('be.visible');
-    
+
     // Test production tab
     cy.get('[data-testid="production-tab"]').click();
     cy.get('[data-testid="milk-production-chart"]').should('be.visible');
-    
+
     // Test genetics tab
     cy.get('[data-testid="genetics-tab"]').click();
     cy.get('[data-testid="genetic-profile-card"]').should('be.visible');
-    
+
     // Test financial tab
     cy.get('[data-testid="financial-tab"]').click();
     cy.get('[data-testid="financial-metrics-card"]').should('be.visible');
@@ -432,41 +429,43 @@ describe('Enhanced Animal Management E2E', () => {
     // Select multiple animals
     cy.get('[data-testid="animal-checkbox"]').first().check();
     cy.get('[data-testid="animal-checkbox"]').eq(1).check();
-    
+
     // Click batch operations
     cy.get('[data-testid="batch-operations-button"]').click();
-    
+
     // Select vaccination operation
     cy.get('[data-testid="vaccination-option"]').click();
-    
+
     // Fill vaccination details
     cy.get('[data-testid="vaccine-name"]').type('E2E Test Vaccine');
     cy.get('[data-testid="vaccine-type"]').type('test');
-    
+
     // Execute batch operation
     cy.get('[data-testid="execute-batch-operation"]').click();
-    
+
     // Verify success message
-    cy.get('[data-testid="batch-operation-success"]')
-      .should('contain.text', 'Successfully processed');
+    cy.get('[data-testid="batch-operation-success"]').should(
+      'contain.text',
+      'Successfully processed'
+    );
   });
 
   it('should filter animals with advanced criteria', () => {
     // Open filters
     cy.get('[data-testid="advanced-filters"]').click();
-    
+
     // Set age filter
     cy.get('[data-testid="age-min"]').type('0');
     cy.get('[data-testid="age-max"]').type('365');
-    
+
     // Set health status filter
     cy.get('[data-testid="health-status-filter"]').select('healthy');
-    
+
     // Apply filters
     cy.get('[data-testid="apply-filters"]').click();
-    
+
     // Verify filtered results
-    cy.get('[data-testid="animal-row"]').each(($row) => {
+    cy.get('[data-testid="animal-row"]').each($row => {
       cy.wrap($row).find('[data-testid="health-status"]').should('contain.text', 'healthy');
     });
   });
@@ -486,10 +485,10 @@ describe('Feed Management E2E', () => {
     cy.get('[data-testid="total-inventory-value"]').should('be.visible');
     cy.get('[data-testid="low-stock-alerts"]').should('be.visible');
     cy.get('[data-testid="expiring-items"]').should('be.visible');
-    
+
     // Test category breakdown
     cy.get('[data-testid="category-chart"]').should('be.visible');
-    
+
     // Test efficiency metrics
     cy.get('[data-testid="efficiency-metrics"]').should('be.visible');
   });
@@ -497,17 +496,17 @@ describe('Feed Management E2E', () => {
   it('should manage feed inventory items', () => {
     // Navigate to inventory tab
     cy.get('[data-testid="inventory-tab"]').click();
-    
+
     // Add new feed item
     cy.get('[data-testid="add-feed-item"]').click();
     cy.get('[data-testid="ingredient-name"]').type('E2E Test Feed');
     cy.get('[data-testid="category"]').select('concentrate');
     cy.get('[data-testid="current-stock"]').type('1000');
     cy.get('[data-testid="unit-cost"]').type('50');
-    
+
     // Save item
     cy.get('[data-testid="save-feed-item"]').click();
-    
+
     // Verify item appears in table
     cy.get('[data-testid="feed-table"]').should('contain.text', 'E2E Test Feed');
   });
@@ -515,16 +514,16 @@ describe('Feed Management E2E', () => {
   it('should optimize nutrition plans', () => {
     // Navigate to nutrition tab
     cy.get('[data-testid="nutrition-tab"]').click();
-    
+
     // Create new nutrition plan
     cy.get('[data-testid="create-nutrition-plan"]').click();
     cy.get('[data-testid="plan-name"]').type('E2E Test Plan');
     cy.get('[data-testid="animal-group"]').select('Lactating Cows');
     cy.get('[data-testid="target-production"]').type('30+ L/day');
-    
+
     // Run optimization
     cy.get('[data-testid="run-optimization"]').click();
-    
+
     // Verify optimization results
     cy.get('[data-testid="optimization-results"]').should('be.visible');
     cy.get('[data-testid="efficiency-score"]').should('be.visible');
@@ -548,30 +547,30 @@ export let options = {
     { duration: '5m', target: 100 }, // Stay at 100 users
     { duration: '2m', target: 200 }, // Ramp up to 200 users
     { duration: '5m', target: 200 }, // Stay at 200 users
-    { duration: '2m', target: 0 },   // Ramp down
+    { duration: '2m', target: 0 }, // Ramp down
   ],
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests under 500ms
-    http_req_failed: ['rate<0.1'],    // Error rate under 10%
+    http_req_failed: ['rate<0.1'], // Error rate under 10%
     errors: ['rate<0.1'],
   },
 };
 
 const BASE_URL = 'http://localhost:3000';
 
-export default function() {
+export default function () {
   // Test enhanced animals API
   let response = http.get(`${BASE_URL}/api/animals/enhanced?page=1&limit=20`, {
     headers: {
-      'Authorization': 'Bearer test_token',
+      Authorization: 'Bearer test_token',
       'Content-Type': 'application/json',
     },
   });
 
   let success = check(response, {
-    'enhanced animals status is 200': (r) => r.status === 200,
-    'enhanced animals response time < 500ms': (r) => r.timings.duration < 500,
-    'enhanced animals has data': (r) => JSON.parse(r.body).success === true,
+    'enhanced animals status is 200': r => r.status === 200,
+    'enhanced animals response time < 500ms': r => r.timings.duration < 500,
+    'enhanced animals has data': r => JSON.parse(r.body).success === true,
   });
 
   errorRate.add(!success);
@@ -579,15 +578,15 @@ export default function() {
   // Test feed management API
   response = http.get(`${BASE_URL}/api/feed-management/enhanced`, {
     headers: {
-      'Authorization': 'Bearer test_token',
+      Authorization: 'Bearer test_token',
       'Content-Type': 'application/json',
     },
   });
 
   success = check(response, {
-    'feed management status is 200': (r) => r.status === 200,
-    'feed management response time < 500ms': (r) => r.timings.duration < 500,
-    'feed management has analytics': (r) => JSON.parse(r.body).data.analytics !== undefined,
+    'feed management status is 200': r => r.status === 200,
+    'feed management response time < 500ms': r => r.timings.duration < 500,
+    'feed management has analytics': r => JSON.parse(r.body).data.analytics !== undefined,
   });
 
   errorRate.add(!success);
@@ -612,11 +611,11 @@ export let options = {
   stages: [
     { duration: '1m', target: 50 }, // Ramp up to 50 concurrent users
     { duration: '3m', target: 50 }, // Stay at 50 users
-    { duration: '1m', target: 0 },  // Ramp down
+    { duration: '1m', target: 0 }, // Ramp down
   ],
 };
 
-export default function() {
+export default function () {
   const batchPayload = JSON.stringify({
     operation: 'vaccination',
     animalIds: ['animal_1', 'animal_2', 'animal_3'],
@@ -624,26 +623,26 @@ export default function() {
       vaccineName: 'Load Test Vaccine',
       vaccineType: 'test',
       batchNumber: 'LT001',
-      manufacturer: 'Load Test Lab'
+      manufacturer: 'Load Test Lab',
     },
     priority: 'medium',
-    createTask: true
+    createTask: true,
   });
 
   const response = http.post('http://localhost:3000/api/animals/batch-operations', batchPayload, {
     headers: {
-      'Authorization': 'Bearer test_token',
+      Authorization: 'Bearer test_token',
       'Content-Type': 'application/json',
     },
   });
 
   check(response, {
-    'batch operations status is 200': (r) => r.status === 200,
-    'batch operations completed successfully': (r) => {
+    'batch operations status is 200': r => r.status === 200,
+    'batch operations completed successfully': r => {
       const data = JSON.parse(r.body);
       return data.success === true && data.data.summary.successful > 0;
     },
-    'batch operations response time < 1000ms': (r) => r.timings.duration < 1000,
+    'batch operations response time < 1000ms': r => r.timings.duration < 1000,
   });
 
   sleep(2);
@@ -657,7 +656,7 @@ export default function() {
 describe('Database Query Performance', () => {
   it('should execute complex animal queries within time limits', async () => {
     const startTime = performance.now();
-    
+
     const result = await db
       .select({
         animal: animals,
@@ -667,7 +666,7 @@ describe('Database Query Performance', () => {
             'lastCheck', MAX(${health_records.date}),
             'vaccinationCount', COUNT(CASE WHEN ${health_records.type} = 'vaccination' THEN 1 END)
           )
-        )`
+        )`,
       })
       .from(animals)
       .leftJoin(genetic_profiles, eq(animals.id, genetic_profiles.animal_id))
@@ -684,15 +683,17 @@ describe('Database Query Performance', () => {
 
   it('should handle large feed inventory queries efficiently', async () => {
     const startTime = performance.now();
-    
+
     const result = await db
       .select()
       .from(feed_inventory)
-      .where(and(
-        eq(feed_inventory.tenantId, 'test_tenant'),
-        eq(feed_inventory.isActive, true),
-        sql`${feed_inventory.currentStock} <= ${feed_inventory.reorderLevel}`
-      ))
+      .where(
+        and(
+          eq(feed_inventory.tenantId, 'test_tenant'),
+          eq(feed_inventory.isActive, true),
+          sql`${feed_inventory.currentStock} <= ${feed_inventory.reorderLevel}`
+        )
+      )
       .orderBy(desc(feed_inventory.expiryDate));
 
     const endTime = performance.now();
@@ -715,17 +716,13 @@ describe('Security - Tenant Isolation', () => {
     // Mock tenant 1 user
     jest.mocked(getTenantContext).mockResolvedValue(tenant1User);
 
-    const response1 = await GET(
-      new Request('http://localhost:3000/api/animals/enhanced')
-    );
+    const response1 = await GET(new Request('http://localhost:3000/api/animals/enhanced'));
     const data1 = await response1.json();
 
     // Mock tenant 2 user
     jest.mocked(getTenantContext).mockResolvedValue(tenant2User);
 
-    const response2 = await GET(
-      new Request('http://localhost:3000/api/animals/enhanced')
-    );
+    const response2 = await GET(new Request('http://localhost:3000/api/animals/enhanced'));
     const data2 = await response2.json();
 
     // Verify data isolation
@@ -739,7 +736,7 @@ describe('Security - Tenant Isolation', () => {
     const endpoints = [
       '/api/animals/enhanced',
       '/api/feed-management/enhanced',
-      '/api/animals/batch-operations'
+      '/api/animals/batch-operations',
     ];
 
     for (const endpoint of endpoints) {
@@ -791,7 +788,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -806,21 +803,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run unit tests
         run: npm run test:coverage
-        
+
       - name: Run integration tests
         run: npm run test:integration
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
-        
+
       - name: Run E2E tests
         run: npm run cypress:run
-        
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 ```
@@ -852,10 +849,10 @@ jobs:
 export async function setupTestDatabase() {
   // Create test schema
   await db.execute(sql`CREATE SCHEMA IF NOT EXISTS test_schema`);
-  
+
   // Seed test data
   await seedTestData();
-  
+
   // Create test users
   await createTestUsers();
 }
@@ -879,7 +876,7 @@ export function generateMockAnimals(count: number) {
     breed: 'Holstein',
     birthDate: new Date(2023 - Math.floor(Math.random() * 5), 0, 1),
     healthScore: 70 + Math.floor(Math.random() * 30),
-    tenantId: 'test_tenant'
+    tenantId: 'test_tenant',
   }));
 }
 ```
@@ -889,9 +886,10 @@ export function generateMockAnimals(count: number) {
 ## 📞 Test Support
 
 For testing issues or questions:
+
 - **Development Team**: dev@maliktechdairy.com
 - **QA Team**: qa@maliktechdairy.com
 
 ---
 
-*This testing strategy ensures comprehensive coverage of all Phase 1 and Phase 2 features, guaranteeing production readiness for the MTK Dairy enhancement plan.*
+_This testing strategy ensures comprehensive coverage of all Phase 1 and Phase 2 features, guaranteeing production readiness for the MTK Dairy enhancement plan._

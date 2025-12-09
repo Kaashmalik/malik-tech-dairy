@@ -1,12 +1,11 @@
-"use client";
+'use client';
 
-import { HealthRecordsList } from "@/components/health/HealthRecordsList";
+import { HealthRecordsList } from '@/components/health/HealthRecordsList';
 
 export default function HealthPage() {
   return (
-    <div className="p-6">
+    <div className='p-6'>
       <HealthRecordsList />
     </div>
   );
 }
-

@@ -1,153 +1,168 @@
-// API Route: Get/Update/Delete Health Record
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import type { HealthRecord } from "@/types";
-import { decrypt } from "@/lib/encryption";
+// API Route: Get/Update/Delete Health Record (Supabase-based)
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSupabaseClient } from '@/lib/supabase';
+import { decrypt, encrypt } from '@/lib/encryption';
+import { updateHealthRecordSchema } from '@/lib/validations/health';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // GET: Get health record by ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
-      const healthRef = getTenantSubcollection(
-        context.tenantId,
-        "health",
-        "records"
-      );
+      const supabase = getSupabaseClient();
 
-      const doc = await healthRef.doc(id).get();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: record, error } = await (supabase.from('health_records') as any)
+        .select('*')
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .single();
 
-      if (!doc.exists) {
+      if (error || !record) {
         return NextResponse.json(
-          { error: "Health record not found" },
+          { success: false, error: 'Health record not found' },
           { status: 404 }
         );
       }
 
-      const data = doc.data();
-      
       // Decrypt notes if encrypted
-      let notes = data?.notes;
-      if (notes && typeof notes === "string") {
+      let notes = record?.notes;
+      if (notes && typeof notes === 'string') {
         try {
           notes = decrypt(notes);
-        } catch (error) {
-          // If decryption fails, return as-is (might be unencrypted legacy data)
-          console.warn("Failed to decrypt notes, returning as-is");
+        } catch {
+          console.warn('Failed to decrypt notes, returning as-is');
         }
       }
-      
+
       return NextResponse.json({
-        id: doc.id,
-        ...data,
-        notes, // Decrypted notes
-        date: data?.date?.toDate(),
-        nextDueDate: data?.nextDueDate?.toDate(),
-        createdAt: data?.createdAt?.toDate(),
+        success: true,
+        record: {
+          id: record?.id,
+          tenantId: record?.tenant_id,
+          animalId: record?.animal_id,
+          type: record?.type,
+          date: record?.date,
+          description: record?.description,
+          veterinarian: record?.veterinarian,
+          cost: record?.cost,
+          nextDueDate: record?.next_due_date,
+          notes,
+          createdAt: record?.created_at,
+        },
       });
     } catch (error) {
-      console.error("Error fetching health record:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error fetching health record:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
 
 // PUT: Update health record
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
+      const supabase = getSupabaseClient();
       const body = await req.json();
 
-      const healthRef = getTenantSubcollection(
-        context.tenantId,
-        "health",
-        "records"
-      );
+      // Check if record exists
+      const { data: existing } = await supabase
+        .from('health_records')
+        .select('id')
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .single();
 
-      const docRef = healthRef.doc(id);
-      const doc = await docRef.get();
-
-      if (!doc.exists) {
+      if (!existing) {
         return NextResponse.json(
-          { error: "Health record not found" },
+          { success: false, error: 'Health record not found' },
           { status: 404 }
         );
       }
 
-      const { updateHealthRecordSchema } = await import("@/lib/validations/health");
-      const { encrypt } = await import("@/lib/encryption");
-      
       // Validate with Zod
       let validated;
       try {
         validated = updateHealthRecordSchema.parse(body);
       } catch (error: any) {
         return NextResponse.json(
-          { error: "Validation failed", details: error.errors },
+          { success: false, error: 'Validation failed', details: error.errors },
           { status: 400 }
         );
       }
 
-      const updates: any = {};
-      if (validated.type !== undefined) updates.type = validated.type;
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (validated.type !== undefined) updateData.type = validated.type;
       if (validated.date !== undefined) {
-        updates.date = typeof validated.date === "string" ? new Date(validated.date) : validated.date;
+        updateData.date =
+          typeof validated.date === 'string' ? validated.date : validated.date.toISOString();
       }
-      if (validated.description !== undefined) updates.description = validated.description;
-      if (validated.veterinarian !== undefined) updates.veterinarian = validated.veterinarian;
-      if (validated.cost !== undefined) updates.cost = validated.cost;
+      if (validated.description !== undefined) updateData.description = validated.description;
+      if (validated.veterinarian !== undefined) updateData.veterinarian = validated.veterinarian;
+      if (validated.cost !== undefined) updateData.cost = validated.cost;
       if (validated.nextDueDate !== undefined) {
-        updates.nextDueDate = validated.nextDueDate 
-          ? (typeof validated.nextDueDate === "string" ? new Date(validated.nextDueDate) : validated.nextDueDate)
-          : undefined;
+        updateData.next_due_date = validated.nextDueDate
+          ? typeof validated.nextDueDate === 'string'
+            ? validated.nextDueDate
+            : validated.nextDueDate.toISOString()
+          : null;
       }
       if (validated.notes !== undefined) {
-        // Encrypt notes if provided
-        updates.notes = validated.notes ? encrypt(validated.notes) : undefined;
+        updateData.notes = validated.notes ? encrypt(validated.notes) : null;
       }
 
-      await docRef.update(updates);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updatedRecord, error } = await (supabase.from('health_records') as any)
+        .update(updateData)
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .select()
+        .single();
 
-      const updated = await docRef.get();
-      const data = updated.data();
+      if (error) {
+        console.error('Error updating health record:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to update health record' },
+          { status: 500 }
+        );
+      }
 
-      // Decrypt notes if encrypted
-      let notes = data?.notes;
-      if (notes && typeof notes === "string") {
+      // Decrypt notes for response
+      let notes = updatedRecord?.notes;
+      if (notes && typeof notes === 'string') {
         try {
           notes = decrypt(notes);
-        } catch (error) {
-          console.warn("Failed to decrypt notes, returning as-is");
+        } catch {
+          console.warn('Failed to decrypt notes, returning as-is');
         }
       }
 
       return NextResponse.json({
-        id: updated.id,
-        ...data,
-        notes, // Decrypted notes
-        date: data?.date?.toDate(),
-        nextDueDate: data?.nextDueDate?.toDate(),
-        createdAt: data?.createdAt?.toDate(),
+        success: true,
+        record: {
+          id: updatedRecord?.id,
+          tenantId: updatedRecord?.tenant_id,
+          animalId: updatedRecord?.animal_id,
+          type: updatedRecord?.type,
+          date: updatedRecord?.date,
+          description: updatedRecord?.description,
+          veterinarian: updatedRecord?.veterinarian,
+          cost: updatedRecord?.cost,
+          nextDueDate: updatedRecord?.next_due_date,
+          notes,
+          createdAt: updatedRecord?.created_at,
+        },
       });
     } catch (error) {
-      console.error("Error updating health record:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error updating health record:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
@@ -160,32 +175,41 @@ export async function DELETE(
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
-      const healthRef = getTenantSubcollection(
-        context.tenantId,
-        "health",
-        "records"
-      );
+      const supabase = getSupabaseClient();
 
-      const docRef = healthRef.doc(id);
-      const doc = await docRef.get();
+      // Check if record exists
+      const { data: existing } = await supabase
+        .from('health_records')
+        .select('id')
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId)
+        .single();
 
-      if (!doc.exists) {
+      if (!existing) {
         return NextResponse.json(
-          { error: "Health record not found" },
+          { success: false, error: 'Health record not found' },
           { status: 404 }
         );
       }
 
-      await docRef.delete();
+      const { error } = await supabase
+        .from('health_records')
+        .delete()
+        .eq('id', id)
+        .eq('tenant_id', context.tenantId);
+
+      if (error) {
+        console.error('Error deleting health record:', error);
+        return NextResponse.json(
+          { success: false, error: 'Failed to delete health record' },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error("Error deleting health record:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error deleting health record:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

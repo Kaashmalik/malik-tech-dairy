@@ -22,12 +22,9 @@ interface Tenant {
 export async function POST() {
   try {
     const { userId } = await auth();
-    
+
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = getSupabaseClient();
@@ -74,8 +71,13 @@ export async function POST() {
     // If not, try to find existing org or create new one
     if (!clerkOrgId.startsWith('org_')) {
       console.log('Tenant was created without Clerk org, searching for existing org...');
-      
-      const baseSlug = tenant.slug || tenant.farm_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      const baseSlug =
+        tenant.slug ||
+        tenant.farm_name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
       let foundOrg = false;
 
       // First, try to find existing organization by slug
@@ -84,23 +86,29 @@ export async function POST() {
           query: tenant.farm_name,
           limit: 10,
         });
-        
+
         // Check if any org matches our farm name or slug
         for (const org of existingOrgs.data) {
-          if (org.name === tenant.farm_name || org.slug === baseSlug || org.slug?.startsWith(baseSlug)) {
+          if (
+            org.name === tenant.farm_name ||
+            org.slug === baseSlug ||
+            org.slug?.startsWith(baseSlug)
+          ) {
             clerkOrgId = org.id;
             foundOrg = true;
             console.log('Found existing Clerk Organization:', clerkOrgId);
-            
+
             // Update tenant with found Clerk org ID
             await (supabase.from('tenants').delete().eq('id', tenant.id) as any);
-            await (supabase.from('tenants').insert([{
-              id: clerkOrgId,
-              slug: org.slug || baseSlug,
-              farm_name: tenant.farm_name,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }] as any) as any);
+            await (supabase.from('tenants').insert([
+              {
+                id: clerkOrgId,
+                slug: org.slug || baseSlug,
+                farm_name: tenant.farm_name,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+            ] as any) as any);
 
             // Update related records
             await (supabase
@@ -111,7 +119,7 @@ export async function POST() {
               .from('tenant_members')
               .update({ tenant_id: clerkOrgId } as any)
               .eq('tenant_id', tenant.id) as any);
-            
+
             break;
           }
         }
@@ -122,7 +130,7 @@ export async function POST() {
       // If no existing org found, try to create one
       if (!foundOrg) {
         console.log('No existing org found, attempting to create new one...');
-        
+
         const slugVariations = [
           baseSlug,
           `${baseSlug}-${Date.now().toString(36)}`,
@@ -136,20 +144,22 @@ export async function POST() {
               name: tenant.farm_name,
               slug: slug,
             });
-            
+
             clerkOrgId = org.id;
             foundOrg = true;
             console.log('Created new Clerk Organization:', clerkOrgId);
 
             // Update tenant with new Clerk org ID
             await (supabase.from('tenants').delete().eq('id', tenant.id) as any);
-            await (supabase.from('tenants').insert([{
-              id: clerkOrgId,
-              slug: slug,
-              farm_name: tenant.farm_name,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }] as any) as any);
+            await (supabase.from('tenants').insert([
+              {
+                id: clerkOrgId,
+                slug: slug,
+                farm_name: tenant.farm_name,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+            ] as any) as any);
 
             // Update related records
             await (supabase
@@ -163,12 +173,15 @@ export async function POST() {
 
             break;
           } catch (clerkError: unknown) {
-            const errorMessage = clerkError instanceof Error ? clerkError.message : String(clerkError);
+            const errorMessage =
+              clerkError instanceof Error ? clerkError.message : String(clerkError);
             console.error(`Clerk org creation failed for slug ${slug}:`, errorMessage);
-            
+
             // If forbidden, it's likely a permissions issue - stop trying
             if (errorMessage.includes('Forbidden')) {
-              console.error('Clerk API returned Forbidden - check API key permissions for organizations');
+              console.error(
+                'Clerk API returned Forbidden - check API key permissions for organizations'
+              );
               break;
             }
           }
@@ -177,10 +190,11 @@ export async function POST() {
 
       if (!foundOrg) {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'Unable to setup organization. This may be a Clerk configuration issue.',
-            details: 'Please ensure Clerk Organizations feature is enabled and API key has proper permissions.'
+            details:
+              'Please ensure Clerk Organizations feature is enabled and API key has proper permissions.',
           },
           { status: 500 }
         );
@@ -193,9 +207,7 @@ export async function POST() {
         organizationId: clerkOrgId,
       });
 
-      const existingMembership = memberships.data.find(
-        m => m.publicUserData?.userId === userId
-      );
+      const existingMembership = memberships.data.find(m => m.publicUserData?.userId === userId);
 
       if (existingMembership) {
         return NextResponse.json({
@@ -204,7 +216,7 @@ export async function POST() {
           data: {
             organizationId: clerkOrgId,
             role: existingMembership.role,
-          }
+          },
         });
       }
     } catch (checkError) {
@@ -227,11 +239,11 @@ export async function POST() {
         data: {
           organizationId: clerkOrgId,
           farmName: tenant.farm_name,
-        }
+        },
       });
     } catch (addError: unknown) {
       console.error('Failed to add as admin:', addError);
-      
+
       // Try as member
       try {
         await clerk.organizations.createOrganizationMembership({
@@ -246,15 +258,15 @@ export async function POST() {
           data: {
             organizationId: clerkOrgId,
             farmName: tenant.farm_name,
-          }
+          },
         });
       } catch (addError2) {
         console.error('Failed to add as member:', addError2);
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'Failed to join organization',
-            details: addError2 instanceof Error ? addError2.message : String(addError2)
+            details: addError2 instanceof Error ? addError2.message : String(addError2),
           },
           { status: 500 }
         );
@@ -263,10 +275,10 @@ export async function POST() {
   } catch (error) {
     console.error('Join org error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

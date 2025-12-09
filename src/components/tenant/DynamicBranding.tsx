@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useTenantContext } from "./TenantProvider";
-import { useEffect } from "react";
+import { useTenantContext } from './TenantProvider';
+import { useEffect } from 'react';
 
 /**
  * Applies dynamic branding (colors, logo) from tenant config
@@ -16,21 +16,21 @@ export function DynamicBranding() {
 
     // Apply primary color
     if (config.primaryColor) {
-      root.style.setProperty("--tenant-primary", config.primaryColor);
+      root.style.setProperty('--tenant-primary', config.primaryColor);
     }
 
     // Apply accent color
     if (config.accentColor) {
-      root.style.setProperty("--tenant-accent", config.accentColor);
+      root.style.setProperty('--tenant-accent', config.accentColor);
     }
 
     // Apply language direction
-    if (config.language === "ur") {
-      document.documentElement.setAttribute("dir", "rtl");
-      document.documentElement.setAttribute("lang", "ur");
+    if (config.language === 'ur') {
+      document.documentElement.setAttribute('dir', 'rtl');
+      document.documentElement.setAttribute('lang', 'ur');
     } else {
-      document.documentElement.setAttribute("dir", "ltr");
-      document.documentElement.setAttribute("lang", "en");
+      document.documentElement.setAttribute('dir', 'ltr');
+      document.documentElement.setAttribute('lang', 'en');
     }
   }, [config]);
 
@@ -44,25 +44,16 @@ export function TenantLogo({ className }: { className?: string }) {
   const { config } = useTenantContext();
 
   if (config?.logoUrl) {
-    return (
-      <img
-        src={config.logoUrl}
-        alt={config.farmName || "Farm Logo"}
-        className={className}
-      />
-    );
+    return <img src={config.logoUrl} alt={config.farmName || 'Farm Logo'} className={className} />;
   }
 
   // Default logo
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-        <span className="text-primary-foreground font-bold text-lg">M</span>
+      <div className='bg-primary flex h-8 w-8 items-center justify-center rounded-lg'>
+        <span className='text-primary-foreground text-lg font-bold'>M</span>
       </div>
-      <span className="font-semibold text-lg">
-        {config?.farmName || "MTK Dairy"}
-      </span>
+      <span className='text-lg font-semibold'>{config?.farmName || 'MTK Dairy'}</span>
     </div>
   );
 }
-

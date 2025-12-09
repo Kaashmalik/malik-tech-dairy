@@ -1,21 +1,17 @@
 // API Route: Get Tenant Limits with Usage (Supabase-based)
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { 
-  getSubscriptionWithLimits, 
-  getAnimalCount, 
-  getUserCount 
-} from "@/lib/supabase/limits";
-import { SUBSCRIPTION_PLANS } from "@/lib/constants";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSubscriptionWithLimits, getAnimalCount, getUserCount } from '@/lib/supabase/limits';
+import { SUBSCRIPTION_PLANS } from '@/lib/constants';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       // Get subscription and limits from Supabase
       const subscription = await getSubscriptionWithLimits(context.tenantId);
-      
+
       if (!subscription) {
         // Return default free tier limits
         return NextResponse.json({
@@ -54,23 +50,22 @@ export async function GET(request: NextRequest) {
         trialEndsAt: subscription.trialEndsAt?.toISOString() || null,
         renewDate: subscription.renewDate.toISOString(),
         // Usage percentages
-        animalUsagePercent: subscription.limits.maxAnimals === -1 
-          ? 0 
-          : Math.round((animalCount / subscription.limits.maxAnimals) * 100),
-        userUsagePercent: subscription.limits.maxUsers === -1 
-          ? 0 
-          : Math.round((userCount / subscription.limits.maxUsers) * 100),
+        animalUsagePercent:
+          subscription.limits.maxAnimals === -1
+            ? 0
+            : Math.round((animalCount / subscription.limits.maxAnimals) * 100),
+        userUsagePercent:
+          subscription.limits.maxUsers === -1
+            ? 0
+            : Math.round((userCount / subscription.limits.maxUsers) * 100),
         // Can add more?
-        canAddAnimal: subscription.limits.maxAnimals === -1 || animalCount < subscription.limits.maxAnimals,
+        canAddAnimal:
+          subscription.limits.maxAnimals === -1 || animalCount < subscription.limits.maxAnimals,
         canAddUser: subscription.limits.maxUsers === -1 || userCount < subscription.limits.maxUsers,
       });
     } catch (error) {
-      console.error("Error fetching limits:", error);
-      return NextResponse.json(
-        { success: false, error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error fetching limits:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

@@ -1,9 +1,9 @@
 // Role-based API Middleware
-import { auth } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
-import { doc, getDoc } from "firebase/firestore";
-import { adminDb } from "@/lib/firebase/admin";
-import { TenantRole, UserRole, PlatformRole, ROLE_PERMISSIONS } from "@/types/roles";
+import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { doc, getDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { TenantRole, UserRole, PlatformRole, ROLE_PERMISSIONS } from '@/types/roles';
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: {
@@ -13,54 +13,52 @@ export interface AuthenticatedRequest extends NextRequest {
   };
 }
 
-export async function withAuth(
-  handler: (req: AuthenticatedRequest) => Promise<Response>
+// Context type for Next.js 15 route handlers
+export interface RouteContext {
+  params: Promise<Record<string, string>>;
+}
+
+export function withAuth(
+  handler: (req: AuthenticatedRequest, context?: RouteContext) => Promise<Response>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context?: RouteContext) => {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Attach user info to request
     (req as AuthenticatedRequest).user = {
       id: userId,
       role: TenantRole.GUEST as UserRole,
-      tenantId: "",
+      tenantId: '',
     };
 
-    return handler(req as AuthenticatedRequest);
+    return handler(req as AuthenticatedRequest, context);
   };
 }
 
-export async function withRole(
+export function withRole(
   requiredRoles: UserRole[],
-  handler: (req: AuthenticatedRequest) => Promise<Response>
+  handler: (req: AuthenticatedRequest, context?: RouteContext) => Promise<Response>
 ) {
-  return withAuth(async (req: AuthenticatedRequest) => {
+  return withAuth(async (req: AuthenticatedRequest, context?: RouteContext) => {
     const { userId } = await auth();
-    const tenantId = req.nextUrl.searchParams.get("tenantId") || 
-                     req.headers.get("x-tenant-id") ||
-                     "";
+    const tenantId =
+      req.nextUrl.searchParams.get('tenantId') || req.headers.get('x-tenant-id') || '';
 
     if (!tenantId) {
-      return NextResponse.json(
-        { error: "Tenant ID required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
     }
 
     if (!adminDb) {
-      return NextResponse.json(
-        { error: "Database not initialized" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
 
     try {
       // Check if super admin
-      const userDoc = await adminDb.collection("users").doc(userId!).get();
+      const userDoc = await adminDb.collection('users').doc(userId!).get();
 
       if (userDoc.exists) {
         const userData = userDoc.data();
@@ -70,15 +68,15 @@ export async function withRole(
             role: PlatformRole.SUPER_ADMIN,
             tenantId,
           };
-          return handler(req);
+          return handler(req, context);
         }
       }
 
       // Check tenant role
       const memberDoc = await adminDb
-        .collection("tenants")
+        .collection('tenants')
         .doc(tenantId)
-        .collection("members")
+        .collection('members')
         .doc(userId!)
         .get();
 
@@ -94,15 +92,12 @@ export async function withRole(
                 role: userRole,
                 tenantId,
               };
-              return handler(req);
+              return handler(req, context);
             }
           }
         }
 
-        return NextResponse.json(
-          { error: "Not a member of this tenant" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'Not a member of this tenant' }, { status: 403 });
       }
 
       const memberData = memberDoc.data();
@@ -111,7 +106,7 @@ export async function withRole(
       if (!requiredRoles.includes(userRole)) {
         return NextResponse.json(
           {
-            error: "Insufficient permissions",
+            error: 'Insufficient permissions',
             required: requiredRoles,
             current: userRole,
           },
@@ -125,45 +120,35 @@ export async function withRole(
         tenantId,
       };
 
-      return handler(req);
+      return handler(req, context);
     } catch (error) {
-      console.error("Error in withRole middleware:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error in withRole middleware:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
 }
 
-export async function withPermission(
+export function withPermission(
   resource: string,
-  action: "create" | "read" | "update" | "delete",
-  handler: (req: AuthenticatedRequest) => Promise<Response>
+  action: 'create' | 'read' | 'update' | 'delete',
+  handler: (req: AuthenticatedRequest, context?: RouteContext) => Promise<Response>
 ) {
-  return withAuth(async (req: AuthenticatedRequest) => {
+  return withAuth(async (req: AuthenticatedRequest, context?: RouteContext) => {
     const { userId } = await auth();
-    const tenantId = req.nextUrl.searchParams.get("tenantId") ||
-                     req.headers.get("x-tenant-id") ||
-                     "";
+    const tenantId =
+      req.nextUrl.searchParams.get('tenantId') || req.headers.get('x-tenant-id') || '';
 
     if (!tenantId) {
-      return NextResponse.json(
-        { error: "Tenant ID required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
     }
 
     if (!adminDb) {
-      return NextResponse.json(
-        { error: "Database not initialized" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
 
     try {
       // Check if super admin
-      const userDoc = await adminDb.collection("users").doc(userId!).get();
+      const userDoc = await adminDb.collection('users').doc(userId!).get();
 
       if (userDoc.exists) {
         const userData = userDoc.data();
@@ -173,15 +158,15 @@ export async function withPermission(
             role: PlatformRole.SUPER_ADMIN,
             tenantId,
           };
-          return handler(req);
+          return handler(req, context);
         }
       }
 
       // Get user role and permissions
       const memberDoc = await adminDb
-        .collection("tenants")
+        .collection('tenants')
         .doc(tenantId)
-        .collection("members")
+        .collection('members')
         .doc(userId!)
         .get();
 
@@ -193,7 +178,7 @@ export async function withPermission(
             const userRole = userData.role as TenantRole;
             const rolePerms = ROLE_PERMISSIONS[userRole];
             const hasPermission = rolePerms?.some(
-              (p) => p.resource === resource && p.actions.includes(action)
+              p => p.resource === resource && p.actions.includes(action)
             );
 
             if (hasPermission) {
@@ -202,15 +187,12 @@ export async function withPermission(
                 role: userRole,
                 tenantId,
               };
-              return handler(req);
+              return handler(req, context);
             }
           }
         }
 
-        return NextResponse.json(
-          { error: "Not a member of this tenant" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'Not a member of this tenant' }, { status: 403 });
       }
 
       const memberData = memberDoc.data();
@@ -229,13 +211,13 @@ export async function withPermission(
       // Check default role permissions
       const rolePerms = ROLE_PERMISSIONS[userRole];
       const hasPermission = rolePerms?.some(
-        (p) => p.resource === resource && p.actions.includes(action)
+        p => p.resource === resource && p.actions.includes(action)
       );
 
       if (!hasPermission) {
         return NextResponse.json(
           {
-            error: "Insufficient permissions",
+            error: 'Insufficient permissions',
             required: { resource, action },
             role: userRole,
           },
@@ -251,12 +233,8 @@ export async function withPermission(
 
       return handler(req);
     } catch (error) {
-      console.error("Error in withPermission middleware:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error in withPermission middleware:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
 }
-

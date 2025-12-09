@@ -1,33 +1,33 @@
 // API Route: Get/Update Tenant Config (Supabase-based)
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { getSupabaseClient } from "@/lib/supabase";
-import { checkUserRole } from "@/lib/api/middleware";
-import { DEFAULT_TENANT_CONFIG } from "@/lib/constants";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSupabaseClient } from '@/lib/supabase';
+import { checkUserRole } from '@/lib/api/middleware';
+import { DEFAULT_TENANT_CONFIG } from '@/lib/constants';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // GET: Fetch tenant config
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const supabase = getSupabaseClient();
-      
-      const { data: tenant, error } = await supabase
+
+      const { data: tenant, error } = (await supabase
         .from('tenants')
         .select('*')
         .eq('id', context.tenantId)
-        .single() as { data: any; error: any };
+        .single()) as { data: any; error: any };
 
       if (error || !tenant) {
         // Return default config for graceful degradation
         return NextResponse.json({
           success: true,
           config: {
-            farmName: "Your Farm",
+            farmName: 'Your Farm',
             ...DEFAULT_TENANT_CONFIG,
           },
-          message: "Using default configuration",
+          message: 'Using default configuration',
         });
       }
 
@@ -49,14 +49,14 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ success: true, config });
     } catch (error) {
-      console.error("Error fetching tenant config:", error);
+      console.error('Error fetching tenant config:', error);
       return NextResponse.json({
         success: true,
         config: {
-          farmName: "Your Farm",
+          farmName: 'Your Farm',
           ...DEFAULT_TENANT_CONFIG,
         },
-        message: "Error loading configuration, using defaults",
+        message: 'Error loading configuration, using defaults',
       });
     }
   })(request);
@@ -67,17 +67,16 @@ export async function PUT(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const supabase = getSupabaseClient();
-      
+
       // Check if user has permission
-      const hasPermission = await checkUserRole(
-        context.tenantId,
-        context.userId,
-        ["owner", "manager"]
-      );
+      const hasPermission = await checkUserRole(context.tenantId, context.userId, [
+        'owner',
+        'manager',
+      ]);
 
       if (!hasPermission) {
         return NextResponse.json(
-          { success: false, error: "Insufficient permissions" },
+          { success: false, error: 'Insufficient permissions' },
           { status: 403 }
         );
       }
@@ -97,27 +96,23 @@ export async function PUT(request: NextRequest) {
       if (body.timezone !== undefined) updates.timezone = body.timezone;
       if (body.animalTypes !== undefined) updates.animal_types = body.animalTypes;
 
-      const { error } = await supabase
+      const { error } = (await supabase
         .from('tenants')
         .update(updates)
-        .eq('id', context.tenantId) as { error: any };
+        .eq('id', context.tenantId)) as { error: any };
 
       if (error) {
-        console.error("Error updating tenant config:", error);
+        console.error('Error updating tenant config:', error);
         return NextResponse.json(
-          { success: false, error: "Failed to update configuration" },
+          { success: false, error: 'Failed to update configuration' },
           { status: 500 }
         );
       }
 
-      return NextResponse.json({ success: true, message: "Configuration updated" });
+      return NextResponse.json({ success: true, message: 'Configuration updated' });
     } catch (error) {
-      console.error("Error updating tenant config:", error);
-      return NextResponse.json(
-        { success: false, error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error updating tenant config:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

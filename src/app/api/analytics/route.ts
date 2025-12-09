@@ -1,11 +1,11 @@
 // API Route: Analytics Dashboard Data
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { getTenantSubcollection } from "@/lib/firebase/tenant";
-import { adminDb } from "@/lib/firebase/admin";
-import { format, subDays, subMonths, subYears, startOfDay, endOfDay } from "date-fns";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getTenantSubcollection } from '@/lib/firebase/tenant';
+import { adminDb } from '@/lib/firebase/admin';
+import { format, subDays, subMonths, subYears, startOfDay, endOfDay } from 'date-fns';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 interface AnalyticsData {
   milkYield: {
@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       if (!adminDb) {
-        return NextResponse.json({ error: "Database not available" }, { status: 500 });
+        return NextResponse.json({ error: 'Database not available' }, { status: 500 });
       }
 
       const { searchParams } = new URL(req.url);
-      const period = searchParams.get("period") || "30d";
+      const period = searchParams.get('period') || '30d';
 
       // Get date ranges
       const today = new Date();
@@ -37,65 +37,50 @@ export async function GET(request: NextRequest) {
       const start1y = subYears(today, 1);
 
       // Fetch milk logs
-      const milkLogsRef = getTenantSubcollection(
-        context.tenantId,
-        "milkLogs",
-        "logs"
-      );
+      const milkLogsRef = getTenantSubcollection(context.tenantId, 'milkLogs', 'logs');
 
       // Fetch expenses
-      const expensesRef = getTenantSubcollection(
-        context.tenantId,
-        "expenses",
-        "records"
-      );
+      const expensesRef = getTenantSubcollection(context.tenantId, 'expenses', 'records');
 
       // Fetch sales
-      const salesRef = getTenantSubcollection(
-        context.tenantId,
-        "sales",
-        "records"
-      );
+      const salesRef = getTenantSubcollection(context.tenantId, 'sales', 'records');
 
       // Fetch health records
-      const healthRef = getTenantSubcollection(
-        context.tenantId,
-        "health",
-        "records"
-      );
+      const healthRef = getTenantSubcollection(context.tenantId, 'health', 'records');
 
       // Fetch all data in parallel
-      const [milkLogs30d, milkLogs90d, milkLogs1y, expenses, sales, healthRecords] = await Promise.all([
-        milkLogsRef
-          .where("date", ">=", format(start30d, "yyyy-MM-dd"))
-          .where("date", "<=", format(today, "yyyy-MM-dd"))
-          .get(),
-        milkLogsRef
-          .where("date", ">=", format(start90d, "yyyy-MM-dd"))
-          .where("date", "<=", format(today, "yyyy-MM-dd"))
-          .get(),
-        milkLogsRef
-          .where("date", ">=", format(start1y, "yyyy-MM-dd"))
-          .where("date", "<=", format(today, "yyyy-MM-dd"))
-          .get(),
-        expensesRef
-          .where("date", ">=", startOfDay(start30d))
-          .where("date", "<=", endOfDay(today))
-          .get(),
-        salesRef
-          .where("date", ">=", startOfDay(start30d))
-          .where("date", "<=", endOfDay(today))
-          .get(),
-        healthRef
-          .where("date", ">=", startOfDay(subDays(today, 90)))
-          .where("date", "<=", endOfDay(today))
-          .get(),
-      ]);
+      const [milkLogs30d, milkLogs90d, milkLogs1y, expenses, sales, healthRecords] =
+        await Promise.all([
+          milkLogsRef
+            .where('date', '>=', format(start30d, 'yyyy-MM-dd'))
+            .where('date', '<=', format(today, 'yyyy-MM-dd'))
+            .get(),
+          milkLogsRef
+            .where('date', '>=', format(start90d, 'yyyy-MM-dd'))
+            .where('date', '<=', format(today, 'yyyy-MM-dd'))
+            .get(),
+          milkLogsRef
+            .where('date', '>=', format(start1y, 'yyyy-MM-dd'))
+            .where('date', '<=', format(today, 'yyyy-MM-dd'))
+            .get(),
+          expensesRef
+            .where('date', '>=', startOfDay(start30d))
+            .where('date', '<=', endOfDay(today))
+            .get(),
+          salesRef
+            .where('date', '>=', startOfDay(start30d))
+            .where('date', '<=', endOfDay(today))
+            .get(),
+          healthRef
+            .where('date', '>=', startOfDay(subDays(today, 90)))
+            .where('date', '<=', endOfDay(today))
+            .get(),
+        ]);
 
       // Process milk yield trends
       const processMilkTrend = (logs: any[]) => {
         const dailyTotals: Record<string, number> = {};
-        logs.forEach((doc) => {
+        logs.forEach(doc => {
           const log = doc.data();
           const date = log.date;
           dailyTotals[date] = (dailyTotals[date] || 0) + (log.quantity || 0);
@@ -112,28 +97,25 @@ export async function GET(request: NextRequest) {
 
       // Process expense vs revenue
       const expenseByDate: Record<string, number> = {};
-      expenses.docs.forEach((doc) => {
+      expenses.docs.forEach(doc => {
         const expense = doc.data();
-        const date = format(expense.date.toDate(), "yyyy-MM-dd");
+        const date = format(expense.date.toDate(), 'yyyy-MM-dd');
         expenseByDate[date] = (expenseByDate[date] || 0) + (expense.amount || 0);
       });
 
       const revenueByDate: Record<string, number> = {};
-      sales.docs.forEach((doc) => {
+      sales.docs.forEach(doc => {
         const sale = doc.data();
-        const date = format(sale.date.toDate(), "yyyy-MM-dd");
+        const date = format(sale.date.toDate(), 'yyyy-MM-dd');
         revenueByDate[date] = (revenueByDate[date] || 0) + (sale.total || 0);
       });
 
       // Combine all dates
-      const allDates = new Set([
-        ...Object.keys(expenseByDate),
-        ...Object.keys(revenueByDate),
-      ]);
+      const allDates = new Set([...Object.keys(expenseByDate), ...Object.keys(revenueByDate)]);
 
       const expenseVsRevenue = Array.from(allDates)
         .sort()
-        .map((date) => ({
+        .map(date => ({
           date,
           expenses: Math.round((expenseByDate[date] || 0) * 100) / 100,
           revenue: Math.round((revenueByDate[date] || 0) * 100) / 100,
@@ -143,24 +125,24 @@ export async function GET(request: NextRequest) {
       // Based on: recent checkups (positive), treatments (negative), diseases (very negative)
       let healthScore = 100;
       const recentRecords = healthRecords.docs
-        .map((doc) => doc.data())
-        .filter((record) => {
+        .map(doc => doc.data())
+        .filter(record => {
           const recordDate = record.date.toDate();
           return recordDate >= startOfDay(subDays(today, 30));
         });
 
-      recentRecords.forEach((record) => {
+      recentRecords.forEach(record => {
         switch (record.type) {
-          case "checkup":
+          case 'checkup':
             healthScore += 2; // Regular checkups are good
             break;
-          case "vaccination":
+          case 'vaccination':
             healthScore += 3; // Vaccinations are very good
             break;
-          case "treatment":
+          case 'treatment':
             healthScore -= 5; // Treatments indicate issues
             break;
-          case "disease":
+          case 'disease':
             healthScore -= 15; // Diseases are serious
             break;
         }
@@ -176,20 +158,16 @@ export async function GET(request: NextRequest) {
           trend1y,
         },
         expenseVsRevenue: {
-          expenses: expenseVsRevenue.map((d) => ({ date: d.date, amount: d.expenses })),
-          revenue: expenseVsRevenue.map((d) => ({ date: d.date, amount: d.revenue })),
+          expenses: expenseVsRevenue.map(d => ({ date: d.date, amount: d.expenses })),
+          revenue: expenseVsRevenue.map(d => ({ date: d.date, amount: d.revenue })),
         },
         healthScore: Math.round(healthScore),
       };
 
       return NextResponse.json(analyticsData);
     } catch (error) {
-      console.error("Error fetching analytics:", error);
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
+      console.error('Error fetching analytics:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-

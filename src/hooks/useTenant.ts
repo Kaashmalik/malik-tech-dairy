@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useOrganization } from "@clerk/nextjs";
-import { useTenantContext } from "@/components/tenant/TenantProvider";
+import { useOrganization } from '@clerk/nextjs';
+import { useTenantContext } from '@/components/tenant/TenantProvider';
 
 /**
  * Legacy hook - use useTenantContext instead
@@ -14,8 +14,8 @@ export function useTenant() {
   return {
     tenant: tenantContext.config
       ? {
-          id: tenantContext.tenantId || "",
-          slug: tenantContext.tenantSlug || "",
+          id: tenantContext.tenantId || '',
+          slug: tenantContext.tenantSlug || '',
           ...tenantContext.config,
         }
       : null,
@@ -25,4 +25,3 @@ export function useTenant() {
     isLoaded: isLoaded && !tenantContext.isLoading,
   };
 }
-

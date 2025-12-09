@@ -10,11 +10,8 @@ export interface EmailTemplate {
 /**
  * Welcome Email Template
  */
-export function getWelcomeEmailTemplate(
-  userName: string,
-  tenantName: string
-): EmailTemplate {
-  const subject = "Welcome to MTK Dairy! 🐄";
+export function getWelcomeEmailTemplate(userName: string, tenantName: string): EmailTemplate {
+  const subject = 'Welcome to MTK Dairy! 🐄';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -82,10 +79,7 @@ export function getWelcomeEmailTemplate(
 /**
  * Onboarding Email Template (Day 1)
  */
-export function getOnboardingEmailTemplate(
-  userName: string,
-  step: number
-): EmailTemplate {
+export function getOnboardingEmailTemplate(userName: string, step: number): EmailTemplate {
   const subject = `Let's Set Up Your Farm - Step ${step}`;
   const html = `
     <!DOCTYPE html>
@@ -109,19 +103,27 @@ export function getOnboardingEmailTemplate(
         <div class="content">
           <p>Hi ${userName},</p>
           <p>Great to see you're getting started! Here's a quick guide for Step ${step}:</p>
-          ${step === 1 ? `
+          ${
+            step === 1
+              ? `
             <h3>Step 1: Farm Information</h3>
             <p>Tell us about your farm - name, location, and basic details.</p>
-          ` : step === 2 ? `
+          `
+              : step === 2
+                ? `
             <h3>Step 2: Animal Types</h3>
             <p>Select which types of animals you manage (cows, buffaloes, poultry, etc.).</p>
-          ` : step === 3 ? `
+          `
+                : step === 3
+                  ? `
             <h3>Step 3: Staff Setup</h3>
             <p>Invite team members and assign roles.</p>
-          ` : `
+          `
+                  : `
             <h3>Step 4: Choose Your Plan</h3>
             <p>Select a subscription plan that fits your needs.</p>
-          `}
+          `
+          }
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/onboarding" class="button">Continue Setup</a>
           <p>Need help? Reply to this email or contact support.</p>
           <p>Best regards,<br>The MTK Dairy Team</p>
@@ -154,7 +156,7 @@ export function getOnboardingEmailTemplate(
  * NPS Survey Email Template (Day 7)
  */
 export function getNPSEmailTemplate(userName: string): EmailTemplate {
-  const subject = "How are we doing? Your feedback matters";
+  const subject = 'How are we doing? Your feedback matters';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -208,4 +210,3 @@ export function getNPSEmailTemplate(userName: string): EmailTemplate {
 
   return { subject, html, text };
 }
-

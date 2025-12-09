@@ -19,13 +19,17 @@ export class DualWriteAPI {
   private featureFlagManager = FeatureFlagManager.getInstance();
 
   // Enhanced Dual-Write with Exponential Backoff Retry Logic
-  async createMilkRecordWithRetry(request: Request, data: any, maxRetries: number = 3): Promise<DualWriteResult> {
+  async createMilkRecordWithRetry(
+    request: Request,
+    data: any,
+    maxRetries: number = 3
+  ): Promise<DualWriteResult> {
     let lastError: any = null;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const result = await this.createMilkRecord(request, data);
-        
+
         if (result.success) {
           // Log successful operation
           await this.logOperation('milk_record_create', data, true, attempt);
@@ -47,10 +51,10 @@ export class DualWriteAPI {
         }
       }
     }
-    
+
     // Log failed operation
     await this.logOperation('milk_record_create', data, false, maxRetries, lastError?.message);
-    
+
     return {
       success: false,
       errors: [lastError?.message || 'Max retries exceeded'],
@@ -63,29 +67,27 @@ export class DualWriteAPI {
   }
 
   private async logOperation(
-    operationType: string, 
-    data: any, 
-    success: boolean, 
-    attempts: number, 
+    operationType: string,
+    data: any,
+    success: boolean,
+    attempts: number,
     errorMessage?: string
   ): Promise<void> {
     try {
-      await this.supabase
-        .from('migration_logs')
-        .insert({
-          operation_type: operationType,
-          tenant_id: data.tenantId,
-          user_id: data.userId,
-          success,
-          failure: !success,
-          error_message: errorMessage,
-          duration_ms: attempts * 1000, // Approximate duration
-          metadata: {
-            attempts,
-            data: JSON.stringify(data),
-          },
-          created_at: new Date().toISOString(),
-        });
+      await this.supabase.from('migration_logs').insert({
+        operation_type: operationType,
+        tenant_id: data.tenantId,
+        user_id: data.userId,
+        success,
+        failure: !success,
+        error_message: errorMessage,
+        duration_ms: attempts * 1000, // Approximate duration
+        metadata: {
+          attempts,
+          data: JSON.stringify(data),
+        },
+        created_at: new Date().toISOString(),
+      });
     } catch (logError) {
       console.error('Failed to log operation:', logError);
     }
@@ -143,7 +145,7 @@ export class DualWriteAPI {
         if (supabaseError || firebaseError) {
           result.success = false;
           result.errors.push('Dual-write consistency check failed: both writes must succeed');
-          
+
           // Attempt rollback if one write succeeded
           await this.rollbackMilkRecord(result, data);
         }
@@ -219,7 +221,7 @@ export class DualWriteAPI {
         if (supabaseError || firebaseError) {
           result.success = false;
           result.errors.push('Dual-write consistency check failed: both writes must succeed');
-          
+
           // Attempt rollback if one write succeeded
           await this.rollbackHealthRecord(result, data);
         }
@@ -343,9 +345,7 @@ export class DualWriteAPI {
     }
 
     if (query.startDate && query.endDate) {
-      supabaseQuery = supabaseQuery
-        .gte('date', query.startDate)
-        .lte('date', query.endDate);
+      supabaseQuery = supabaseQuery.gte('date', query.startDate).lte('date', query.endDate);
     }
 
     return await supabaseQuery
@@ -354,10 +354,7 @@ export class DualWriteAPI {
   }
 
   private async getMilkRecordsFromFirebase(query: any): Promise<any> {
-    const collectionRef = adminDb
-      .collection('tenants')
-      .doc('global')
-      .collection('milkLogs');
+    const collectionRef = adminDb.collection('tenants').doc('global').collection('milkLogs');
 
     let firebaseQuery = collectionRef.where('tenantId', '==', query.tenantId);
 
@@ -405,10 +402,7 @@ export class DualWriteAPI {
   }
 
   private async getHealthRecordsFromFirebase(query: any): Promise<any> {
-    const collectionRef = adminDb
-      .collection('tenants')
-      .doc('global')
-      .collection('healthRecords');
+    const collectionRef = adminDb.collection('tenants').doc('global').collection('healthRecords');
 
     let firebaseQuery = collectionRef.where('tenantId', '==', query.tenantId);
 
@@ -433,7 +427,7 @@ export class DualWriteAPI {
   // Migration Phase Management
   async setMigrationPhase(phase: keyof typeof MIGRATION_PHASES): Promise<void> {
     const flags = MIGRATION_PHASES[phase];
-    
+
     for (const [key, value] of Object.entries(flags)) {
       await this.featureFlagManager.updateFlag(key.replace(/([A-Z])/g, '_$1').toLowerCase(), {
         enabled: value,
@@ -452,16 +446,14 @@ export class DualWriteAPI {
     };
   }> {
     const flags = await this.featureFlagManager.getFeatureFlags();
-    
+
     // Get data counts for integrity check
     const [supabaseCount, firebaseCount] = await Promise.all([
       this.supabase.from('milk_logs').select('*', { count: 'exact', head: true }),
       adminDb.collection('tenants').doc('global').collection('milkLogs').count().get(),
     ]);
 
-    const discrepancy = Math.abs(
-      (supabaseCount.count || 0) - firebaseCount.data().count
-    );
+    const discrepancy = Math.abs((supabaseCount.count || 0) - firebaseCount.data().count);
 
     // Determine current phase
     let currentPhase = 'UNKNOWN';
@@ -486,14 +478,11 @@ export class DualWriteAPI {
   // Rollback Methods for Dual-Write Consistency
   private async rollbackMilkRecord(result: DualWriteResult, data: any): Promise<void> {
     console.log('🔄 Attempting rollback for milk record due to dual-write failure');
-    
+
     try {
       // Rollback Supabase if it succeeded
       if (result.supabaseResult && result.supabaseResult.id) {
-        await this.supabase
-          .from('milk_logs')
-          .delete()
-          .eq('id', result.supabaseResult.id);
+        await this.supabase.from('milk_logs').delete().eq('id', result.supabaseResult.id);
         console.log('✅ Rolled back Supabase milk record');
       }
     } catch (rollbackError) {
@@ -518,14 +507,11 @@ export class DualWriteAPI {
 
   private async rollbackHealthRecord(result: DualWriteResult, data: any): Promise<void> {
     console.log('🔄 Attempting rollback for health record due to dual-write failure');
-    
+
     try {
       // Rollback Supabase if it succeeded
       if (result.supabaseResult && result.supabaseResult.id) {
-        await this.supabase
-          .from('health_records')
-          .delete()
-          .eq('id', result.supabaseResult.id);
+        await this.supabase.from('health_records').delete().eq('id', result.supabaseResult.id);
         console.log('✅ Rolled back Supabase health record');
       }
     } catch (rollbackError) {
@@ -561,7 +547,7 @@ export class DualWriteAPI {
     reconciliationStatus: 'PASSED' | 'FAILED' | 'WARNING';
   }> {
     console.log('🔍 Starting data reconciliation between Firebase and Supabase');
-    
+
     const discrepancies = [];
     const tables = [
       { name: 'milk_logs', firebaseCollection: 'milkLogs' },
@@ -574,15 +560,13 @@ export class DualWriteAPI {
     for (const table of tables) {
       try {
         // Get all tenant IDs from Supabase
-        const { data: tenants } = await this.supabase
-          .from('tenants')
-          .select('id');
+        const { data: tenants } = await this.supabase.from('tenants').select('id');
 
         if (!tenants) continue;
 
         for (const tenant of tenants) {
           const tenantId = tenant.id;
-          
+
           // Count records in Supabase
           const { count: supabaseCount } = await this.supabase
             .from(table.name)
@@ -627,7 +611,9 @@ export class DualWriteAPI {
       reconciliationStatus = 'WARNING';
     }
 
-    console.log(`📊 Data reconciliation completed: ${reconciliationStatus} (${totalDiscrepancies} discrepancies)`);
+    console.log(
+      `📊 Data reconciliation completed: ${reconciliationStatus} (${totalDiscrepancies} discrepancies)`
+    );
 
     return {
       discrepancies,
@@ -639,7 +625,7 @@ export class DualWriteAPI {
   // Automatic Data Sync for Discrepancies
   async syncDiscrepancies(discrepancies: any[]): Promise<void> {
     console.log(`🔄 Starting automatic sync for ${discrepancies.length} discrepancies`);
-    
+
     for (const discrepancy of discrepancies) {
       try {
         if (discrepancy.supabaseCount > discrepancy.firebaseCount) {
@@ -650,14 +636,17 @@ export class DualWriteAPI {
           await this.syncFirebaseToSupabase(discrepancy.table, discrepancy.tenantId);
         }
       } catch (error) {
-        console.error(`Failed to sync ${discrepancy.table} for tenant ${discrepancy.tenantId}:`, error);
+        console.error(
+          `Failed to sync ${discrepancy.table} for tenant ${discrepancy.tenantId}:`,
+          error
+        );
       }
     }
   }
 
   private async syncSupabaseToFirebase(table: string, tenantId: string): Promise<void> {
     console.log(`📤 Syncing ${table} from Supabase to Firebase for tenant ${tenantId}`);
-    
+
     // Get records from Supabase
     const { data: supabaseRecords } = await this.supabase
       .from(table)
@@ -676,7 +665,7 @@ export class DualWriteAPI {
         .doc('global')
         .collection(firebaseCollection)
         .doc(record.id);
-      
+
       batch.set(docRef, firebaseData);
     }
 
@@ -686,7 +675,7 @@ export class DualWriteAPI {
 
   private async syncFirebaseToSupabase(table: string, tenantId: string): Promise<void> {
     console.log(`📥 Syncing ${table} from Firebase to Supabase for tenant ${tenantId}`);
-    
+
     const firebaseCollection = this.getFirebaseCollection(table);
     const firebaseSnapshot = await adminDb
       .collection('tenants')
@@ -697,13 +686,11 @@ export class DualWriteAPI {
 
     if (firebaseSnapshot.empty) return;
 
-    const supabaseData = firebaseSnapshot.docs.map(doc => 
+    const supabaseData = firebaseSnapshot.docs.map(doc =>
       this.transformToSupabase(doc.data(), table)
     );
 
-    const { error } = await this.supabase
-      .from(table)
-      .insert(supabaseData as any);
+    const { error } = await this.supabase.from(table).insert(supabaseData as any);
 
     if (error) {
       throw error;
@@ -714,11 +701,11 @@ export class DualWriteAPI {
 
   private getFirebaseCollection(table: string): string {
     const collectionMap: Record<string, string> = {
-      'milk_logs': 'milkLogs',
-      'health_records': 'healthRecords',
-      'breeding_records': 'breedingRecords',
-      'expenses': 'expenses',
-      'sales': 'sales',
+      milk_logs: 'milkLogs',
+      health_records: 'healthRecords',
+      breeding_records: 'breedingRecords',
+      expenses: 'expenses',
+      sales: 'sales',
     };
     return collectionMap[table] || table;
   }

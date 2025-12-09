@@ -37,10 +37,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get tenant context for proper isolation
@@ -55,7 +52,7 @@ export async function GET(request: NextRequest) {
     // Build where conditions - ALWAYS include tenant filtering for tenant-specific tables
     const whereConditions = [
       eq(feedingSchedules.tenantId, tenantContext.tenantId),
-      eq(feedingSchedules.isActive, query.isActive)
+      eq(feedingSchedules.isActive, query.isActive),
     ];
 
     if (query.animalId) {
@@ -63,9 +60,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (query.feedType) {
-      whereConditions.push(
-        ilike(feedingSchedules.feedType, `%${query.feedType}%`)
-      );
+      whereConditions.push(ilike(feedingSchedules.feedType, `%${query.feedType}%`));
     }
 
     if (query.timeOfDay) {
@@ -144,18 +139,18 @@ export async function GET(request: NextRequest) {
     const schedulesWithNextFeeding = schedulesList.map(schedule => {
       const now = new Date();
       const [hours, minutes] = schedule.timeOfDay.split(':').map(Number);
-      
+
       let nextFeeding = new Date();
       nextFeeding.setHours(hours, minutes, 0, 0);
-      
+
       // If today's feeding time has passed, schedule for tomorrow
       if (nextFeeding <= now) {
         nextFeeding.setDate(nextFeeding.getDate() + 1);
       }
-      
+
       // Check if schedule is still active
       const isActive = schedule.endDate ? nextFeeding <= new Date(schedule.endDate) : true;
-      
+
       return {
         ...schedule,
         nextFeedingTime: nextFeeding.toISOString(),
@@ -177,16 +172,15 @@ export async function GET(request: NextRequest) {
         summary: {
           totalSchedules: schedulesList.length,
           activeSchedules: schedulesList.filter(s => s.isActive).length,
-          upcomingFeedings: schedulesWithNextFeeding.filter(s => s.isNextFeedingActive && s.minutesUntilNextFeeding <= 60).length, // Next hour
+          upcomingFeedings: schedulesWithNextFeeding.filter(
+            s => s.isNextFeedingActive && s.minutesUntilNextFeeding <= 60
+          ).length, // Next hour
         },
       },
     });
   } catch (error) {
     console.error('Error fetching feeding schedules:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -195,10 +189,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -215,10 +206,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!animal.length) {
-      return NextResponse.json(
-        { success: false, error: 'Animal not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
     }
 
     // Get tenant context
@@ -245,7 +233,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating feeding schedule:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
@@ -253,9 +241,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

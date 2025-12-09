@@ -45,41 +45,42 @@ export async function setTenantConfig(
   config: Partial<TenantConfig>
 ): Promise<void> {
   const db = getDrizzle();
-  
-  await db.insert(tenants).values({
-    id: tenantId,
-    slug: config.subdomain || tenantId.slice(0, 8),
-    farmName: config.farmName || 'Unnamed Farm',
-    logoUrl: config.logoUrl || null,
-    primaryColor: config.primaryColor || '#1F7A3D',
-    accentColor: config.accentColor || '#F59E0B',
-    language: config.language || 'en',
-    currency: config.currency || 'PKR',
-    timezone: config.timezone || 'Asia/Karachi',
-    animalTypes: config.animalTypes || ['cow', 'buffalo', 'chicken'],
-    updatedAt: new Date(),
-  }).onConflictDoUpdate({
-    target: tenants.id,
-    set: {
-      farmName: config.farmName,
+
+  await db
+    .insert(tenants)
+    .values({
+      id: tenantId,
+      slug: config.subdomain || tenantId.slice(0, 8),
+      farmName: config.farmName || 'Unnamed Farm',
       logoUrl: config.logoUrl || null,
-      primaryColor: config.primaryColor,
-      accentColor: config.accentColor,
-      language: config.language,
-      currency: config.currency,
-      timezone: config.timezone,
-      animalTypes: config.animalTypes,
+      primaryColor: config.primaryColor || '#1F7A3D',
+      accentColor: config.accentColor || '#F59E0B',
+      language: config.language || 'en',
+      currency: config.currency || 'PKR',
+      timezone: config.timezone || 'Asia/Karachi',
+      animalTypes: config.animalTypes || ['cow', 'buffalo', 'chicken'],
       updatedAt: new Date(),
-    },
-  });
+    })
+    .onConflictDoUpdate({
+      target: tenants.id,
+      set: {
+        farmName: config.farmName,
+        logoUrl: config.logoUrl || null,
+        primaryColor: config.primaryColor,
+        accentColor: config.accentColor,
+        language: config.language,
+        currency: config.currency,
+        timezone: config.timezone,
+        animalTypes: config.animalTypes,
+        updatedAt: new Date(),
+      },
+    });
 }
 
 /**
  * Get tenant subscription from Supabase
  */
-export async function getTenantSubscription(
-  tenantId: string
-): Promise<TenantSubscription | null> {
+export async function getTenantSubscription(tenantId: string): Promise<TenantSubscription | null> {
   try {
     const db = getDrizzle();
     const result = await db
@@ -115,13 +116,13 @@ export async function getTenantSubscription(
 export async function getTenantLimits(tenantId: string): Promise<TenantLimits | null> {
   try {
     const subscription = await getTenantSubscription(tenantId);
-    
+
     if (!subscription) {
       return null;
     }
 
     const planDetails = SUBSCRIPTION_PLANS[subscription.plan];
-    
+
     return {
       maxAnimals: planDetails.maxAnimals,
       maxUsers: planDetails.maxUsers,
@@ -145,41 +146,49 @@ export async function initializeTenant(
   const db = getDrizzle();
 
   // Create tenant
-  await db.insert(tenants).values({
-    id: tenantId,
-    slug: tenantSlug,
-    farmName: tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1) + ' Farm',
-    primaryColor: '#1F7A3D',
-    accentColor: '#F59E0B',
-    language: 'en',
-    currency: 'PKR',
-    timezone: 'Asia/Karachi',
-    animalTypes: ['cow', 'buffalo', 'chicken'],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }).onConflictDoNothing();
+  await db
+    .insert(tenants)
+    .values({
+      id: tenantId,
+      slug: tenantSlug,
+      farmName: tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1) + ' Farm',
+      primaryColor: '#1F7A3D',
+      accentColor: '#F59E0B',
+      language: 'en',
+      currency: 'PKR',
+      timezone: 'Asia/Karachi',
+      animalTypes: ['cow', 'buffalo', 'chicken'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
 
   // Create default subscription (free tier)
-  await db.insert(subscriptions).values({
-    id: `${tenantId}_subscription`,
-    tenantId,
-    plan: 'free',
-    status: 'trial',
-    gateway: 'bank_transfer',
-    renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-    amount: 0,
-    currency: 'PKR',
-    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14-day trial
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }).onConflictDoNothing();
+  await db
+    .insert(subscriptions)
+    .values({
+      id: `${tenantId}_subscription`,
+      tenantId,
+      plan: 'free',
+      status: 'trial',
+      gateway: 'bank_transfer',
+      renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      amount: 0,
+      currency: 'PKR',
+      trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14-day trial
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
 
   // Create default custom fields config
-  await db.insert(customFieldsConfig).values({
-    id: `${tenantId}_custom_fields`,
-    tenantId,
-    fields: [],
-    updatedAt: new Date(),
-  }).onConflictDoNothing();
+  await db
+    .insert(customFieldsConfig)
+    .values({
+      id: `${tenantId}_custom_fields`,
+      tenantId,
+      fields: [],
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
 }
-

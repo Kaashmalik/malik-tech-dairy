@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { CustomField } from "@/types";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { CustomField } from '@/types';
 
 interface CustomFieldsRendererProps {
   fields: CustomField[];
@@ -28,30 +28,30 @@ export function CustomFieldsRenderer({
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Additional Information</h3>
-      {fields.map((field) => {
+    <div className='space-y-4'>
+      <h3 className='text-lg font-semibold'>Additional Information</h3>
+      {fields.map(field => {
         const value = values[field.id];
         const displayValue =
           value instanceof Date
-            ? value.toISOString().split("T")[0]
-            : value?.toString() || field.defaultValue?.toString() || "";
+            ? value.toISOString().split('T')[0]
+            : value?.toString() || field.defaultValue?.toString() || '';
 
         if (readOnly) {
           return (
             <div key={field.id}>
-              <Label className="text-sm font-medium text-muted-foreground">
+              <Label className='text-muted-foreground text-sm font-medium'>
                 {field.name}
-                {field.required && <span className="text-destructive ml-1">*</span>}
+                {field.required && <span className='text-destructive ml-1'>*</span>}
               </Label>
-              <p className="text-lg mt-1">
-                {field.type === "dropdown"
-                  ? displayValue || "N/A"
-                  : field.type === "date"
-                  ? displayValue
-                    ? new Date(displayValue).toLocaleDateString()
-                    : "N/A"
-                  : displayValue || "N/A"}
+              <p className='mt-1 text-lg'>
+                {field.type === 'dropdown'
+                  ? displayValue || 'N/A'
+                  : field.type === 'date'
+                    ? displayValue
+                      ? new Date(displayValue).toLocaleDateString()
+                      : 'N/A'
+                    : displayValue || 'N/A'}
               </p>
             </div>
           );
@@ -61,17 +61,17 @@ export function CustomFieldsRenderer({
           <div key={field.id}>
             <Label>
               {field.name}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className='text-destructive ml-1'>*</span>}
             </Label>
-            {field.type === "dropdown" ? (
+            {field.type === 'dropdown' ? (
               <select
                 value={displayValue}
-                onChange={(e) => handleChange(field.id, e.target.value)}
-                className="w-full mt-1 px-3 py-2 border rounded-md"
+                onChange={e => handleChange(field.id, e.target.value)}
+                className='mt-1 w-full rounded-md border px-3 py-2'
                 required={field.required}
               >
-                <option value="">Select {field.name}</option>
-                {field.options?.map((option) => (
+                <option value=''>Select {field.name}</option>
+                {field.options?.map(option => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -79,19 +79,19 @@ export function CustomFieldsRenderer({
               </select>
             ) : (
               <Input
-                type={field.type === "date" ? "date" : field.type === "number" ? "number" : "text"}
+                type={field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'text'}
                 value={displayValue}
-                onChange={(e) => {
+                onChange={e => {
                   const newValue =
-                    field.type === "number"
+                    field.type === 'number'
                       ? parseFloat(e.target.value) || 0
-                      : field.type === "date"
-                      ? e.target.value
-                      : e.target.value;
+                      : field.type === 'date'
+                        ? e.target.value
+                        : e.target.value;
                   handleChange(field.id, newValue);
                 }}
                 required={field.required}
-                className="mt-1"
+                className='mt-1'
               />
             )}
           </div>
@@ -100,4 +100,3 @@ export function CustomFieldsRenderer({
     </div>
   );
 }
-

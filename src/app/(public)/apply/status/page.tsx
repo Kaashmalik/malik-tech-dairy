@@ -189,24 +189,24 @@ export default function ApplicationStatusPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      <div className='flex min-h-screen items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin text-emerald-600' />
       </div>
     );
   }
 
   if (!application) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <FileText className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold dark:text-white mb-2">No Application Found</h2>
-        <p className="text-gray-500 dark:text-slate-400 mb-6">
+      <div className='flex min-h-screen flex-col items-center justify-center p-4'>
+        <FileText className='mb-4 h-16 w-16 text-gray-300' />
+        <h2 className='mb-2 text-xl font-semibold dark:text-white'>No Application Found</h2>
+        <p className='mb-6 text-gray-500 dark:text-slate-400'>
           You haven&apos;t submitted a farm application yet.
         </p>
-        <Link href="/apply">
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
+        <Link href='/apply'>
+          <Button className='bg-emerald-600 hover:bg-emerald-700'>
             Apply for Farm ID
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight className='ml-2 h-4 w-4' />
           </Button>
         </Link>
       </div>
@@ -215,61 +215,63 @@ export default function ApplicationStatusPage() {
 
   const status = statusConfig[application.status] || statusConfig.pending;
   const StatusIcon = status.icon;
-  const needsPayment = application.requestedPlan !== 'free' && !application.paymentSlipUrl && application.status === 'pending';
+  const needsPayment =
+    application.requestedPlan !== 'free' &&
+    !application.paymentSlipUrl &&
+    application.status === 'pending';
 
   return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="max-w-xl mx-auto">
+    <div className='min-h-screen px-4 py-12'>
+      <div className='mx-auto max-w-xl'>
         {/* Status Header */}
-        <div className="text-center mb-8">
-          <div className={`w-20 h-20 ${status.bgColor} rounded-full flex items-center justify-center mx-auto mb-4`}>
-            <StatusIcon className={`w-10 h-10 ${status.color}`} />
+        <div className='mb-8 text-center'>
+          <div
+            className={`h-20 w-20 ${status.bgColor} mx-auto mb-4 flex items-center justify-center rounded-full`}
+          >
+            <StatusIcon className={`h-10 w-10 ${status.color}`} />
           </div>
-          <h1 className="text-3xl font-bold dark:text-white">{status.title}</h1>
-          <p className="text-gray-500 dark:text-slate-400 mt-2">{status.description}</p>
+          <h1 className='text-3xl font-bold dark:text-white'>{status.title}</h1>
+          <p className='mt-2 text-gray-500 dark:text-slate-400'>{status.description}</p>
         </div>
 
         {/* Application Details */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between pb-4 border-b dark:border-slate-700">
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5 text-emerald-600" />
+        <div className='mb-6 rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800'>
+          <div className='flex items-center justify-between border-b pb-4 dark:border-slate-700'>
+            <div className='flex items-center gap-3'>
+              <FileText className='h-5 w-5 text-emerald-600' />
               <div>
-                <p className="font-semibold dark:text-white">{application.farmName}</p>
-                <p className="text-sm text-gray-500 dark:text-slate-400">
+                <p className='font-semibold dark:text-white'>{application.farmName}</p>
+                <p className='text-sm text-gray-500 dark:text-slate-400'>
                   ID: {application.id.slice(0, 8)}...
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <Button variant='ghost' size='sm' onClick={handleRefresh} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
 
-          <div className="py-4 space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-slate-400">Owner</span>
-              <span className="font-medium dark:text-white">{application.ownerName}</span>
+          <div className='space-y-3 py-4'>
+            <div className='flex justify-between'>
+              <span className='text-gray-500 dark:text-slate-400'>Owner</span>
+              <span className='font-medium dark:text-white'>{application.ownerName}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-slate-400">Plan</span>
-              <span className="font-medium dark:text-white capitalize">{application.requestedPlan}</span>
+            <div className='flex justify-between'>
+              <span className='text-gray-500 dark:text-slate-400'>Plan</span>
+              <span className='font-medium capitalize dark:text-white'>
+                {application.requestedPlan}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-slate-400">Applied</span>
-              <span className="font-medium dark:text-white">
+            <div className='flex justify-between'>
+              <span className='text-gray-500 dark:text-slate-400'>Applied</span>
+              <span className='font-medium dark:text-white'>
                 {new Date(application.createdAt).toLocaleDateString()}
               </span>
             </div>
             {application.assignedFarmId && (
-              <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-slate-400">Farm ID</span>
-                <span className="font-bold text-emerald-600">{application.assignedFarmId}</span>
+              <div className='flex justify-between'>
+                <span className='text-gray-500 dark:text-slate-400'>Farm ID</span>
+                <span className='font-bold text-emerald-600'>{application.assignedFarmId}</span>
               </div>
             )}
           </div>
@@ -277,45 +279,54 @@ export default function ApplicationStatusPage() {
 
         {/* Payment Upload Section */}
         {needsPayment && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 mb-6">
-            <h2 className="font-semibold dark:text-white flex items-center gap-2 mb-4">
-              <CreditCard className="w-5 h-5 text-emerald-600" />
+          <div className='mb-6 rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800'>
+            <h2 className='mb-4 flex items-center gap-2 font-semibold dark:text-white'>
+              <CreditCard className='h-5 w-5 text-emerald-600' />
               Upload Payment Slip
             </h2>
 
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 mb-4">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                Please transfer the subscription fee to our bank account and upload the payment slip.
+            <div className='mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20'>
+              <p className='text-sm text-amber-800 dark:text-amber-200'>
+                Please transfer the subscription fee to our bank account and upload the payment
+                slip.
               </p>
             </div>
 
-            <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg mb-4 space-y-2">
-              <p className="text-sm font-medium dark:text-white">Bank Account Details:</p>
-              <div className="text-sm text-gray-600 dark:text-slate-300 space-y-1">
-                <p><strong>Bank:</strong> Bank Alfalah</p>
-                <p><strong>Account Title:</strong> MTK Dairy Pvt Ltd</p>
-                <p><strong>Account #:</strong> 1234567890123</p>
-                <p><strong>IBAN:</strong> PK12ALFH1234567890123456</p>
+            <div className='mb-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-slate-700/50'>
+              <p className='text-sm font-medium dark:text-white'>Bank Account Details:</p>
+              <div className='space-y-1 text-sm text-gray-600 dark:text-slate-300'>
+                <p>
+                  <strong>Bank:</strong> Bank Alfalah
+                </p>
+                <p>
+                  <strong>Account Title:</strong> MTK Dairy Pvt Ltd
+                </p>
+                <p>
+                  <strong>Account #:</strong> 1234567890123
+                </p>
+                <p>
+                  <strong>IBAN:</strong> PK12ALFH1234567890123456
+                </p>
               </div>
             </div>
 
-            <div className="relative">
+            <div className='relative'>
               <input
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
+                type='file'
+                accept='image/jpeg,image/png,application/pdf'
                 onChange={handleFileUpload}
                 disabled={uploading}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
               />
-              <Button className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={uploading}>
+              <Button className='w-full bg-emerald-600 hover:bg-emerald-700' disabled={uploading}>
                 {uploading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                     Uploading...
                   </>
                 ) : (
                   <>
-                    <Upload className="w-4 h-4 mr-2" />
+                    <Upload className='mr-2 h-4 w-4' />
                     Upload Payment Slip
                   </>
                 )}
@@ -326,31 +337,31 @@ export default function ApplicationStatusPage() {
 
         {/* Rejection Reason */}
         {application.status === 'rejected' && application.rejectionReason && (
-          <div className="bg-red-50 dark:bg-red-900/20 rounded-2xl p-6 mb-6 border border-red-200 dark:border-red-800">
-            <h3 className="font-semibold text-red-700 dark:text-red-300 mb-2">Reason:</h3>
-            <p className="text-red-600 dark:text-red-400">{application.rejectionReason}</p>
+          <div className='mb-6 rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20'>
+            <h3 className='mb-2 font-semibold text-red-700 dark:text-red-300'>Reason:</h3>
+            <p className='text-red-600 dark:text-red-400'>{application.rejectionReason}</p>
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className='flex flex-col gap-3 sm:flex-row'>
           {application.status === 'approved' ? (
-            <Link href="/dashboard" className="flex-1">
-              <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+            <Link href='/dashboard' className='flex-1'>
+              <Button className='w-full bg-emerald-600 hover:bg-emerald-700'>
                 Go to Dashboard
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             </Link>
           ) : application.status === 'rejected' ? (
-            <Link href="/apply" className="flex-1">
-              <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+            <Link href='/apply' className='flex-1'>
+              <Button className='w-full bg-emerald-600 hover:bg-emerald-700'>
                 Apply Again
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             </Link>
           ) : (
-            <div className="text-center w-full py-4 text-gray-500 dark:text-slate-400">
-              <Clock className="w-5 h-5 inline mr-2" />
+            <div className='w-full py-4 text-center text-gray-500 dark:text-slate-400'>
+              <Clock className='mr-2 inline h-5 w-5' />
               We&apos;ll notify you by email when your application status changes.
             </div>
           )}

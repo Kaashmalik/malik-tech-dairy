@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useTenantContext } from "@/components/tenant/TenantProvider";
-import { useUser } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
-import { ROLE_PERMISSIONS, TenantRole, UserRole, PlatformRole, MODULE_ACCESS } from "@/types/roles";
+import { useTenantContext } from '@/components/tenant/TenantProvider';
+import { useUser } from '@clerk/nextjs';
+import { useEffect, useState } from 'react';
+import { ROLE_PERMISSIONS, TenantRole, UserRole, PlatformRole, MODULE_ACCESS } from '@/types/roles';
 
 export function usePermissions() {
   const { user } = useUser();
@@ -21,22 +21,22 @@ export function usePermissions() {
 
       try {
         console.log('Fetching user role from server API...', { userId: user?.id, tenantId });
-        
+
         // Fetch permissions from server-side API
         const response = await fetch(
           `/api/user/permissions?userId=${user.id}&tenantId=${tenantId}`
         );
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log('Permissions API response:', data);
-        
+
         setUserRole(data.userRole);
       } catch (error) {
-        console.error("Error fetching user role from API:", error);
+        console.error('Error fetching user role from API:', error);
         setUserRole(null);
       } finally {
         setLoading(false);
@@ -53,7 +53,7 @@ export function usePermissions() {
     const permissions = ROLE_PERMISSIONS[userRole as TenantRole];
     if (!permissions) return false;
 
-    const resourcePerm = permissions.find((p) => p.resource === resource);
+    const resourcePerm = permissions.find(p => p.resource === resource);
     return resourcePerm?.actions.includes(action as any) ?? false;
   };
 
@@ -87,4 +87,3 @@ export function usePermissions() {
     isGuest: userRole === TenantRole.GUEST,
   };
 }
-

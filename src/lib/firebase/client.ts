@@ -1,11 +1,11 @@
 // Firebase Client SDK Configuration
 // LIMITED USE: Only for real-time activity feeds (50K reads/day)
 // All other data is stored in Supabase PostgreSQL
-import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
-import { getStorage, FirebaseStorage } from "firebase/storage";
-import { getAuth, Auth } from "firebase/auth";
-import { getDatabase, Database } from "firebase/database";
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getAuth, Auth } from 'firebase/auth';
+import { getDatabase, Database } from 'firebase/database';
 
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
@@ -74,4 +74,3 @@ export function getFirebaseStorage(): FirebaseStorage {
 }
 
 export { app, db, storage, auth, realtimeDb };
-

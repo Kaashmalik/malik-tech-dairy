@@ -11,12 +11,14 @@ This migration moves all relational and real-time data from Firestore to Supabas
 ## Architecture Changes
 
 ### Before (Firestore Only)
+
 - All data in Firestore
 - High read/write costs at scale
 - Limited query capabilities
 - No native joins or transactions
 
 ### After (Hybrid)
+
 - **Supabase (PostgreSQL)**: Relational data
   - Tenants, subscriptions, payments
   - API keys, audit logs
@@ -34,19 +36,21 @@ This migration moves all relational and real-time data from Firestore to Supabas
 
 ### Supabase Pricing (PostgreSQL)
 
-| Plan | Price | Database Size | Bandwidth | Realtime |
-|------|-------|----------------|-----------|----------|
-| Free | $0 | 500 MB | 2 GB | 2M messages/mo |
-| Pro | $25/mo | 8 GB | 50 GB | 5M messages/mo |
-| Team | $599/mo | 100 GB | 1 TB | 200M messages/mo |
+| Plan | Price   | Database Size | Bandwidth | Realtime         |
+| ---- | ------- | ------------- | --------- | ---------------- |
+| Free | $0      | 500 MB        | 2 GB      | 2M messages/mo   |
+| Pro  | $25/mo  | 8 GB          | 50 GB     | 5M messages/mo   |
+| Team | $599/mo | 100 GB        | 1 TB      | 200M messages/mo |
 
 **Estimated at 100 tenants:**
+
 - Database: ~500 MB (tenant metadata, subscriptions, payments)
 - Bandwidth: ~5 GB/month
 - Realtime: ~1M messages/month
 - **Cost: Free tier sufficient** ✅
 
 **Estimated at 1000 tenants:**
+
 - Database: ~5 GB
 - Bandwidth: ~50 GB/month
 - Realtime: ~10M messages/month
@@ -55,12 +59,14 @@ This migration moves all relational and real-time data from Firestore to Supabas
 ### Firestore Costs (Document Data Only)
 
 **At 100 tenants:**
+
 - Reads: ~50K/day × $0.06/100K = $0.90/mo
 - Writes: ~10K/day × $0.18/100K = $0.54/mo
 - Storage: ~10 GB × $0.18/GB = $1.80/mo
 - **Total: ~$3.24/mo** ✅
 
 **At 1000 tenants:**
+
 - Reads: ~500K/day × $0.06/100K = $9/mo
 - Writes: ~100K/day × $0.18/100K = $5.40/mo
 - Storage: ~100 GB × $0.18/GB = $18/mo
@@ -69,21 +75,23 @@ This migration moves all relational and real-time data from Firestore to Supabas
 ### Redis (Upstash) Costs
 
 **Free tier:**
+
 - 10K commands/day
 - 256 MB storage
 - **Cost: $0** ✅
 
 **At scale (1000 tenants):**
+
 - ~100K commands/day
 - 1 GB storage
 - **Cost: ~$10/mo** ✅
 
 ### Total Monthly Costs
 
-| Tenants | Supabase | Firestore | Redis | **Total** |
-|---------|----------|-----------|-------|-----------|
-| 100 | $0 | $3.24 | $0 | **$3.24** ✅ |
-| 1000 | $25 | $32.40 | $10 | **$67.40** ✅ |
+| Tenants | Supabase | Firestore | Redis | **Total**     |
+| ------- | -------- | --------- | ----- | ------------- |
+| 100     | $0       | $3.24     | $0    | **$3.24** ✅  |
+| 1000    | $25      | $32.40    | $10   | **$67.40** ✅ |
 
 **Target achieved**: < $50/mo at 100 tenants, < $200/mo at 1000 tenants ✅
 
@@ -137,6 +145,7 @@ Or use Supabase Dashboard → SQL Editor to run the schema manually.
 ### 5. Enable Realtime on Tables
 
 In Supabase Dashboard → Database → Replication:
+
 - Enable replication for `milk_logs` table
 - Enable replication for `health_events` table
 
@@ -156,6 +165,7 @@ npx tsx scripts/migrate-to-supabase.ts --tenant-id=org_xxxxx
 ### 7. Update Code References
 
 The following files have been updated to use Supabase:
+
 - ✅ `src/lib/supabase/tenant.ts` - Tenant helpers
 - ✅ `src/lib/subscriptions/management.ts` - Subscription management
 - ✅ `src/app/api/webhooks/clerk/route.ts` - Clerk webhooks
@@ -214,16 +224,19 @@ Then import back to Firestore using a script.
 Add these composite indexes in Firebase Console:
 
 ### Milk Logs
+
 - Collection: `tenants_data/{tenantId}_milkLogs`
 - Fields: `date` (Ascending), `quantity` (Descending)
 - Use case: Low-yield animals query
 
 ### Health Records
+
 - Collection: `tenants_data/{tenantId}_health`
 - Fields: `animalId` (Ascending), `date` (Descending)
 - Use case: Recent health records per animal
 
 ### Animals
+
 - Collection: `tenants_data/{tenantId}_animals`
 - Fields: `species` (Ascending), `status` (Ascending)
 - Use case: Filter by species and status
@@ -250,6 +263,7 @@ Add these composite indexes in Firebase Console:
 ### 1. Connection Pooling
 
 Supabase connection pooling is configured in `src/lib/supabase.ts`:
+
 - Max pool size: 20
 - Idle timeout: 20s
 - Connection timeout: 10s
@@ -257,6 +271,7 @@ Supabase connection pooling is configured in `src/lib/supabase.ts`:
 ### 2. Redis Caching
 
 Frequently accessed Firestore queries are cached:
+
 - Tenant config: 5 min TTL
 - Subscription: 5 min TTL
 - Animal counts: 10 min TTL
@@ -265,6 +280,7 @@ Frequently accessed Firestore queries are cached:
 ### 3. Database Indexes
 
 All foreign keys and frequently queried columns are indexed:
+
 - `tenants.slug` (unique)
 - `subscriptions.tenant_id` (unique)
 - `payments.tenant_id`, `payments.status`
@@ -276,14 +292,17 @@ All foreign keys and frequently queried columns are indexed:
 ## Monitoring
 
 ### Supabase Dashboard
+
 - Monitor database size, bandwidth, and query performance
 - Set up alerts for high usage
 
 ### Firestore Console
+
 - Monitor read/write operations
 - Track storage usage
 
 ### Application Logs
+
 - Monitor migration script output
 - Check for Supabase connection errors
 - Verify Redis cache hit rates
@@ -293,6 +312,7 @@ All foreign keys and frequently queried columns are indexed:
 ## Support
 
 For issues:
+
 1. Check Supabase Dashboard → Logs
 2. Review application logs
 3. Verify environment variables
@@ -303,6 +323,7 @@ For issues:
 ## Next Steps
 
 After successful migration:
+
 1. Monitor costs for 1 month
 2. Optimize queries based on usage
 3. Consider moving more data to Supabase if needed
@@ -312,4 +333,3 @@ After successful migration:
 
 **Migration Status**: ✅ Complete
 **Last Updated**: 2024-01-XX
-

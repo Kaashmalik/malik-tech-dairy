@@ -1,32 +1,32 @@
 // API Route: Get Milk Statistics (Supabase-based)
-import { NextRequest, NextResponse } from "next/server";
-import { withTenantContext } from "@/lib/api/middleware";
-import { getSupabaseClient } from "@/lib/supabase";
-import { format, subDays } from "date-fns";
+import { NextRequest, NextResponse } from 'next/server';
+import { withTenantContext } from '@/lib/api/middleware';
+import { getSupabaseClient } from '@/lib/supabase';
+import { format, subDays } from 'date-fns';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const supabase = getSupabaseClient();
-      
-      const { searchParams } = new URL(req.url);
-      const days = parseInt(searchParams.get("days") || "7");
 
-      const today = format(new Date(), "yyyy-MM-dd");
-      const startDate = format(subDays(new Date(), days), "yyyy-MM-dd");
+      const { searchParams } = new URL(req.url);
+      const days = parseInt(searchParams.get('days') || '7');
+
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const startDate = format(subDays(new Date(), days), 'yyyy-MM-dd');
 
       // Get logs for the period from Supabase
-      const { data: logs, error } = await supabase
+      const { data: logs, error } = (await supabase
         .from('milk_logs')
         .select('date, quantity, session')
         .eq('tenant_id', context.tenantId)
         .gte('date', startDate)
-        .lte('date', today) as { data: any[] | null; error: any };
+        .lte('date', today)) as { data: any[] | null; error: any };
 
       if (error) {
-        console.error("Error fetching milk logs:", error);
+        console.error('Error fetching milk logs:', error);
         // Return empty stats instead of error for graceful degradation
         return NextResponse.json({
           success: true,
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
           periodTotal: 0,
           averagePerDay: 0,
           dailyTotals: [],
-          message: "No milk data available",
+          message: 'No milk data available',
         });
       }
 
@@ -55,8 +55,7 @@ export async function GET(request: NextRequest) {
       const uniqueDates = Object.keys(dailyTotals);
       const averagePerDay =
         uniqueDates.length > 0
-          ? Object.values(dailyTotals).reduce((sum, val) => sum + val, 0) /
-            uniqueDates.length
+          ? Object.values(dailyTotals).reduce((sum, val) => sum + val, 0) / uniqueDates.length
           : 0;
 
       // Calculate total for period
@@ -72,7 +71,7 @@ export async function GET(request: NextRequest) {
           .sort((a, b) => a.date.localeCompare(b.date)),
       });
     } catch (error) {
-      console.error("Error fetching milk stats:", error);
+      console.error('Error fetching milk stats:', error);
       // Return empty stats for graceful degradation
       return NextResponse.json({
         success: true,
@@ -80,9 +79,8 @@ export async function GET(request: NextRequest) {
         periodTotal: 0,
         averagePerDay: 0,
         dailyTotals: [],
-        message: "Error loading milk statistics",
+        message: 'Error loading milk statistics',
       });
     }
   })(request);
 }
-

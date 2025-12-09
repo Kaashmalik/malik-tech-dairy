@@ -1,0 +1,140 @@
+# MTK Dairy - AI Coding Rules
+
+## Project Overview
+Multi-tenant dairy farm management SaaS built with Next.js 15, Supabase, and Clerk.
+
+## Tech Stack
+- **Framework**: Next.js 15 (App Router) + TypeScript
+- **Auth**: Clerk (Organizations = Tenants)
+- **Database**: Supabase PostgreSQL
+- **ORM**: Drizzle (schema only, use Supabase REST API)
+- **UI**: Tailwind CSS + shadcn/ui + Radix UI
+- **State**: Zustand + TanStack Query
+
+## Critical Rules
+
+### 1. Database Operations
+```typescript
+// ALWAYS use type assertions for Supabase queries
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { data, error } = await (supabase.from('table_name') as any)
+  .select('*')
+  .eq('tenant_id', tenantId);
+
+// ALWAYS filter by tenant_id for data isolation
+.eq('tenant_id', context.tenantId)
+
+// Use snake_case for database columns
+// Use camelCase for API responses
+```
+
+### 2. API Response Format
+```typescript
+// Success response
+return NextResponse.json({ success: true, data: {...}, message: '...' });
+
+// Error response
+return NextResponse.json({ success: false, error: '...', details: '...' }, { status: 4xx });
+```
+
+### 3. Next.js 15 Async Params
+```typescript
+// Dynamic routes MUST use Promise<{ param: string }> pattern
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  // ...
+}
+```
+
+### 4. Middleware Pattern
+```typescript
+// Use withTenantContext for tenant-scoped routes
+return withTenantContext(async (req, context) => {
+  // context.tenantId is available
+  // context.userId is available
+})(request);
+```
+
+### 5. Field Mapping (DB ↔ API)
+| Database (snake_case) | API (camelCase) |
+|----------------------|-----------------|
+| tenant_id | tenantId |
+| animal_id | animalId |
+| date_of_birth | dateOfBirth |
+| created_at | createdAt |
+| updated_at | updatedAt |
+
+### 6. File Organization
+```
+src/
+├── app/
+│   ├── (auth)/          # Clerk auth pages
+│   ├── (dashboard)/     # Protected dashboard pages
+│   ├── (onboarding)/    # Onboarding flow
+│   ├── (public)/        # Public pages
+│   ├── (super-admin)/   # Super admin panel
+│   └── api/             # API routes
+├── components/
+│   ├── animals/         # Animal-related components
+│   ├── tenant/          # Tenant-related components
+│   └── ui/              # shadcn/ui components
+├── lib/
+│   ├── supabase.ts      # Supabase client
+│   ├── validations/     # Zod schemas
+│   └── api/middleware.ts # API middleware
+└── types/               # TypeScript types
+```
+
+### 7. Validation
+```typescript
+// Use Zod for request validation
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  // ...
+});
+
+const validated = schema.parse(body);
+```
+
+### 8. Error Handling
+```typescript
+try {
+  // operations
+} catch (error) {
+  console.error('Context:', error);
+  return NextResponse.json(
+    { success: false, error: 'User-friendly message' },
+    { status: 500 }
+  );
+}
+```
+
+### 9. Soft Deletes
+```typescript
+// Prefer soft deletes over hard deletes
+.update({ status: 'deleted', updated_at: new Date().toISOString() })
+```
+
+### 10. Icons
+- Use `lucide-react` for icons
+- Check icon availability before using (e.g., `Lung` doesn't exist, use `Wind`)
+
+## Don't
+- Never hardcode tenant IDs
+- Never expose API keys in client code
+- Never skip tenant_id filtering
+- Never use Firebase for new features (Supabase only)
+- Never use `any` without eslint-disable comment
+- Never delete test data without confirmation
+
+## Do
+- Always run `npm run format` after changes
+- Always check TypeScript compilation
+- Always use environment variables for secrets
+- Always add proper error messages
+- Always log errors with context

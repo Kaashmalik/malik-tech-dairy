@@ -2,7 +2,7 @@
 const CACHE_NAME = 'malik-tech-dairy-v1';
 const STATIC_CACHE = 'mtk-static-v1';
 const DYNAMIC_CACHE = 'mtk-dynamic-v1';
-const OFFLINE_URL = "/offline.html";
+const OFFLINE_URL = '/offline.html';
 
 // Assets to cache for offline use
 const STATIC_ASSETS = [
@@ -19,19 +19,16 @@ const STATIC_ASSETS = [
 ];
 
 // API routes that support offline caching
-const CACHABLE_API_ROUTES = [
-  '/api/animals',
-  '/api/milk',
-  '/api/health',
-];
+const CACHABLE_API_ROUTES = ['/api/animals', '/api/milk', '/api/health'];
 
 // Install event - cache static assets
-self.addEventListener("install", (event) => {
+self.addEventListener('install', event => {
   console.log('Service Worker: Installing...');
-  
+
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
+    caches
+      .open(STATIC_CACHE)
+      .then(cache => {
         console.log('Service Worker: Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
@@ -40,15 +37,20 @@ self.addEventListener("install", (event) => {
 });
 
 // Activate event - clean up old caches
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', event => {
   console.log('Service Worker: Activating...');
-  
+
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
+    caches
+      .keys()
+      .then(cacheNames => {
         return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE && cacheName !== CACHE_NAME) {
+          cacheNames.map(cacheName => {
+            if (
+              cacheName !== STATIC_CACHE &&
+              cacheName !== DYNAMIC_CACHE &&
+              cacheName !== CACHE_NAME
+            ) {
               console.log('Service Worker: Clearing old cache', cacheName);
               return caches.delete(cacheName);
             }
@@ -60,7 +62,7 @@ self.addEventListener("activate", (event) => {
 });
 
 // Fetch event - handle requests
-self.addEventListener("fetch", (event) => {
+self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
@@ -71,9 +73,11 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Handle static assets
-  if (request.destination === 'document' || 
-      request.destination === 'script' || 
-      request.destination === 'style') {
+  if (
+    request.destination === 'document' ||
+    request.destination === 'script' ||
+    request.destination === 'style'
+  ) {
     event.respondWith(handleStaticRequest(request));
     return;
   }
@@ -85,21 +89,21 @@ self.addEventListener("fetch", (event) => {
 // Handle API requests with network-first strategy
 async function handleApiRequest(request) {
   const url = new URL(request.url);
-  
+
   try {
     // Try network first
     const networkResponse = await fetch(request.clone());
-    
+
     // Cache successful GET requests
     if (request.method === 'GET' && networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('Service Worker: Network failed, trying cache for', request.url);
-    
+
     // For GET requests, try cache
     if (request.method === 'GET') {
       const cachedResponse = await caches.match(request);
@@ -107,17 +111,17 @@ async function handleApiRequest(request) {
         return cachedResponse;
       }
     }
-    
+
     // Return offline response or error
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'You are offline and this data is not cached' 
+      JSON.stringify({
+        success: false,
+        error: 'You are offline and this data is not cached',
       }),
       {
         status: 503,
         statusText: 'Service Unavailable',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }
@@ -126,26 +130,26 @@ async function handleApiRequest(request) {
 // Handle static requests with cache-first strategy
 async function handleStaticRequest(request) {
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     return cachedResponse;
   }
-  
+
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     // Return cached index.html for SPA navigation
     if (request.destination === 'document') {
       return caches.match('/') || new Response('Offline', { status: 503 });
     }
-    
+
     return new Response('Offline', { status: 503 });
   }
 }
@@ -154,25 +158,25 @@ async function handleStaticRequest(request) {
 async function handleOtherRequest(request) {
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     return new Response('Offline', { status: 503 });
   }
 }
 
 // Background sync for queued mutations
-self.addEventListener('sync', (event) => {
+self.addEventListener('sync', event => {
   if (event.tag === 'background-sync') {
     event.waitUntil(performBackgroundSync());
   }
@@ -181,15 +185,15 @@ self.addEventListener('sync', (event) => {
 // Perform background sync
 async function performBackgroundSync() {
   console.log('Service Worker: Performing background sync');
-  
+
   try {
     // Get all clients and notify them to sync
     const clients = await self.clients.matchAll();
-    
+
     clients.forEach(client => {
       client.postMessage({
         type: 'BACKGROUND_SYNC',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     });
   } catch (error) {
@@ -198,7 +202,7 @@ async function performBackgroundSync() {
 }
 
 // Push notifications (future feature)
-self.addEventListener('push', (event) => {
+self.addEventListener('push', event => {
   const options = {
     body: event.data ? event.data.text() : 'New notification from MTK Dairy',
     icon: '/icons/icon-192x192.png',
@@ -206,35 +210,30 @@ self.addEventListener('push', (event) => {
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: 1
+      primaryKey: 1,
     },
     actions: [
       {
         action: 'explore',
         title: 'View Details',
-        icon: '/images/checkmark.png'
+        icon: '/images/checkmark.png',
       },
       {
         action: 'close',
         title: 'Close',
-        icon: '/images/xmark.png'
-      }
-    ]
+        icon: '/images/xmark.png',
+      },
+    ],
   };
 
-  event.waitUntil(
-    self.registration.showNotification('MTK Dairy', options)
-  );
+  event.waitUntil(self.registration.showNotification('MTK Dairy', options));
 });
 
 // Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', event => {
   event.notification.close();
 
   if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/dashboard')
-    );
+    event.waitUntil(clients.openWindow('/dashboard'));
   }
 });
-

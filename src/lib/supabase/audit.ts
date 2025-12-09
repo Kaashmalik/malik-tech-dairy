@@ -20,7 +20,7 @@ export interface AuditLogData {
 export async function createAuditLog(data: AuditLogData): Promise<void> {
   try {
     const db = getDrizzle();
-    
+
     await db.insert(auditLogs).values({
       id: nanoid(),
       tenantId: data.tenantId || null,
@@ -53,19 +53,25 @@ export async function getAuditLogs(
 ) {
   const db = getDrizzle();
   const { and, eq } = await import('drizzle-orm');
-  
+
   let query = db.select().from(auditLogs).where(eq(auditLogs.tenantId, tenantId));
-  
+
   if (options?.resource) {
-    query = query.where(and(eq(auditLogs.tenantId, tenantId), eq(auditLogs.resource, options.resource))) as any;
+    query = query.where(
+      and(eq(auditLogs.tenantId, tenantId), eq(auditLogs.resource, options.resource))
+    ) as any;
   }
-  
+
   if (options?.userId) {
-    query = query.where(and(eq(auditLogs.tenantId, tenantId), eq(auditLogs.userId, options.userId))) as any;
+    query = query.where(
+      and(eq(auditLogs.tenantId, tenantId), eq(auditLogs.userId, options.userId))
+    ) as any;
   }
-  
-  query = query.orderBy(auditLogs.createdAt).limit(options?.limit || 100).offset(options?.offset || 0) as any;
-  
+
+  query = query
+    .orderBy(auditLogs.createdAt)
+    .limit(options?.limit || 100)
+    .offset(options?.offset || 0) as any;
+
   return query;
 }
-

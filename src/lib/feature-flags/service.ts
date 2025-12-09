@@ -1,56 +1,59 @@
 import crypto from 'crypto';
-import { DEFAULT_FEATURE_FLAGS, EnterpriseFeatureFlag, ENTERPRISE_FEATURE_FLAGS, FeatureFlag } from './config';
+import {
+  DEFAULT_FEATURE_FLAGS,
+  EnterpriseFeatureFlag,
+  ENTERPRISE_FEATURE_FLAGS,
+  FeatureFlag,
+} from './config';
 
 // Environment variable feature flags (override defaults)
 const ENV_FEATURE_FLAGS: Partial<Record<EnterpriseFeatureFlag, boolean>> = {
   // Read from environment variables - format: FEATURE_VETERINARY_DISEASE_MANAGEMENT=true
-  [ENTERPRISE_FEATURE_FLAGS.VETERINARY_DISEASE_MANAGEMENT]: 
+  [ENTERPRISE_FEATURE_FLAGS.VETERINARY_DISEASE_MANAGEMENT]:
     process.env.FEATURE_VETERINARY_DISEASE_MANAGEMENT === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.VETERINARY_TREATMENT_TRACKING]: 
+  [ENTERPRISE_FEATURE_FLAGS.VETERINARY_TREATMENT_TRACKING]:
     process.env.FEATURE_VETERINARY_TREATMENT_TRACKING === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.VETERINARY_VACCINATION_SCHEDULES]: 
+  [ENTERPRISE_FEATURE_FLAGS.VETERINARY_VACCINATION_SCHEDULES]:
     process.env.FEATURE_VETERINARY_VACCINATION_SCHEDULES === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.FEED_INVENTORY_TRACKING]: 
+  [ENTERPRISE_FEATURE_FLAGS.FEED_INVENTORY_TRACKING]:
     process.env.FEATURE_FEED_INVENTORY_TRACKING === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.FEED_SCHEDULE_AUTOMATION]: 
+  [ENTERPRISE_FEATURE_FLAGS.FEED_SCHEDULE_AUTOMATION]:
     process.env.FEATURE_FEED_SCHEDULE_AUTOMATION === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.NUTRITION_TEMPLATES]: 
+  [ENTERPRISE_FEATURE_FLAGS.NUTRITION_TEMPLATES]:
     process.env.FEATURE_NUTRITION_TEMPLATES === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.STAFF_ATTENDANCE_TRACKING]: 
+  [ENTERPRISE_FEATURE_FLAGS.STAFF_ATTENDANCE_TRACKING]:
     process.env.FEATURE_STAFF_ATTENDANCE_TRACKING === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.TASK_ASSIGNMENT_SYSTEM]: 
+  [ENTERPRISE_FEATURE_FLAGS.TASK_ASSIGNMENT_SYSTEM]:
     process.env.FEATURE_TASK_ASSIGNMENT_SYSTEM === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.PERFORMANCE_REVIEWS]: 
+  [ENTERPRISE_FEATURE_FLAGS.PERFORMANCE_REVIEWS]:
     process.env.FEATURE_PERFORMANCE_REVIEWS === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.IOT_DEVICE_MANAGEMENT]: 
+  [ENTERPRISE_FEATURE_FLAGS.IOT_DEVICE_MANAGEMENT]:
     process.env.FEATURE_IOT_DEVICE_MANAGEMENT === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.SENSOR_DATA_INGESTION]: 
+  [ENTERPRISE_FEATURE_FLAGS.SENSOR_DATA_INGESTION]:
     process.env.FEATURE_SENSOR_DATA_INGESTION === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.REAL_TIME_MONITORING]: 
+  [ENTERPRISE_FEATURE_FLAGS.REAL_TIME_MONITORING]:
     process.env.FEATURE_REAL_TIME_MONITORING === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.MILK_QUALITY_TESTING]: 
+  [ENTERPRISE_FEATURE_FLAGS.MILK_QUALITY_TESTING]:
     process.env.FEATURE_MILK_QUALITY_TESTING === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.QUALITY_GRADING_SYSTEM]: 
+  [ENTERPRISE_FEATURE_FLAGS.QUALITY_GRADING_SYSTEM]:
     process.env.FEATURE_QUALITY_GRADING_SYSTEM === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.ADULTERATION_DETECTION]: 
+  [ENTERPRISE_FEATURE_FLAGS.ADULTERATION_DETECTION]:
     process.env.FEATURE_ADULTERATION_DETECTION === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.AI_PREDICTIVE_ANALYTICS]: 
+  [ENTERPRISE_FEATURE_FLAGS.AI_PREDICTIVE_ANALYTICS]:
     process.env.FEATURE_AI_PREDICTIVE_ANALYTICS === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.PRODUCTION_FORECASTING]: 
+  [ENTERPRISE_FEATURE_FLAGS.PRODUCTION_FORECASTING]:
     process.env.FEATURE_PRODUCTION_FORECASTING === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.HEALTH_MONITORING_AI]: 
+  [ENTERPRISE_FEATURE_FLAGS.HEALTH_MONITORING_AI]:
     process.env.FEATURE_HEALTH_MONITORING_AI === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.DASHBOARD_REDESIGN]: 
-    process.env.FEATURE_DASHBOARD_REDESIGN === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.MOBILE_RESPONSIVE_UI]: 
+  [ENTERPRISE_FEATURE_FLAGS.DASHBOARD_REDESIGN]: process.env.FEATURE_DASHBOARD_REDESIGN === 'true',
+  [ENTERPRISE_FEATURE_FLAGS.MOBILE_RESPONSIVE_UI]:
     process.env.FEATURE_MOBILE_RESPONSIVE_UI === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.DARK_MODE_SUPPORT]: 
-    process.env.FEATURE_DARK_MODE_SUPPORT === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.COMPLIANCE_REPORTING]: 
+  [ENTERPRISE_FEATURE_FLAGS.DARK_MODE_SUPPORT]: process.env.FEATURE_DARK_MODE_SUPPORT === 'true',
+  [ENTERPRISE_FEATURE_FLAGS.COMPLIANCE_REPORTING]:
     process.env.FEATURE_COMPLIANCE_REPORTING === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.AUDIT_LOG_ENHANCEMENT]: 
+  [ENTERPRISE_FEATURE_FLAGS.AUDIT_LOG_ENHANCEMENT]:
     process.env.FEATURE_AUDIT_LOG_ENHANCEMENT === 'true',
-  [ENTERPRISE_FEATURE_FLAGS.DATA_EXPORT_FEATURES]: 
+  [ENTERPRISE_FEATURE_FLAGS.DATA_EXPORT_FEATURES]:
     process.env.FEATURE_DATA_EXPORT_FEATURES === 'true',
 };
 
@@ -83,21 +86,21 @@ export function isFeatureEnabled(
   } = {}
 ): boolean {
   const cacheKey = `${featureKey}:${context.userId || 'anonymous'}:${context.tenantId || 'no-tenant'}:${context.userRole || 'no-role'}`;
-  
+
   // Check cache first
   const cached = featureFlagCache.get(cacheKey);
   const cacheTime = cacheTimestamps.get(cacheKey);
-  
-  if (cached !== undefined && cacheTime && (Date.now() - cacheTime) < CACHE_TTL) {
+
+  if (cached !== undefined && cacheTime && Date.now() - cacheTime < CACHE_TTL) {
     return cached;
   }
 
   // Get feature flag configuration
   const defaultConfig = DEFAULT_FEATURE_FLAGS[featureKey];
   const envOverride = ENV_FEATURE_FLAGS[featureKey];
-  
+
   let featureConfig: FeatureFlag;
-  
+
   if (envOverride !== undefined) {
     // Environment variable override
     featureConfig = {
@@ -173,14 +176,14 @@ export function getEnabledFeatures(context: {
 export function getFeatureConfig(featureKey: EnterpriseFeatureFlag): FeatureFlag {
   const envOverride = ENV_FEATURE_FLAGS[featureKey];
   const defaultConfig = DEFAULT_FEATURE_FLAGS[featureKey];
-  
+
   if (envOverride !== undefined) {
     return {
       ...defaultConfig,
       enabled: envOverride,
     };
   }
-  
+
   return defaultConfig;
 }
 
@@ -197,7 +200,7 @@ export function isPhaseEnabled(
 ): boolean {
   const { PHASE_ROLLOUT_ORDER } = require('./config');
   const phaseFeatures = PHASE_ROLLOUT_ORDER[phase];
-  
+
   return phaseFeatures.some(featureKey => isFeatureEnabled(featureKey, context));
 }
 
@@ -225,16 +228,16 @@ export function getRolloutStats(): {
   }).length;
 
   const { PHASE_ROLLOUT_ORDER } = require('./config');
-  
+
   const phaseStats: Record<string, { total: number; enabled: number }> = {};
-  
+
   Object.entries(PHASE_ROLLOUT_ORDER).forEach(([phase, features]) => {
     const phaseEnabled = features.filter(key => {
       const config = DEFAULT_FEATURE_FLAGS[key];
       const envOverride = ENV_FEATURE_FLAGS[key];
       return envOverride !== undefined ? envOverride : config.enabled;
     }).length;
-    
+
     phaseStats[phase] = {
       total: features.length,
       enabled: phaseEnabled,
@@ -265,11 +268,7 @@ export function extractUserContext(request: Request): {
  * API route protection helper
  */
 export function requireFeature(featureKey: EnterpriseFeatureFlag) {
-  return (context: {
-    userId?: string;
-    tenantId?: string;
-    userRole?: string;
-  }) => {
+  return (context: { userId?: string; tenantId?: string; userRole?: string }) => {
     if (!isFeatureEnabled(featureKey, context)) {
       throw new Error(`Feature ${featureKey} is not enabled`);
     }

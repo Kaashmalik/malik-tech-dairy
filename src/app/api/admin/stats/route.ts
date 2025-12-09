@@ -1,23 +1,23 @@
 // API Route: Get Admin Statistics
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { adminDb } from "@/lib/firebase/admin";
-import { PlatformRole } from "@/types/roles";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { adminDb } from '@/lib/firebase/admin';
+import { PlatformRole } from '@/types/roles';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 async function isSuperAdmin(userId: string): Promise<boolean> {
   if (!adminDb) return false;
 
   try {
-    const userDoc = await adminDb.collection("users").doc(userId).get();
+    const userDoc = await adminDb.collection('users').doc(userId).get();
     if (userDoc.exists) {
       const userData = userDoc.data();
       return userData?.platformRole === PlatformRole.SUPER_ADMIN;
     }
     return false;
   } catch (error) {
-    console.error("Error checking super admin:", error);
+    console.error('Error checking super admin:', error);
     return false;
   }
 }
@@ -27,29 +27,20 @@ export async function GET(request: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const isAdmin = await isSuperAdmin(userId);
     if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden - Super admin only" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden - Super admin only' }, { status: 403 });
     }
 
     if (!adminDb) {
-      return NextResponse.json(
-        { error: "Database not initialized" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
 
     // Get all tenants
-    const tenantsSnapshot = await adminDb.collection("tenants").get();
+    const tenantsSnapshot = await adminDb.collection('tenants').get();
     const tenants = tenantsSnapshot.docs;
 
     let totalTenants = 0;
@@ -70,39 +61,34 @@ export async function GET(request: NextRequest) {
       totalTenants++;
 
       // Get subscription
-      const subDoc = await tenantDoc.ref
-        .collection("subscription")
-        .doc("main")
-        .get();
+      const subDoc = await tenantDoc.ref.collection('subscription').doc('main').get();
 
       if (subDoc.exists) {
         const subData = subDoc.data();
-        const status = subData?.status || "inactive";
-        const plan = subData?.plan || "free";
+        const status = subData?.status || 'inactive';
+        const plan = subData?.plan || 'free';
 
-        if (status === "active") {
+        if (status === 'active') {
           activeTenants++;
           monthlyRecurringRevenue += subscriptionPlans[plan] || 0;
-        } else if (status === "trial") {
+        } else if (status === 'trial') {
           trialTenants++;
         }
       }
 
       // Count animals
       const animalsRef = adminDb
-        .collection("tenants_data")
+        .collection('tenants_data')
         .doc(`${tenantDoc.id}_animals`)
-        .collection("animals");
-      
-      const animalsSnapshot = await animalsRef
-        .where("status", "!=", "deceased")
-        .get();
+        .collection('animals');
+
+      const animalsSnapshot = await animalsRef.where('status', '!=', 'deceased').get();
       totalAnimals += animalsSnapshot.size;
 
       // Count users
       const usersSnapshot = await adminDb
-        .collection("users")
-        .where("tenantId", "==", tenantDoc.id)
+        .collection('users')
+        .where('tenantId', '==', tenantDoc.id)
         .get();
       totalUsers += usersSnapshot.size;
     }
@@ -116,11 +102,7 @@ export async function GET(request: NextRequest) {
       totalUsers,
     });
   } catch (error) {
-    console.error("Error fetching admin stats:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error fetching admin stats:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
