@@ -3,14 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSubscriptionWithLimits } from '@/lib/supabase/limits';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
-
 export const dynamic = 'force-dynamic';
-
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const subscription = await getSubscriptionWithLimits(context.tenantId);
-
       if (!subscription) {
         // Return default free subscription for graceful degradation
         const freePlan = SUBSCRIPTION_PLANS.free;
@@ -24,9 +21,7 @@ export async function GET(request: NextRequest) {
           message: 'Using default subscription',
         });
       }
-
       const planConfig = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
-
       return NextResponse.json({
         success: true,
         plan: subscription.plan,
@@ -38,7 +33,6 @@ export async function GET(request: NextRequest) {
         priceDisplay: planConfig.priceDisplay,
       });
     } catch (error) {
-      console.error('Error fetching subscription:', error);
       // Return default for graceful degradation
       return NextResponse.json({
         success: true,

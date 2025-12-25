@@ -26,7 +26,7 @@ export default function MilkLogsPage() {
           <h1 className='text-3xl font-bold'>Milk Logs</h1>
           <p className='text-muted-foreground'>Track milk production from your dairy animals</p>
         </div>
-        <Link href='/dashboard/milk/new'>
+        <Link href='/milk/new'>
           <Button>
             <Plus className='mr-2 h-4 w-4' />
             Log Milk
@@ -40,7 +40,7 @@ export default function MilkLogsPage() {
         <Card>
           <CardContent className='py-12 text-center'>
             <p className='text-muted-foreground mb-4'>No milk logs yet.</p>
-            <Link href='/dashboard/milk/new'>
+            <Link href='/milk/new'>
               <Button>
                 <Plus className='mr-2 h-4 w-4' />
                 Log Your First Milk Entry

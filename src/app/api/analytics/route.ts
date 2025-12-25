@@ -4,9 +4,7 @@ import { withTenantContext } from '@/lib/api/middleware';
 import { getTenantSubcollection } from '@/lib/firebase/tenant';
 import { adminDb } from '@/lib/firebase/admin';
 import { format, subDays, subMonths, subYears, startOfDay, endOfDay } from 'date-fns';
-
 export const dynamic = 'force-dynamic';
-
 interface AnalyticsData {
   milkYield: {
     trend30d: Array<{ date: string; total: number }>;
@@ -19,35 +17,27 @@ interface AnalyticsData {
   };
   healthScore: number;
 }
-
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       if (!adminDb) {
         return NextResponse.json({ error: 'Database not available' }, { status: 500 });
       }
-
       const { searchParams } = new URL(req.url);
       const period = searchParams.get('period') || '30d';
-
       // Get date ranges
       const today = new Date();
       const start30d = subDays(today, 30);
       const start90d = subDays(today, 90);
       const start1y = subYears(today, 1);
-
       // Fetch milk logs
       const milkLogsRef = getTenantSubcollection(context.tenantId, 'milkLogs', 'logs');
-
       // Fetch expenses
       const expensesRef = getTenantSubcollection(context.tenantId, 'expenses', 'records');
-
       // Fetch sales
       const salesRef = getTenantSubcollection(context.tenantId, 'sales', 'records');
-
       // Fetch health records
       const healthRef = getTenantSubcollection(context.tenantId, 'health', 'records');
-
       // Fetch all data in parallel
       const [milkLogs30d, milkLogs90d, milkLogs1y, expenses, sales, healthRecords] =
         await Promise.all([
@@ -76,7 +66,6 @@ export async function GET(request: NextRequest) {
             .where('date', '<=', endOfDay(today))
             .get(),
         ]);
-
       // Process milk yield trends
       const processMilkTrend = (logs: any[]) => {
         const dailyTotals: Record<string, number> = {};
@@ -85,16 +74,13 @@ export async function GET(request: NextRequest) {
           const date = log.date;
           dailyTotals[date] = (dailyTotals[date] || 0) + (log.quantity || 0);
         });
-
         return Object.entries(dailyTotals)
           .map(([date, total]) => ({ date, total: Math.round(total * 100) / 100 }))
           .sort((a, b) => a.date.localeCompare(b.date));
       };
-
       const trend30d = processMilkTrend(milkLogs30d.docs);
       const trend90d = processMilkTrend(milkLogs90d.docs);
       const trend1y = processMilkTrend(milkLogs1y.docs);
-
       // Process expense vs revenue
       const expenseByDate: Record<string, number> = {};
       expenses.docs.forEach(doc => {
@@ -102,17 +88,14 @@ export async function GET(request: NextRequest) {
         const date = format(expense.date.toDate(), 'yyyy-MM-dd');
         expenseByDate[date] = (expenseByDate[date] || 0) + (expense.amount || 0);
       });
-
       const revenueByDate: Record<string, number> = {};
       sales.docs.forEach(doc => {
         const sale = doc.data();
         const date = format(sale.date.toDate(), 'yyyy-MM-dd');
         revenueByDate[date] = (revenueByDate[date] || 0) + (sale.total || 0);
       });
-
       // Combine all dates
       const allDates = new Set([...Object.keys(expenseByDate), ...Object.keys(revenueByDate)]);
-
       const expenseVsRevenue = Array.from(allDates)
         .sort()
         .map(date => ({
@@ -120,7 +103,6 @@ export async function GET(request: NextRequest) {
           expenses: Math.round((expenseByDate[date] || 0) * 100) / 100,
           revenue: Math.round((revenueByDate[date] || 0) * 100) / 100,
         }));
-
       // Calculate health score (0-100)
       // Based on: recent checkups (positive), treatments (negative), diseases (very negative)
       let healthScore = 100;
@@ -130,7 +112,6 @@ export async function GET(request: NextRequest) {
           const recordDate = record.date.toDate();
           return recordDate >= startOfDay(subDays(today, 30));
         });
-
       recentRecords.forEach(record => {
         switch (record.type) {
           case 'checkup':
@@ -147,10 +128,8 @@ export async function GET(request: NextRequest) {
             break;
         }
       });
-
       // Clamp score between 0 and 100
       healthScore = Math.max(0, Math.min(100, healthScore));
-
       const analyticsData: AnalyticsData = {
         milkYield: {
           trend30d,
@@ -163,10 +142,8 @@ export async function GET(request: NextRequest) {
         },
         healthScore: Math.round(healthScore),
       };
-
       return NextResponse.json(analyticsData);
     } catch (error) {
-      console.error('Error fetching analytics:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);

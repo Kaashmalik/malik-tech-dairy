@@ -2,30 +2,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase';
-
 export const dynamic = 'force-dynamic';
-
 // GET: Get breeding record by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
       const supabase = getSupabaseClient();
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: record, error } = await (supabase.from('breeding_records') as any)
         .select('*')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
         .single();
-
       if (error || !record) {
         return NextResponse.json(
           { success: false, error: 'Breeding record not found' },
           { status: 404 }
         );
       }
-
       return NextResponse.json({
         success: true,
         record: {
@@ -42,12 +37,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
       });
     } catch (error) {
-      console.error('Error fetching breeding record:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-
 // PUT: Update breeding record
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
@@ -55,7 +48,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const { id } = await params;
       const supabase = getSupabaseClient();
       const body = await req.json();
-
       // Check if record exists
       const { data: existing } = await supabase
         .from('breeding_records')
@@ -63,18 +55,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
         .single();
-
       if (!existing) {
         return NextResponse.json(
           { success: false, error: 'Breeding record not found' },
           { status: 404 }
         );
       }
-
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       };
-
       if (body.breedingDate !== undefined) {
         updateData.breeding_date = body.breedingDate;
       }
@@ -87,7 +76,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (body.sireId !== undefined) updateData.sire_id = body.sireId;
       if (body.status !== undefined) updateData.status = body.status;
       if (body.notes !== undefined) updateData.notes = body.notes;
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: updatedRecord, error } = await (supabase.from('breeding_records') as any)
         .update(updateData)
@@ -95,15 +83,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         .eq('tenant_id', context.tenantId)
         .select()
         .single();
-
       if (error) {
-        console.error('Error updating breeding record:', error);
         return NextResponse.json(
           { success: false, error: 'Failed to update breeding record' },
           { status: 500 }
         );
       }
-
       return NextResponse.json({
         success: true,
         record: {
@@ -120,12 +105,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         },
       });
     } catch (error) {
-      console.error('Error updating breeding record:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-
 // DELETE: Delete breeding record
 export async function DELETE(
   request: NextRequest,
@@ -135,7 +118,6 @@ export async function DELETE(
     try {
       const { id } = await params;
       const supabase = getSupabaseClient();
-
       // Check if record exists
       const { data: existing } = await supabase
         .from('breeding_records')
@@ -143,31 +125,25 @@ export async function DELETE(
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
         .single();
-
       if (!existing) {
         return NextResponse.json(
           { success: false, error: 'Breeding record not found' },
           { status: 404 }
         );
       }
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('breeding_records') as any)
         .delete()
         .eq('id', id)
         .eq('tenant_id', context.tenantId);
-
       if (error) {
-        console.error('Error deleting breeding record:', error);
         return NextResponse.json(
           { success: false, error: 'Failed to delete breeding record' },
           { status: 500 }
         );
       }
-
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Error deleting breeding record:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);

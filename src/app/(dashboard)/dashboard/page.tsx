@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useOrganization, useUser } from '@clerk/nextjs';
 import { MilkChart } from '@/components/dashboard/MilkChart';
 import { AnimalsBySpeciesChart } from '@/components/dashboard/AnimalsBySpeciesChart';
+import { GlassCard } from '@/components/ui/card';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import {
@@ -225,11 +226,10 @@ export default function DashboardPageClient() {
               </div>
               {stat.trendUp !== null && (
                 <div
-                  className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
-                    stat.trendUp
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                  }`}
+                  className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${stat.trendUp
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                    }`}
                 >
                   {stat.trendUp && <TrendingUp className='h-3 w-3' />}
                   {stat.trend}
@@ -272,7 +272,7 @@ export default function DashboardPageClient() {
 
       {/* Charts Section */}
       <div className='grid gap-6 lg:grid-cols-2'>
-        <div className='rounded-2xl border border-gray-200/50 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700/50 dark:bg-slate-900'>
+        <GlassCard blur='sm' intensity='heavy' className='p-6 transition-shadow hover:shadow-md'>
           <div className='mb-4 flex items-center justify-between'>
             <div>
               <h3 className='font-semibold text-gray-900 dark:text-white'>Milk Production</h3>
@@ -286,9 +286,9 @@ export default function DashboardPageClient() {
             </Link>
           </div>
           <MilkChart />
-        </div>
+        </GlassCard>
 
-        <div className='rounded-2xl border border-gray-200/50 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700/50 dark:bg-slate-900'>
+        <GlassCard blur='sm' intensity='heavy' className='p-6 transition-shadow hover:shadow-md'>
           <div className='mb-4 flex items-center justify-between'>
             <div>
               <h3 className='font-semibold text-gray-900 dark:text-white'>Animals by Species</h3>
@@ -302,11 +302,11 @@ export default function DashboardPageClient() {
             </Link>
           </div>
           <AnimalsBySpeciesChart />
-        </div>
+        </GlassCard>
       </div>
 
       {/* Quick Actions */}
-      <div className='rounded-2xl border border-gray-200/50 bg-white p-6 shadow-sm dark:border-gray-700/50 dark:bg-slate-900'>
+      <GlassCard blur='md' intensity='medium' className='p-6'>
         <div className='mb-6 flex items-center justify-between'>
           <div>
             <h3 className='flex items-center gap-2 font-semibold text-gray-900 dark:text-white'>
@@ -344,7 +344,7 @@ export default function DashboardPageClient() {
             </Link>
           ))}
         </div>
-      </div>
+      </GlassCard>
 
       {/* Footer tip */}
       <div className='py-4 text-center'>

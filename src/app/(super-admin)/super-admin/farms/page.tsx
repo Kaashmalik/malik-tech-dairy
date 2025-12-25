@@ -1,6 +1,5 @@
 // Super Admin - All Farms Management Page
 'use client';
-
 import { useState, useEffect } from 'react';
 import {
   Building2,
@@ -39,7 +38,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-
 interface Farm {
   id: string;
   farmName: string;
@@ -53,36 +51,30 @@ interface Farm {
   city?: string;
   createdAt: string;
 }
-
 const planColors: Record<string, string> = {
   free: 'bg-gray-100 text-gray-700',
   professional: 'bg-blue-100 text-blue-700',
   farm: 'bg-purple-100 text-purple-700',
   enterprise: 'bg-amber-100 text-amber-700',
 };
-
 const statusColors: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   paused: 'bg-amber-100 text-amber-700',
   suspended: 'bg-red-100 text-red-700',
 };
-
 export default function FarmsPage() {
   const [farms, setFarms] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-
   useEffect(() => {
     fetchFarms();
   }, [planFilter]);
-
   async function fetchFarms() {
     setLoading(true);
     try {
       const response = await fetch('/api/admin/farms');
       const data = await response.json();
-
       if (data.success) {
         setFarms(data.data || []);
       } else {
@@ -117,13 +109,11 @@ export default function FarmsPage() {
         ]);
       }
     } catch (error) {
-      console.error('Failed to fetch farms:', error);
       setFarms([]);
     } finally {
       setLoading(false);
     }
   }
-
   const filteredFarms = farms.filter(farm => {
     const matchesSearch =
       farm.farmName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,7 +122,6 @@ export default function FarmsPage() {
     const matchesPlan = planFilter === 'all' || farm.plan === planFilter;
     return matchesSearch && matchesPlan;
   });
-
   return (
     <div className='space-y-4 md:space-y-6'>
       {/* Page Header - Mobile Optimized */}
@@ -150,7 +139,6 @@ export default function FarmsPage() {
           </Button>
         </Link>
       </div>
-
       {/* Stats Cards - Scrollable on Mobile */}
       <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
         <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
@@ -204,7 +192,6 @@ export default function FarmsPage() {
           </div>
         </div>
       </div>
-
       {/* Filters - Stacked on Mobile */}
       <div className='flex flex-col gap-3 sm:flex-row'>
         <div className='relative flex-1'>
@@ -230,7 +217,6 @@ export default function FarmsPage() {
           </SelectContent>
         </Select>
       </div>
-
       {/* Farms List - Card Layout for Mobile, Table for Desktop */}
       <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
         {loading ? (
@@ -277,7 +263,6 @@ export default function FarmsPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-
                   <div className='flex flex-wrap gap-2'>
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${planColors[farm.plan]}`}
@@ -290,7 +275,6 @@ export default function FarmsPage() {
                       {farm.status}
                     </span>
                   </div>
-
                   <div className='flex items-center gap-4 text-sm text-gray-500'>
                     <span className='flex items-center gap-1'>
                       <Users className='h-4 w-4' /> {farm.userCount}
@@ -305,7 +289,6 @@ export default function FarmsPage() {
                 </div>
               ))}
             </div>
-
             {/* Desktop Table View */}
             <div className='hidden overflow-x-auto md:block'>
               <table className='w-full'>

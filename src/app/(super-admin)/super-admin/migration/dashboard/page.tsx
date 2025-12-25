@@ -1,8 +1,6 @@
 'use client';
-
 // Real-time Migration Dashboard Component
 // Provides enterprise-grade monitoring and control
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +21,6 @@ import {
   Pause,
   RotateCcw,
 } from 'lucide-react';
-
 interface DashboardData {
   currentMetrics: {
     timestamp: string;
@@ -44,38 +41,31 @@ interface DashboardData {
     estimatedTimeRemaining: number;
   };
 }
-
 export default function MigrationDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-
   useEffect(() => {
     fetchDashboardData();
-
     let interval: NodeJS.Timeout;
     if (autoRefresh && !isPaused) {
       interval = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [autoRefresh, isPaused]);
-
   const fetchDashboardData = async () => {
     try {
       const response = await fetch('/api/migration/dashboard');
       const dashboardData = await response.json();
       setData(dashboardData);
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const handleRecovery = async (alertType: string) => {
     try {
       const response = await fetch('/api/migration/recover', {
@@ -83,15 +73,12 @@ export default function MigrationDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alertType }),
       });
-
       if (response.ok) {
         fetchDashboardData(); // Refresh data
       }
     } catch (error) {
-      console.error('Failed to trigger recovery:', error);
     }
   };
-
   const getPhaseColor = (phase: string) => {
     const colors: Record<string, string> = {
       PHASE_1_DUAL_WRITE: 'bg-blue-500',
@@ -101,7 +88,6 @@ export default function MigrationDashboard() {
     };
     return colors[phase] || 'bg-gray-500';
   };
-
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       HEALTHY: 'text-green-600',
@@ -113,7 +99,6 @@ export default function MigrationDashboard() {
     };
     return colors[status] || 'text-gray-600';
   };
-
   if (loading) {
     return (
       <div className='flex h-96 items-center justify-center'>
@@ -121,11 +106,9 @@ export default function MigrationDashboard() {
       </div>
     );
   }
-
   if (!data) {
     return <div className='text-center text-gray-500'>Failed to load migration dashboard data</div>;
   }
-
   return (
     <div className='space-y-6 p-6'>
       {/* Header Controls */}
@@ -150,7 +133,6 @@ export default function MigrationDashboard() {
           </Button>
         </div>
       </div>
-
       {/* Migration Progress Overview */}
       <Card>
         <CardHeader>
@@ -197,7 +179,6 @@ export default function MigrationDashboard() {
           </div>
         </CardContent>
       </Card>
-
       {/* Key Metrics */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Card>
@@ -218,7 +199,6 @@ export default function MigrationDashboard() {
             </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Error Rate</CardTitle>
@@ -235,7 +215,6 @@ export default function MigrationDashboard() {
             </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Active Users</CardTitle>
@@ -246,7 +225,6 @@ export default function MigrationDashboard() {
             <p className='text-muted-foreground text-xs'>Currently active</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Throughput</CardTitle>
@@ -258,7 +236,6 @@ export default function MigrationDashboard() {
           </CardContent>
         </Card>
       </div>
-
       {/* Active Alerts */}
       {data.activeAlerts.length > 0 && (
         <Card>
@@ -292,7 +269,6 @@ export default function MigrationDashboard() {
           </CardContent>
         </Card>
       )}
-
       {/* Detailed Tabs */}
       <Tabs defaultValue='metrics' className='space-y-4'>
         <TabsList>
@@ -300,7 +276,6 @@ export default function MigrationDashboard() {
           <TabsTrigger value='logs'>Operation Logs</TabsTrigger>
           <TabsTrigger value='health'>System Health</TabsTrigger>
         </TabsList>
-
         <TabsContent value='metrics'>
           <Card>
             <CardHeader>
@@ -331,7 +306,6 @@ export default function MigrationDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value='logs'>
           <Card>
             <CardHeader>
@@ -345,7 +319,6 @@ export default function MigrationDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value='health'>
           <Card>
             <CardHeader>

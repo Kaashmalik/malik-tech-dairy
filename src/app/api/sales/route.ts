@@ -1,11 +1,22 @@
-// API Route: Sales
-import { NextRequest, NextResponse } from 'next/server';
+// API Route: Sales - Migrated to Supabase
+import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getTenantSubcollection } from '@/lib/firebase/tenant';
-import type { Sale } from '@/types';
-
+import { createClient } from '@/lib/supabase';
+import { successResponse, errorResponse, ValidationError } from '@/lib/api/response';
+import { transformFromDb, transformToDb } from '@/lib/utils/transform';
+import { z } from 'zod';
 export const dynamic = 'force-dynamic';
-
+// Validation schema
+const saleSchema = z.object({
+  date: z.string().datetime(),
+  type: z.enum(['milk', 'animal', 'manure', 'other']),
+  quantity: z.number().positive(),
+  unit: z.string().min(1).max(20),
+  pricePerUnit: z.number().positive(),
+  buyerName: z.string().max(100).optional(),
+  buyerPhone: z.string().max(20).optional(),
+  notes: z.string().max(500).optional(),
+});
 // GET: List sales
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
@@ -14,85 +25,93 @@ export async function GET(request: NextRequest) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
       const type = searchParams.get('type');
-
-      const salesRef = getTenantSubcollection(context.tenantId, 'sales', 'records');
-
-      let query: any = salesRef;
-
+      const page = parseInt(searchParams.get('page') || '1');
+      const limit = parseInt(searchParams.get('limit') || '20');
+      const supabase = createClient();
+      let query = supabase
+        .from('sales')
+        .select('*', { count: 'exact' })
+        .eq('tenant_id', context.tenantId)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
+      // Apply filters
       if (type) {
-        query = query.where('type', '==', type);
+        query = query.eq('type', type);
       }
-
-      if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        query = query.where('date', '>=', start).where('date', '<=', end);
+      if (startDate) {
+        query = query.gte('date', startDate);
       }
-
-      query = query.orderBy('date', 'desc');
-
-      const snapshot = await query.limit(100).get();
-      const sales = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate(),
-        createdAt: doc.data().createdAt?.toDate(),
-      }));
-
-      return NextResponse.json({ sales });
+      if (endDate) {
+        query = query.lte('date', endDate);
+      }
+      // Apply pagination
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      query = query.range(from, to);
+      const { data, error, count } = await query;
+      if (error) {
+        return errorResponse(error);
+      }
+      // Transform data from snake_case to camelCase
+      const sales = data ? transformFromDb(data) : [];
+      return successResponse(sales, {
+        meta: {
+          total: count || 0,
+          page,
+          limit,
+          hasMore: count ? from + limit < count : false,
+        },
+      });
     } catch (error) {
-      console.error('Error fetching sales:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return errorResponse(error);
     }
   })(request);
 }
-
 // POST: Create sale
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const body = await req.json();
-      const { date, type, quantity, unit, price, buyer, notes } = body;
-
-      if (!date || !type || !quantity || !unit || !price) {
-        return NextResponse.json(
-          { error: 'Missing required fields: date, type, quantity, unit, price' },
-          { status: 400 }
-        );
-      }
-
-      const total = parseFloat(quantity) * parseFloat(price);
-
-      const salesRef = getTenantSubcollection(context.tenantId, 'sales', 'records');
-
-      const saleData: Omit<Sale, 'id' | 'tenantId' | 'createdAt' | 'recordedBy' | 'currency'> = {
-        date: new Date(date),
-        type: type as Sale['type'],
-        quantity: parseFloat(quantity),
-        unit,
-        price: parseFloat(price),
+      
+      // Validate request body
+      const validatedData = saleSchema.parse(body);
+      const supabase = createClient();
+      
+      // Calculate total
+      const total = validatedData.quantity * validatedData.pricePerUnit;
+      
+      // Transform to snake_case for database
+      const saleData = transformToDb({
+        ...validatedData,
         total,
-        buyer,
-        notes,
-      };
-
-      const docRef = await salesRef.add({
-        ...saleData,
-        currency: 'PKR',
         recordedBy: context.userId,
-        createdAt: new Date(),
       });
-
-      return NextResponse.json({
-        id: docRef.id,
-        ...saleData,
-        currency: 'PKR',
-        recordedBy: context.userId,
-        createdAt: new Date(),
+      const { data, error } = await supabase
+        .from('sales')
+        .insert({
+          ...saleData,
+          tenant_id: context.tenantId,
+          currency: 'PKR',
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      if (error) {
+        return errorResponse(error);
+      }
+      // Transform response to camelCase
+      const sale = transformFromDb(data);
+      return successResponse(sale, {
+        message: 'Sale created successfully',
+        status: 201,
       });
     } catch (error) {
-      console.error('Error creating sale:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      
+      if (error instanceof z.ZodError) {
+        return errorResponse(ValidationError.fromZodError(error));
+      }
+      
+      return errorResponse(error);
     }
   })(request);
 }

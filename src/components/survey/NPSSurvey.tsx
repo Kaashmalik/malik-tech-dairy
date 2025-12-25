@@ -1,17 +1,14 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { usePostHogAnalytics } from '@/hooks/usePostHog';
 import { useAuth } from '@clerk/nextjs';
-
 interface NPSSurveyProps {
   onClose?: () => void;
   autoShow?: boolean; // Auto-show after 7 days
 }
-
 export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
   const t = useTranslations('nps');
   const { trackEvent } = usePostHogAnalytics();
@@ -20,13 +17,11 @@ export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
   const [feedback, setFeedback] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [show, setShow] = useState(false);
-
   // Check if user has been active for 7 days
   useEffect(() => {
     if (autoShow && userId) {
       const lastSurveyDate = localStorage.getItem(`nps_survey_${userId}`);
       const signupDate = localStorage.getItem(`signup_date_${userId}`);
-
       if (!lastSurveyDate) {
         // Check if 7 days have passed since signup
         if (signupDate) {
@@ -41,17 +36,14 @@ export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
       }
     }
   }, [autoShow, userId]);
-
   const handleSubmit = async () => {
     if (score === null) return;
-
     // Track NPS event
     trackEvent('nps_survey_submitted', {
       score,
       feedback: feedback || undefined,
       category: score >= 9 ? 'promoter' : score >= 7 ? 'passive' : 'detractor',
     });
-
     // Submit to API
     try {
       await fetch('/api/survey/nps', {
@@ -60,21 +52,16 @@ export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
         body: JSON.stringify({ score, feedback }),
       });
     } catch (error) {
-      console.error('Error submitting NPS survey:', error);
     }
-
     // Mark as submitted
     if (userId) {
       localStorage.setItem(`nps_survey_${userId}`, Date.now().toString());
     }
-
     setSubmitted(true);
   };
-
   if (!show && !autoShow) {
     return null;
   }
-
   if (submitted) {
     return (
       <Card className='fixed bottom-4 right-4 z-50 w-96 shadow-lg'>
@@ -84,7 +71,6 @@ export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
       </Card>
     );
   }
-
   return (
     <Card className='fixed bottom-4 right-4 z-50 w-96 shadow-lg'>
       <CardHeader>
@@ -108,7 +94,6 @@ export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
             </button>
           ))}
         </div>
-
         {/* Feedback Textarea */}
         {score !== null && (
           <div className='space-y-2'>
@@ -128,7 +113,6 @@ export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
             />
           </div>
         )}
-
         {/* Actions */}
         <div className='flex gap-2'>
           <Button onClick={handleSubmit} disabled={score === null} className='flex-1'>

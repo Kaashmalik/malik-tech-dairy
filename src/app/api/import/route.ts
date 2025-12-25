@@ -8,33 +8,26 @@ import {
 } from '@/lib/import/csv-parser';
 import { getSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
-
 const bulkImportSchema = z.object({
   type: z.enum(['animals', 'milk', 'health']).default('animals'),
   dryRun: z.boolean().default(false),
 });
-
 export const dynamic = 'force-dynamic';
-
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const formData = await request.formData();
       const file = formData.get('file') as File;
       const options = JSON.parse((formData.get('options') as string) || '{}');
-
       const { type, dryRun } = bulkImportSchema.parse(options);
-
       if (!file) {
         return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
       }
-
       // Validate file
       const validation = validateImportFile(file);
       if (!validation.valid) {
         return NextResponse.json({ success: false, error: validation.error }, { status: 400 });
       }
-
       // Parse file based on type
       let parseResult;
       if (file.name.endsWith('.csv')) {
@@ -42,7 +35,6 @@ export async function POST(request: NextRequest) {
       } else {
         parseResult = await parseExcel(file);
       }
-
       if (!parseResult.success) {
         return NextResponse.json({
           success: false,
@@ -50,7 +42,6 @@ export async function POST(request: NextRequest) {
           details: parseResult.errors,
         });
       }
-
       // If dry run, return validation results only
       if (dryRun) {
         return NextResponse.json({
@@ -62,7 +53,6 @@ export async function POST(request: NextRequest) {
           },
         });
       }
-
       // Import data based on type
       let importResult;
       switch (type) {
@@ -78,7 +68,6 @@ export async function POST(request: NextRequest) {
         default:
           throw new Error(`Unsupported import type: ${type}`);
       }
-
       return NextResponse.json({
         success: true,
         data: {
@@ -88,20 +77,16 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Bulk import error:', error);
-
       if (error instanceof z.ZodError) {
         return NextResponse.json(
           { success: false, error: 'Invalid options', details: error.errors },
           { status: 400 }
         );
       }
-
       return NextResponse.json({ success: false, error: 'Import failed' }, { status: 500 });
     }
   })(request);
 }
-
 // Import animals
 async function importAnimals(data: AnimalImportData[], tenantId: string) {
   const supabase = getSupabaseClient();
@@ -110,7 +95,6 @@ async function importAnimals(data: AnimalImportData[], tenantId: string) {
     skipped: 0,
     errors: [] as string[],
   };
-
   // Check tenant limits before importing
   try {
     const { data: subscription } = (await supabase
@@ -118,12 +102,10 @@ async function importAnimals(data: AnimalImportData[], tenantId: string) {
       .select('plan')
       .eq('tenant_id', tenantId)
       .single()) as { data: any; error: any };
-
     const { count: currentAnimalCount } = (await supabase
       .from('animals')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)) as { count: number; error: any };
-
     // Define limits based on subscription plan
     const limits: Record<string, number> = {
       free: 5,
@@ -131,17 +113,14 @@ async function importAnimals(data: AnimalImportData[], tenantId: string) {
       farm: 500,
       enterprise: Infinity,
     };
-
     const maxAnimals = limits[subscription?.plan || 'free'] || 5;
     const availableSlots = maxAnimals - currentAnimalCount;
-
     if (availableSlots <= 0) {
       results.errors.push(
         `You've reached your limit of ${maxAnimals} animals. Please upgrade your subscription to add more animals.`
       );
       return results;
     }
-
     if (data.length > availableSlots) {
       results.errors.push(
         `You can only import ${availableSlots} more animals with your current subscription. ${data.length} animals were in the file.`
@@ -150,10 +129,8 @@ async function importAnimals(data: AnimalImportData[], tenantId: string) {
       data = data.slice(0, availableSlots);
     }
   } catch (error) {
-    console.error('Error checking tenant limits:', error);
     // Continue with import if limit check fails
   }
-
   for (const animal of data) {
     try {
       // Check if animal with this tag already exists
@@ -163,13 +140,11 @@ async function importAnimals(data: AnimalImportData[], tenantId: string) {
         .eq('tenant_id', tenantId)
         .eq('tag', animal.tag)
         .single()) as { data: any; error: any };
-
       if (existing) {
         results.skipped++;
         results.errors.push(`Animal with tag "${animal.tag}" already exists`);
         continue;
       }
-
       // Insert new animal
       const { error } = (await supabase.from('animals').insert({
         ...animal,
@@ -177,7 +152,6 @@ async function importAnimals(data: AnimalImportData[], tenantId: string) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       } as any)) as { error: any };
-
       if (error) {
         results.errors.push(`Failed to import ${animal.tag}: ${error.message}`);
       } else {
@@ -189,10 +163,8 @@ async function importAnimals(data: AnimalImportData[], tenantId: string) {
       );
     }
   }
-
   return results;
 }
-
 // Import milk records
 async function importMilkRecords(data: any[], tenantId: string) {
   const supabase = getSupabaseClient();
@@ -201,7 +173,6 @@ async function importMilkRecords(data: any[], tenantId: string) {
     skipped: 0,
     errors: [] as string[],
   };
-
   // Check tenant limits before importing
   try {
     const { data: subscription } = (await supabase
@@ -209,12 +180,10 @@ async function importMilkRecords(data: any[], tenantId: string) {
       .select('plan')
       .eq('tenant_id', tenantId)
       .single()) as { data: any; error: any };
-
     const { count: currentMilkCount } = (await supabase
       .from('milk_logs')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)) as { count: number; error: any };
-
     // Define limits based on subscription plan
     const limits: Record<string, number> = {
       free: 50,
@@ -222,17 +191,14 @@ async function importMilkRecords(data: any[], tenantId: string) {
       farm: 5000,
       enterprise: Infinity,
     };
-
     const maxMilkRecords = limits[subscription?.plan || 'free'] || 50;
     const availableSlots = maxMilkRecords - currentMilkCount;
-
     if (availableSlots <= 0) {
       results.errors.push(
         `You've reached your limit of ${maxMilkRecords} milk records. Please upgrade your subscription to add more records.`
       );
       return results;
     }
-
     if (data.length > availableSlots) {
       results.errors.push(
         `You can only import ${availableSlots} more milk records with your current subscription. ${data.length} records were in the file.`
@@ -241,10 +207,8 @@ async function importMilkRecords(data: any[], tenantId: string) {
       data = data.slice(0, availableSlots);
     }
   } catch (error) {
-    console.error('Error checking tenant limits:', error);
     // Continue with import if limit check fails
   }
-
   // Validate milk record schema
   const milkSchema = z.object({
     animalTag: z.string(),
@@ -253,11 +217,9 @@ async function importMilkRecords(data: any[], tenantId: string) {
     eveningYield: z.number(),
     notes: z.string().optional(),
   });
-
   for (const record of data) {
     try {
       const validated = milkSchema.parse(record);
-
       // Find animal by tag
       const { data: animal } = (await supabase
         .from('animals')
@@ -265,13 +227,11 @@ async function importMilkRecords(data: any[], tenantId: string) {
         .eq('tenant_id', tenantId)
         .eq('tag', validated.animalTag)
         .single()) as { data: any; error: any };
-
       if (!animal) {
         results.skipped++;
         results.errors.push(`Animal with tag "${validated.animalTag}" not found`);
         continue;
       }
-
       // Check if record already exists
       const { data: existing } = (await supabase
         .from('milk_logs')
@@ -279,7 +239,6 @@ async function importMilkRecords(data: any[], tenantId: string) {
         .eq('animal_id', animal.id)
         .eq('date', validated.date)
         .single()) as { data: any; error: any };
-
       if (existing) {
         results.skipped++;
         results.errors.push(
@@ -287,7 +246,6 @@ async function importMilkRecords(data: any[], tenantId: string) {
         );
         continue;
       }
-
       // Insert milk record
       const { error } = (await supabase.from('milk_logs').insert({
         animal_id: animal.id,
@@ -298,7 +256,6 @@ async function importMilkRecords(data: any[], tenantId: string) {
         notes: validated.notes,
         created_at: new Date().toISOString(),
       } as any)) as { error: any };
-
       if (error) {
         results.errors.push(
           `Failed to import milk record for ${validated.animalTag}: ${error.message}`
@@ -312,10 +269,8 @@ async function importMilkRecords(data: any[], tenantId: string) {
       );
     }
   }
-
   return results;
 }
-
 // Import health records
 async function importHealthRecords(data: any[], tenantId: string) {
   const supabase = getSupabaseClient();
@@ -324,7 +279,6 @@ async function importHealthRecords(data: any[], tenantId: string) {
     skipped: 0,
     errors: [] as string[],
   };
-
   // Check tenant limits before importing
   try {
     const { data: subscription } = (await supabase
@@ -332,12 +286,10 @@ async function importHealthRecords(data: any[], tenantId: string) {
       .select('plan')
       .eq('tenant_id', tenantId)
       .single()) as { data: any; error: any };
-
     const { count: currentHealthCount } = (await supabase
       .from('health_records')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)) as { count: number; error: any };
-
     // Define limits based on subscription plan
     const limits: Record<string, number> = {
       free: 25,
@@ -345,17 +297,14 @@ async function importHealthRecords(data: any[], tenantId: string) {
       farm: 2500,
       enterprise: Infinity,
     };
-
     const maxHealthRecords = limits[subscription?.plan || 'free'] || 25;
     const availableSlots = maxHealthRecords - currentHealthCount;
-
     if (availableSlots <= 0) {
       results.errors.push(
         `You've reached your limit of ${maxHealthRecords} health records. Please upgrade your subscription to add more records.`
       );
       return results;
     }
-
     if (data.length > availableSlots) {
       results.errors.push(
         `You can only import ${availableSlots} more health records with your current subscription. ${data.length} records were in the file.`
@@ -364,10 +313,8 @@ async function importHealthRecords(data: any[], tenantId: string) {
       data = data.slice(0, availableSlots);
     }
   } catch (error) {
-    console.error('Error checking tenant limits:', error);
     // Continue with import if limit check fails
   }
-
   // Validate health record schema
   const healthSchema = z.object({
     animalTag: z.string(),
@@ -378,11 +325,9 @@ async function importHealthRecords(data: any[], tenantId: string) {
     veterinarian: z.string().optional(),
     notes: z.string().optional(),
   });
-
   for (const record of data) {
     try {
       const validated = healthSchema.parse(record);
-
       // Find animal by tag
       const { data: animal } = (await supabase
         .from('animals')
@@ -390,13 +335,11 @@ async function importHealthRecords(data: any[], tenantId: string) {
         .eq('tenant_id', tenantId)
         .eq('tag', validated.animalTag)
         .single()) as { data: any; error: any };
-
       if (!animal) {
         results.skipped++;
         results.errors.push(`Animal with tag "${validated.animalTag}" not found`);
         continue;
       }
-
       // Insert health record
       const { error } = (await supabase.from('health_records').insert({
         animal_id: animal.id,
@@ -409,7 +352,6 @@ async function importHealthRecords(data: any[], tenantId: string) {
         notes: validated.notes,
         created_at: new Date().toISOString(),
       } as any)) as { error: any };
-
       if (error) {
         results.errors.push(
           `Failed to import health record for ${validated.animalTag}: ${error.message}`
@@ -423,18 +365,14 @@ async function importHealthRecords(data: any[], tenantId: string) {
       );
     }
   }
-
   return results;
 }
-
 // Get import templates
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') || 'animals';
-
   try {
     let template: string;
-
     switch (type) {
       case 'animals':
         template = generateAnimalTemplate();
@@ -451,7 +389,6 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
     }
-
     return new Response(template, {
       headers: {
         'Content-Type': 'text/csv',
@@ -459,14 +396,12 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Template generation error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to generate template' },
       { status: 500 }
     );
   }
 }
-
 function generateAnimalTemplate(): string {
   const headers = [
     'Tag',
@@ -509,20 +444,16 @@ function generateAnimalTemplate(): string {
       '',
     ],
   ];
-
   return [headers, ...sampleData].map(row => row.join(',')).join('\n');
 }
-
 function generateMilkTemplate(): string {
   const headers = ['AnimalTag', 'Date', 'MorningYield', 'EveningYield', 'Notes'];
   const sampleData = [
     ['TAG001', '2024-01-01', '15', '12', 'Normal production'],
     ['', 'YYYY-MM-DD', '0', '0', 'Optional notes'],
   ];
-
   return [headers, ...sampleData].map(row => row.join(',')).join('\n');
 }
-
 function generateHealthTemplate(): string {
   const headers = [
     'AnimalTag',
@@ -553,6 +484,5 @@ function generateHealthTemplate(): string {
       'Optional notes',
     ],
   ];
-
   return [headers, ...sampleData].map(row => row.join(',')).join('\n');
 }

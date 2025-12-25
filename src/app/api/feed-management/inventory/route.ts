@@ -5,7 +5,6 @@ import { eq, and, ilike, lte, desc, sql, isNotNull } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/tenant/context';
-
 // Validation schemas
 const feedInventoryQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -17,7 +16,6 @@ const feedInventoryQuerySchema = z.object({
   search: z.string().optional(),
   isActive: z.coerce.boolean().default(true),
 });
-
 const createFeedInventorySchema = z.object({
   feedType: z.enum(['concentrate', 'silage', 'hay', 'minerals', 'supplements', 'water']),
   feedName: z.string().min(2).max(255),
@@ -40,7 +38,6 @@ const createFeedInventorySchema = z.object({
     })
     .optional(),
 });
-
 // GET /api/feed-management/inventory - List feed inventory with filtering
 export async function GET(request: NextRequest) {
   try {
@@ -48,38 +45,29 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     // Get tenant context for proper isolation
     const tenantContext = await getTenantContext();
-
     const { searchParams } = new URL(request.url);
     const query = feedInventoryQuerySchema.parse(Object.fromEntries(searchParams));
-
     const db = getDrizzle();
     const offset = (query.page - 1) * query.limit;
-
     // Build where conditions - ALWAYS include tenant filtering for tenant-specific tables
     const whereConditions = [
       eq(feedInventory.tenantId, tenantContext.tenantId),
       eq(feedInventory.isActive, query.isActive),
     ];
-
     if (query.feedType) {
       whereConditions.push(eq(feedInventory.feedType, query.feedType));
     }
-
     if (query.supplier) {
       whereConditions.push(ilike(feedInventory.supplier, `%${query.supplier}%`));
     }
-
     if (query.search) {
       whereConditions.push(ilike(feedInventory.feedName, `%${query.search}%`));
     }
-
     if (query.lowStock === true) {
       whereConditions.push(sql`${feedInventory.quantity} <= ${feedInventory.minimumStock}`);
     }
-
     if (query.expiringSoon === true) {
       // Items expiring within 30 days
       const thirtyDaysFromNow = new Date();
@@ -88,15 +76,12 @@ export async function GET(request: NextRequest) {
         and(lte(feedInventory.expiryDate, thirtyDaysFromNow), isNotNull(feedInventory.expiryDate))
       );
     }
-
     // Get total count
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(feedInventory)
       .where(and(...whereConditions));
-
     const total = totalCountResult[0]?.count || 0;
-
     // Get feed inventory
     const inventoryList = await db
       .select()
@@ -105,7 +90,6 @@ export async function GET(request: NextRequest) {
       .limit(query.limit)
       .offset(offset)
       .orderBy(desc(feedInventory.purchaseDate));
-
     // Calculate stock status for each item
     const inventoryWithStatus = inventoryList.map(item => ({
       ...item,
@@ -119,7 +103,6 @@ export async function GET(request: NextRequest) {
         ? new Date(item.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         : false,
     }));
-
     return NextResponse.json({
       success: true,
       data: {
@@ -142,11 +125,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching feed inventory:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
-
 // POST /api/feed-management/inventory - Add new feed inventory
 export async function POST(request: NextRequest) {
   try {
@@ -154,16 +135,12 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const validatedData = createFeedInventorySchema.parse(body);
-
     const db = getDrizzle();
     const inventoryId = `feed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     // Get tenant context
     const tenantContext = await getTenantContext();
-
     const newInventoryItem = await db
       .insert(feedInventory)
       .values({
@@ -175,22 +152,18 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       })
       .returning();
-
     return NextResponse.json({
       success: true,
       data: newInventoryItem[0],
       message: 'Feed inventory item added successfully',
     });
   } catch (error) {
-    console.error('Error adding feed inventory:', error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
         { status: 400 }
       );
     }
-
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

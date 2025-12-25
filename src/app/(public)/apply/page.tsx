@@ -1,6 +1,5 @@
 // Farm Application Page - Users apply for Farm ID here
 'use client';
-
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
@@ -40,7 +39,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-
 const applicationSchema = z.object({
   farmName: z.string().min(2, 'Farm name must be at least 2 characters'),
   ownerName: z.string().min(2, 'Owner name must be at least 2 characters'),
@@ -54,9 +52,7 @@ const applicationSchema = z.object({
   requestedPlan: z.enum(['free', 'professional', 'farm', 'enterprise']).nullable(),
   paymentSlipUrl: z.string().optional(),
 });
-
 type ApplicationFormData = z.infer<typeof applicationSchema>;
-
 const animalTypeOptions = [
   { value: 'cow', label: '🐄 Cows' },
   { value: 'buffalo', label: '🐃 Buffaloes' },
@@ -65,7 +61,6 @@ const animalTypeOptions = [
   { value: 'chicken', label: '🐔 Chickens' },
   { value: 'horse', label: '🐴 Horses' },
 ];
-
 const planOptions = [
   {
     value: 'free',
@@ -92,7 +87,6 @@ const planOptions = [
     features: ['Unlimited', 'Unlimited users', 'White-label', 'Dedicated support'],
   },
 ];
-
 const provinces = [
   'Punjab',
   'Sindh',
@@ -102,7 +96,6 @@ const provinces = [
   'Azad Kashmir',
   'Islamabad Capital Territory',
 ];
-
 // Payment methods
 const paymentMethods = {
   bank: {
@@ -118,7 +111,6 @@ const paymentMethods = {
     accountNumber: '03020718182',
   },
 };
-
 // User status type
 interface UserStatus {
   hasFarms: boolean;
@@ -137,7 +129,6 @@ interface UserStatus {
     createdAt: string;
   }>;
 }
-
 export default function ApplyForFarmPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
@@ -151,11 +142,9 @@ export default function ApplyForFarmPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'bank' | 'jazzcash'>('bank');
   const [stepErrors, setStepErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   // User status state
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
-
   const {
     register,
     handleSubmit,
@@ -180,7 +169,6 @@ export default function ApplyForFarmPage() {
     },
     mode: 'onChange',
   });
-
   // Check user status on load
   useEffect(() => {
     async function checkUserStatus() {
@@ -188,14 +176,11 @@ export default function ApplyForFarmPage() {
         setCheckingStatus(false);
         return;
       }
-
       try {
         const response = await fetch('/api/user/farms');
         const data = await response.json();
-
         if (data.success) {
           setUserStatus(data.data);
-
           // If user has farms, redirect to select-farm (which will redirect to dashboard if org is active)
           if (data.data.hasFarms && data.data.farms.length > 0) {
             router.push('/select-farm');
@@ -203,15 +188,12 @@ export default function ApplyForFarmPage() {
           }
         }
       } catch (error) {
-        console.error('Error checking user status:', error);
       } finally {
         setCheckingStatus(false);
       }
     }
-
     checkUserStatus();
   }, [isLoaded, user, router]);
-
   // Set user data when loaded
   useEffect(() => {
     if (isLoaded && user) {
@@ -219,7 +201,6 @@ export default function ApplyForFarmPage() {
       setValue('email', user.primaryEmailAddress?.emailAddress || '');
     }
   }, [isLoaded, user, setValue]);
-
   const requestedPlan = watch('requestedPlan');
   const farmName = watch('farmName');
   const ownerName = watch('ownerName');
@@ -229,12 +210,10 @@ export default function ApplyForFarmPage() {
   const isPlanSelected = requestedPlan !== null && requestedPlan !== undefined;
   const isPaidPlan = isPlanSelected && requestedPlan !== 'free';
   const totalSteps = isPaidPlan ? 4 : 3;
-
   // Step validation
   const validateStep = async (currentStep: number): Promise<boolean> => {
     setStepErrors([]);
     const errors: string[] = [];
-
     if (currentStep === 1) {
       if (!farmName || farmName.length < 2) errors.push('Farm name is required (min 2 characters)');
       if (!ownerName || ownerName.length < 2)
@@ -243,33 +222,27 @@ export default function ApplyForFarmPage() {
         errors.push('Valid email is required');
       if (!phone || phone.length < 10) errors.push('Phone number is required (min 10 digits)');
     }
-
     if (currentStep === 2) {
       if (selectedAnimalTypes.length === 0) errors.push('Select at least one animal type');
       if (!estimatedAnimals || estimatedAnimals < 1)
         errors.push('Estimated animals must be at least 1');
     }
-
     if (currentStep === 3) {
       if (!requestedPlan) errors.push('Please select a plan before continuing');
     }
-
     if (errors.length > 0) {
       setStepErrors(errors);
       toast.error(errors[0]);
       return false;
     }
-
     return true;
   };
-
   const handleNextStep = async () => {
     const isValid = await validateStep(step);
     if (isValid) {
       setStep(step + 1);
     }
   };
-
   // Copy to clipboard function
   const copyToClipboard = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
@@ -277,7 +250,6 @@ export default function ApplyForFarmPage() {
     toast.success('Copied to clipboard!');
     setTimeout(() => setCopiedField(null), 2000);
   };
-
   // Handle payment slip upload
   const handlePaymentSlipUpload = async (file: File) => {
     setUploadingSlip(true);
@@ -285,12 +257,10 @@ export default function ApplyForFarmPage() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('type', 'payment-slip');
-
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-
       const result = await response.json();
       if (result.success && result.url) {
         setPaymentSlipUrl(result.url);
@@ -305,7 +275,6 @@ export default function ApplyForFarmPage() {
       setUploadingSlip(false);
     }
   };
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -317,14 +286,12 @@ export default function ApplyForFarmPage() {
       handlePaymentSlipUpload(file);
     }
   };
-
   async function onSubmit(data: ApplicationFormData) {
     // Validate plan is selected
     if (!data.requestedPlan) {
       toast.error('Please select a plan before submitting');
       return;
     }
-
     setSubmitting(true);
     try {
       const submitData = {
@@ -332,15 +299,12 @@ export default function ApplyForFarmPage() {
         requestedPlan: data.requestedPlan, // Ensure plan is included
         paymentSlipUrl: paymentSlipUrl || undefined,
       };
-
       const response = await fetch('/api/farm-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),
       });
-
       const result = await response.json();
-
       if (result.success) {
         toast.success(result.message || 'Application submitted successfully!');
         router.push(`/apply/success?id=${result.data.id}`);
@@ -353,17 +317,14 @@ export default function ApplyForFarmPage() {
       setSubmitting(false);
     }
   }
-
   function toggleAnimalType(type: string) {
     const newTypes = selectedAnimalTypes.includes(type)
       ? selectedAnimalTypes.filter(t => t !== type)
       : [...selectedAnimalTypes, type];
-
     setSelectedAnimalTypes(newTypes);
     setValue('animalTypes', newTypes);
     setStepErrors([]);
   }
-
   // Show loading state while checking user status
   if (checkingStatus || !isLoaded) {
     return (
@@ -375,13 +336,11 @@ export default function ApplyForFarmPage() {
       </div>
     );
   }
-
   // Show existing applications if user has any
   const existingApplication = userStatus?.applications?.find(
     app =>
       app.status === 'pending' || app.status === 'payment_uploaded' || app.status === 'approved'
   );
-
   if (existingApplication) {
     const statusInfo: Record<
       string,
@@ -409,9 +368,7 @@ export default function ApplyForFarmPage() {
           'Congratulations! Your farm has been approved. Click below to access your dashboard.',
       },
     };
-
     const info = statusInfo[existingApplication.status] || statusInfo.pending;
-
     return (
       <div className='min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 px-4 py-12 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800'>
         <div className='mx-auto max-w-lg'>
@@ -425,15 +382,12 @@ export default function ApplyForFarmPage() {
                 <AlertCircle className='h-10 w-10 text-amber-600' />
               )}
             </div>
-
             <h1 className='mb-2 text-2xl font-bold dark:text-white'>
               {existingApplication.status === 'approved'
                 ? 'Welcome to MTK Dairy!'
                 : 'Application Submitted'}
             </h1>
-
             <p className='mb-6 text-gray-600 dark:text-slate-400'>{info.message}</p>
-
             <div className={`${info.bg} mb-6 rounded-xl border p-4`}>
               <div className='mb-2 flex items-center justify-between'>
                 <span className='text-sm text-gray-500'>Farm Name</span>
@@ -452,7 +406,6 @@ export default function ApplyForFarmPage() {
                 </div>
               )}
             </div>
-
             {existingApplication.status === 'approved' ? (
               <Button
                 onClick={() => router.push('/select-farm')}
@@ -477,7 +430,6 @@ export default function ApplyForFarmPage() {
       </div>
     );
   }
-
   return (
     <div className='min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 px-4 py-12 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800'>
       <div className='mx-auto max-w-2xl'>
@@ -494,7 +446,6 @@ export default function ApplyForFarmPage() {
             Register your farm and get started with MTK Dairy
           </p>
         </div>
-
         {/* Progress Steps */}
         <div className='mb-8 flex items-center justify-center gap-2'>
           {Array.from({ length: totalSteps }, (_, i) => i + 1).map(s => (
@@ -518,7 +469,6 @@ export default function ApplyForFarmPage() {
             </div>
           ))}
         </div>
-
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className='rounded-2xl bg-white p-8 shadow-lg dark:bg-slate-800'>
@@ -529,7 +479,6 @@ export default function ApplyForFarmPage() {
                   <Building2 className='h-5 w-5 text-emerald-600' />
                   Farm Details
                 </h2>
-
                 <div className='grid gap-4'>
                   <div>
                     <Label htmlFor='farmName'>Farm Name *</Label>
@@ -542,7 +491,6 @@ export default function ApplyForFarmPage() {
                       <p className='mt-1 text-sm text-red-500'>{errors.farmName.message}</p>
                     )}
                   </div>
-
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
                       <Label htmlFor='ownerName'>Owner Name *</Label>
@@ -559,7 +507,6 @@ export default function ApplyForFarmPage() {
                       )}
                     </div>
                   </div>
-
                   <div>
                     <Label htmlFor='email'>Email Address *</Label>
                     <Input
@@ -572,12 +519,10 @@ export default function ApplyForFarmPage() {
                       <p className='mt-1 text-sm text-red-500'>{errors.email.message}</p>
                     )}
                   </div>
-
                   <div>
                     <Label htmlFor='address'>Farm Address</Label>
                     <Input id='address' {...register('address')} placeholder='Full address' />
                   </div>
-
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
                       <Label htmlFor='city'>City</Label>
@@ -605,7 +550,6 @@ export default function ApplyForFarmPage() {
                 </div>
               </div>
             )}
-
             {/* Step 2: Farm Setup */}
             {step === 2 && (
               <div className='space-y-6'>
@@ -613,7 +557,6 @@ export default function ApplyForFarmPage() {
                   <PawPrint className='h-5 w-5 text-emerald-600' />
                   Farm Setup
                 </h2>
-
                 <div>
                   <Label>Animal Types *</Label>
                   <p className='mb-3 text-sm text-gray-500'>
@@ -642,7 +585,6 @@ export default function ApplyForFarmPage() {
                     <p className='mt-2 text-sm text-red-500'>{errors.animalTypes.message}</p>
                   )}
                 </div>
-
                 <div>
                   <Label htmlFor='estimatedAnimals'>Estimated Number of Animals *</Label>
                   <Input
@@ -658,7 +600,6 @@ export default function ApplyForFarmPage() {
                 </div>
               </div>
             )}
-
             {/* Step 3: Select Plan */}
             {step === 3 && (
               <div className='animate-fade-in space-y-6'>
@@ -666,7 +607,6 @@ export default function ApplyForFarmPage() {
                   <CreditCard className='h-5 w-5 text-emerald-600' />
                   Select Your Plan
                 </h2>
-
                 {/* Info message */}
                 <div className='rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20'>
                   <p className='flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200'>
@@ -676,7 +616,6 @@ export default function ApplyForFarmPage() {
                     </span>
                   </p>
                 </div>
-
                 <div className='space-y-3'>
                   {planOptions.map(plan => (
                     <button
@@ -724,7 +663,6 @@ export default function ApplyForFarmPage() {
                     </button>
                   ))}
                 </div>
-
                 {/* Show info based on selection */}
                 {isPlanSelected && isPaidPlan && (
                   <div className='animate-fade-in rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20'>
@@ -734,7 +672,6 @@ export default function ApplyForFarmPage() {
                     </p>
                   </div>
                 )}
-
                 {isPlanSelected && !isPaidPlan && (
                   <div className='animate-fade-in rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20'>
                     <p className='flex items-center gap-2 text-sm text-green-800 dark:text-green-200'>
@@ -745,7 +682,6 @@ export default function ApplyForFarmPage() {
                 )}
               </div>
             )}
-
             {/* Step 4: Payment Upload (for paid plans) */}
             {step === 4 && isPaidPlan && (
               <div className='animate-fade-in space-y-6'>
@@ -753,7 +689,6 @@ export default function ApplyForFarmPage() {
                   <Upload className='h-5 w-5 text-emerald-600' />
                   Payment & Upload Slip
                 </h2>
-
                 {/* Plan Summary */}
                 <div className='rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-blue-50 p-4 dark:border-emerald-700 dark:from-emerald-900/20 dark:to-blue-900/20'>
                   <p className='text-sm text-gray-500 dark:text-slate-400'>Selected Plan</p>
@@ -762,7 +697,6 @@ export default function ApplyForFarmPage() {
                     {planOptions.find(p => p.value === requestedPlan)?.price}
                   </p>
                 </div>
-
                 {/* Payment Method Tabs */}
                 <div className='flex gap-2 rounded-xl bg-gray-100 p-1 dark:bg-slate-700'>
                   <button
@@ -790,7 +724,6 @@ export default function ApplyForFarmPage() {
                     JazzCash
                   </button>
                 </div>
-
                 {/* Bank Details */}
                 {selectedPaymentMethod === 'bank' && (
                   <div className='animate-fade-in rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5 dark:border-green-800 dark:from-green-900/20 dark:to-emerald-900/20'>
@@ -850,7 +783,6 @@ export default function ApplyForFarmPage() {
                     </div>
                   </div>
                 )}
-
                 {/* JazzCash Details */}
                 {selectedPaymentMethod === 'jazzcash' && (
                   <div className='animate-fade-in rounded-xl border border-red-200 bg-gradient-to-br from-red-50 to-orange-50 p-5 dark:border-red-800 dark:from-red-900/20 dark:to-orange-900/20'>
@@ -906,14 +838,12 @@ export default function ApplyForFarmPage() {
                     </div>
                   </div>
                 )}
-
                 {/* Upload Section */}
                 <div>
                   <Label>Upload Payment Slip</Label>
                   <p className='mb-3 text-sm text-gray-500'>
                     Upload a screenshot or photo of your bank transfer receipt
                   </p>
-
                   <input
                     ref={fileInputRef}
                     type='file'
@@ -921,7 +851,6 @@ export default function ApplyForFarmPage() {
                     onChange={handleFileSelect}
                     className='hidden'
                   />
-
                   {!paymentSlipUrl ? (
                     <button
                       type='button'
@@ -973,7 +902,6 @@ export default function ApplyForFarmPage() {
                     </div>
                   )}
                 </div>
-
                 <div className='rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20'>
                   <p className='text-sm text-amber-800 dark:text-amber-200'>
                     <strong>Note:</strong> You can submit without uploading now and upload the
@@ -982,7 +910,6 @@ export default function ApplyForFarmPage() {
                 </div>
               </div>
             )}
-
             {/* Step Errors */}
             {stepErrors.length > 0 && (
               <div className='animate-shake mt-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20'>
@@ -1003,7 +930,6 @@ export default function ApplyForFarmPage() {
                 </div>
               </div>
             )}
-
             {/* Navigation Buttons */}
             <div className='mt-8 flex justify-between border-t border-gray-200 pt-6 dark:border-slate-700'>
               {step > 1 ? (
@@ -1022,7 +948,6 @@ export default function ApplyForFarmPage() {
               ) : (
                 <div />
               )}
-
               {/* Step 3 with paid plan - go to step 4 */}
               {step === 3 && isPlanSelected && isPaidPlan ? (
                 <Button

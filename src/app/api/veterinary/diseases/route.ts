@@ -5,7 +5,6 @@ import { eq, and, ilike, inArray, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/tenant/context';
-
 // Validation schemas
 const diseaseQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -28,7 +27,6 @@ const diseaseQuerySchema = z.object({
   search: z.string().optional(),
   isActive: z.coerce.boolean().default(true),
 });
-
 const createDiseaseSchema = z.object({
   category: z.enum([
     'metabolic',
@@ -71,7 +69,6 @@ const createDiseaseSchema = z.object({
     )
     .default([]),
 });
-
 // GET /api/veterinary/diseases - List diseases with filtering and pagination
 export async function GET(request: NextRequest) {
   try {
@@ -79,50 +76,38 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     // Get tenant context for proper isolation
     const tenantContext = await getTenantContext();
-
     const { searchParams } = new URL(request.url);
     const query = diseaseQuerySchema.parse(Object.fromEntries(searchParams));
-
     const db = getDrizzle();
     const offset = (query.page - 1) * query.limit;
-
     // Build where conditions
     const whereConditions = [eq(diseases.isActive, query.isActive)];
-
     if (query.category) {
       whereConditions.push(eq(diseases.category, query.category));
     }
-
     if (query.severity) {
       whereConditions.push(eq(diseases.severity, query.severity));
     }
-
     if (query.zoonoticRisk !== undefined) {
       whereConditions.push(eq(diseases.zoonoticRisk, query.zoonoticRisk));
     }
-
     if (query.search) {
       whereConditions.push(ilike(diseases.nameEn, `%${query.search}%`));
     }
-
     if (query.animalType) {
       whereConditions.push(
         // Check if animalType is in the commonInAnimalTypes array
         sql`${query.animalType} = ANY(${diseases.commonInAnimalTypes})`
       );
     }
-
     // Get total count
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(diseases)
       .where(and(...whereConditions));
-
     const total = totalCountResult[0]?.count || 0;
-
     // Get diseases
     const diseasesList = await db
       .select()
@@ -131,7 +116,6 @@ export async function GET(request: NextRequest) {
       .limit(query.limit)
       .offset(offset)
       .orderBy(diseases.nameEn);
-
     return NextResponse.json({
       success: true,
       data: {
@@ -145,11 +129,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching diseases:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
-
 // POST /api/veterinary/diseases - Create new disease (admin only)
 export async function POST(request: NextRequest) {
   try {
@@ -157,7 +139,6 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     // TODO: Add admin role check here
     // const userRole = await getUserRole(userId);
     // if (userRole !== 'admin') {
@@ -166,16 +147,12 @@ export async function POST(request: NextRequest) {
     //     { status: 403 }
     //   );
     // }
-
     const body = await request.json();
     const validatedData = createDiseaseSchema.parse(body);
-
     // Get tenant context
     const tenantContext = await getTenantContext();
-
     const db = getDrizzle();
     const diseaseId = `disease_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     const newDisease = await db
       .insert(diseases)
       .values({
@@ -187,22 +164,18 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       })
       .returning();
-
     return NextResponse.json({
       success: true,
       data: newDisease[0],
       message: 'Disease created successfully',
     });
   } catch (error) {
-    console.error('Error creating disease:', error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
         { status: 400 }
       );
     }
-
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +24,6 @@ import { cn } from '@/lib/utils';
 import { FeedInventoryTable } from './FeedInventoryTable';
 import { FeedAnalyticsChart } from './FeedAnalyticsChart';
 import { NutritionOptimizer } from './NutritionOptimizer';
-
 interface FeedAnalytics {
   totalValue: number;
   totalItems: number;
@@ -46,34 +44,27 @@ interface FeedAnalytics {
     costPerDay: number;
   };
 }
-
 export function FeedManagementDashboard({ className }: { className?: string }) {
   const [analytics, setAnalytics] = useState<FeedAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-
   useEffect(() => {
     fetchAnalytics();
   }, []);
-
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/feed-management/enhanced');
       const result = await response.json();
-
       if (result.success) {
         setAnalytics(result.data.analytics);
       } else {
-        console.error('Failed to fetch analytics:', result.error);
       }
     } catch (error) {
-      console.error('Error fetching analytics:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
@@ -82,14 +73,12 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
       maximumFractionDigits: 0,
     }).format(amount);
   };
-
   const formatWeight = (amount: number) => {
     if (amount >= 1000) {
       return `${(amount / 1000).toFixed(1)} tons`;
     }
     return `${amount.toFixed(0)} kg`;
   };
-
   const getStockStatusColor = (status: string) => {
     switch (status) {
       case 'critical':
@@ -104,7 +93,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
   if (loading) {
     return (
       <div className={cn('w-full space-y-6', className)}>
@@ -120,7 +108,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
       </div>
     );
   }
-
   if (!analytics) {
     return (
       <div className={cn('w-full', className)}>
@@ -135,7 +122,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
       </div>
     );
   }
-
   return (
     <div className={cn('w-full space-y-6', className)}>
       {/* Header */}
@@ -155,7 +141,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
           </Button>
         </div>
       </div>
-
       {/* Key Metrics Cards */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card>
@@ -172,7 +157,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-6'>
             <div className='flex items-center justify-between'>
@@ -187,7 +171,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-6'>
             <div className='flex items-center justify-between'>
@@ -200,7 +183,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-6'>
             <div className='flex items-center justify-between'>
@@ -214,7 +196,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
           </CardContent>
         </Card>
       </div>
-
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
         <TabsList className='grid w-full grid-cols-4'>
@@ -223,7 +204,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
           <TabsTrigger value='nutrition'>Nutrition</TabsTrigger>
           <TabsTrigger value='analytics'>Analytics</TabsTrigger>
         </TabsList>
-
         <TabsContent value='overview' className='space-y-6'>
           {/* Category Breakdown */}
           <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
@@ -256,7 +236,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                 </div>
               </CardContent>
             </Card>
-
             {/* Efficiency Metrics */}
             <Card>
               <CardHeader>
@@ -281,7 +260,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                       className='h-2'
                     />
                   </div>
-
                   <div className='rounded-lg bg-gray-50 p-4'>
                     <div className='mb-2 flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-700'>Stock Turnover Rate</span>
@@ -294,7 +272,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                       className='h-2'
                     />
                   </div>
-
                   <div className='rounded-lg bg-gray-50 p-4'>
                     <div className='mb-2 flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-700'>Waste Percentage</span>
@@ -304,7 +281,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                     </div>
                     <Progress value={analytics.efficiencyMetrics.wastePercentage} className='h-2' />
                   </div>
-
                   <div className='rounded-lg bg-gray-50 p-4'>
                     <div className='flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-700'>Daily Cost</span>
@@ -317,7 +293,6 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
               </CardContent>
             </Card>
           </div>
-
           {/* Quick Actions */}
           <Card>
             <CardHeader>
@@ -341,15 +316,12 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value='inventory' className='space-y-4'>
           <FeedInventoryTable />
         </TabsContent>
-
         <TabsContent value='nutrition' className='space-y-4'>
           <NutritionOptimizer />
         </TabsContent>
-
         <TabsContent value='analytics' className='space-y-4'>
           <FeedAnalyticsChart analytics={analytics} />
         </TabsContent>

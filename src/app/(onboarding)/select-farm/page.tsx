@@ -1,32 +1,27 @@
 // Farm Selection Page - User selects which farm to access
 'use client';
-
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useOrganizationList, useOrganization } from '@clerk/nextjs';
 import { Building2, Loader2, ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
 interface Farm {
   id: string;
   name: string;
   slug: string;
   role: string;
 }
-
 interface Application {
   id: string;
   farmName: string;
   status: string;
   assignedFarmId?: string;
 }
-
 interface UserFarmsData {
   farms: Farm[];
   applications: Application[];
   hasFarms: boolean;
 }
-
 export default function SelectFarmPage() {
   const router = useRouter();
   const { user, isLoaded: userLoaded } = useUser();
@@ -40,14 +35,12 @@ export default function SelectFarmPage() {
       infinite: true,
     },
   });
-
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState(false);
   const [joining, setJoining] = useState(false);
   const [userFarms, setUserFarms] = useState<UserFarmsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hasRedirected = useRef(false);
-
   // If already in an organization, redirect to dashboard
   useEffect(() => {
     if (orgLoaded && organization && !hasRedirected.current) {
@@ -55,24 +48,18 @@ export default function SelectFarmPage() {
       router.replace('/dashboard');
     }
   }, [organization, orgLoaded, router]);
-
   // Fetch user farms from our API with cleanup
   const fetchUserFarms = useCallback(
     async (signal?: AbortSignal) => {
       if (!userLoaded || !user) return;
-
       setLoading(true);
       setError(null);
-
       try {
         const response = await fetch('/api/user/farms', { signal });
-
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-
         const data = await response.json();
-
         if (data.success) {
           setUserFarms(data.data);
         } else {
@@ -81,7 +68,6 @@ export default function SelectFarmPage() {
       } catch (err: any) {
         // Ignore abort errors
         if (err?.name === 'AbortError') return;
-        console.error('Error fetching farms:', err);
         setError('Failed to load your farms. Please try again.');
       } finally {
         setLoading(false);
@@ -89,41 +75,32 @@ export default function SelectFarmPage() {
     },
     [userLoaded, user]
   );
-
   useEffect(() => {
     const controller = new AbortController();
     fetchUserFarms(controller.signal);
-
     return () => controller.abort();
   }, [fetchUserFarms]);
-
   // Handle switching to an organization
   async function handleSelectOrg(orgId: string) {
     if (!setActive) return;
-
     setSwitching(true);
     try {
       await setActive({ organization: orgId });
       router.push('/dashboard');
     } catch (err) {
-      console.error('Error switching organization:', err);
       setError('Failed to switch to this farm. Please try again.');
       setSwitching(false);
     }
   }
-
   // Handle joining organization for approved users
   async function handleJoinOrg() {
     setJoining(true);
     setError(null);
-
     try {
       const response = await fetch('/api/user/join-org', {
         method: 'POST',
       });
-
       const data = await response.json();
-
       if (data.success) {
         // Refresh the page to get updated memberships
         window.location.reload();
@@ -135,22 +112,18 @@ export default function SelectFarmPage() {
         setError(errorMsg);
       }
     } catch (err) {
-      console.error('Error joining organization:', err);
       setError('Failed to join organization. Please try again.');
     } finally {
       setJoining(false);
     }
   }
-
   // Handle retry
   const handleRetry = () => {
     const controller = new AbortController();
     fetchUserFarms(controller.signal);
   };
-
   // Loading state - wait for all required data
   const isLoading = loading || !userLoaded || !orgsLoaded || !orgLoaded;
-
   if (isLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-blue-50'>
@@ -161,7 +134,6 @@ export default function SelectFarmPage() {
       </div>
     );
   }
-
   // If organization is set, show redirecting state
   if (organization) {
     return (
@@ -173,19 +145,15 @@ export default function SelectFarmPage() {
       </div>
     );
   }
-
   // Get Clerk organizations
   const clerkOrgs = userMemberships?.data || [];
-
   // Check if user has any organizations in Clerk
   const hasClerkOrgs = clerkOrgs.length > 0;
-
   // Check for approved application without Clerk org
   const approvedApp = userFarms?.applications?.find(app => app.status === 'approved');
   const pendingApp = userFarms?.applications?.find(
     app => app.status === 'pending' || app.status === 'payment_uploaded'
   );
-
   return (
     <div className='min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 px-4 py-12'>
       <div className='mx-auto max-w-lg'>
@@ -197,7 +165,6 @@ export default function SelectFarmPage() {
           <h1 className='text-2xl font-bold text-gray-900'>Select Your Farm</h1>
           <p className='mt-2 text-gray-600'>Choose a farm to access its dashboard</p>
         </div>
-
         {/* Error message */}
         {error && (
           <div className='mb-6 rounded-lg border border-red-200 bg-red-50 p-4'>
@@ -235,7 +202,6 @@ export default function SelectFarmPage() {
             </Button>
           </div>
         )}
-
         {/* Organizations from Clerk */}
         {hasClerkOrgs ? (
           <div className='overflow-hidden rounded-xl bg-white shadow-lg'>

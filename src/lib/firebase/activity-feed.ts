@@ -1,7 +1,6 @@
 // Firebase Firestore Activity Feed Service
 // LIMITED USE: Only for real-time activity feeds (50K reads/day limit)
 // All other data is stored in Supabase PostgreSQL
-
 import {
   collection,
   addDoc,
@@ -17,7 +16,6 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { getFirestoreDb } from './client';
-
 export type ActivityType =
   | 'animal_added'
   | 'animal_updated'
@@ -34,7 +32,6 @@ export type ActivityType =
   | 'farm_application_submitted'
   | 'farm_application_approved'
   | 'farm_application_rejected';
-
 export interface ActivityFeedItem {
   id?: string;
   tenantId: string;
@@ -47,9 +44,7 @@ export interface ActivityFeedItem {
   metadata?: Record<string, unknown>;
   createdAt: Timestamp | Date;
 }
-
 const ACTIVITY_COLLECTION = 'activity_feeds';
-
 /**
  * Add a new activity to the feed
  * Use sparingly to stay within 50K reads/day limit
@@ -65,11 +60,9 @@ export async function addActivity(
     });
     return docRef.id;
   } catch (error) {
-    console.error('Error adding activity:', error);
     throw error;
   }
 }
-
 /**
  * Subscribe to real-time activity feed for a tenant
  * Returns unsubscribe function
@@ -86,7 +79,6 @@ export function subscribeToActivityFeed(
     orderBy('createdAt', 'desc'),
     limit(maxItems)
   );
-
   return onSnapshot(q, snapshot => {
     const activities: ActivityFeedItem[] = [];
     snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -98,7 +90,6 @@ export function subscribeToActivityFeed(
     onUpdate(activities);
   });
 }
-
 /**
  * Subscribe to platform-wide activity feed (for super admins)
  * Shows all farm applications and important platform events
@@ -115,14 +106,12 @@ export function subscribeToPlatformActivityFeed(
     'payment_received',
     'subscription_updated',
   ];
-
   const q = query(
     collection(db, ACTIVITY_COLLECTION),
     where('type', 'in', platformTypes),
     orderBy('createdAt', 'desc'),
     limit(maxItems)
   );
-
   return onSnapshot(q, snapshot => {
     const activities: ActivityFeedItem[] = [];
     snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -134,7 +123,6 @@ export function subscribeToPlatformActivityFeed(
     onUpdate(activities);
   });
 }
-
 /**
  * Helper to create activity messages
  */
@@ -203,7 +191,6 @@ export const activityMessages: Record<
     description: `${m?.farmName || 'A farm'} application was rejected`,
   }),
 };
-
 /**
  * Create and add an activity with auto-generated message
  */
@@ -216,7 +203,6 @@ export async function logActivity(
   userAvatar?: string
 ): Promise<string> {
   const { title, description } = activityMessages[type](metadata);
-
   return addActivity({
     tenantId,
     userId,

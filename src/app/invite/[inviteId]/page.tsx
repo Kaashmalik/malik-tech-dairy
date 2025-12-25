@@ -1,12 +1,10 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
-
 interface Invitation {
   id: string;
   email: string;
@@ -15,7 +13,6 @@ interface Invitation {
   status: string;
   expiresAt: Date;
 }
-
 export default function AcceptInvitePage() {
   const params = useParams();
   const router = useRouter();
@@ -24,13 +21,11 @@ export default function AcceptInvitePage() {
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     if (params.inviteId) {
       fetchInvite();
     }
   }, [params.inviteId]);
-
   const fetchInvite = async () => {
     try {
       const response = await fetch(`/api/invitations/${params.inviteId}`);
@@ -42,22 +37,18 @@ export default function AcceptInvitePage() {
         setError(errorData.error || 'Invitation not found');
       }
     } catch (error) {
-      console.error('Error fetching invitation:', error);
       setError('Failed to load invitation');
     } finally {
       setLoading(false);
     }
   };
-
   const handleAccept = async () => {
     if (!user || !invite) return;
-
     setAccepting(true);
     try {
       const response = await fetch(`/api/invitations/${params.inviteId}`, {
         method: 'POST',
       });
-
       if (response.ok) {
         const data = await response.json();
         // Redirect to tenant dashboard
@@ -67,13 +58,11 @@ export default function AcceptInvitePage() {
         setError(errorData.error || 'Failed to accept invitation');
       }
     } catch (error) {
-      console.error('Error accepting invitation:', error);
       setError('Failed to accept invitation');
     } finally {
       setAccepting(false);
     }
   };
-
   if (loading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
@@ -84,7 +73,6 @@ export default function AcceptInvitePage() {
       </div>
     );
   }
-
   if (error || !invite) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
@@ -95,7 +83,6 @@ export default function AcceptInvitePage() {
       </div>
     );
   }
-
   if (invite.status !== 'pending') {
     return (
       <div className='flex min-h-screen items-center justify-center'>
@@ -106,7 +93,6 @@ export default function AcceptInvitePage() {
       </div>
     );
   }
-
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-50'>
       <Card className='w-full max-w-md p-8'>
@@ -115,7 +101,6 @@ export default function AcceptInvitePage() {
         <p className='mb-6 text-xl font-semibold'>
           {ROLE_DISPLAY_NAMES[invite.role as keyof typeof ROLE_DISPLAY_NAMES]}
         </p>
-
         {!isLoaded ? (
           <div className='py-4 text-center'>
             <div className='mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900'></div>
@@ -137,7 +122,6 @@ export default function AcceptInvitePage() {
             </Button>
           </div>
         )}
-
         {invite.expiresAt && (
           <p className='mt-4 text-center text-xs text-gray-500'>
             Expires: {new Date(invite.expiresAt).toLocaleDateString()}

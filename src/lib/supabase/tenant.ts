@@ -4,7 +4,6 @@ import { tenants, subscriptions, customFieldsConfig } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { TenantConfig, TenantSubscription, TenantLimits } from '@/types';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
-
 /**
  * Get tenant config from Supabase
  */
@@ -12,11 +11,9 @@ export async function getTenantConfig(tenantId: string): Promise<TenantConfig | 
   try {
     const db = getDrizzle();
     const result = await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1);
-
     if (result.length === 0) {
       return null;
     }
-
     const data = result[0];
     return {
       farmName: data.farmName,
@@ -32,11 +29,9 @@ export async function getTenantConfig(tenantId: string): Promise<TenantConfig | 
       updatedAt: data.updatedAt,
     };
   } catch (error) {
-    console.error('Error fetching tenant config from Supabase:', error);
     return null;
   }
 }
-
 /**
  * Create or update tenant config in Supabase
  */
@@ -45,7 +40,6 @@ export async function setTenantConfig(
   config: Partial<TenantConfig>
 ): Promise<void> {
   const db = getDrizzle();
-
   await db
     .insert(tenants)
     .values({
@@ -76,7 +70,6 @@ export async function setTenantConfig(
       },
     });
 }
-
 /**
  * Get tenant subscription from Supabase
  */
@@ -88,11 +81,9 @@ export async function getTenantSubscription(tenantId: string): Promise<TenantSub
       .from(subscriptions)
       .where(eq(subscriptions.tenantId, tenantId))
       .limit(1);
-
     if (result.length === 0) {
       return null;
     }
-
     const data = result[0];
     return {
       plan: data.plan as any,
@@ -105,35 +96,28 @@ export async function getTenantSubscription(tenantId: string): Promise<TenantSub
       trialEndsAt: data.trialEndsAt || undefined,
     };
   } catch (error) {
-    console.error('Error fetching tenant subscription from Supabase:', error);
     return null;
   }
 }
-
 /**
  * Get tenant limits based on subscription plan
  */
 export async function getTenantLimits(tenantId: string): Promise<TenantLimits | null> {
   try {
     const subscription = await getTenantSubscription(tenantId);
-
     if (!subscription) {
       return null;
     }
-
     const planDetails = SUBSCRIPTION_PLANS[subscription.plan];
-
     return {
       maxAnimals: planDetails.maxAnimals,
       maxUsers: planDetails.maxUsers,
       features: planDetails.features,
     };
   } catch (error) {
-    console.error('Error fetching tenant limits:', error);
     return null;
   }
 }
-
 /**
  * Initialize tenant in Supabase (called when organization is created)
  */
@@ -144,7 +128,6 @@ export async function initializeTenant(
   ownerEmail: string
 ): Promise<void> {
   const db = getDrizzle();
-
   // Create tenant
   await db
     .insert(tenants)
@@ -162,7 +145,6 @@ export async function initializeTenant(
       updatedAt: new Date(),
     })
     .onConflictDoNothing();
-
   // Create default subscription (free tier)
   await db
     .insert(subscriptions)
@@ -180,7 +162,6 @@ export async function initializeTenant(
       updatedAt: new Date(),
     })
     .onConflictDoNothing();
-
   // Create default custom fields config
   await db
     .insert(customFieldsConfig)

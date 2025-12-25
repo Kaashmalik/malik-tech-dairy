@@ -1,10 +1,8 @@
 'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { OfflineDB } from './database';
 import { syncService } from './sync-service';
-
 // Generic offline query hook
 export function useOfflineQuery<T>(
   tenantId: string,
@@ -19,7 +17,6 @@ export function useOfflineQuery<T>(
 ) {
   const [hasUsedOfflineData, setHasUsedOfflineData] = useState(false);
   const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey,
     queryFn: async () => {
@@ -31,27 +28,20 @@ export function useOfflineQuery<T>(
           return offlineData;
         }
       } catch (error) {
-        console.error('Offline fetch failed:', error);
       }
-
       // Then try network if online
       if (navigator.onLine) {
         try {
           const networkData = await networkFetcher(tenantId);
-
           // Reset offline flag when we get fresh network data
           setHasUsedOfflineData(false);
-
           // Update offline cache with fresh data
           if (networkData.length > 0) {
             // This would be implemented in each specific service
             // For now, just return network data
           }
-
           return networkData;
         } catch (error) {
-          console.error('Network fetch failed:', error);
-
           // Fallback to offline data if network fails
           try {
             const fallbackData = await offlineFetcher(tenantId);
@@ -61,7 +51,6 @@ export function useOfflineQuery<T>(
           }
         }
       }
-
       // If offline and no cached data, throw error
       throw new Error('No internet connection and no cached data available');
     },
@@ -69,7 +58,6 @@ export function useOfflineQuery<T>(
     staleTime: options?.staleTime || 1000 * 60 * 5, // 5 minutes
     refetchInterval: options?.refetchInterval,
   });
-
   // Auto-sync when coming back online
   useEffect(() => {
     const handleOnline = async () => {
@@ -79,21 +67,17 @@ export function useOfflineQuery<T>(
           // Refetch data after sync
           queryClient.invalidateQueries({ queryKey });
         } catch (error) {
-          console.error('Auto-sync failed:', error);
         }
       }
     };
-
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
   }, [tenantId, queryClient, queryKey]);
-
   return {
     ...query,
     isOfflineData: hasUsedOfflineData && !query.isFetched,
   };
 }
-
 // Specific hooks for different entities
 export function useOfflineAnimals(tenantId: string) {
   return useOfflineQuery(
@@ -108,7 +92,6 @@ export function useOfflineAnimals(tenantId: string) {
     }
   );
 }
-
 export function useOfflineMilkLogs(tenantId: string, animalId?: string, limit = 30) {
   return useOfflineQuery(
     tenantId,
@@ -125,7 +108,6 @@ export function useOfflineMilkLogs(tenantId: string, animalId?: string, limit = 
     }
   );
 }
-
 export function useOfflineHealthRecords(tenantId: string, animalId?: string, limit = 30) {
   return useOfflineQuery(
     tenantId,
@@ -142,7 +124,6 @@ export function useOfflineHealthRecords(tenantId: string, animalId?: string, lim
     }
   );
 }
-
 // Offline mutation hook
 export function useOfflineMutation<T, V>(
   tenantId: string,
@@ -155,28 +136,22 @@ export function useOfflineMutation<T, V>(
   }
 ) {
   const queryClient = useQueryClient();
-
   const mutation = useMutation({
     mutationFn: async (variables: V) => {
       // First perform offline action for immediate UI update
       try {
         await offlineAction(variables, tenantId);
       } catch (error) {
-        console.error('Offline action failed:', error);
         // Continue with network action even if offline fails
       }
-
       // Then perform network mutation if online
       if (navigator.onLine) {
         try {
           const result = await mutationFn(variables);
-
           // Update offline cache with server response
           // This would be implemented based on the specific mutation type
-
           return result;
         } catch (error) {
-          console.error('Network mutation failed, will sync later:', error);
           // Return a success response anyway since offline action succeeded
           return { success: true, offline: true } as T;
         }
@@ -192,18 +167,14 @@ export function useOfflineMutation<T, V>(
           queryClient.invalidateQueries({ queryKey });
         });
       }
-
       options?.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {
-      console.error('Mutation failed:', error);
       options?.onError?.(error, variables);
     },
   });
-
   return mutation;
 }
-
 // Specific mutation hooks
 export function useOfflineCreateAnimal(tenantId: string) {
   return useOfflineMutation(
@@ -225,7 +196,6 @@ export function useOfflineCreateAnimal(tenantId: string) {
     }
   );
 }
-
 export function useOfflineUpdateAnimal(tenantId: string) {
   return useOfflineMutation(
     tenantId,
@@ -247,7 +217,6 @@ export function useOfflineUpdateAnimal(tenantId: string) {
     }
   );
 }
-
 export function useOfflineDeleteAnimal(tenantId: string) {
   return useOfflineMutation(
     tenantId,
@@ -267,7 +236,6 @@ export function useOfflineDeleteAnimal(tenantId: string) {
     }
   );
 }
-
 export function useOfflineCreateMilkLog(tenantId: string) {
   return useOfflineMutation(
     tenantId,
@@ -288,7 +256,6 @@ export function useOfflineCreateMilkLog(tenantId: string) {
     }
   );
 }
-
 // Sync status hook
 export function useSyncStatus(tenantId: string) {
   const [syncStatus, setSyncStatus] = useState({
@@ -297,13 +264,11 @@ export function useSyncStatus(tenantId: string) {
     lastSync: 0,
     syncInProgress: false,
   });
-
   useEffect(() => {
     const updateStatus = async () => {
       try {
         const status = await OfflineDB.getSyncStatus(tenantId);
         const mutations = await OfflineDB.getQueuedMutations(tenantId);
-
         setSyncStatus({
           isOnline: navigator.onLine,
           pendingMutations: mutations.length,
@@ -311,27 +276,20 @@ export function useSyncStatus(tenantId: string) {
           syncInProgress: status?.syncInProgress || false,
         });
       } catch (error) {
-        console.error('Failed to get sync status:', error);
       }
     };
-
     updateStatus();
-
     const interval = setInterval(updateStatus, 5000); // Update every 5 seconds
-
     const handleOnline = updateStatus;
     const handleOffline = updateStatus;
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
     return () => {
       clearInterval(interval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, [tenantId]);
-
   const manualSync = useCallback(async () => {
     if (navigator.onLine && tenantId) {
       try {
@@ -339,7 +297,6 @@ export function useSyncStatus(tenantId: string) {
         // Update status after sync
         const status = await OfflineDB.getSyncStatus(tenantId);
         const mutations = await OfflineDB.getQueuedMutations(tenantId);
-
         setSyncStatus(prev => ({
           ...prev,
           pendingMutations: mutations.length,
@@ -347,11 +304,9 @@ export function useSyncStatus(tenantId: string) {
           syncInProgress: false,
         }));
       } catch (error) {
-        console.error('Manual sync failed:', error);
       }
     }
   }, [tenantId]);
-
   return {
     ...syncStatus,
     manualSync,

@@ -7,9 +7,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { updateTenantSubscription } from '@/lib/subscriptions/management';
 import { recordCouponUsage } from '@/lib/coupons/validation';
 import type { PaymentGateway } from '@/types';
-
 export const dynamic = 'force-dynamic';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ gateway: string }> }
@@ -17,13 +15,11 @@ export async function GET(
   try {
     const { gateway } = await params;
     const { searchParams } = new URL(request.url);
-
     // Get all query parameters
     const responseData: Record<string, string> = {};
     searchParams.forEach((value, key) => {
       responseData[key] = value;
     });
-
     // Verify payment based on gateway
     let verification: {
       valid: boolean;
@@ -31,7 +27,6 @@ export async function GET(
       amount?: number;
       status?: string;
     };
-
     if (gateway === 'jazzcash') {
       const config = {
         merchantId: process.env.JAZZCASH_MERCHANT_ID!,
@@ -62,44 +57,36 @@ export async function GET(
         `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=invalid_gateway`
       );
     }
-
     if (!verification.valid || verification.status !== 'success') {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=payment_failed`
       );
     }
-
     // Extract order ID from transaction ID or response
     const orderId = responseData.orderId || responseData.pp_TxnRefNo || verification.transactionId;
-
     if (!orderId || !adminDb) {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=invalid_order`
       );
     }
-
     // Find payment intent by order ID
     const paymentIntents = await adminDb
       .collection('payment_intents')
       .where('orderId', '==', orderId)
       .limit(1)
       .get();
-
     if (paymentIntents.empty) {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=order_not_found`
       );
     }
-
     const paymentIntent = paymentIntents.docs[0].data();
     const { tenantId, plan, userId, couponCode, discountAmount } = paymentIntent;
-
     // Record payment in Supabase
     const { getDrizzle } = await import('@/lib/supabase');
     const { payments } = await import('@/db/schema');
     const { nanoid } = await import('nanoid');
     const db = getDrizzle();
-
     await db.insert(payments).values({
       id: nanoid(),
       tenantId,
@@ -113,12 +100,10 @@ export async function GET(
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
     // Record coupon usage if applicable
     if (couponCode && discountAmount > 0) {
       await recordCouponUsage(paymentIntent.couponId, tenantId, userId, orderId, discountAmount);
     }
-
     // Update tenant subscription
     await updateTenantSubscription(tenantId, {
       plan,
@@ -128,18 +113,15 @@ export async function GET(
       amount: verification.amount || paymentIntent.amount,
       currency: 'PKR',
     });
-
     // Mark payment intent as completed
     await adminDb.collection('payment_intents').doc(paymentIntents.docs[0].id).update({
       status: 'completed',
       completedAt: new Date(),
     });
-
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?success=true`
     );
   } catch (error) {
-    console.error('Error processing payment callback:', error);
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=processing_error`
     );

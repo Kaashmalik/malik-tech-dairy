@@ -5,7 +5,6 @@ import { eq, and, desc, gte, lte, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/tenant/context';
-
 // Validation schemas
 const milkQualityQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -20,7 +19,6 @@ const milkQualityQuerySchema = z.object({
   testedBy: z.string().optional(),
   adulterationTest: z.coerce.boolean().optional(),
 });
-
 const createMilkQualityTestSchema = z.object({
   milkLogId: z.string().optional(),
   animalId: z.string().optional(),
@@ -37,7 +35,6 @@ const createMilkQualityTestSchema = z.object({
   labName: z.string().max(255).optional(),
   notes: z.string().optional(),
 });
-
 const updateMilkQualityTestSchema = z.object({
   fatPercentage: z.number().min(0).max(100).optional(),
   proteinPercentage: z.number().min(0).max(100).optional(),
@@ -54,7 +51,6 @@ const updateMilkQualityTestSchema = z.object({
   certificateUrl: z.string().optional(),
   notes: z.string().optional(),
 });
-
 // GET /api/milk-quality/tests - List milk quality tests
 export async function GET(request: NextRequest) {
   try {
@@ -62,63 +58,47 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     // Get tenant context for proper isolation
     const tenantContext = await getTenantContext();
-
     const { searchParams } = new URL(request.url);
     const query = milkQualityQuerySchema.parse(Object.fromEntries(searchParams));
-
     const db = getDrizzle();
     const offset = (query.page - 1) * query.limit;
-
     // Build where conditions - ALWAYS include tenant filtering for tenant-specific tables
     const whereConditions = [eq(milkQualityTests.tenantId, tenantContext.tenantId)];
-
     if (query.animalId) {
       whereConditions.push(eq(milkQualityTests.animalId, query.animalId));
     }
-
     if (query.milkLogId) {
       whereConditions.push(eq(milkQualityTests.milkLogId, query.milkLogId));
     }
-
     if (query.grade) {
       whereConditions.push(eq(milkQualityTests.grade, query.grade));
     }
-
     if (query.status) {
       whereConditions.push(eq(milkQualityTests.status, query.status));
     }
-
     if (query.testedBy) {
       whereConditions.push(eq(milkQualityTests.testedBy, query.testedBy));
     }
-
     if (query.adulterationTest !== undefined) {
       whereConditions.push(eq(milkQualityTests.adulterationTest, query.adulterationTest));
     }
-
     if (query.testDate) {
       whereConditions.push(gte(milkQualityTests.testDate, new Date(query.testDate)));
     }
-
     if (query.startDate) {
       whereConditions.push(gte(milkQualityTests.testDate, new Date(query.startDate)));
     }
-
     if (query.endDate) {
       whereConditions.push(lte(milkQualityTests.testDate, new Date(query.endDate)));
     }
-
     // Get total count
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(milkQualityTests)
       .where(and(...whereConditions));
-
     const total = totalCountResult[0]?.count || 0;
-
     // Get milk quality tests with relations
     const qualityTestsList = await db
       .select({
@@ -167,7 +147,6 @@ export async function GET(request: NextRequest) {
       .limit(query.limit)
       .offset(offset)
       .orderBy(desc(milkQualityTests.testDate));
-
     // Calculate quality metrics for each test
     const testsWithMetrics = qualityTestsList.map(test => {
       // Convert stored integer values back to percentages for display
@@ -177,11 +156,9 @@ export async function GET(request: NextRequest) {
       const lactosePercentage = test.lactosePercentage ? test.lactosePercentage / 100 : null;
       const temperature = test.temperature ? test.temperature / 10 : null;
       const phLevel = test.phLevel ? test.phLevel / 100 : null;
-
       // Calculate quality score (0-100)
       let qualityScore = 0;
       let factors = 0;
-
       if (fatPercentage !== null) {
         qualityScore += Math.min(fatPercentage * 20, 20); // Max 20 points for fat
         factors++;
@@ -202,9 +179,7 @@ export async function GET(request: NextRequest) {
         qualityScore += 15; // 15 points for no adulteration
         factors++;
       }
-
       const finalScore = factors > 0 ? Math.round(qualityScore) : null;
-
       // Determine if test meets premium standards
       const meetsPremiumStandards =
         fatPercentage !== null &&
@@ -215,7 +190,6 @@ export async function GET(request: NextRequest) {
         snfPercentage >= 8.5 &&
         !test.adulterationTest &&
         test.status === 'passed';
-
       return {
         ...test,
         fatPercentage,
@@ -231,7 +205,6 @@ export async function GET(request: NextRequest) {
         ),
       };
     });
-
     return NextResponse.json({
       success: true,
       data: {
@@ -256,11 +229,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching milk quality tests:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
-
 // POST /api/milk-quality/tests - Create new milk quality test
 export async function POST(request: NextRequest) {
   try {
@@ -268,13 +239,10 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const validatedData = createMilkQualityTestSchema.parse(body);
-
     const db = getDrizzle();
     const testId = `quality_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     // Verify animal exists if provided
     if (validatedData.animalId) {
       const animal = await db
@@ -282,12 +250,10 @@ export async function POST(request: NextRequest) {
         .from(animals)
         .where(eq(animals.id, validatedData.animalId))
         .limit(1);
-
       if (!animal.length) {
         return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
     }
-
     // Verify milk log exists if provided
     if (validatedData.milkLogId) {
       const milkLog = await db
@@ -295,12 +261,10 @@ export async function POST(request: NextRequest) {
         .from(milkLogs)
         .where(eq(milkLogs.id, validatedData.milkLogId))
         .limit(1);
-
       if (!milkLog.length) {
         return NextResponse.json({ success: false, error: 'Milk log not found' }, { status: 404 });
       }
     }
-
     // Convert percentages to integers for storage
     const testData = {
       ...validatedData,
@@ -319,10 +283,8 @@ export async function POST(request: NextRequest) {
       temperature: validatedData.temperature ? Math.round(validatedData.temperature * 10) : null,
       phLevel: validatedData.phLevel ? Math.round(validatedData.phLevel * 100) : null,
     };
-
     // Get tenant context for proper isolation
     const tenantContext = await getTenantContext();
-
     const newTest = await db
       .insert(milkQualityTests)
       .values({
@@ -335,26 +297,21 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       })
       .returning();
-
     return NextResponse.json({
       success: true,
       data: newTest[0],
       message: 'Milk quality test created successfully',
     });
   } catch (error) {
-    console.error('Error creating milk quality test:', error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
         { status: 400 }
       );
     }
-
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
-
 // PUT /api/milk-quality/tests?id=xxx - Update milk quality test
 export async function PUT(request: NextRequest) {
   try {
@@ -362,7 +319,6 @@ export async function PUT(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) {
@@ -370,34 +326,27 @@ export async function PUT(request: NextRequest) {
     }
     const body = await request.json();
     const validatedData = updateMilkQualityTestSchema.parse(body);
-
     const db = getDrizzle();
-
     // Check if test exists and validate tenant ownership
     const existingTest = await db
       .select()
       .from(milkQualityTests)
       .where(eq(milkQualityTests.id, id))
       .limit(1);
-
     if (!existingTest.length) {
       return NextResponse.json({ success: false, error: 'Test not found' }, { status: 404 });
     }
-
     // Get tenant context for ownership validation
     const tenantContext = await getTenantContext();
-
     // Validate tenant ownership to prevent cross-tenant updates
     if (existingTest[0].tenantId !== tenantContext.tenantId) {
       return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
     }
-
     // Convert percentages to integers for storage
     const updateData: any = {
       ...validatedData,
       updatedAt: new Date(),
     };
-
     if (validatedData.fatPercentage !== undefined) {
       updateData.fatPercentage = Math.round(validatedData.fatPercentage * 100);
     }
@@ -416,17 +365,14 @@ export async function PUT(request: NextRequest) {
     if (validatedData.phLevel !== undefined) {
       updateData.phLevel = Math.round(validatedData.phLevel * 100);
     }
-
     // Auto-grade based on quality parameters if status is being set to passed
     if (validatedData.status === 'passed' && !validatedData.grade) {
       const test = existingTest[0];
       let grade = 'grade_c';
-
       const fat = updateData.fatPercentage ?? test.fatPercentage;
       const protein = updateData.proteinPercentage ?? test.proteinPercentage;
       const snf = updateData.snfPercentage ?? test.snfPercentage;
       const adulteration = updateData.adulterationTest ?? test.adulterationTest;
-
       if (fat && protein && snf && !adulteration) {
         if (fat >= 350 && protein >= 320 && snf >= 850) {
           // 3.5%, 3.2%, 8.5%
@@ -439,35 +385,28 @@ export async function PUT(request: NextRequest) {
           grade = 'grade_b';
         }
       }
-
       if (adulteration) {
         grade = 'rejected';
       }
-
       updateData.grade = grade;
     }
-
     const updatedTest = await db
       .update(milkQualityTests)
       .set(updateData)
       .where(eq(milkQualityTests.id, id))
       .returning();
-
     return NextResponse.json({
       success: true,
       data: updatedTest[0],
       message: 'Milk quality test updated successfully',
     });
   } catch (error) {
-    console.error('Error updating milk quality test:', error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
         { status: 400 }
       );
     }
-
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

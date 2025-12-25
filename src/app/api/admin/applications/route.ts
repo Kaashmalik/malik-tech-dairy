@@ -1,11 +1,9 @@
 // Super Admin - Farm Applications Management API
 // GET: List all applications
 // Requires super_admin role
-
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase';
-
 // Helper to check if user is super admin
 async function isSuperAdmin(userId: string): Promise<boolean> {
   const supabase = getSupabaseClient();
@@ -14,19 +12,15 @@ async function isSuperAdmin(userId: string): Promise<boolean> {
     .select('platform_role')
     .eq('id', userId)
     .single();
-
   return user?.platform_role === 'super_admin';
 }
-
 // GET: List all farm applications (super admin only)
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     // Check super admin role
     const isAdmin = await isSuperAdmin(userId);
     if (!isAdmin) {
@@ -35,31 +29,23 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
-
     const supabase = getSupabaseClient();
-
     // Get query params
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const includeStats = searchParams.get('stats') === 'true';
-
     // Build query
     let query = supabase
       .from('farm_applications')
       .select('*')
       .order('created_at', { ascending: false });
-
     if (status && status !== 'all') {
       query = query.eq('status', status);
     }
-
     const { data: applications, error } = await query;
-
     if (error) {
-      console.error('Error fetching applications:', error);
       return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
     }
-
     // Transform to camelCase for frontend
     const transformedApplications = (applications || []).map(app => ({
       application: {
@@ -86,7 +72,6 @@ export async function GET(request: NextRequest) {
         updatedAt: app.updated_at,
       },
     }));
-
     // Get stats if requested
     let stats = null;
     if (includeStats) {
@@ -110,7 +95,6 @@ export async function GET(request: NextRequest) {
           .select('*', { count: 'exact', head: true })
           .eq('status', 'rejected'),
       ]);
-
       stats = {
         applications: {
           totalApplications: totalApplications || 0,
@@ -120,7 +104,6 @@ export async function GET(request: NextRequest) {
         },
       };
     }
-
     return NextResponse.json({
       success: true,
       data: {
@@ -129,7 +112,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching applications:', error);
     return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
   }
 }

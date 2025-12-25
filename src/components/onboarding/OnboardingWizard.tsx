@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useOrganization, useOrganizationList } from '@clerk/nextjs';
@@ -21,7 +20,6 @@ import { DEFAULT_TENANT_CONFIG, SUBSCRIPTION_PLANS } from '@/lib/constants';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle2, Building2, Palette, DollarSign, Check } from 'lucide-react';
 import type { AnimalSpecies, SubscriptionPlan } from '@/types';
-
 interface OnboardingData {
   farmName: string;
   subdomain: string;
@@ -30,14 +28,12 @@ interface OnboardingData {
   animalTypes: AnimalSpecies[];
   selectedPlan: SubscriptionPlan;
 }
-
 const STEPS = [
   { id: 1, title: 'Farm Details', icon: Building2 },
   { id: 2, title: 'Branding', icon: Palette },
   { id: 3, title: 'Animal Types', icon: Check },
   { id: 4, title: 'Subscription', icon: DollarSign },
 ];
-
 export function OnboardingWizard() {
   const router = useRouter();
   const { user } = useUser();
@@ -47,7 +43,6 @@ export function OnboardingWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingSubdomain, setIsCheckingSubdomain] = useState(false);
   const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null);
-
   const [data, setData] = useState<OnboardingData>({
     farmName: '',
     subdomain: '',
@@ -56,19 +51,16 @@ export function OnboardingWizard() {
     animalTypes: DEFAULT_TENANT_CONFIG.animalTypes as AnimalSpecies[],
     selectedPlan: 'free',
   });
-
   // Check subdomain availability
   const checkSubdomain = async (subdomain: string) => {
     if (!subdomain || subdomain.length < 3) {
       setSubdomainAvailable(null);
       return;
     }
-
     if (!validateSubdomain(subdomain)) {
       setSubdomainAvailable(false);
       return;
     }
-
     setIsCheckingSubdomain(true);
     try {
       const res = await fetch(
@@ -77,13 +69,11 @@ export function OnboardingWizard() {
       const result = await res.json();
       setSubdomainAvailable(result.available);
     } catch (error) {
-      console.error('Error checking subdomain:', error);
       setSubdomainAvailable(false);
     } finally {
       setIsCheckingSubdomain(false);
     }
   };
-
   // Handle farm name change and auto-generate subdomain
   const handleFarmNameChange = (farmName: string) => {
     setData(prev => ({ ...prev, farmName }));
@@ -95,7 +85,6 @@ export function OnboardingWizard() {
       }
     }
   };
-
   // Handle subdomain change
   const handleSubdomainChange = (subdomain: string) => {
     const sanitized = sanitizeSubdomain(subdomain);
@@ -106,14 +95,12 @@ export function OnboardingWizard() {
       setSubdomainAvailable(null);
     }
   };
-
   // Create organization in Clerk
   const createOrganization = async () => {
     if (!user) {
       toast.error('Please sign in first');
       return null;
     }
-
     try {
       const response = await fetch('/api/organizations/create', {
         method: 'POST',
@@ -123,12 +110,10 @@ export function OnboardingWizard() {
           slug: data.subdomain,
         }),
       });
-
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create organization');
       }
-
       const { organizationId } = await response.json();
       return organizationId;
     } catch (error: any) {
@@ -136,7 +121,6 @@ export function OnboardingWizard() {
       return null;
     }
   };
-
   // Initialize tenant in Firestore
   const initializeTenant = async (orgId: string) => {
     try {
@@ -148,18 +132,14 @@ export function OnboardingWizard() {
           ownerEmail: user?.primaryEmailAddress?.emailAddress || '',
         }),
       });
-
       if (!response.ok) {
         throw new Error('Failed to initialize tenant');
       }
-
       return true;
     } catch (error) {
-      console.error('Error initializing tenant:', error);
       throw error;
     }
   };
-
   // Update tenant config
   const updateTenantConfig = async (orgId: string) => {
     try {
@@ -174,18 +154,14 @@ export function OnboardingWizard() {
           animalTypes: data.animalTypes,
         }),
       });
-
       if (!response.ok) {
         throw new Error('Failed to update config');
       }
-
       return true;
     } catch (error) {
-      console.error('Error updating config:', error);
       throw error;
     }
   };
-
   // Handle next step
   const handleNext = () => {
     if (currentStep < STEPS.length) {
@@ -214,40 +190,32 @@ export function OnboardingWizard() {
           return;
         }
       }
-
       setCurrentStep(currentStep + 1);
     }
   };
-
   // Handle previous step
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
-
   // Handle final submission
   const handleSubmit = async () => {
     setIsSubmitting(true);
-
     try {
       // Step 1: Create organization in Clerk
       const orgId = await createOrganization();
       if (!orgId) {
         throw new Error('Failed to create organization');
       }
-
       // Step 2: Set active organization
       if (setActive) {
         await setActive({ organization: orgId });
       }
-
       // Step 3: Initialize tenant in Firestore (if not already done by webhook)
       await initializeTenant(orgId);
-
       // Step 4: Update tenant config with branding and animal types
       await updateTenantConfig(orgId);
-
       // Step 5: If paid plan selected, redirect to checkout
       if (data.selectedPlan !== 'free') {
         toast.success('Farm created! Redirecting to payment...');
@@ -257,14 +225,11 @@ export function OnboardingWizard() {
         router.push('/dashboard');
       }
     } catch (error: any) {
-      console.error('Error completing onboarding:', error);
       toast.error(error.message || 'Failed to complete setup. Please try again.');
       setIsSubmitting(false);
     }
   };
-
   const progress = (currentStep / STEPS.length) * 100;
-
   return (
     <div className='min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4'>
       <div className='mx-auto max-w-4xl py-8'>
@@ -278,7 +243,6 @@ export function OnboardingWizard() {
             </div>
             <Progress value={progress} className='h-2' />
           </CardHeader>
-
           <CardContent className='pt-6'>
             <Tabs value={currentStep.toString()} className='w-full'>
               <TabsList className='mb-6 grid w-full grid-cols-4'>
@@ -297,7 +261,6 @@ export function OnboardingWizard() {
                   );
                 })}
               </TabsList>
-
               {/* Step 1: Farm Details */}
               <TabsContent value='1' className='space-y-6'>
                 <div>
@@ -306,7 +269,6 @@ export function OnboardingWizard() {
                     Let's start by setting up your farm details.
                   </p>
                 </div>
-
                 <div className='space-y-4'>
                   <div>
                     <Label htmlFor='farmName'>Farm Name *</Label>
@@ -318,7 +280,6 @@ export function OnboardingWizard() {
                       className='mt-1'
                     />
                   </div>
-
                   <div>
                     <Label htmlFor='subdomain'>Subdomain *</Label>
                     <div className='mt-1 flex items-center gap-2'>
@@ -349,7 +310,6 @@ export function OnboardingWizard() {
                   </div>
                 </div>
               </TabsContent>
-
               {/* Step 2: Branding */}
               <TabsContent value='2' className='space-y-6'>
                 <div>
@@ -358,7 +318,6 @@ export function OnboardingWizard() {
                     Choose colors that represent your farm. You can change these later.
                   </p>
                 </div>
-
                 <div className='space-y-4'>
                   <div>
                     <Label htmlFor='primaryColor'>Primary Color</Label>
@@ -378,7 +337,6 @@ export function OnboardingWizard() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <Label htmlFor='accentColor'>Accent Color</Label>
                     <div className='mt-1 flex items-center gap-3'>
@@ -397,7 +355,6 @@ export function OnboardingWizard() {
                       />
                     </div>
                   </div>
-
                   <div className='bg-muted/50 rounded-lg border p-4'>
                     <p className='mb-2 text-sm font-medium'>Preview</p>
                     <div
@@ -409,7 +366,6 @@ export function OnboardingWizard() {
                   </div>
                 </div>
               </TabsContent>
-
               {/* Step 3: Animal Types */}
               <TabsContent value='3' className='space-y-6'>
                 <div>
@@ -418,7 +374,6 @@ export function OnboardingWizard() {
                     Which animals will you be managing? You can add more later.
                   </p>
                 </div>
-
                 <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
                   {(['cow', 'buffalo', 'chicken', 'goat', 'sheep', 'horse'] as AnimalSpecies[]).map(
                     species => (
@@ -458,7 +413,6 @@ export function OnboardingWizard() {
                   )}
                 </div>
               </TabsContent>
-
               {/* Step 4: Subscription */}
               <TabsContent value='4' className='space-y-6'>
                 <div>
@@ -467,7 +421,6 @@ export function OnboardingWizard() {
                     Start with a free plan and upgrade anytime. 14-day free trial included.
                   </p>
                 </div>
-
                 <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
                   {Object.entries(SUBSCRIPTION_PLANS).map(([planKey, plan]) => (
                     <button
@@ -499,7 +452,6 @@ export function OnboardingWizard() {
                 </div>
               </TabsContent>
             </Tabs>
-
             {/* Navigation Buttons */}
             <div className='mt-8 flex justify-between border-t pt-6'>
               <Button

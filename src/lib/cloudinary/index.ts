@@ -1,7 +1,6 @@
 // Cloudinary Integration - Primary File Storage
 // Supabase Storage is used as backup for critical files
 import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
-
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -9,7 +8,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
-
 export type CloudinaryFolder =
   | 'payment-slips'
   | 'animals'
@@ -17,7 +15,6 @@ export type CloudinaryFolder =
   | 'receipts'
   | 'documents'
   | 'avatars';
-
 export interface UploadOptions {
   folder: CloudinaryFolder;
   publicId?: string;
@@ -26,7 +23,6 @@ export interface UploadOptions {
   tags?: string[];
   context?: Record<string, string>;
 }
-
 export interface UploadResult {
   success: boolean;
   publicId?: string;
@@ -39,7 +35,6 @@ export interface UploadResult {
   bytes?: number;
   error?: string;
 }
-
 /**
  * Upload a file to Cloudinary
  * @param file - Base64 string or file URL
@@ -56,11 +51,9 @@ export async function uploadToCloudinary(
       tags: options.tags || [],
       context: options.context || {},
     };
-
     if (options.publicId) {
       uploadOptions.public_id = options.publicId;
     }
-
     // Add transformations for images
     if (options.resourceType === 'image' || !options.resourceType) {
       uploadOptions.transformation = options.transformation || [
@@ -68,9 +61,7 @@ export async function uploadToCloudinary(
         { fetch_format: 'auto' },
       ];
     }
-
     const result: UploadApiResponse = await cloudinary.uploader.upload(file, uploadOptions);
-
     // Generate thumbnail URL for images
     let thumbnailUrl: string | undefined;
     if (result.resource_type === 'image') {
@@ -82,7 +73,6 @@ export async function uploadToCloudinary(
         ],
       });
     }
-
     return {
       success: true,
       publicId: result.public_id,
@@ -96,14 +86,12 @@ export async function uploadToCloudinary(
     };
   } catch (error) {
     const cloudinaryError = error as UploadApiErrorResponse;
-    console.error('Cloudinary upload error:', cloudinaryError);
     return {
       success: false,
       error: cloudinaryError.message || 'Failed to upload file',
     };
   }
 }
-
 /**
  * Delete a file from Cloudinary
  * @param publicId - The public ID of the file to delete
@@ -117,11 +105,9 @@ export async function deleteFromCloudinary(
     await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
     return { success: true };
   } catch (error) {
-    console.error('Cloudinary delete error:', error);
     return { success: false, error: 'Failed to delete file' };
   }
 }
-
 /**
  * Generate a signed upload URL for direct browser uploads
  * @param folder - The folder to upload to
@@ -139,18 +125,15 @@ export function generateSignedUploadParams(
 } {
   const timestamp = Math.round(new Date().getTime() / 1000);
   const folderPath = `malik-tech-dairy/${folder}`;
-
   const paramsToSign = {
     timestamp,
     folder: folderPath,
     upload_preset: 'malik-tech-dairy',
   };
-
   const signature = cloudinary.utils.api_sign_request(
     paramsToSign,
     process.env.CLOUDINARY_API_SECRET!
   );
-
   return {
     timestamp,
     signature,
@@ -159,7 +142,6 @@ export function generateSignedUploadParams(
     folder: folderPath,
   };
 }
-
 /**
  * Get optimized URL for an image with transformations
  * @param publicId - The public ID of the image
@@ -176,7 +158,6 @@ export function getOptimizedUrl(
   } = {}
 ): string {
   const transformations: object[] = [];
-
   if (options.width || options.height) {
     transformations.push({
       width: options.width,
@@ -185,30 +166,23 @@ export function getOptimizedUrl(
       gravity: 'auto',
     });
   }
-
   transformations.push({
     quality: options.quality || 'auto:good',
     fetch_format: options.format || 'auto',
   });
-
   return cloudinary.url(publicId, { transformation: transformations });
 }
-
 /**
  * Validate file type before upload
  */
 export function validateFileType(mimeType: string, allowedTypes: string[]): boolean {
   return allowedTypes.includes(mimeType);
 }
-
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-
 export const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
-
 export const MAX_FILE_SIZES = {
   image: 5 * 1024 * 1024, // 5MB
   document: 10 * 1024 * 1024, // 10MB
   paymentSlip: 5 * 1024 * 1024, // 5MB
 };
-
 export { cloudinary };

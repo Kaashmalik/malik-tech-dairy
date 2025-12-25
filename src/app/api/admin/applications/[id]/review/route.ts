@@ -1,12 +1,10 @@
 // Super Admin - Review Farm Application API
 // POST: Approve or reject an application
 // On approval: Creates Clerk Org, Tenant, assigns farm_owner role
-
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseClient } from '@/lib/supabase';
-
 // Type definitions
 interface FarmApplication {
   id: string;
@@ -21,17 +19,14 @@ interface FarmApplication {
   estimated_animals?: number;
   [key: string]: unknown;
 }
-
 interface PlatformUser {
   platform_role: string;
 }
-
 const reviewSchema = z.object({
   action: z.enum(['approve', 'reject']),
   reviewNotes: z.string().optional(),
   rejectionReason: z.string().optional(),
 });
-
 // Helper to check if user is super admin
 async function isSuperAdmin(userId: string): Promise<boolean> {
   const supabase = getSupabaseClient();
@@ -40,11 +35,9 @@ async function isSuperAdmin(userId: string): Promise<boolean> {
     .select('platform_role')
     .eq('id', userId)
     .single();
-
   const user = data as PlatformUser | null;
   return user?.platform_role === 'super_admin';
 }
-
 // Generate a URL-friendly slug from farm name
 function generateSlug(farmName: string): string {
   return farmName
@@ -54,7 +47,6 @@ function generateSlug(farmName: string): string {
     .replace(/-+/g, '-')
     .substring(0, 50);
 }
-
 // Generate a unique Farm ID
 function generateFarmId(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -64,17 +56,14 @@ function generateFarmId(): string {
   }
   return result;
 }
-
 // POST: Review (approve/reject) application
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     const { id } = await params;
-
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     // Check super admin role
     const isAdmin = await isSuperAdmin(userId);
     if (!isAdmin) {
@@ -83,24 +72,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         { status: 403 }
       );
     }
-
     const supabase = getSupabaseClient();
     const body = await request.json();
     const validatedData = reviewSchema.parse(body);
-
     // Fetch the application
     const { data: appData, error: fetchError } = await supabase
       .from('farm_applications')
       .select('*')
       .eq('id', id)
       .single();
-
     if (fetchError || !appData) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
-
     const application = appData as FarmApplication;
-
     // Check if already processed
     if (application.status === 'approved' || application.status === 'rejected') {
       return NextResponse.json(
@@ -108,54 +92,40 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         { status: 400 }
       );
     }
-
     if (validatedData.action === 'approve') {
       // ============ APPROVAL FLOW ============
       const farmId = generateFarmId();
       const baseSlug = generateSlug(application.farm_name);
-
       // 1. Create Clerk Organization (or fallback to UUID)
       let clerkOrgId: string = '';
       let finalSlug: string = baseSlug;
       let orgCreated = false;
-
       try {
         const clerk = await clerkClient();
-
         // Try to create organization with different slug variations
         const slugVariations = [
           baseSlug,
           `${baseSlug}-${Date.now().toString(36)}`,
           `${baseSlug}-${Math.random().toString(36).slice(2, 8)}`,
         ];
-
         for (const slug of slugVariations) {
           try {
-            console.log(`Attempting to create Clerk org with slug: ${slug}`);
-
             const org = await clerk.organizations.createOrganization({
               name: application.farm_name,
               slug: slug,
             });
-
             clerkOrgId = org.id;
             finalSlug = slug;
             orgCreated = true;
-            console.log('Created Clerk Organization:', clerkOrgId);
-
             // Add the applicant as admin member - CRITICAL STEP
             try {
-              console.log(`Adding user ${application.applicant_id} to org ${clerkOrgId}`);
-
               await clerk.organizations.createOrganizationMembership({
                 organizationId: clerkOrgId,
                 userId: application.applicant_id,
                 role: 'org:admin',
               });
-              console.log('✅ Successfully added applicant as org admin');
             } catch (memberError: unknown) {
               // Try with basic member role if admin fails
-              console.error('Failed to add as admin, trying as member:', memberError);
               try {
                 await clerk.organizations.createOrganizationMembership({
                   organizationId: clerkOrgId,
@@ -164,7 +134,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 });
                 console.log('✅ Added applicant as org member (fallback)');
               } catch (memberError2) {
-                console.error('❌ Failed to add member entirely:', memberError2);
                 // Don't break - continue with tenant creation
               }
             }
@@ -172,25 +141,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           } catch (clerkError: unknown) {
             const errorMessage =
               clerkError instanceof Error ? clerkError.message : String(clerkError);
-            console.error(`Clerk org creation failed for slug ${slug}:`, errorMessage);
-
             if (!errorMessage.includes('slug') && !errorMessage.includes('already exists')) {
               break;
             }
           }
         }
       } catch (clerkInitError) {
-        console.error('Clerk client initialization failed:', clerkInitError);
       }
-
       // FALLBACK: Use UUID if Clerk fails
       if (!orgCreated) {
-        console.log('Using fallback mode - creating tenant without Clerk org');
         clerkOrgId = `tenant_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
         finalSlug = `${baseSlug}-${Date.now().toString(36)}`;
-        console.log('Generated fallback tenant ID:', clerkOrgId);
       }
-
       // 2. Create Tenant record in Supabase (matching schema)
       const tenantData = {
         id: clerkOrgId!,
@@ -205,7 +167,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: tenantError } = await (supabase.from('tenants') as any).insert([tenantData]);
-
       // 2b. Create subscription record
       if (!tenantError) {
         try {
@@ -226,22 +187,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             subscriptionData,
           ]);
           if (subError) {
-            console.error('Failed to create subscription:', subError);
           }
         } catch (e) {
-          console.error('Subscription creation error:', e);
         }
       }
-
       if (tenantError) {
-        console.error('Failed to create tenant:', tenantError);
         // Rollback: Delete Clerk organization (only if we created one)
         if (orgCreated && clerkOrgId) {
           try {
             const clerk = await clerkClient();
             await clerk.organizations.deleteOrganization(clerkOrgId);
           } catch (e) {
-            console.error('Failed to rollback Clerk org:', e);
           }
         }
         return NextResponse.json(
@@ -249,7 +205,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           { status: 500 }
         );
       }
-
       // 3. Add user as farm_owner in tenant_members (matching schema)
       const memberData = {
         id: `mem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -265,12 +220,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const { error: memberError } = await (supabase.from('tenant_members') as any).insert([
         memberData,
       ]);
-
       if (memberError) {
-        console.error('Failed to create tenant member:', memberError);
         // Continue anyway - user can be added later
       }
-
       // 4. Update application status
       const updateData = {
         status: 'approved',
@@ -290,12 +242,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .select()
         .single();
       const updatedApp = updatedAppData as FarmApplication;
-
       if (updateError) {
-        console.error('Failed to update application:', updateError);
         return NextResponse.json({ error: 'Failed to update application status' }, { status: 500 });
       }
-
       // 5. Create notification for the user (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -311,9 +260,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           },
         ]);
       } catch (e) {
-        console.error('Failed to create notification:', e);
       }
-
       // 6. Create super admin notification (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -328,9 +275,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           },
         ]);
       } catch (e) {
-        console.error('Failed to create admin notification:', e);
       }
-
       return NextResponse.json({
         success: true,
         data: {
@@ -353,7 +298,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!validatedData.rejectionReason) {
         return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 });
       }
-
       const rejectData = {
         status: 'rejected',
         reviewed_by: userId,
@@ -370,14 +314,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .eq('id', id)
         .select()
         .single();
-
       const updatedApp = updatedAppData as FarmApplication;
-
       if (updateError) {
-        console.error('Failed to update application:', updateError);
         return NextResponse.json({ error: 'Failed to reject application' }, { status: 500 });
       }
-
       // Create notification for the user (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -393,9 +333,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           },
         ]);
       } catch (e) {
-        console.error('Failed to create notification:', e);
       }
-
       return NextResponse.json({
         success: true,
         data: {
@@ -409,19 +347,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
     }
   } catch (error) {
-    console.error('Error reviewing application:', error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
-
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Full error details:', { message: errorMessage, stack: errorStack });
-
     return NextResponse.json(
       {
         error: 'Failed to review application',

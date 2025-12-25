@@ -1,0 +1,95 @@
+
+> malik-tech-dairy@1.0.0 build
+> cross-env NODE_OPTIONS='--max-old-space-size=4096' next build
+
+   ▲ Next.js 15.5.7
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 35.7s
+
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@sentry/opentelemetry/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/server/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+./src/components/ErrorBoundary.tsx
+
+./node_modules/@opentelemetry/instrumentation-http/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@opentelemetry/instrumentation-http/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@opentelemetry/instrumentation-http/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@opentelemetry/instrumentation-http/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@opentelemetry/instrumentation-http/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@opentelemetry/instrumentation-http/build/src/http.js
+./node_modules/@opentelemetry/instrumentation-http/build/src/index.js
+./node_modules/@sentry/node/build/cjs/integrations/http/index.js
+./node_modules/@sentry/node/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@prisma/instrumentation/dist/chunk-PVBRMQBZ.js
+./node_modules/@prisma/instrumentation/dist/index.js
+./node_modules/@sentry/node/build/cjs/integrations/tracing/prisma.js
+./node_modules/@sentry/node/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@sentry/opentelemetry/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/server/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+./src/lib/logger.ts
+./src/app/api/reports/generate/route.ts
+
+./node_modules/bullmq/dist/esm/classes/child-processor.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/bullmq/dist/esm/classes/child-processor.js
+./node_modules/bullmq/dist/esm/classes/index.js
+./node_modules/bullmq/dist/esm/index.js
+./src/lib/workers/queue.ts
+./src/app/api/cron/predictions/route.ts
+
+   Linting and checking validity of types ...
+ ⨯ ESLint: Cannot find module 'D:\MalikTech\MalikTech-dairy\malik-tech-dairy\node_modules\eslint-config-next\core-web-vitals' imported from D:\MalikTech\MalikTech-dairy\malik-tech-dairy\eslint.config.mjs Did you mean to import "eslint-config-next/core-web-vitals.js"?
+Failed to compile.
+
+.next/types/app/api/staff/[memberId]/route.ts:205:7
+Type error: Type '{ __tag__: "PUT"; __param_position__: "second"; __param_type__: RouteContext | undefined; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
+  Types of property '__param_type__' are incompatible.
+    Type 'RouteContext | undefined' is not assignable to type 'RouteContext'.
+      Type 'undefined' is not assignable to type 'RouteContext'.
+
+[0m [90m 203 |[39m     [33mDiff[39m[33m<[39m
+ [90m 204 |[39m       [33mParamCheck[39m[33m<[39m[33mRouteContext[39m[33m>[39m[33m,[39m
+[31m[1m>[22m[39m[90m 205 |[39m       {
+ [90m     |[39m       [31m[1m^[22m[39m
+ [90m 206 |[39m         __tag__[33m:[39m [32m'PUT'[39m
+ [90m 207 |[39m         __param_position__[33m:[39m [32m'second'[39m
+ [90m 208 |[39m         __param_type__[33m:[39m [33mSecondArg[39m[33m<[39m[33mMaybeField[39m[33m<[39m[33mTEntry[39m[33m,[39m [32m'PUT'[39m[33m>>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

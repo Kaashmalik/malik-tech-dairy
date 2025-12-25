@@ -1,34 +1,28 @@
 'use client';
-
 import React from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, RefreshCw, Home, MessageSquare } from 'lucide-react';
-
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   eventId: string | null;
 }
-
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
   showReportDialog?: boolean;
 }
-
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null, eventId: null };
   }
-
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
-
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log to Sentry with component stack
     const eventId = Sentry.captureException(error, {
@@ -38,34 +32,26 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         },
       },
     });
-
     this.setState({ eventId });
-
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
-
     // Also log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
   }
-
   handleReset = () => {
     this.setState({ hasError: false, error: null, eventId: null });
   };
-
   handleReportFeedback = () => {
     if (this.state.eventId) {
       Sentry.showReportDialog({ eventId: this.state.eventId });
     }
   };
-
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
       }
-
       return (
         <div className='bg-background flex min-h-screen items-center justify-center p-4'>
           <Card className='w-full max-w-md shadow-lg'>
@@ -86,13 +72,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   </p>
                 </div>
               )}
-
               {this.state.eventId && (
                 <p className='text-muted-foreground text-center text-xs'>
                   Error ID: <code className='bg-muted rounded px-1'>{this.state.eventId}</code>
                 </p>
               )}
-
               <div className='flex flex-col gap-2 sm:flex-row'>
                 <Button
                   onClick={() => {
@@ -109,7 +93,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   Go Home
                 </Button>
               </div>
-
               {this.props.showReportDialog && this.state.eventId && (
                 <Button
                   variant='ghost'
@@ -126,11 +109,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         </div>
       );
     }
-
     return this.props.children;
   }
 }
-
 /**
  * Higher-order component to wrap any component with error boundary
  */
@@ -139,14 +120,11 @@ export function withErrorBoundary<P extends object>(
   errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
 ) {
   const displayName = Component.displayName || Component.name || 'Component';
-
   const WrappedComponent = (props: P) => (
     <ErrorBoundary {...errorBoundaryProps}>
       <Component {...props} />
     </ErrorBoundary>
   );
-
   WrappedComponent.displayName = `withErrorBoundary(${displayName})`;
-
   return WrappedComponent;
 }

@@ -3,20 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase';
 import { format, subDays } from 'date-fns';
-
 export const dynamic = 'force-dynamic';
-
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const supabase = getSupabaseClient();
-
       const { searchParams } = new URL(req.url);
       const days = parseInt(searchParams.get('days') || '7');
-
       const today = format(new Date(), 'yyyy-MM-dd');
       const startDate = format(subDays(new Date(), days), 'yyyy-MM-dd');
-
       // Get logs for the period from Supabase
       const { data: logs, error } = (await supabase
         .from('milk_logs')
@@ -24,9 +19,7 @@ export async function GET(request: NextRequest) {
         .eq('tenant_id', context.tenantId)
         .gte('date', startDate)
         .lte('date', today)) as { data: any[] | null; error: any };
-
       if (error) {
-        console.error('Error fetching milk logs:', error);
         // Return empty stats instead of error for graceful degradation
         return NextResponse.json({
           success: true,
@@ -37,30 +30,24 @@ export async function GET(request: NextRequest) {
           message: 'No milk data available',
         });
       }
-
       const milkLogs = logs || [];
-
       // Calculate today's total
       const todayLogs = milkLogs.filter((log: any) => log.date === today);
       const todayTotal = todayLogs.reduce((sum: number, log: any) => sum + (log.quantity || 0), 0);
-
       // Calculate daily totals for chart
       const dailyTotals: Record<string, number> = {};
       milkLogs.forEach((log: any) => {
         const date = log.date;
         dailyTotals[date] = (dailyTotals[date] || 0) + (log.quantity || 0);
       });
-
       // Calculate average per day
       const uniqueDates = Object.keys(dailyTotals);
       const averagePerDay =
         uniqueDates.length > 0
           ? Object.values(dailyTotals).reduce((sum, val) => sum + val, 0) / uniqueDates.length
           : 0;
-
       // Calculate total for period
       const periodTotal = milkLogs.reduce((sum: number, log: any) => sum + (log.quantity || 0), 0);
-
       return NextResponse.json({
         success: true,
         todayTotal: Math.round(todayTotal * 100) / 100,
@@ -71,7 +58,6 @@ export async function GET(request: NextRequest) {
           .sort((a, b) => a.date.localeCompare(b.date)),
       });
     } catch (error) {
-      console.error('Error fetching milk stats:', error);
       // Return empty stats for graceful degradation
       return NextResponse.json({
         success: true,

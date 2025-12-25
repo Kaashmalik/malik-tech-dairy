@@ -4,10 +4,8 @@ import { eq, and, or, ilike, gte, lte, desc, asc, sql, between } from 'drizzle-o
 import { getDrizzle, getSupabaseClient } from '@/lib/supabase';
 import { feedInventory, animals, tenants } from '@/db/schema';
 import { getTenantContext } from '@/lib/tenant/context';
-
 // Note: nutrition_requirements accessed via Supabase REST API
 import { z } from 'zod';
-
 // Enhanced feed query schema
 const enhancedFeedQuerySchema = z.object({
   page: z
@@ -59,7 +57,6 @@ const enhancedFeedQuerySchema = z.object({
     .transform(val => (val ? parseInt(val) : undefined)),
   storageLocation: z.string().optional(),
 });
-
 // GET /api/feed-management/enhanced - Advanced feed inventory with analytics
 export async function GET(request: NextRequest) {
   try {
@@ -67,17 +64,13 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
-
     const db = getDrizzle();
-
     const { searchParams } = new URL(request.url);
     const query = enhancedFeedQuerySchema.parse(Object.fromEntries(searchParams));
-
     const {
       page,
       limit,
@@ -95,13 +88,11 @@ export async function GET(request: NextRequest) {
       expiryDays,
       storageLocation,
     } = query;
-
     // Build where conditions
     const whereConditions = [
       eq(feedInventory.tenantId, tenantContext.tenantId),
       eq(feedInventory.isActive, true),
     ];
-
     // Search functionality
     if (search) {
       const searchConditions = [
@@ -110,27 +101,22 @@ export async function GET(request: NextRequest) {
         ilike(feedInventory.batchNumber ?? '', `%${search}%`),
         ilike(feedInventory.storageLocation ?? '', `%${search}%`),
       ].filter(Boolean);
-
       if (searchConditions.length > 0) {
         whereConditions.push(or(...searchConditions)!);
       }
     }
-
     // Category filter
     if (category && category.length > 0) {
       whereConditions.push(sql`${feedInventory.feedType} = ANY(${category})`);
     }
-
     // Quality grade filter (using feedType as category since qualityGrade doesn't exist)
     if (qualityGrade && qualityGrade.length > 0) {
       whereConditions.push(sql`${feedInventory.feedType} = ANY(${qualityGrade})`);
     }
-
     // Low stock filter
     if (lowStock) {
       whereConditions.push(sql`${feedInventory.quantity} <= ${feedInventory.minimumStock}`);
     }
-
     // Expiring soon filter
     if (expiringSoon) {
       const days = expiryDays || 30;
@@ -138,7 +124,6 @@ export async function GET(request: NextRequest) {
         sql`${feedInventory.expiryDate} <= CURRENT_DATE + INTERVAL '${days} days'`
       );
     }
-
     // Stock range filter
     if (minStock !== undefined || maxStock !== undefined) {
       if (minStock !== undefined && maxStock !== undefined) {
@@ -151,7 +136,6 @@ export async function GET(request: NextRequest) {
         whereConditions.push(sql`${feedInventory.quantity} <= ${maxStock}`);
       }
     }
-
     // Cost range filter
     if (minCost !== undefined || maxCost !== undefined) {
       if (minCost !== undefined && maxCost !== undefined) {
@@ -164,16 +148,13 @@ export async function GET(request: NextRequest) {
         whereConditions.push(sql`${feedInventory.unitPrice} <= ${maxCost}`);
       }
     }
-
     // Storage location filter
     if (storageLocation) {
       whereConditions.push(ilike(feedInventory.storageLocation, `%${storageLocation}%`));
     }
-
     // Combine all conditions
     const finalWhereCondition =
       whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0];
-
     // Build order by
     let orderBy;
     switch (sortBy) {
@@ -194,7 +175,6 @@ export async function GET(request: NextRequest) {
       default:
         orderBy = sortOrder === 'desc' ? desc(feedInventory.feedName) : asc(feedInventory.feedName);
     }
-
     // Execute main query
     const [feedData, totalCount] = await Promise.all([
       db
@@ -243,22 +223,18 @@ export async function GET(request: NextRequest) {
         .orderBy(orderBy)
         .limit(limit)
         .offset((page - 1) * limit),
-
       db
         .select({ count: sql<number>`count(*)` })
         .from(feedInventory)
         .where(finalWhereCondition)
         .then((result: any[]) => result[0]?.count || 0),
     ]);
-
     // Calculate inventory analytics
     const analytics = await calculateFeedAnalytics(tenantContext.tenantId, db);
-
     // Calculate pagination
     const totalPages = Math.ceil(totalCount / limit);
     const hasNextPage = page < totalPages;
     const hasPreviousPage = page > 1;
-
     return NextResponse.json({
       success: true,
       data: {
@@ -306,7 +282,6 @@ export async function GET(request: NextRequest) {
       message: `Found ${feedData.length} feed items`,
     });
   } catch (error) {
-    console.error('Enhanced feed management GET error:', error);
     return NextResponse.json(
       {
         success: false,
@@ -317,7 +292,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
 // Helper function to calculate feed analytics
 async function calculateFeedAnalytics(tenantId: string, db: any) {
   try {
@@ -330,7 +304,6 @@ async function calculateFeedAnalytics(tenantId: string, db: any) {
         .from(feedInventory)
         .where(and(eq(feedInventory.tenantId, tenantId), eq(feedInventory.isActive, true)))
         .then((result: any[]) => result[0]?.total || 0),
-
       // Low stock items count
       db
         .select({ count: sql<number>`count(*)` })
@@ -343,7 +316,6 @@ async function calculateFeedAnalytics(tenantId: string, db: any) {
           )
         )
         .then((result: any[]) => result[0]?.count || 0),
-
       // Expiring items count (next 30 days)
       db
         .select({ count: sql<number>`count(*)` })
@@ -356,7 +328,6 @@ async function calculateFeedAnalytics(tenantId: string, db: any) {
           )
         )
         .then((result: any[]) => result[0]?.count || 0),
-
       // Category breakdown
       db
         .select({
@@ -370,11 +341,9 @@ async function calculateFeedAnalytics(tenantId: string, db: any) {
         .groupBy(feedInventory.feedType)
         .orderBy(desc(sql`SUM(${feedInventory.quantity} * ${feedInventory.unitPrice})`)),
     ]);
-
     // Calculate additional metrics
     const totalItems = categoryBreakdown.reduce((sum: number, cat: any) => sum + cat.itemCount, 0);
     const totalStock = categoryBreakdown.reduce((sum: number, cat: any) => sum + cat.totalStock, 0);
-
     return {
       totalValue,
       totalItems,
@@ -393,7 +362,6 @@ async function calculateFeedAnalytics(tenantId: string, db: any) {
       },
     };
   } catch (error) {
-    console.error('Error calculating feed analytics:', error);
     return {
       totalValue: 0,
       totalItems: 0,
@@ -410,7 +378,6 @@ async function calculateFeedAnalytics(tenantId: string, db: any) {
     };
   }
 }
-
 // Helper function to get distinct values for filters
 async function getDistinctValues(column: string, tenantId: string, db: any): Promise<string[]> {
   try {
@@ -426,10 +393,8 @@ async function getDistinctValues(column: string, tenantId: string, db: any): Pro
         )
       )
       .orderBy(asc(sql.raw(column)));
-
     return result.map((row: any) => row.value).filter(Boolean);
   } catch (error) {
-    console.error(`Error getting distinct values for ${column}:`, error);
     return [];
   }
 }

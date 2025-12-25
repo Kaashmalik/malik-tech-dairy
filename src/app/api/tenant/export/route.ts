@@ -6,9 +6,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { withMFAEnforcement } from '@/lib/middleware/mfaMiddleware';
 import JSZip from 'jszip';
 import { decrypt } from '@/lib/encryption';
-
 export const dynamic = 'force-dynamic';
-
 /**
  * Export all tenant data as a ZIP file (GDPR/DPA compliance)
  * Only accessible by tenant owner
@@ -19,7 +17,6 @@ export async function GET(request: NextRequest) {
       if (!adminDb) {
         return NextResponse.json({ error: 'Database not available' }, { status: 500 });
       }
-
       // Verify user is owner
       const memberDoc = await adminDb
         .collection('tenants')
@@ -27,19 +24,15 @@ export async function GET(request: NextRequest) {
         .collection('members')
         .doc(userId)
         .get();
-
       if (!memberDoc.exists || memberDoc.data()?.role !== TenantRole.FARM_OWNER) {
         return NextResponse.json({ error: 'Only tenant owner can export data' }, { status: 403 });
       }
-
       const zip = new JSZip();
-
       // 1. Tenant Information
       const tenantDoc = await adminDb.collection('tenants').doc(tenantId).get();
       if (tenantDoc.exists) {
         zip.file('tenant.json', JSON.stringify(tenantDoc.data(), null, 2));
       }
-
       // 2. Tenant Configuration
       const configDoc = await adminDb
         .collection('tenants')
@@ -50,7 +43,6 @@ export async function GET(request: NextRequest) {
       if (configDoc.exists) {
         zip.file('config.json', JSON.stringify(configDoc.data(), null, 2));
       }
-
       // 3. Subscription Data
       const subscriptionDoc = await adminDb
         .collection('tenants')
@@ -61,7 +53,6 @@ export async function GET(request: NextRequest) {
       if (subscriptionDoc.exists) {
         zip.file('subscription.json', JSON.stringify(subscriptionDoc.data(), null, 2));
       }
-
       // 4. Members/Staff
       const membersSnapshot = await adminDb
         .collection('tenants')
@@ -73,7 +64,6 @@ export async function GET(request: NextRequest) {
         ...doc.data(),
       }));
       zip.file('members.json', JSON.stringify(members, null, 2));
-
       // 5. Animals (from subcollection)
       const animalsRef = adminDb
         .collection('tenants_data')
@@ -85,7 +75,6 @@ export async function GET(request: NextRequest) {
         ...doc.data(),
       }));
       zip.file('animals.json', JSON.stringify(animals, null, 2));
-
       // 6. Milk Logs (from subcollection)
       const milkLogsRef = adminDb
         .collection('tenants_data')
@@ -97,7 +86,6 @@ export async function GET(request: NextRequest) {
         ...doc.data(),
       }));
       zip.file('milk_logs.json', JSON.stringify(milkLogs, null, 2));
-
       // 7. Health Records (from subcollection) - decrypt notes
       const healthRef = adminDb
         .collection('tenants_data')
@@ -113,7 +101,6 @@ export async function GET(request: NextRequest) {
             notes = decrypt(notes);
           } catch (error) {
             // If decryption fails, keep encrypted (for audit)
-            console.warn('Failed to decrypt notes in export');
           }
         }
         return {
@@ -123,7 +110,6 @@ export async function GET(request: NextRequest) {
         };
       });
       zip.file('health_records.json', JSON.stringify(healthRecords, null, 2));
-
       // 8. Breeding Records (from subcollection)
       const breedingRef = adminDb
         .collection('tenants_data')
@@ -135,7 +121,6 @@ export async function GET(request: NextRequest) {
         ...doc.data(),
       }));
       zip.file('breeding_records.json', JSON.stringify(breedingRecords, null, 2));
-
       // 9. Expenses (from subcollection)
       const expensesRef = adminDb
         .collection('tenants_data')
@@ -147,7 +132,6 @@ export async function GET(request: NextRequest) {
         ...doc.data(),
       }));
       zip.file('expenses.json', JSON.stringify(expenses, null, 2));
-
       // 10. Payments
       const paymentsSnapshot = await adminDb
         .collection('payments')
@@ -158,10 +142,8 @@ export async function GET(request: NextRequest) {
         ...doc.data(),
       }));
       zip.file('payments.json', JSON.stringify(payments, null, 2));
-
       // Generate ZIP file
       const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
-
       // Return ZIP file
       return new NextResponse(zipBuffer, {
         headers: {
@@ -170,7 +152,6 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Error exporting tenant data:', error);
       return NextResponse.json({ error: 'Failed to export data' }, { status: 500 });
     }
   })(request);

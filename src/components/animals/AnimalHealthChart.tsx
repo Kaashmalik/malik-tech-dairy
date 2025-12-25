@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -15,12 +14,10 @@ import {
 } from 'recharts';
 import { Heart, TrendingUp, Calendar, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface AnimalHealthChartProps {
   animalId: string;
   className?: string;
 }
-
 interface HealthData {
   date: string;
   healthScore: number;
@@ -29,16 +26,13 @@ interface HealthData {
   weight: number;
   event: string;
 }
-
 export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProps) {
   const [healthData, setHealthData] = useState<HealthData[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
-
   useEffect(() => {
     fetchHealthData();
   }, [animalId, timeRange]);
-
   const fetchHealthData = async () => {
     try {
       setLoading(true);
@@ -101,17 +95,14 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
           event: 'Normal',
         },
       ];
-
       // Filter data based on time range
       const filteredData = mockData.slice(-getTimeRangeDays(timeRange));
       setHealthData(filteredData);
     } catch (error) {
-      console.error('Error fetching health data:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const getTimeRangeDays = (range: string) => {
     switch (range) {
       case '7d':
@@ -124,20 +115,17 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
         return 30;
     }
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
     });
   };
-
   const getHealthScoreColor = (score: number) => {
     if (score >= 85) return '#10b981'; // green
     if (score >= 70) return '#f59e0b'; // yellow
     return '#ef4444'; // red
   };
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -157,7 +145,6 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
     }
     return null;
   };
-
   if (loading) {
     return (
       <Card className={cn('w-full', className)}>
@@ -175,7 +162,6 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
       </Card>
     );
   }
-
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
@@ -250,7 +236,6 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
               </AreaChart>
             </ResponsiveContainer>
           </div>
-
           {/* Vital Signs Chart */}
           <div>
             <h3 className='mb-4 text-sm font-medium text-gray-700'>Vital Signs</h3>
@@ -279,7 +264,6 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
               </LineChart>
             </ResponsiveContainer>
           </div>
-
           {/* Weight Tracking */}
           <div>
             <div className='mb-4 flex items-center justify-between'>
@@ -306,7 +290,6 @@ export function AnimalHealthChart({ animalId, className }: AnimalHealthChartProp
               </LineChart>
             </ResponsiveContainer>
           </div>
-
           {/* Health Events */}
           <div>
             <h3 className='mb-3 text-sm font-medium text-gray-700'>Recent Health Events</h3>

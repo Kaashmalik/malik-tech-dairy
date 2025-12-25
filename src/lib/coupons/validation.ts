@@ -2,7 +2,6 @@
 import { adminDb } from '@/lib/firebase/admin';
 import type { Coupon, DiscountCalculation } from './types';
 import type { SubscriptionPlan } from '@/types';
-
 /**
  * Validate and calculate discount for a coupon
  */
@@ -16,7 +15,6 @@ export async function validateCoupon(
   if (!adminDb) {
     return { valid: false, error: 'Database not available' };
   }
-
   try {
     // Find coupon by code
     const couponsSnapshot = await adminDb
@@ -25,14 +23,11 @@ export async function validateCoupon(
       .where('isActive', '==', true)
       .limit(1)
       .get();
-
     if (couponsSnapshot.empty) {
       return { valid: false, error: 'Invalid coupon code' };
     }
-
     const couponDoc = couponsSnapshot.docs[0];
     const coupon = { id: couponDoc.id, ...couponDoc.data() } as Coupon;
-
     // Check validity dates
     const now = new Date();
     const validFrom =
@@ -43,11 +38,9 @@ export async function validateCoupon(
       coupon.validUntil instanceof Date
         ? coupon.validUntil
         : (coupon.validUntil as any)?.toDate?.() || new Date(coupon.validUntil);
-
     if (now < validFrom || now > validUntil) {
       return { valid: false, error: 'Coupon has expired' };
     }
-
     // Check if coupon applies to this plan
     if (
       coupon.targetPlans.length > 0 &&
@@ -56,7 +49,6 @@ export async function validateCoupon(
     ) {
       return { valid: false, error: 'Coupon not valid for this plan' };
     }
-
     // Check minimum amount
     if (coupon.minAmount && amount < coupon.minAmount) {
       return {
@@ -64,7 +56,6 @@ export async function validateCoupon(
         error: `Minimum purchase amount is PKR ${coupon.minAmount}`,
       };
     }
-
     // Check max uses
     if (coupon.maxUses) {
       const usageCount = await adminDb
@@ -72,12 +63,10 @@ export async function validateCoupon(
         .where('couponId', '==', coupon.id)
         .count()
         .get();
-
       if (usageCount.data().count >= coupon.maxUses) {
         return { valid: false, error: 'Coupon has reached maximum uses' };
       }
     }
-
     // Check max uses per user
     if (coupon.maxUsesPerUser) {
       const userUsageCount = await adminDb
@@ -86,15 +75,12 @@ export async function validateCoupon(
         .where('userId', '==', userId)
         .count()
         .get();
-
       if (userUsageCount.data().count >= coupon.maxUsesPerUser) {
         return { valid: false, error: 'You have already used this coupon' };
       }
     }
-
     // Calculate discount
     let discountAmount = 0;
-
     if (coupon.type === 'percentage') {
       discountAmount = (amount * coupon.value) / 100;
       if (coupon.maxDiscount) {
@@ -105,9 +91,7 @@ export async function validateCoupon(
     } else if (coupon.type === 'free_trial') {
       discountAmount = amount; // Full discount for free trial
     }
-
     const finalAmount = Math.max(0, amount - discountAmount);
-
     return {
       valid: true,
       calculation: {
@@ -118,11 +102,9 @@ export async function validateCoupon(
       },
     };
   } catch (error) {
-    console.error('Error validating coupon:', error);
     return { valid: false, error: 'Error validating coupon' };
   }
 }
-
 /**
  * Record coupon usage
  */
@@ -136,7 +118,6 @@ export async function recordCouponUsage(
   if (!adminDb) {
     throw new Error('Database not available');
   }
-
   await adminDb.collection('coupon_usage').add({
     couponId,
     tenantId,

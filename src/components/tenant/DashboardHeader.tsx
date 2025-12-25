@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOrganization } from '@clerk/nextjs';
 import { UserButton, OrganizationSwitcher, useUser, useClerk } from '@clerk/nextjs';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -30,6 +30,7 @@ import {
   Crown,
   Building,
   Pill,
+  Package,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
@@ -57,14 +58,21 @@ export function DashboardHeader() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
-  // Get farm name from Clerk organization
-  const farmName = organization?.name || 'Your Farm';
+  // Fix hydration mismatch - only render dynamic content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  // Get user display name
-  const userDisplayName =
-    user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress || 'User';
+  // Get farm name from Clerk organization - use placeholder during SSR
+  const farmName = mounted ? (organization?.name || 'Your Farm') : 'Your Farm';
+
+  // Get user display name - use placeholder during SSR
+  const userDisplayName = mounted
+    ? (user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress || 'User')
+    : 'User';
 
   // Handle sign out
   const handleSignOut = async () => {
@@ -121,8 +129,14 @@ export function DashboardHeader() {
       module: 'expenses',
     },
     {
-      label: 'Analytics',
-      href: '/analytics',
+      label: 'Assets',
+      href: '/assets',
+      icon: Package,
+      module: 'expenses',
+    },
+    {
+      label: 'Reports',
+      href: '/reports',
       icon: BarChart3,
       module: 'analytics',
     },
@@ -131,6 +145,12 @@ export function DashboardHeader() {
       href: '/settings',
       icon: Settings,
       module: 'settings',
+    },
+    {
+      label: 'Help',
+      href: '/help',
+      icon: HelpCircle,
+      module: 'dashboard',
     },
   ];
 
@@ -179,25 +199,16 @@ export function DashboardHeader() {
           {/* Desktop Navigation */}
           <nav className='hidden items-center gap-1 rounded-xl bg-gray-100/80 p-1 lg:flex dark:bg-slate-800/50'>
             {navItems.map(item => {
-              console.log(
-                'Desktop nav item:',
-                item.label,
-                'Module:',
-                item.module,
-                'Can access:',
-                canAccessModule(item.module)
-              );
               if (!canAccessModule(item.module)) return null;
               const active = isActive(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                    active
-                      ? 'bg-white text-emerald-700 shadow-sm dark:bg-slate-700 dark:text-emerald-400'
-                      : 'text-gray-600 hover:bg-white/50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-white'
-                  }`}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${active
+                    ? 'bg-white text-emerald-700 shadow-sm dark:bg-slate-700 dark:text-emerald-400'
+                    : 'text-gray-600 hover:bg-white/50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-white'
+                    }`}
                 >
                   <item.icon className={`h-4 w-4 ${active ? 'text-emerald-500' : ''}`} />
                   {item.label}
@@ -224,6 +235,7 @@ export function DashboardHeader() {
             <button
               className='group hidden rounded-xl bg-gray-100 p-2.5 transition-colors hover:bg-gray-200 md:flex dark:bg-slate-800 dark:hover:bg-slate-700'
               title='Search (⌘K)'
+              aria-label='Search'
             >
               <Search className='h-4 w-4 text-gray-500 group-hover:text-gray-700 dark:text-slate-400 dark:group-hover:text-slate-300' />
               <span className='ml-2 text-xs text-gray-400 group-hover:text-gray-600 dark:text-slate-500 dark:group-hover:text-slate-400'>
@@ -232,7 +244,11 @@ export function DashboardHeader() {
             </button>
 
             {/* Notifications */}
-            <button className='relative rounded-xl bg-gray-100 p-2.5 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700'>
+            {/* Notifications */}
+            <button
+              className='relative rounded-xl bg-gray-100 p-2.5 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700'
+              aria-label='Notifications'
+            >
               <Bell className='h-4 w-4 text-gray-500 dark:text-slate-400' />
               <span className='absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500'></span>
             </button>
@@ -249,6 +265,7 @@ export function DashboardHeader() {
                   <Button
                     variant='ghost'
                     className='relative h-9 w-9 rounded-full p-0 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-white hover:bg-gray-100 dark:ring-offset-slate-900 dark:hover:bg-slate-800'
+                    aria-label='User menu'
                   >
                     <div className='flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-sm font-semibold text-white'>
                       {userDisplayName.charAt(0).toUpperCase()}
@@ -264,7 +281,7 @@ export function DashboardHeader() {
                       </p>
                       <div className='mt-1 flex items-center gap-2'>
                         <Badge variant='outline' className='text-xs'>
-                          {ROLE_DISPLAY_NAMES[userRole] || 'Member'}
+                          {(userRole && ROLE_DISPLAY_NAMES[userRole]) || 'Member'}
                         </Badge>
                         <Badge variant='secondary' className='text-xs'>
                           {farmName}
@@ -378,6 +395,7 @@ export function DashboardHeader() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className='rounded-xl bg-gray-100 p-2 transition-colors hover:bg-gray-200 lg:hidden dark:bg-slate-800 dark:hover:bg-slate-700'
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {mobileMenuOpen ? (
                 <X className='h-5 w-5 text-gray-600 dark:text-slate-300' />
@@ -397,11 +415,10 @@ export function DashboardHeader() {
             <Link
               href='/dashboard'
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${
-                isActive('/dashboard')
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${isActive('/dashboard')
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+                : 'text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                }`}
             >
               <Home className='h-5 w-5' />
               Dashboard
@@ -409,14 +426,6 @@ export function DashboardHeader() {
 
             {/* Permission-based navigation items */}
             {navItems.map(item => {
-              console.log(
-                'Mobile menu item:',
-                item.label,
-                'Module:',
-                item.module,
-                'Can access:',
-                canAccessModule(item.module)
-              );
               if (!canAccessModule(item.module)) return null;
               const active = isActive(item.href);
               return (
@@ -424,11 +433,10 @@ export function DashboardHeader() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${
-                    active
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                  }`}
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${active
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                    }`}
                 >
                   <item.icon className='h-5 w-5' />
                   {item.label}
@@ -447,7 +455,7 @@ export function DashboardHeader() {
                 </p>
                 <div className='mt-2 flex items-center gap-2'>
                   <Badge variant='outline' className='text-xs'>
-                    {ROLE_DISPLAY_NAMES[userRole] || 'Member'}
+                    {(userRole && ROLE_DISPLAY_NAMES[userRole]) || 'Member'}
                   </Badge>
                 </div>
               </div>

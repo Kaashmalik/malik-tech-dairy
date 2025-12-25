@@ -3,7 +3,6 @@ import type { Job } from 'bullmq';
 import { adminDb } from '@/lib/firebase/admin';
 import { getTenantSubcollection } from '@/lib/firebase/tenant';
 import type { MilkLog } from '@/types';
-
 interface MilkLogJobData {
   tenantId: string;
   animalId: string;
@@ -15,16 +14,13 @@ interface MilkLogJobData {
   recordedBy: string;
   source: 'iot' | 'manual';
 }
-
 export async function processMilkLogJob(job: Job<MilkLogJobData>) {
   const { tenantId, animalId, date, session, quantity, quality, notes, recordedBy, source } =
     job.data;
-
   try {
     if (!adminDb) {
       throw new Error('Database not initialized');
     }
-
     // Check if log already exists
     const milkLogsRef = getTenantSubcollection(tenantId, 'milkLogs', 'logs');
     const existing = await milkLogsRef
@@ -33,7 +29,6 @@ export async function processMilkLogJob(job: Job<MilkLogJobData>) {
       .where('session', '==', session)
       .limit(1)
       .get();
-
     if (!existing.empty) {
       // Update existing log instead of creating duplicate
       const existingDoc = existing.docs[0];
@@ -43,7 +38,6 @@ export async function processMilkLogJob(job: Job<MilkLogJobData>) {
         notes: notes || existingDoc.data().notes,
         updatedAt: new Date(),
       });
-
       job.updateProgress(100);
       return {
         success: true,
@@ -51,7 +45,6 @@ export async function processMilkLogJob(job: Job<MilkLogJobData>) {
         action: 'updated',
       };
     }
-
     // Create new milk log
     const milkLogData: Omit<MilkLog, 'id'> = {
       tenantId,
@@ -64,18 +57,14 @@ export async function processMilkLogJob(job: Job<MilkLogJobData>) {
       recordedBy,
       createdAt: new Date(),
     };
-
     const docRef = await milkLogsRef.add(milkLogData);
-
     job.updateProgress(100);
-
     return {
       success: true,
       logId: docRef.id,
       action: 'created',
     };
   } catch (error) {
-    console.error('Error processing milk log job:', error);
     throw new Error(`Milk log processing failed: ${error}`);
   }
 }

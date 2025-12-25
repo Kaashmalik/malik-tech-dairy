@@ -1,29 +1,23 @@
 // Admin API - List and Create farms
 import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-
 export async function GET() {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     // Use Supabase REST API
     const { getSupabaseClient } = await import('@/lib/supabase');
     const supabase = getSupabaseClient();
-
     const { data: farms, error } = await supabase
       .from('tenants')
       .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
-
     if (error) {
-      console.error('Error fetching farms:', error);
       return NextResponse.json({ success: false, error: 'Failed to fetch farms' }, { status: 500 });
     }
-
     // Get user counts per farm
     const farmsWithStats = await Promise.all(
       (farms || []).map(async (farm: Record<string, unknown>) => {
@@ -31,7 +25,6 @@ export async function GET() {
           .from('tenant_members')
           .select('*', { count: 'exact', head: true })
           .eq('tenant_id', farm.id);
-
         return {
           id: farm.id,
           farmName: farm.farm_name,
@@ -44,14 +37,11 @@ export async function GET() {
         };
       })
     );
-
     return NextResponse.json({ success: true, data: farmsWithStats });
   } catch (error) {
-    console.error('Error:', error);
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }
-
 // POST - Create a new farm
 export async function POST(request: Request) {
   try {
@@ -59,27 +49,22 @@ export async function POST(request: Request) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const { farmName, ownerName, email, phone, city, province, plan } = body;
-
     if (!farmName || !ownerName || !email) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
-
     // Generate slug from farm name
     const slug = farmName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
     const farmId = `MTD-${Date.now().toString(36).toUpperCase()}`;
-
     const { getSupabaseClient } = await import('@/lib/supabase');
     const supabase = getSupabaseClient();
-
     // Create tenant in Supabase
     const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
@@ -101,12 +86,9 @@ export async function POST(request: Request) {
       })
       .select()
       .single();
-
     if (tenantError) {
-      console.error('Error creating tenant:', tenantError);
       return NextResponse.json({ success: false, error: 'Failed to create farm' }, { status: 500 });
     }
-
     // Try to create Clerk organization (optional, may fail if user doesn't exist)
     try {
       const client = await clerkClient();
@@ -120,10 +102,8 @@ export async function POST(request: Request) {
         },
       });
     } catch (clerkError) {
-      console.warn('Could not create Clerk organization:', clerkError);
       // Continue anyway - farm is created in Supabase
     }
-
     return NextResponse.json({
       success: true,
       data: {
@@ -134,7 +114,6 @@ export async function POST(request: Request) {
       message: 'Farm created successfully',
     });
   } catch (error) {
-    console.error('Error creating farm:', error);
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }

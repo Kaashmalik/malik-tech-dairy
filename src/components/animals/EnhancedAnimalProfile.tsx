@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,12 +33,10 @@ import { GeneticProfileCard } from './GeneticProfileCard';
 import { FinancialMetricsCard } from './FinancialMetricsCard';
 import { BreedingTimeline } from './BreedingTimeline';
 import { VisionAnalysisCard } from './VisionAnalysisCard';
-
 interface EnhancedAnimalProfileProps {
   animalId: string;
   className?: string;
 }
-
 interface AnimalData {
   id: string;
   name: string;
@@ -73,34 +70,27 @@ interface AnimalData {
     analysisDate: string;
   };
 }
-
 export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalProfileProps) {
   const [animal, setAnimal] = useState<AnimalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-
   useEffect(() => {
     fetchAnimalData();
   }, [animalId]);
-
   const fetchAnimalData = async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/animals/enhanced?id=${animalId}`);
       const result = await response.json();
-
       if (result.success) {
         setAnimal(result.data);
       } else {
-        console.error('Failed to fetch animal data:', result.error);
       }
     } catch (error) {
-      console.error('Error fetching animal data:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const getHealthStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'healthy':
@@ -115,24 +105,20 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
         return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getHealthScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
     return 'text-red-600';
   };
-
   const calculateAge = (birthDate: string) => {
     const birth = new Date(birthDate);
     const today = new Date();
     const ageInDays = Math.floor((today.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
-
     if (ageInDays < 365) {
       return `${Math.floor(ageInDays / 30)} months`;
     }
     return `${Math.floor(ageInDays / 365)} years`;
   };
-
   if (loading) {
     return (
       <Card className={cn('w-full', className)}>
@@ -146,7 +132,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
       </Card>
     );
   }
-
   if (!animal) {
     return (
       <Card className={cn('w-full', className)}>
@@ -159,7 +144,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
       </Card>
     );
   }
-
   return (
     <div className={cn('w-full space-y-6', className)}>
       {/* Header Section */}
@@ -209,7 +193,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
               </div>
               <p className='text-lg font-semibold capitalize'>{animal.species}</p>
             </div>
-
             <div className='space-y-2'>
               <div className='flex items-center space-x-2'>
                 <Droplets className='h-4 w-4 text-gray-500' />
@@ -217,7 +200,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
               </div>
               <p className='text-lg font-semibold'>{animal.breed}</p>
             </div>
-
             <div className='space-y-2'>
               <div className='flex items-center space-x-2'>
                 <Calendar className='h-4 w-4 text-gray-500' />
@@ -225,7 +207,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
               </div>
               <p className='text-lg font-semibold'>{calculateAge(animal.birthDate)}</p>
             </div>
-
             <div className='space-y-2'>
               <div className='flex items-center space-x-2'>
                 <MapPin className='h-4 w-4 text-gray-500' />
@@ -234,7 +215,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
               <p className='text-lg font-semibold'>{animal.location || 'Not assigned'}</p>
             </div>
           </div>
-
           {/* Status Badges */}
           <div className='mt-4 flex flex-wrap gap-2'>
             <Badge className={getHealthStatusColor(animal.healthStatus)}>
@@ -244,7 +224,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
             <Badge variant='outline'>{animal.reproductiveStatus}</Badge>
             {animal.rfidTag && <Badge variant='outline'>RFID: {animal.rfidTag}</Badge>}
           </div>
-
           {/* Health Score Progress */}
           <div className='mt-4'>
             <div className='mb-2 flex items-center justify-between'>
@@ -257,7 +236,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
           </div>
         </CardContent>
       </Card>
-
       {/* Detailed Information Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
         <TabsList className='grid w-full grid-cols-6'>
@@ -268,7 +246,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
           <TabsTrigger value='genetics'>Genetics</TabsTrigger>
           <TabsTrigger value='financial'>Financial</TabsTrigger>
         </TabsList>
-
         <TabsContent value='overview' className='space-y-4'>
           <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
             {/* Quick Stats */}
@@ -307,17 +284,14 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
                 </div>
               </CardContent>
             </Card>
-
             {/* Latest Vision Analysis */}
             {animal.latestVisionAnalysis && (
               <VisionAnalysisCard analysis={animal.latestVisionAnalysis} />
             )}
           </div>
-
           {/* Health Trend Chart */}
           <AnimalHealthChart animalId={animalId} />
         </TabsContent>
-
         <TabsContent value='health' className='space-y-4'>
           <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
             <Card>
@@ -333,7 +307,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
                 </p>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center text-lg'>
@@ -349,10 +322,8 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
             </Card>
           </div>
         </TabsContent>
-
         <TabsContent value='production' className='space-y-4'>
           <MilkProductionChart animalId={animalId} />
-
           <div className='grid grid-cols-1 gap-4 lg:grid-cols-3'>
             <Card>
               <CardHeader>
@@ -378,7 +349,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center text-lg'>
@@ -392,7 +362,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
                 </p>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center text-lg'>
@@ -406,11 +375,9 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
             </Card>
           </div>
         </TabsContent>
-
         <TabsContent value='breeding' className='space-y-4'>
           <BreedingTimeline animalId={animalId} />
         </TabsContent>
-
         <TabsContent value='genetics' className='space-y-4'>
           {animal.geneticProfile ? (
             <GeneticProfileCard geneticProfile={animal.geneticProfile} />
@@ -430,7 +397,6 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
             </Card>
           )}
         </TabsContent>
-
         <TabsContent value='financial' className='space-y-4'>
           <FinancialMetricsCard animalId={animalId} />
         </TabsContent>

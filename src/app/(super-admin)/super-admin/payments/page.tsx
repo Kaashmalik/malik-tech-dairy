@@ -1,6 +1,5 @@
 // Super Admin - Payments Management Page
 'use client';
-
 import { useState, useEffect } from 'react';
 import {
   CreditCard,
@@ -35,7 +34,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-
 interface Payment {
   id: string;
   farmName: string;
@@ -47,37 +45,31 @@ interface Payment {
   transactionId?: string;
   createdAt: string;
 }
-
 const statusConfig = {
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-700', icon: Clock },
   completed: { label: 'Completed', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
   failed: { label: 'Failed', color: 'bg-red-100 text-red-700', icon: XCircle },
   refunded: { label: 'Refunded', color: 'bg-gray-100 text-gray-700', icon: DollarSign },
 };
-
 const gatewayConfig: Record<string, { label: string; color: string }> = {
   jazzcash: { label: 'JazzCash', color: 'bg-red-100 text-red-700' },
   easypaisa: { label: 'EasyPaisa', color: 'bg-green-100 text-green-700' },
   bank_transfer: { label: 'Bank Transfer', color: 'bg-blue-100 text-blue-700' },
   xpay: { label: 'XPay', color: 'bg-purple-100 text-purple-700' },
 };
-
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-
   useEffect(() => {
     fetchPayments();
   }, [statusFilter]);
-
   async function fetchPayments() {
     setLoading(true);
     try {
       const response = await fetch('/api/admin/payments');
       const data = await response.json();
-
       if (data.success) {
         setPayments(data.data || []);
       } else {
@@ -107,21 +99,17 @@ export default function PaymentsPage() {
         ]);
       }
     } catch (error) {
-      console.error('Failed to fetch payments:', error);
       setPayments([]);
     } finally {
       setLoading(false);
     }
   }
-
   const totalRevenue = payments
     .filter(p => p.status === 'completed')
     .reduce((acc, p) => acc + p.amount, 0);
-
   const pendingAmount = payments
     .filter(p => p.status === 'pending')
     .reduce((acc, p) => acc + p.amount, 0);
-
   const filteredPayments = payments.filter(payment => {
     const matchesSearch =
       payment.farmName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -129,11 +117,9 @@ export default function PaymentsPage() {
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
   const formatAmount = (amount: number) => {
     return `Rs. ${(amount / 100).toLocaleString()}`;
   };
-
   return (
     <div className='space-y-4 md:space-y-6'>
       {/* Page Header */}
@@ -149,7 +135,6 @@ export default function PaymentsPage() {
           Export Report
         </Button>
       </div>
-
       {/* Stats Cards */}
       <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
         <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
@@ -203,7 +188,6 @@ export default function PaymentsPage() {
           </div>
         </div>
       </div>
-
       {/* Filters */}
       <div className='flex flex-col gap-3 sm:flex-row'>
         <div className='relative flex-1'>
@@ -229,7 +213,6 @@ export default function PaymentsPage() {
           </SelectContent>
         </Select>
       </div>
-
       {/* Payments List */}
       <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
         {loading ? (
@@ -250,7 +233,6 @@ export default function PaymentsPage() {
                 const status = statusConfig[payment.status];
                 const StatusIcon = status.icon;
                 const gateway = gatewayConfig[payment.gateway];
-
                 return (
                   <div key={payment.id} className='space-y-3 p-4'>
                     <div className='flex items-start justify-between'>
@@ -276,7 +258,6 @@ export default function PaymentsPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-
                     <div className='flex flex-wrap gap-2'>
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${status.color}`}
@@ -293,7 +274,6 @@ export default function PaymentsPage() {
                         {payment.plan}
                       </span>
                     </div>
-
                     <div className='flex items-center justify-between text-xs text-gray-500'>
                       {payment.transactionId && (
                         <span className='font-mono'>{payment.transactionId}</span>
@@ -307,7 +287,6 @@ export default function PaymentsPage() {
                 );
               })}
             </div>
-
             {/* Desktop Table View */}
             <div className='hidden overflow-x-auto md:block'>
               <table className='w-full'>
@@ -341,7 +320,6 @@ export default function PaymentsPage() {
                     const status = statusConfig[payment.status];
                     const StatusIcon = status.icon;
                     const gateway = gatewayConfig[payment.gateway];
-
                     return (
                       <tr key={payment.id} className='hover:bg-gray-50 dark:hover:bg-slate-700/30'>
                         <td className='px-6 py-4'>

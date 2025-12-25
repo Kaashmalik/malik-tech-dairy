@@ -2,9 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { adminDb } from '@/lib/firebase/admin';
-
 export const dynamic = 'force-dynamic';
-
 async function isSuperAdmin(userId: string): Promise<boolean> {
   if (!adminDb) return false;
   try {
@@ -15,29 +13,24 @@ async function isSuperAdmin(userId: string): Promise<boolean> {
     return false;
   }
 }
-
 // PUT: Update coupon
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     const { id } = await params;
-
     if (!userId || !(await isSuperAdmin(userId))) {
       return NextResponse.json(
         { error: 'Unauthorized - Super admin access required' },
         { status: 403 }
       );
     }
-
     if (!adminDb) {
       return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
-
     const body = await request.json();
     const updates: any = {
       updatedAt: new Date(),
     };
-
     // Allow updating these fields
     if (body.type !== undefined) updates.type = body.type;
     if (body.value !== undefined) updates.value = body.value;
@@ -50,16 +43,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (body.maxUsesPerUser !== undefined) updates.maxUsesPerUser = body.maxUsesPerUser;
     if (body.isActive !== undefined) updates.isActive = body.isActive;
     if (body.description !== undefined) updates.description = body.description;
-
     await adminDb.collection('coupons').doc(id).update(updates);
-
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating coupon:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
 // DELETE: Delete coupon (soft delete by setting isActive = false)
 export async function DELETE(
   request: NextRequest,
@@ -68,26 +57,21 @@ export async function DELETE(
   try {
     const { userId } = await auth();
     const { id } = await params;
-
     if (!userId || !(await isSuperAdmin(userId))) {
       return NextResponse.json(
         { error: 'Unauthorized - Super admin access required' },
         { status: 403 }
       );
     }
-
     if (!adminDb) {
       return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
-
     await adminDb.collection('coupons').doc(id).update({
       isActive: false,
       updatedAt: new Date(),
     });
-
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting coupon:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

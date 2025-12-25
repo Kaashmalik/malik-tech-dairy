@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useTenantContext } from '@/components/tenant/TenantProvider';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -10,7 +9,6 @@ import { Select } from '@/components/ui/select';
 import { TenantRole, ROLE_DISPLAY_NAMES } from '@/types/roles';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-
 interface TeamMember {
   id: string;
   email: string;
@@ -19,7 +17,6 @@ interface TeamMember {
   joinedAt?: Date;
   invitedBy?: string;
 }
-
 export default function TeamManagementPage() {
   const { tenantId } = useTenantContext();
   const { hasPermission, isOwner, isManager } = usePermissions();
@@ -28,13 +25,11 @@ export default function TeamManagementPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<TenantRole>(TenantRole.MILKING_STAFF);
   const [inviting, setInviting] = useState(false);
-
   useEffect(() => {
     if (tenantId) {
       fetchMembers();
     }
   }, [tenantId]);
-
   const fetchMembers = async () => {
     try {
       const response = await fetch('/api/staff');
@@ -43,15 +38,12 @@ export default function TeamManagementPage() {
         setMembers(data.members || []);
       }
     } catch (error) {
-      console.error('Error fetching members:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const handleInvite = async () => {
     if (!inviteEmail || !tenantId) return;
-
     setInviting(true);
     try {
       const response = await fetch('/api/staff', {
@@ -59,12 +51,10 @@ export default function TeamManagementPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
       });
-
       if (response.ok) {
         const data = await response.json();
         alert(`Invitation sent! Invite ID: ${data.inviteId}`);
         setInviteEmail('');
-
         // Send invitation email
         await fetch('/api/invitations/send', {
           method: 'POST',
@@ -75,49 +65,40 @@ export default function TeamManagementPage() {
             inviteId: data.inviteId,
           }),
         });
-
         fetchMembers();
       } else {
         const error = await response.json();
         alert(`Error: ${error.error}`);
       }
     } catch (error) {
-      console.error('Error sending invitation:', error);
       alert('Failed to send invitation');
     } finally {
       setInviting(false);
     }
   };
-
   const handleRoleChange = async (memberId: string, newRole: TenantRole) => {
     if (!tenantId) return;
-
     try {
       const response = await fetch(`/api/staff/${memberId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       });
-
       if (response.ok) {
         fetchMembers();
       } else {
         alert('Failed to update role');
       }
     } catch (error) {
-      console.error('Error updating role:', error);
       alert('Failed to update role');
     }
   };
-
   const handleRemove = async (memberId: string) => {
     if (!confirm('Are you sure you want to remove this team member?')) return;
-
     try {
       const response = await fetch(`/api/staff/${memberId}`, {
         method: 'DELETE',
       });
-
       if (response.ok) {
         fetchMembers();
       } else {
@@ -125,11 +106,9 @@ export default function TeamManagementPage() {
         alert(`Error: ${error.error}`);
       }
     } catch (error) {
-      console.error('Error removing member:', error);
       alert('Failed to remove member');
     }
   };
-
   if (loading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
@@ -140,7 +119,6 @@ export default function TeamManagementPage() {
       </div>
     );
   }
-
   return (
     <ProtectedRoute requiredRole={[TenantRole.FARM_OWNER, TenantRole.FARM_MANAGER]}>
       <div className='space-y-6 p-6'>
@@ -148,7 +126,6 @@ export default function TeamManagementPage() {
           <h1 className='text-3xl font-bold'>Team Management</h1>
           <p className='mt-2 text-gray-600'>Manage your farm team members and their roles</p>
         </div>
-
         {/* Invite Form */}
         <RoleGuard
           roles={[TenantRole.FARM_OWNER, TenantRole.FARM_MANAGER]}
@@ -193,7 +170,6 @@ export default function TeamManagementPage() {
             </div>
           </Card>
         </RoleGuard>
-
         {/* Members List */}
         <Card className='p-6'>
           <h2 className='mb-4 text-xl font-semibold'>Team Members</h2>
@@ -219,7 +195,6 @@ export default function TeamManagementPage() {
                       )}
                     </p>
                   </div>
-
                   <div className='flex items-center gap-4'>
                     {hasPermission('staff', 'update') ? (
                       <select
@@ -237,7 +212,6 @@ export default function TeamManagementPage() {
                     ) : (
                       <span className='text-sm capitalize'>{ROLE_DISPLAY_NAMES[member.role]}</span>
                     )}
-
                     {isOwner && member.role !== TenantRole.FARM_OWNER && (
                       <Button variant='destructive' onClick={() => handleRemove(member.id)}>
                         Remove

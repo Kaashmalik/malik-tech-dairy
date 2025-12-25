@@ -58,9 +58,10 @@ export const ENTERPRISE_FEATURE_FLAGS = {
   DATA_EXPORT_FEATURES: 'data_export_features',
 } as const;
 
-export type EnterpriseFeatureFlag = keyof typeof ENTERPRISE_FEATURE_FLAGS;
+// Type representing the lowercase string values of feature flags
+export type EnterpriseFeatureFlag = (typeof ENTERPRISE_FEATURE_FLAGS)[keyof typeof ENTERPRISE_FEATURE_FLAGS];
 
-// Default feature flag configurations
+// Default feature flag configurations (keyed by feature flag values)
 export const DEFAULT_FEATURE_FLAGS: Record<EnterpriseFeatureFlag, FeatureFlag> = {
   // Phase 1: Foundation (Database & APIs) - Roll out gradually
   [ENTERPRISE_FEATURE_FLAGS.VETERINARY_DISEASE_MANAGEMENT]: {

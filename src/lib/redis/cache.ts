@@ -1,17 +1,14 @@
 // Redis Caching Layer for Firestore Queries
 // Uses Upstash Redis for caching frequently accessed Firestore data
 import { Redis } from '@upstash/redis';
-
 let redis: Redis | null = null;
 let redisDisabled = false;
-
 /**
  * Check if Redis is configured
  */
 function isRedisConfigured(): boolean {
   return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 }
-
 /**
  * Get Redis client (singleton)
  * Returns null if Redis is not configured (graceful degradation)
@@ -20,26 +17,21 @@ function getRedis(): Redis | null {
   if (redisDisabled) {
     return null;
   }
-
   if (!redis) {
     const url = process.env.UPSTASH_REDIS_REST_URL;
     const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
     if (!url || !token) {
       // Redis not configured - disable silently for development
       redisDisabled = true;
       return null;
     }
-
     redis = new Redis({
       url,
       token,
     });
   }
-
   return redis;
 }
-
 /**
  * Cache key generators
  */
@@ -52,7 +44,6 @@ export const cacheKeys = {
   healthRecords: (tenantId: string, animalId: string) => `tenant:health:${tenantId}:${animalId}`,
   lowYieldAnimals: (tenantId: string) => `tenant:animals:low-yield:${tenantId}`,
 };
-
 /**
  * Get cached value
  */
@@ -63,11 +54,9 @@ export async function getCache<T>(key: string): Promise<T | null> {
     const value = await client.get<T>(key);
     return value;
   } catch (error) {
-    console.error(`Redis cache get error for key ${key}:`, error);
     return null; // Fail gracefully - return null on cache miss/error
   }
 }
-
 /**
  * Set cached value with TTL
  */
@@ -81,11 +70,9 @@ export async function setCache<T>(
     if (!client) return; // Redis not configured
     await client.setex(key, ttlSeconds, value);
   } catch (error) {
-    console.error(`Redis cache set error for key ${key}:`, error);
     // Fail silently - caching is not critical
   }
 }
-
 /**
  * Delete cached value
  */
@@ -95,11 +82,9 @@ export async function deleteCache(key: string): Promise<void> {
     if (!client) return; // Redis not configured
     await client.del(key);
   } catch (error) {
-    console.error(`Redis cache delete error for key ${key}:`, error);
     // Fail silently
   }
 }
-
 /**
  * Delete cache by pattern (use with caution - expensive operation)
  */
@@ -109,12 +94,9 @@ export async function deleteCachePattern(pattern: string): Promise<void> {
     if (!client) return; // Redis not configured
     // Upstash Redis doesn't support KEYS command, so we'll use SCAN
     // For now, we'll just log - implement if needed
-    console.warn(`Pattern deletion not implemented for ${pattern}`);
   } catch (error) {
-    console.error(`Redis cache pattern delete error for ${pattern}:`, error);
   }
 }
-
 /**
  * Invalidate tenant-related caches
  */
@@ -126,10 +108,8 @@ export async function invalidateTenantCache(tenantId: string): Promise<void> {
     cacheKeys.animalCount(tenantId),
     cacheKeys.lowYieldAnimals(tenantId),
   ];
-
   await Promise.all(keys.map(key => deleteCache(key)));
 }
-
 /**
  * Cache wrapper for async functions
  */
@@ -143,12 +123,9 @@ export async function withCache<T>(
   if (cached !== null) {
     return cached;
   }
-
   // Cache miss - execute function
   const result = await fn();
-
   // Cache result
   await setCache(key, result, ttlSeconds);
-
   return result;
 }

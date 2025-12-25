@@ -1,6 +1,5 @@
 // Super Admin - Users Management Page
 'use client';
-
 import { useState, useEffect } from 'react';
 import {
   Users,
@@ -43,7 +42,6 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-
 interface User {
   id: string;
   name: string;
@@ -56,13 +54,11 @@ interface User {
   lastLoginAt?: string;
   createdAt: string;
 }
-
 const roleConfig = {
   super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700', icon: ShieldCheck },
   admin: { label: 'Admin', color: 'bg-blue-100 text-blue-700', icon: Shield },
   user: { label: 'User', color: 'bg-gray-100 text-gray-700', icon: Users },
 };
-
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,17 +67,14 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [newRole, setNewRole] = useState<string>('');
-
   useEffect(() => {
     fetchUsers();
   }, [roleFilter]);
-
   async function fetchUsers() {
     setLoading(true);
     try {
       const response = await fetch('/api/admin/users');
       const data = await response.json();
-
       if (data.success) {
         setUsers(data.data || []);
       } else {
@@ -111,23 +104,19 @@ export default function UsersPage() {
         ]);
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error);
       setUsers([]);
     } finally {
       setLoading(false);
     }
   }
-
   async function updateUserRole() {
     if (!selectedUser || !newRole) return;
-
     try {
       const response = await fetch(`/api/admin/users/${selectedUser.id}/role`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       });
-
       if (response.ok) {
         toast.success('User role updated successfully');
         setShowRoleDialog(false);
@@ -139,7 +128,6 @@ export default function UsersPage() {
       toast.error('Failed to update role');
     }
   }
-
   async function toggleUserStatus(user: User) {
     try {
       const response = await fetch(`/api/admin/users/${user.id}/status`, {
@@ -147,7 +135,6 @@ export default function UsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !user.isActive }),
       });
-
       if (response.ok) {
         toast.success(user.isActive ? 'User deactivated' : 'User activated');
         fetchUsers();
@@ -156,7 +143,6 @@ export default function UsersPage() {
       toast.error('Failed to update status');
     }
   }
-
   const filteredUsers = users.filter(user => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -164,7 +150,6 @@ export default function UsersPage() {
     const matchesRole = roleFilter === 'all' || user.platformRole === roleFilter;
     return matchesSearch && matchesRole;
   });
-
   return (
     <div className='space-y-4 md:space-y-6'>
       {/* Page Header */}
@@ -174,7 +159,6 @@ export default function UsersPage() {
           Manage platform users and their roles
         </p>
       </div>
-
       {/* Stats Cards */}
       <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
         <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
@@ -228,7 +212,6 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
-
       {/* Filters */}
       <div className='flex flex-col gap-3 sm:flex-row'>
         <div className='relative flex-1'>
@@ -253,7 +236,6 @@ export default function UsersPage() {
           </SelectContent>
         </Select>
       </div>
-
       {/* Users List */}
       <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
         {loading ? (
@@ -273,7 +255,6 @@ export default function UsersPage() {
               {filteredUsers.map(user => {
                 const role = roleConfig[user.platformRole];
                 const RoleIcon = role.icon;
-
                 return (
                   <div key={user.id} className='space-y-3 p-4'>
                     <div className='flex items-start gap-3'>
@@ -321,7 +302,6 @@ export default function UsersPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-
                     <div className='flex flex-wrap items-center gap-2'>
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${role.color}`}
@@ -338,7 +318,6 @@ export default function UsersPage() {
                         <Building2 className='h-3 w-3' /> {user.farmCount} farms
                       </span>
                     </div>
-
                     <div className='flex items-center gap-4 text-xs text-gray-500'>
                       <span className='flex items-center gap-1'>
                         <Calendar className='h-3 w-3' />
@@ -349,7 +328,6 @@ export default function UsersPage() {
                 );
               })}
             </div>
-
             {/* Desktop Table View */}
             <div className='hidden overflow-x-auto md:block'>
               <table className='w-full'>
@@ -382,7 +360,6 @@ export default function UsersPage() {
                   {filteredUsers.map(user => {
                     const role = roleConfig[user.platformRole];
                     const RoleIcon = role.icon;
-
                     return (
                       <tr key={user.id} className='hover:bg-gray-50 dark:hover:bg-slate-700/30'>
                         <td className='px-6 py-4'>
@@ -462,7 +439,6 @@ export default function UsersPage() {
           </>
         )}
       </div>
-
       {/* Change Role Dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
         <DialogContent className='sm:max-w-[400px]'>

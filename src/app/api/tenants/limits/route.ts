@@ -3,15 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSubscriptionWithLimits, getAnimalCount, getUserCount } from '@/lib/supabase/limits';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
-
 export const dynamic = 'force-dynamic';
-
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       // Get subscription and limits from Supabase
       const subscription = await getSubscriptionWithLimits(context.tenantId);
-
       if (!subscription) {
         // Return default free tier limits
         return NextResponse.json({
@@ -28,15 +25,12 @@ export async function GET(request: NextRequest) {
           renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         });
       }
-
       // Get current usage counts from Supabase
       const [animalCount, userCount] = await Promise.all([
         getAnimalCount(context.tenantId),
         getUserCount(context.tenantId),
       ]);
-
       const planConfig = SUBSCRIPTION_PLANS[subscription.plan] || SUBSCRIPTION_PLANS.free;
-
       return NextResponse.json({
         success: true,
         plan: subscription.plan,
@@ -64,7 +58,6 @@ export async function GET(request: NextRequest) {
         canAddUser: subscription.limits.maxUsers === -1 || userCount < subscription.limits.maxUsers,
       });
     } catch (error) {
-      console.error('Error fetching limits:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);

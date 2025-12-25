@@ -7,16 +7,16 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://js.sentry-cdn.com https://*.posthog.com https://challenges.cloudflare.com;
+  worker-src 'self' blob:;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' data: blob: https: http:;
   font-src 'self' https://fonts.gstatic.com data:;
-  connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://*.supabase.co wss://*.supabase.co https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://api.cloudinary.com https://res.cloudinary.com https://*.upstash.io;
+  connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.supabase.co wss://*.supabase.co https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://api.cloudinary.com https://res.cloudinary.com https://*.upstash.io;
   frame-src 'self' https://clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
-  frame-ancestors 'none';
-  upgrade-insecure-requests;
+  frame-ancestors 'none';${process.env.NODE_ENV === 'production' ? '\n  upgrade-insecure-requests;' : ''}
 `
   .replace(/\s{2,}/g, ' ')
   .trim();
@@ -96,7 +96,24 @@ const nextConfig: NextConfig = {
 
   // Experimental features
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'date-fns'],
+    optimizePackageImports: [
+      'lucide-react', 
+      '@radix-ui/react-icons', 
+      'date-fns',
+      '@supabase/supabase-js',
+      '@clerk/nextjs',
+      'recharts',
+      'zod'
+    ],
+    // Enable turbopack for faster builds
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
 
   // Suppress warnings for lockfile detection

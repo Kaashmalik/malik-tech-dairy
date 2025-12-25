@@ -2,11 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ipRateLimit, tenantRateLimit, authRateLimit } from '@/lib/ratelimit';
 import { auth } from '@clerk/nextjs/server';
-
 export async function rateLimitMiddleware(request: NextRequest) {
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
   const pathname = request.nextUrl.pathname;
-
   // Apply different rate limits based on path
   if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/sign')) {
     const { success } = await authRateLimit.limit(ip);
@@ -29,7 +27,6 @@ export async function rateLimitMiddleware(request: NextRequest) {
         { status: 429 }
       );
     }
-
     // Tenant-based rate limiting: 1000 req/min per tenant
     try {
       const { orgId } = await auth();
@@ -48,9 +45,7 @@ export async function rateLimitMiddleware(request: NextRequest) {
       }
     } catch (error) {
       // If auth fails, continue with IP-based limiting only
-      console.warn('Failed to get tenant ID for rate limiting:', error);
     }
   }
-
   return null; // Continue to next middleware
 }

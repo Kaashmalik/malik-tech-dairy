@@ -1,12 +1,10 @@
 // Farm Applications API Routes
 // POST: Create new application
 // GET: List user's applications
-
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseClient } from '@/lib/supabase';
-
 const createApplicationSchema = z.object({
   farmName: z.string().min(2).max(255),
   ownerName: z.string().min(2).max(255),
@@ -20,28 +18,22 @@ const createApplicationSchema = z.object({
   requestedPlan: z.enum(['free', 'professional', 'farm', 'enterprise']),
   paymentSlipUrl: z.string().optional(),
 });
-
 // POST: Create new farm application
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const validatedData = createApplicationSchema.parse(body);
-
     const supabase = getSupabaseClient();
-
     // Ensure user exists in platform_users
     const { data: existingUser } = await supabase
       .from('platform_users')
       .select('id')
       .eq('id', userId)
       .single();
-
     if (!existingUser) {
       // Create platform user
       await supabase.from('platform_users').insert([
@@ -57,10 +49,8 @@ export async function POST(request: NextRequest) {
         },
       ]);
     }
-
     // Generate application ID
     const applicationId = `APP-${Date.now().toString(36).toUpperCase()}`;
-
     // Determine initial status based on plan
     const isPaidPlan = validatedData.requestedPlan !== 'free';
     const status =
@@ -69,7 +59,6 @@ export async function POST(request: NextRequest) {
         : isPaidPlan
           ? 'pending_payment'
           : 'pending';
-
     // Create application
     const { data: application, error } = await supabase
       .from('farm_applications')
@@ -95,12 +84,9 @@ export async function POST(request: NextRequest) {
       ])
       .select()
       .single();
-
     if (error) {
-      console.error('Error creating application:', error);
       return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
     }
-
     return NextResponse.json(
       {
         success: true,
@@ -113,47 +99,36 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating farm application:', error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Validation error', details: error.errors },
         { status: 400 }
       );
     }
-
     return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
   }
 }
-
 // GET: List user's farm applications
 export async function GET() {
   try {
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const supabase = getSupabaseClient();
-
     const { data: applications, error } = await supabase
       .from('farm_applications')
       .select('*')
       .eq('applicant_id', userId)
       .order('created_at', { ascending: false });
-
     if (error) {
-      console.error('Error fetching applications:', error);
       return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
     }
-
     return NextResponse.json({
       success: true,
       data: applications || [],
     });
   } catch (error) {
-    console.error('Error fetching farm applications:', error);
     return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
   }
 }

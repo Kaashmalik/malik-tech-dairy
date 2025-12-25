@@ -6,6 +6,10 @@ import {
   FeatureFlag,
 } from './config';
 
+// Re-export for convenience
+export { DEFAULT_FEATURE_FLAGS, ENTERPRISE_FEATURE_FLAGS };
+export type { EnterpriseFeatureFlag, FeatureFlag };
+
 // Environment variable feature flags (override defaults)
 const ENV_FEATURE_FLAGS: Partial<Record<EnterpriseFeatureFlag, boolean>> = {
   // Read from environment variables - format: FEATURE_VETERINARY_DISEASE_MANAGEMENT=true
@@ -201,7 +205,7 @@ export function isPhaseEnabled(
   const { PHASE_ROLLOUT_ORDER } = require('./config');
   const phaseFeatures = PHASE_ROLLOUT_ORDER[phase];
 
-  return phaseFeatures.some(featureKey => isFeatureEnabled(featureKey, context));
+  return phaseFeatures.some((featureKey: EnterpriseFeatureFlag) => isFeatureEnabled(featureKey, context));
 }
 
 /**
@@ -232,14 +236,15 @@ export function getRolloutStats(): {
   const phaseStats: Record<string, { total: number; enabled: number }> = {};
 
   Object.entries(PHASE_ROLLOUT_ORDER).forEach(([phase, features]) => {
-    const phaseEnabled = features.filter(key => {
+    const typedFeatures = features as EnterpriseFeatureFlag[];
+    const phaseEnabled = typedFeatures.filter((key: EnterpriseFeatureFlag) => {
       const config = DEFAULT_FEATURE_FLAGS[key];
       const envOverride = ENV_FEATURE_FLAGS[key];
       return envOverride !== undefined ? envOverride : config.enabled;
     }).length;
 
     phaseStats[phase] = {
-      total: features.length,
+      total: typedFeatures.length,
       enabled: phaseEnabled,
     };
   });

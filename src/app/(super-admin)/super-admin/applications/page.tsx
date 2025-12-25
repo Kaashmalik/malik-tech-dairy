@@ -1,6 +1,5 @@
 // Super Admin - Farm Applications Management Page
 'use client';
-
 import { useState, useEffect } from 'react';
 import {
   FileText,
@@ -33,9 +32,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-
 type ApplicationStatus = 'pending' | 'payment_uploaded' | 'under_review' | 'approved' | 'rejected';
-
 interface FarmApplication {
   id: string;
   farmName: string;
@@ -51,7 +48,6 @@ interface FarmApplication {
   assignedFarmId?: string;
   createdAt: string;
 }
-
 const statusConfig: Record<
   ApplicationStatus,
   { label: string; color: string; icon: typeof Clock }
@@ -66,7 +62,6 @@ const statusConfig: Record<
   approved: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
   rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle },
 };
-
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<FarmApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,12 +73,10 @@ export default function ApplicationsPage() {
   const [reviewNotes, setReviewNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
   // Fetch applications
   useEffect(() => {
     fetchApplications();
   }, [statusFilter]);
-
   async function fetchApplications() {
     setLoading(true);
     try {
@@ -91,10 +84,8 @@ export default function ApplicationsPage() {
         statusFilter === 'all'
           ? '/api/admin/applications'
           : `/api/admin/applications?status=${statusFilter}`;
-
       const response = await fetch(url);
       const data = await response.json();
-
       if (data.success) {
         setApplications(
           data.data.applications.map((item: { application: FarmApplication }) => item.application)
@@ -106,11 +97,9 @@ export default function ApplicationsPage() {
       setLoading(false);
     }
   }
-
   // Handle review submission
   async function handleReview() {
     if (!selectedApplication) return;
-
     setSubmitting(true);
     try {
       const response = await fetch(`/api/admin/applications/${selectedApplication.id}/review`, {
@@ -122,9 +111,7 @@ export default function ApplicationsPage() {
           rejectionReason: reviewAction === 'reject' ? rejectionReason : undefined,
         }),
       });
-
       const data = await response.json();
-
       if (data.success) {
         toast.success(data.message);
         setShowReviewDialog(false);
@@ -138,27 +125,22 @@ export default function ApplicationsPage() {
           ? `${data.error}: ${data.details}`
           : data.error || 'Failed to review application';
         toast.error(errorMsg);
-        console.error('Review error:', data);
       }
     } catch (error) {
-      console.error('Review failed:', error);
       toast.error('Failed to review application - check console for details');
     } finally {
       setSubmitting(false);
     }
   }
-
   // Filter applications by search query (robust with null checks)
   const filteredApplications = applications.filter(app => {
     if (!searchQuery.trim()) return true;
-
     const query = searchQuery.toLowerCase().trim();
     const farmName = (app.farmName || '').toLowerCase();
     const ownerName = (app.ownerName || '').toLowerCase();
     const email = (app.email || '').toLowerCase();
     const phone = (app.phone || '').toLowerCase();
     const farmId = (app.assignedFarmId || '').toLowerCase();
-
     return (
       farmName.includes(query) ||
       ownerName.includes(query) ||
@@ -167,7 +149,6 @@ export default function ApplicationsPage() {
       farmId.includes(query)
     );
   });
-
   return (
     <div className='space-y-6'>
       {/* Page Header */}
@@ -179,7 +160,6 @@ export default function ApplicationsPage() {
           </p>
         </div>
       </div>
-
       {/* Filters */}
       <div className='flex flex-col gap-3 sm:flex-row'>
         <div className='relative flex-1'>
@@ -214,7 +194,6 @@ export default function ApplicationsPage() {
           </SelectContent>
         </Select>
       </div>
-
       {/* Results Count */}
       {!loading && (
         <div className='flex items-center justify-between text-sm text-gray-500 dark:text-slate-400'>
@@ -246,7 +225,6 @@ export default function ApplicationsPage() {
           )}
         </div>
       )}
-
       {/* Applications Table */}
       <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
         {loading ? (
@@ -266,7 +244,6 @@ export default function ApplicationsPage() {
               {filteredApplications.map((app, index) => {
                 const status = statusConfig[app.status];
                 const StatusIcon = status.icon;
-
                 return (
                   <div
                     key={app.id}
@@ -294,7 +271,6 @@ export default function ApplicationsPage() {
                         <span className='xs:inline hidden'>{status.label}</span>
                       </span>
                     </div>
-
                     {/* Info Grid */}
                     <div className='mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm'>
                       <div className='col-span-2 sm:col-span-1'>
@@ -326,7 +302,6 @@ export default function ApplicationsPage() {
                         </p>
                       </div>
                     </div>
-
                     {/* Payment slip link */}
                     {app.paymentSlipUrl && (
                       <div className='mb-3'>
@@ -341,7 +316,6 @@ export default function ApplicationsPage() {
                         </a>
                       </div>
                     )}
-
                     {/* Action Buttons */}
                     {(app.status === 'pending' || app.status === 'payment_uploaded') && (
                       <div className='flex gap-2 border-t border-gray-100 pt-2 dark:border-slate-700'>
@@ -376,7 +350,6 @@ export default function ApplicationsPage() {
                 );
               })}
             </div>
-
             {/* Desktop Table View */}
             <div className='hidden overflow-x-auto lg:block'>
               <table className='w-full'>
@@ -409,7 +382,6 @@ export default function ApplicationsPage() {
                   {filteredApplications.map(app => {
                     const status = statusConfig[app.status];
                     const StatusIcon = status.icon;
-
                     return (
                       <tr key={app.id} className='hover:bg-gray-50 dark:hover:bg-slate-700/30'>
                         <td className='px-6 py-4'>
@@ -508,7 +480,6 @@ export default function ApplicationsPage() {
           </>
         )}
       </div>
-
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
         <DialogContent className='sm:max-w-[500px]'>
@@ -522,7 +493,6 @@ export default function ApplicationsPage() {
                 : 'Provide a reason for rejecting this application.'}
             </DialogDescription>
           </DialogHeader>
-
           {selectedApplication && (
             <div className='space-y-4 py-4'>
               <div className='rounded-lg bg-gray-50 p-4 dark:bg-slate-700/50'>
@@ -530,7 +500,6 @@ export default function ApplicationsPage() {
                 <p className='text-sm text-gray-500'>{selectedApplication.ownerName}</p>
                 <p className='text-sm text-gray-500'>{selectedApplication.email}</p>
               </div>
-
               {selectedApplication.paymentSlipUrl && (
                 <div>
                   <label className='mb-1 block text-sm font-medium'>Payment Slip</label>
@@ -545,7 +514,6 @@ export default function ApplicationsPage() {
                   </a>
                 </div>
               )}
-
               <div>
                 <label className='mb-1 block text-sm font-medium'>
                   {reviewAction === 'approve' ? 'Notes (optional)' : 'Rejection Reason *'}
@@ -571,7 +539,6 @@ export default function ApplicationsPage() {
               </div>
             </div>
           )}
-
           <DialogFooter>
             <Button
               variant='outline'

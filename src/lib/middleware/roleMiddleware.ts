@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc } from 'firebase/firestore';
 import { adminDb } from '@/lib/firebase/admin';
 import { TenantRole, UserRole, PlatformRole, ROLE_PERMISSIONS } from '@/types/roles';
-
 export interface AuthenticatedRequest extends NextRequest {
   user?: {
     id: string;
@@ -12,33 +11,27 @@ export interface AuthenticatedRequest extends NextRequest {
     tenantId: string;
   };
 }
-
 // Context type for Next.js 15 route handlers
 export interface RouteContext {
   params: Promise<Record<string, string>>;
 }
-
 export function withAuth(
   handler: (req: AuthenticatedRequest, context?: RouteContext) => Promise<Response>
 ) {
   return async (req: NextRequest, context?: RouteContext) => {
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     // Attach user info to request
     (req as AuthenticatedRequest).user = {
       id: userId,
       role: TenantRole.GUEST as UserRole,
       tenantId: '',
     };
-
     return handler(req as AuthenticatedRequest, context);
   };
 }
-
 export function withRole(
   requiredRoles: UserRole[],
   handler: (req: AuthenticatedRequest, context?: RouteContext) => Promise<Response>
@@ -47,19 +40,15 @@ export function withRole(
     const { userId } = await auth();
     const tenantId =
       req.nextUrl.searchParams.get('tenantId') || req.headers.get('x-tenant-id') || '';
-
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
     }
-
     if (!adminDb) {
       return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
-
     try {
       // Check if super admin
       const userDoc = await adminDb.collection('users').doc(userId!).get();
-
       if (userDoc.exists) {
         const userData = userDoc.data();
         if (userData?.platformRole === PlatformRole.SUPER_ADMIN) {
@@ -71,7 +60,6 @@ export function withRole(
           return handler(req, context);
         }
       }
-
       // Check tenant role
       const memberDoc = await adminDb
         .collection('tenants')
@@ -79,7 +67,6 @@ export function withRole(
         .collection('members')
         .doc(userId!)
         .get();
-
       if (!memberDoc.exists) {
         // Fallback: check legacy users collection
         if (userDoc.exists) {
@@ -96,13 +83,10 @@ export function withRole(
             }
           }
         }
-
         return NextResponse.json({ error: 'Not a member of this tenant' }, { status: 403 });
       }
-
       const memberData = memberDoc.data();
       const userRole = memberData?.role as TenantRole;
-
       if (!requiredRoles.includes(userRole)) {
         return NextResponse.json(
           {
@@ -113,21 +97,17 @@ export function withRole(
           { status: 403 }
         );
       }
-
       req.user = {
         id: userId!,
         role: userRole,
         tenantId,
       };
-
       return handler(req, context);
     } catch (error) {
-      console.error('Error in withRole middleware:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
 }
-
 export function withPermission(
   resource: string,
   action: 'create' | 'read' | 'update' | 'delete',
@@ -137,19 +117,15 @@ export function withPermission(
     const { userId } = await auth();
     const tenantId =
       req.nextUrl.searchParams.get('tenantId') || req.headers.get('x-tenant-id') || '';
-
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
     }
-
     if (!adminDb) {
       return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
-
     try {
       // Check if super admin
       const userDoc = await adminDb.collection('users').doc(userId!).get();
-
       if (userDoc.exists) {
         const userData = userDoc.data();
         if (userData?.platformRole === PlatformRole.SUPER_ADMIN) {
@@ -161,7 +137,6 @@ export function withPermission(
           return handler(req, context);
         }
       }
-
       // Get user role and permissions
       const memberDoc = await adminDb
         .collection('tenants')
@@ -169,7 +144,6 @@ export function withPermission(
         .collection('members')
         .doc(userId!)
         .get();
-
       if (!memberDoc.exists) {
         // Fallback: check legacy users collection
         if (userDoc.exists) {
@@ -180,7 +154,6 @@ export function withPermission(
             const hasPermission = rolePerms?.some(
               p => p.resource === resource && p.actions.includes(action)
             );
-
             if (hasPermission) {
               req.user = {
                 id: userId!,
@@ -191,13 +164,10 @@ export function withPermission(
             }
           }
         }
-
         return NextResponse.json({ error: 'Not a member of this tenant' }, { status: 403 });
       }
-
       const memberData = memberDoc.data();
       const userRole = memberData?.role as TenantRole;
-
       // Check custom permissions first
       if (memberData?.permissions?.[resource]?.includes(action)) {
         req.user = {
@@ -207,13 +177,11 @@ export function withPermission(
         };
         return handler(req);
       }
-
       // Check default role permissions
       const rolePerms = ROLE_PERMISSIONS[userRole];
       const hasPermission = rolePerms?.some(
         p => p.resource === resource && p.actions.includes(action)
       );
-
       if (!hasPermission) {
         return NextResponse.json(
           {
@@ -224,16 +192,13 @@ export function withPermission(
           { status: 403 }
         );
       }
-
       req.user = {
         id: userId!,
         role: userRole,
         tenantId,
       };
-
       return handler(req);
     } catch (error) {
-      console.error('Error in withPermission middleware:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

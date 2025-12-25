@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,11 +18,9 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface NutritionOptimizerProps {
   className?: string;
 }
-
 interface NutritionPlan {
   id: string;
   name: string;
@@ -36,7 +33,6 @@ interface NutritionPlan {
   efficiency: number;
   status: 'active' | 'draft' | 'archived';
 }
-
 interface Ingredient {
   name: string;
   protein: number;
@@ -44,17 +40,14 @@ interface Ingredient {
   cost: number;
   availability: number;
 }
-
 export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
   const [plans, setPlans] = useState<NutritionPlan[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('plans');
-
   useEffect(() => {
     fetchNutritionData();
   }, []);
-
   const fetchNutritionData = async () => {
     try {
       setLoading(true);
@@ -97,23 +90,19 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
           status: 'draft',
         },
       ];
-
       const mockIngredients: Ingredient[] = [
         { name: 'Alfalfa Hay', protein: 18, energy: 2400, cost: 45, availability: 2500 },
         { name: 'Dairy Concentrate', protein: 22, energy: 3200, cost: 120, availability: 450 },
         { name: 'Soybean Meal', protein: 44, energy: 2800, cost: 85, availability: 1200 },
         { name: 'Corn Silage', protein: 8, energy: 1800, cost: 25, availability: 3000 },
       ];
-
       setPlans(mockPlans);
       setIngredients(mockIngredients);
     } catch (error) {
-      console.error('Error fetching nutrition data:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
@@ -122,7 +111,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
       maximumFractionDigits: 0,
     }).format(amount);
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -135,13 +123,11 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getEfficiencyColor = (efficiency: number) => {
     if (efficiency >= 90) return 'text-green-600';
     if (efficiency >= 80) return 'text-yellow-600';
     return 'text-red-600';
   };
-
   if (loading) {
     return (
       <Card className={cn('w-full', className)}>
@@ -159,7 +145,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
       </Card>
     );
   }
-
   return (
     <div className={cn('w-full space-y-6', className)}>
       {/* Header */}
@@ -179,7 +164,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
           </Button>
         </div>
       </div>
-
       {/* Key Metrics */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card>
@@ -195,7 +179,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
@@ -211,7 +194,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
@@ -225,7 +207,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
@@ -238,7 +219,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
           </CardContent>
         </Card>
       </div>
-
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
         <TabsList className='grid w-full grid-cols-3'>
@@ -246,7 +226,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
           <TabsTrigger value='ingredients'>Ingredients</TabsTrigger>
           <TabsTrigger value='optimizer'>AI Optimizer</TabsTrigger>
         </TabsList>
-
         <TabsContent value='plans' className='space-y-4'>
           <Card>
             <CardHeader>
@@ -265,7 +244,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
                       </div>
                       <Badge className={getStatusColor(plan.status)}>{plan.status}</Badge>
                     </div>
-
                     <div className='mb-3 grid grid-cols-2 gap-4 md:grid-cols-4'>
                       <div>
                         <p className='text-xs text-gray-500'>Protein</p>
@@ -284,7 +262,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
                         <p className='text-sm font-medium'>{formatCurrency(plan.costPerDay)}</p>
                       </div>
                     </div>
-
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center space-x-2'>
                         <span className='text-xs text-gray-500'>Efficiency:</span>
@@ -310,7 +287,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value='ingredients' className='space-y-4'>
           <Card>
             <CardHeader>
@@ -347,7 +323,6 @@ export function NutritionOptimizer({ className }: NutritionOptimizerProps) {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value='optimizer' className='space-y-4'>
           <Card>
             <CardContent className='p-6'>

@@ -5,6 +5,7 @@ import { TenantProvider } from '@/components/tenant/TenantProvider';
 import { DynamicBranding } from '@/components/tenant/DynamicBranding';
 import { DashboardHeader } from '@/components/tenant/DashboardHeader';
 import { CommandPalette } from '@/components/ui/command-palette';
+import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <main className='container mx-auto px-4 py-6'>{children}</main>
         </div>
         <CommandPalette />
+        <WhatsAppButton />
       </TenantProvider>
     </QueryProvider>
   );

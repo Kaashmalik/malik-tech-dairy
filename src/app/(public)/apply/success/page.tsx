@@ -1,6 +1,5 @@
 // Application Success Page - After submitting farm application
 'use client';
-
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -19,7 +18,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
 interface Application {
   id: string;
   farm_name?: string;
@@ -30,7 +28,6 @@ interface Application {
   payment_slip_url?: string;
   paymentSlipUrl?: string;
 }
-
 // Payment methods
 const paymentMethods = {
   bank: {
@@ -46,7 +43,6 @@ const paymentMethods = {
     accountNumber: '03020718182',
   },
 };
-
 function SuccessContent() {
   const searchParams = useSearchParams();
   const applicationId = searchParams.get('id');
@@ -55,20 +51,17 @@ function SuccessContent() {
   const [uploading, setUploading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'bank' | 'jazzcash'>('bank');
-
   const copyToClipboard = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedField(field);
     toast.success('Copied to clipboard!');
     setTimeout(() => setCopiedField(null), 2000);
   };
-
   useEffect(() => {
     if (applicationId) {
       fetchApplication();
     }
   }, [applicationId]);
-
   async function fetchApplication() {
     try {
       const response = await fetch(`/api/farm-applications/${applicationId}`);
@@ -77,46 +70,37 @@ function SuccessContent() {
         setApplication(data.data.application);
       }
     } catch (error) {
-      console.error('Failed to fetch application:', error);
     } finally {
       setLoading(false);
     }
   }
-
   async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !applicationId) return;
-
     // Validate file
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
       toast.error('Please upload a JPG, PNG, or PDF file');
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       toast.error('File size must be less than 5MB');
       return;
     }
-
     setUploading(true);
     try {
       // Upload file
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'payment-slips');
-
       const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-
       const uploadData = await uploadResponse.json();
-
       if (!uploadData.success) {
         throw new Error(uploadData.error || 'Upload failed');
       }
-
       // Update application with payment slip
       const updateResponse = await fetch(`/api/farm-applications/${applicationId}`, {
         method: 'PATCH',
@@ -128,9 +112,7 @@ function SuccessContent() {
           paymentDate: new Date().toISOString(),
         }),
       });
-
       const updateData = await updateResponse.json();
-
       if (updateData.success) {
         toast.success('Payment slip uploaded successfully!');
         setApplication(updateData.data);
@@ -139,12 +121,10 @@ function SuccessContent() {
       }
     } catch (error) {
       toast.error('Failed to upload payment slip');
-      console.error(error);
     } finally {
       setUploading(false);
     }
   }
-
   function getPlanAmount(plan: string): number {
     const prices: Record<string, number> = {
       free: 0,
@@ -154,7 +134,6 @@ function SuccessContent() {
     };
     return prices[plan] || 0;
   }
-
   if (loading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
@@ -162,13 +141,11 @@ function SuccessContent() {
       </div>
     );
   }
-
   const farmName = application?.farm_name || application?.farmName || 'Your Farm';
   const requestedPlan = application?.requested_plan || application?.requestedPlan || 'free';
   const paymentSlipUrl = application?.payment_slip_url || application?.paymentSlipUrl;
   const needsPayment = requestedPlan !== 'free' && !paymentSlipUrl;
   const paymentUploaded = paymentSlipUrl && application?.status === 'payment_uploaded';
-
   return (
     <div className='min-h-screen bg-gray-50 px-4 py-12 dark:bg-slate-900'>
       <div className='mx-auto max-w-xl'>
@@ -182,7 +159,6 @@ function SuccessContent() {
             Your farm application has been received
           </p>
         </div>
-
         {/* Application Details Card */}
         <div className='mb-6 rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800'>
           <div className='flex items-center gap-3 border-b pb-4 dark:border-slate-700'>
@@ -194,7 +170,6 @@ function SuccessContent() {
               </p>
             </div>
           </div>
-
           <div className='space-y-3 py-4'>
             <div className='flex justify-between'>
               <span className='text-gray-500 dark:text-slate-400'>Plan</span>
@@ -222,7 +197,6 @@ function SuccessContent() {
             </div>
           </div>
         </div>
-
         {/* Next Steps */}
         {needsPayment && (
           <div className='mb-6 rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800'>
@@ -230,14 +204,12 @@ function SuccessContent() {
               <CreditCard className='h-5 w-5 text-emerald-600' />
               Next Step: Upload Payment Slip
             </h2>
-
             <div className='mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20'>
               <p className='text-sm text-amber-800 dark:text-amber-200'>
                 Please transfer the subscription fee to our bank account and upload the payment
                 slip.
               </p>
             </div>
-
             {/* Payment Method Tabs */}
             <div className='mb-4 flex gap-2 rounded-xl bg-gray-100 p-1 dark:bg-slate-700'>
               <button
@@ -265,7 +237,6 @@ function SuccessContent() {
                 JazzCash
               </button>
             </div>
-
             {/* Bank Details */}
             {selectedPaymentMethod === 'bank' && (
               <div className='mb-4 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20'>
@@ -310,7 +281,6 @@ function SuccessContent() {
                 </div>
               </div>
             )}
-
             {/* JazzCash Details */}
             {selectedPaymentMethod === 'jazzcash' && (
               <div className='mb-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20'>
@@ -357,7 +327,6 @@ function SuccessContent() {
                 </div>
               </div>
             )}
-
             {/* Upload Button */}
             <div className='relative'>
               <input
@@ -386,7 +355,6 @@ function SuccessContent() {
             </p>
           </div>
         )}
-
         {/* Payment Uploaded - Waiting */}
         {paymentUploaded && (
           <div className='mb-6 rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800'>
@@ -403,7 +371,6 @@ function SuccessContent() {
             </p>
           </div>
         )}
-
         {/* Free Plan - Immediate Access */}
         {requestedPlan === 'free' && (
           <div className='mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-800 dark:bg-emerald-900/20'>
@@ -417,7 +384,6 @@ function SuccessContent() {
             </p>
           </div>
         )}
-
         {/* Actions */}
         <div className='flex flex-col gap-3 sm:flex-row'>
           <Link href={`/apply/status?id=${applicationId}`} className='flex-1'>
@@ -445,7 +411,6 @@ function SuccessContent() {
     </div>
   );
 }
-
 export default function ApplicationSuccessPage() {
   return (
     <Suspense

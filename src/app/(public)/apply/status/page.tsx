@@ -1,6 +1,5 @@
 // Application Status Page - Check application status
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -17,7 +16,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
 interface Application {
   id: string;
   farmName: string;
@@ -30,7 +28,6 @@ interface Application {
   rejectionReason?: string;
   createdAt: string;
 }
-
 const statusConfig = {
   pending: {
     icon: Clock,
@@ -68,7 +65,6 @@ const statusConfig = {
     description: 'Unfortunately, your application was not approved.',
   },
 };
-
 export default function ApplicationStatusPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -77,7 +73,6 @@ export default function ApplicationStatusPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
-
   useEffect(() => {
     if (applicationId) {
       fetchApplication();
@@ -86,7 +81,6 @@ export default function ApplicationStatusPage() {
       fetchLatestApplication();
     }
   }, [applicationId]);
-
   async function fetchApplication() {
     try {
       const response = await fetch(`/api/farm-applications/${applicationId}`);
@@ -97,13 +91,11 @@ export default function ApplicationStatusPage() {
         toast.error('Application not found');
       }
     } catch (error) {
-      console.error('Failed to fetch application:', error);
       toast.error('Failed to load application');
     } finally {
       setLoading(false);
     }
   }
-
   async function fetchLatestApplication() {
     try {
       const response = await fetch('/api/farm-applications/my');
@@ -115,52 +107,42 @@ export default function ApplicationStatusPage() {
         router.push('/apply');
       }
     } catch (error) {
-      console.error('Failed to fetch application:', error);
       router.push('/apply');
     } finally {
       setLoading(false);
     }
   }
-
   async function handleRefresh() {
     setRefreshing(true);
     await fetchApplication();
     setRefreshing(false);
     toast.success('Status refreshed');
   }
-
   async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !application?.id) return;
-
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
       toast.error('Please upload a JPG, PNG, or PDF file');
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       toast.error('File size must be less than 5MB');
       return;
     }
-
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'payment-slips');
-
       const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-
       const uploadData = await uploadResponse.json();
-
       if (!uploadData.success) {
         throw new Error(uploadData.error || 'Upload failed');
       }
-
       const updateResponse = await fetch(`/api/farm-applications/${application.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -170,9 +152,7 @@ export default function ApplicationStatusPage() {
           paymentDate: new Date().toISOString(),
         }),
       });
-
       const updateData = await updateResponse.json();
-
       if (updateData.success) {
         toast.success('Payment slip uploaded successfully!');
         setApplication(updateData.data);
@@ -181,12 +161,10 @@ export default function ApplicationStatusPage() {
       }
     } catch (error) {
       toast.error('Failed to upload payment slip');
-      console.error(error);
     } finally {
       setUploading(false);
     }
   }
-
   if (loading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
@@ -194,7 +172,6 @@ export default function ApplicationStatusPage() {
       </div>
     );
   }
-
   if (!application) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center p-4'>
@@ -212,14 +189,12 @@ export default function ApplicationStatusPage() {
       </div>
     );
   }
-
   const status = statusConfig[application.status] || statusConfig.pending;
   const StatusIcon = status.icon;
   const needsPayment =
     application.requestedPlan !== 'free' &&
     !application.paymentSlipUrl &&
     application.status === 'pending';
-
   return (
     <div className='min-h-screen px-4 py-12'>
       <div className='mx-auto max-w-xl'>
@@ -233,7 +208,6 @@ export default function ApplicationStatusPage() {
           <h1 className='text-3xl font-bold dark:text-white'>{status.title}</h1>
           <p className='mt-2 text-gray-500 dark:text-slate-400'>{status.description}</p>
         </div>
-
         {/* Application Details */}
         <div className='mb-6 rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800'>
           <div className='flex items-center justify-between border-b pb-4 dark:border-slate-700'>
@@ -250,7 +224,6 @@ export default function ApplicationStatusPage() {
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
-
           <div className='space-y-3 py-4'>
             <div className='flex justify-between'>
               <span className='text-gray-500 dark:text-slate-400'>Owner</span>
@@ -276,7 +249,6 @@ export default function ApplicationStatusPage() {
             )}
           </div>
         </div>
-
         {/* Payment Upload Section */}
         {needsPayment && (
           <div className='mb-6 rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-800'>
@@ -284,14 +256,12 @@ export default function ApplicationStatusPage() {
               <CreditCard className='h-5 w-5 text-emerald-600' />
               Upload Payment Slip
             </h2>
-
             <div className='mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20'>
               <p className='text-sm text-amber-800 dark:text-amber-200'>
                 Please transfer the subscription fee to our bank account and upload the payment
                 slip.
               </p>
             </div>
-
             <div className='mb-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-slate-700/50'>
               <p className='text-sm font-medium dark:text-white'>Bank Account Details:</p>
               <div className='space-y-1 text-sm text-gray-600 dark:text-slate-300'>
@@ -309,7 +279,6 @@ export default function ApplicationStatusPage() {
                 </p>
               </div>
             </div>
-
             <div className='relative'>
               <input
                 type='file'
@@ -334,7 +303,6 @@ export default function ApplicationStatusPage() {
             </div>
           </div>
         )}
-
         {/* Rejection Reason */}
         {application.status === 'rejected' && application.rejectionReason && (
           <div className='mb-6 rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20'>
@@ -342,7 +310,6 @@ export default function ApplicationStatusPage() {
             <p className='text-red-600 dark:text-red-400'>{application.rejectionReason}</p>
           </div>
         )}
-
         {/* Actions */}
         <div className='flex flex-col gap-3 sm:flex-row'>
           {application.status === 'approved' ? (

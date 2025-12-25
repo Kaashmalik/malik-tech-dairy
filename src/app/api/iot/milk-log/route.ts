@@ -4,9 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withApiKeyAuth, hasApiKeyPermission } from '@/lib/api/middleware-api-key';
 import { milkLogQueue } from '@/lib/workers/queue';
 import { createMilkLogSchema } from '@/lib/validations/milk';
-
 export const dynamic = 'force-dynamic';
-
 export async function POST(request: NextRequest) {
   return withApiKeyAuth(async (req, context) => {
     try {
@@ -17,9 +15,7 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
-
       const body = await req.json();
-
       // Validate request body
       let validated;
       try {
@@ -30,7 +26,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-
       // Add job to BullMQ queue
       const job = await milkLogQueue.add(
         'create-milk-log',
@@ -48,7 +43,6 @@ export async function POST(request: NextRequest) {
           },
         }
       );
-
       // Return 202 Accepted immediately
       return NextResponse.json(
         {
@@ -59,7 +53,6 @@ export async function POST(request: NextRequest) {
         { status: 202 }
       );
     } catch (error) {
-      console.error('Error processing IoT milk log:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);

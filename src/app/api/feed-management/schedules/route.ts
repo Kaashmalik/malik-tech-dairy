@@ -5,7 +5,6 @@ import { eq, and, or, isNull, ilike, desc, gte, lte, sql, SQL } from 'drizzle-or
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/tenant/context';
-
 // Validation schemas
 const feedingScheduleQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -18,7 +17,6 @@ const feedingScheduleQuerySchema = z.object({
   date: z.string().datetime().optional(), // Filter schedules for specific date
   month: z.string().optional(), // Format: "2024-12"
 });
-
 const createFeedingScheduleSchema = z.object({
   animalId: z.string().min(1),
   feedType: z.string().min(2).max(255),
@@ -31,7 +29,6 @@ const createFeedingScheduleSchema = z.object({
   endDate: z.string().datetime().optional(),
   notes: z.string().optional(),
 });
-
 // GET /api/feed-management/schedules - List feeding schedules
 export async function GET(request: NextRequest) {
   try {
@@ -39,38 +36,29 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     // Get tenant context for proper isolation
     const tenantContext = await getTenantContext();
-
     const { searchParams } = new URL(request.url);
     const query = feedingScheduleQuerySchema.parse(Object.fromEntries(searchParams));
-
     const db = getDrizzle();
     const offset = (query.page - 1) * query.limit;
-
     // Build where conditions - ALWAYS include tenant filtering for tenant-specific tables
     const whereConditions = [
       eq(feedingSchedules.tenantId, tenantContext.tenantId),
       eq(feedingSchedules.isActive, query.isActive),
     ];
-
     if (query.animalId) {
       whereConditions.push(eq(feedingSchedules.animalId, query.animalId));
     }
-
     if (query.feedType) {
       whereConditions.push(ilike(feedingSchedules.feedType, `%${query.feedType}%`));
     }
-
     if (query.timeOfDay) {
       whereConditions.push(eq(feedingSchedules.timeOfDay, query.timeOfDay));
     }
-
     if (query.frequency) {
       whereConditions.push(eq(feedingSchedules.frequency, query.frequency));
     }
-
     if (query.month) {
       const [year, month] = query.month.split('-').map(Number);
       const startDate = new Date(year, month - 1, 1);
@@ -80,7 +68,6 @@ export async function GET(request: NextRequest) {
         lte(feedingSchedules.startDate, endDate)
       );
     }
-
     if (query.date) {
       // Filter schedules that are active on the specified date
       const targetDate = new Date(query.date);
@@ -89,16 +76,13 @@ export async function GET(request: NextRequest) {
         sql`${feedingSchedules.endDate} IS NULL OR ${feedingSchedules.endDate} >= ${targetDate}`
       );
     }
-
     // Get total count
     const filteredConditions = whereConditions.filter((c): c is SQL<unknown> => c !== undefined);
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(feedingSchedules)
       .where(and(...filteredConditions));
-
     const total = totalCountResult[0]?.count || 0;
-
     // Get feeding schedules with relations
     const schedulesList = await db
       .select({
@@ -134,23 +118,18 @@ export async function GET(request: NextRequest) {
       .limit(query.limit)
       .offset(offset)
       .orderBy(feedingSchedules.timeOfDay, feedingSchedules.animalId);
-
     // Calculate next feeding times for each schedule
     const schedulesWithNextFeeding = schedulesList.map(schedule => {
       const now = new Date();
       const [hours, minutes] = schedule.timeOfDay.split(':').map(Number);
-
       let nextFeeding = new Date();
       nextFeeding.setHours(hours, minutes, 0, 0);
-
       // If today's feeding time has passed, schedule for tomorrow
       if (nextFeeding <= now) {
         nextFeeding.setDate(nextFeeding.getDate() + 1);
       }
-
       // Check if schedule is still active
       const isActive = schedule.endDate ? nextFeeding <= new Date(schedule.endDate) : true;
-
       return {
         ...schedule,
         nextFeedingTime: nextFeeding.toISOString(),
@@ -158,7 +137,6 @@ export async function GET(request: NextRequest) {
         minutesUntilNextFeeding: Math.floor((nextFeeding.getTime() - now.getTime()) / (1000 * 60)),
       };
     });
-
     return NextResponse.json({
       success: true,
       data: {
@@ -179,11 +157,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching feeding schedules:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
-
 // POST /api/feed-management/schedules - Create new feeding schedule
 export async function POST(request: NextRequest) {
   try {
@@ -191,27 +167,21 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const validatedData = createFeedingScheduleSchema.parse(body);
-
     const db = getDrizzle();
     const scheduleId = `schedule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     // Verify animal exists and user has access
     const animal = await db
       .select()
       .from(animals)
       .where(eq(animals.id, validatedData.animalId))
       .limit(1);
-
     if (!animal.length) {
       return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
     }
-
     // Get tenant context
     const tenantContext = await getTenantContext();
-
     const newSchedule = await db
       .insert(feedingSchedules)
       .values({
@@ -225,22 +195,18 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       })
       .returning();
-
     return NextResponse.json({
       success: true,
       data: newSchedule[0],
       message: 'Feeding schedule created successfully',
     });
   } catch (error) {
-    console.error('Error creating feeding schedule:', error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation failed', details: error.errors },
         { status: 400 }
       );
     }
-
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

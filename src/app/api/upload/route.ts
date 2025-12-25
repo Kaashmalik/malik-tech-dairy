@@ -1,38 +1,29 @@
 // File Upload API Route
 // POST: Upload file to Cloudinary
-
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
 // POST: Upload file
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const type = (formData.get('type') as string) || 'general';
-
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
-
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
@@ -40,7 +31,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
@@ -48,12 +38,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
     // Convert file to base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
-
     // Determine folder based on type
     const folderMap: Record<string, string> = {
       'payment-slip': 'mtk-dairy/payment-slips',
@@ -62,7 +50,6 @@ export async function POST(request: NextRequest) {
       general: 'mtk-dairy/uploads',
     };
     const folder = folderMap[type] || folderMap.general;
-
     // Upload to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(base64, {
       folder,
@@ -74,7 +61,6 @@ export async function POST(request: NextRequest) {
         upload_type: type,
       },
     });
-
     return NextResponse.json({
       success: true,
       url: uploadResult.secure_url,
@@ -86,7 +72,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error uploading file:', error);
     return NextResponse.json({ success: false, error: 'Failed to upload file' }, { status: 500 });
   }
 }

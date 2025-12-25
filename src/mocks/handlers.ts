@@ -315,4 +315,163 @@ export const handlers = [
       },
     });
   }),
+
+  // ============================================================================
+  // Medicine Inventory API
+  // ============================================================================
+  http.get('/api/medicine', () => {
+    return HttpResponse.json({
+      success: true,
+      medicines: [
+        {
+          id: 'med-1',
+          tenantId: 'tenant-1',
+          name: 'Penicillin G',
+          category: 'antibiotic',
+          stock: 150,
+          unit: 'ml',
+          expiryDate: '2024-12-31',
+          supplier: 'PharmaCo Ltd',
+          purchasePrice: 250,
+          minimumStock: 10,
+          status: 'adequate',
+          isExpired: false,
+          isExpiringSoon: false,
+        },
+        {
+          id: 'med-2',
+          tenantId: 'tenant-1',
+          name: 'Ivermectin',
+          category: 'antiparasitic',
+          stock: 25,
+          unit: 'ml',
+          expiryDate: '2024-08-15',
+          supplier: 'VetMed Inc',
+          purchasePrice: 450,
+          minimumStock: 30,
+          status: 'low',
+          isExpired: false,
+          isExpiringSoon: true,
+        },
+      ],
+      stats: {
+        total: 2,
+        lowStock: 1,
+        expiringSoon: 1,
+        expired: 0,
+        totalValue: 48750,
+      },
+    });
+  }),
+
+  http.post('/api/medicine', async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    const newMedicine = {
+      id: `med-${Date.now()}`,
+      tenantId: 'tenant-1',
+      ...body,
+      status: 'adequate',
+      isExpired: false,
+      isExpiringSoon: false,
+      createdAt: new Date().toISOString(),
+    };
+    return HttpResponse.json(
+      { success: true, medicine: newMedicine, message: 'Medicine added successfully' },
+      { status: 201 }
+    );
+  }),
+
+  // ============================================================================
+  // Subscription API
+  // ============================================================================
+  http.get('/api/subscription', () => {
+    return HttpResponse.json({
+      plan: 'starter',
+      status: 'active',
+      amount: 2999,
+      renewDate: '2025-01-14',
+      features: {
+        name: 'Starter',
+        maxAnimals: 25,
+        maxStaff: 3,
+        price: 2999,
+      },
+    });
+  }),
+
+  http.delete('/api/subscription', () => {
+    return HttpResponse.json({
+      success: true,
+      message: 'Subscription cancelled. Downgraded to free plan.',
+    });
+  }),
+
+  // ============================================================================
+  // Reports API
+  // ============================================================================
+  http.post('/api/reports/generate', async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    // Return a mock PDF blob
+    const pdfContent = new Uint8Array([37, 80, 68, 70]); // PDF magic bytes
+    return new HttpResponse(pdfContent, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="report-${body.type}-test.pdf"`,
+      },
+    });
+  }),
+
+  // ============================================================================
+  // Tenant Config API
+  // ============================================================================
+  http.get('/api/tenants/config', () => {
+    return HttpResponse.json({
+      farmName: 'Test Farm',
+      farmAddress: '123 Test St',
+      primaryColor: '#1F7A3D',
+      secondaryColor: '#2E8B57',
+      logoUrl: 'https://example.com/logo.png',
+      language: 'en',
+      animalTypes: ['cow', 'buffalo'],
+    });
+  }),
+
+  // ============================================================================
+  // Custom Fields API
+  // ============================================================================
+  http.get('/api/tenants/custom-fields', () => {
+    return HttpResponse.json({
+      fields: [
+        {
+          id: 'cf-1',
+          name: 'Color',
+          type: 'text',
+          required: false,
+        },
+      ],
+    });
+  }),
+
+  // ============================================================================
+  // Milk Stats API
+  // ============================================================================
+  http.get('/api/milk/stats', () => {
+    return HttpResponse.json({
+      todayTotal: 27,
+      weekTotal: 189,
+      monthTotal: 810,
+    });
+  }),
+
+  // ============================================================================
+  // Tenant Limits API
+  // ============================================================================
+  http.get('/api/tenants/limits', () => {
+    return HttpResponse.json({
+      maxAnimals: 25,
+      maxStaff: 3,
+      currentAnimals: 5,
+      currentStaff: 1,
+    });
+  }),
 ];

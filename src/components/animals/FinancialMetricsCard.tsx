@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,12 +15,10 @@ import {
   Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface FinancialMetricsCardProps {
   animalId: string;
   className?: string;
 }
-
 interface FinancialData {
   acquisitionCost: number;
   totalRevenue: number;
@@ -43,16 +40,13 @@ interface FinancialData {
     maintenance: number;
   };
 }
-
 export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCardProps) {
   const [financialData, setFinancialData] = useState<FinancialData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'monthly' | 'yearly' | 'lifetime'>('lifetime');
-
   useEffect(() => {
     fetchFinancialData();
   }, [animalId, timeRange]);
-
   const fetchFinancialData = async () => {
     try {
       setLoading(true);
@@ -78,7 +72,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
           maintenance: 10000,
         },
       };
-
       // Adjust data based on time range
       let adjustedData = { ...mockData };
       if (timeRange === 'monthly') {
@@ -89,15 +82,12 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
         adjustedData.totalRevenue = mockData.monthlyRevenue * 12;
         adjustedData.totalExpenses = mockData.monthlyExpenses * 12;
       }
-
       setFinancialData(adjustedData);
     } catch (error) {
-      console.error('Error fetching financial data:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
@@ -106,26 +96,22 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
       maximumFractionDigits: 0,
     }).format(amount);
   };
-
   const getROIColor = (roi: number) => {
     if (roi >= 200) return 'text-green-600';
     if (roi >= 100) return 'text-yellow-600';
     return 'text-red-600';
   };
-
   const getProfitabilityColor = (score: number) => {
     if (score >= 80) return 'bg-green-100 text-green-800';
     if (score >= 60) return 'bg-yellow-100 text-yellow-800';
     return 'bg-red-100 text-red-800';
   };
-
   const getProfitabilityLabel = (score: number) => {
     if (score >= 80) return 'Highly Profitable';
     if (score >= 60) return 'Profitable';
     if (score >= 40) return 'Breaking Even';
     return 'Loss Making';
   };
-
   if (loading) {
     return (
       <Card className={cn('w-full', className)}>
@@ -145,7 +131,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
       </Card>
     );
   }
-
   if (!financialData) {
     return (
       <Card className={cn('w-full', className)}>
@@ -158,11 +143,9 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
       </Card>
     );
   }
-
   const netProfit = financialData.totalRevenue - financialData.totalExpenses;
   const profitMargin =
     financialData.totalRevenue > 0 ? (netProfit / financialData.totalRevenue) * 100 : 0;
-
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
@@ -226,7 +209,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
                 )}
               </div>
             </div>
-
             <div className='rounded-lg bg-blue-50 p-4'>
               <div className='flex items-center justify-between'>
                 <div>
@@ -241,7 +223,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
                 <Target className='h-8 w-8 text-blue-600' />
               </div>
             </div>
-
             <div className='rounded-lg bg-purple-50 p-4'>
               <div className='flex items-center justify-between'>
                 <div>
@@ -255,7 +236,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
               </div>
             </div>
           </div>
-
           {/* Profitability Score */}
           <div className='rounded-lg bg-gray-50 p-4'>
             <div className='mb-2 flex items-center justify-between'>
@@ -285,7 +265,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
               </span>
             </div>
           </div>
-
           {/* Revenue & Expense Breakdown */}
           <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
             {/* Revenue Breakdown */}
@@ -321,7 +300,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
                 </div>
               </div>
             </div>
-
             {/* Expense Breakdown */}
             <div>
               <h4 className='mb-3 flex items-center text-sm font-medium text-gray-700'>
@@ -362,7 +340,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
               </div>
             </div>
           </div>
-
           {/* Key Financial Metrics */}
           <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
             <div className='rounded bg-gray-50 p-3 text-center'>
@@ -388,7 +365,6 @@ export function FinancialMetricsCard({ animalId, className }: FinancialMetricsCa
               </p>
             </div>
           </div>
-
           {/* Action Buttons */}
           <div className='flex items-center space-x-2'>
             <Button variant='outline' size='sm'>

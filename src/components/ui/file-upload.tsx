@@ -1,12 +1,10 @@
 'use client';
-
 import { useState, useCallback } from 'react';
 import { Upload, X, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
-
 interface FileUploadProps {
   onUpload: (file: File) => Promise<void>;
   accept?: string;
@@ -14,7 +12,6 @@ interface FileUploadProps {
   disabled?: boolean;
   className?: string;
 }
-
 export function FileUpload({
   onUpload,
   accept = '.csv,.xlsx,.xls',
@@ -26,7 +23,6 @@ export function FileUpload({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -36,15 +32,12 @@ export function FileUpload({
       setDragActive(false);
     }
   }, []);
-
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
-
       if (disabled) return;
-
       const files = e.dataTransfer.files;
       if (files && files[0]) {
         handleFile(files[0]);
@@ -52,7 +45,6 @@ export function FileUpload({
     },
     [disabled]
   );
-
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
     const files = e.target.files;
@@ -60,30 +52,24 @@ export function FileUpload({
       handleFile(files[0]);
     }
   };
-
   const handleFile = async (file: File) => {
     setError(null);
-
     // Validate file type
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     const validExtensions = ['csv', 'xlsx', 'xls'];
-
     if (!fileExtension || !validExtensions.includes(fileExtension)) {
       setError('Please upload a CSV or Excel file');
       toast.error('Invalid file type. Please upload CSV or Excel file.');
       return;
     }
-
     // Validate file size
     if (file.size > maxSize * 1024 * 1024) {
       setError(`File size must be less than ${maxSize}MB`);
       toast.error(`File too large. Maximum size is ${maxSize}MB.`);
       return;
     }
-
     setUploading(true);
     setProgress(0);
-
     try {
       // Simulate progress updates
       const progressInterval = setInterval(() => {
@@ -95,27 +81,22 @@ export function FileUpload({
           return prev + 10;
         });
       }, 100);
-
       await onUpload(file);
-
       clearInterval(progressInterval);
       setProgress(100);
       toast.success('File uploaded successfully!');
-
       // Reset after success
       setTimeout(() => {
         setUploading(false);
         setProgress(0);
       }, 1000);
     } catch (error) {
-      console.error('Upload error:', error);
       setError(error instanceof Error ? error.message : 'Upload failed');
       toast.error(error instanceof Error ? error.message : 'Failed to upload file');
       setUploading(false);
       setProgress(0);
     }
   };
-
   return (
     <Card className={className}>
       <CardContent className='p-6'>
@@ -135,7 +116,6 @@ export function FileUpload({
             disabled={disabled || uploading}
             className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
           />
-
           {uploading ? (
             <div className='space-y-4'>
               <div className='bg-primary/10 mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
@@ -164,7 +144,6 @@ export function FileUpload({
             </div>
           )}
         </div>
-
         {error && (
           <div className='text-destructive mt-4 flex items-center gap-2'>
             <AlertCircle className='h-4 w-4' />
@@ -175,7 +154,6 @@ export function FileUpload({
     </Card>
   );
 }
-
 // Validation results display
 interface ValidationResultsProps {
   results: {
@@ -187,7 +165,6 @@ interface ValidationResultsProps {
   onCancel?: () => void;
   loading?: boolean;
 }
-
 export function ValidationResults({
   results,
   onConfirm,
@@ -210,7 +187,6 @@ export function ValidationResults({
               </div>
             )}
           </div>
-
           {results.errors.length > 0 && (
             <div className='space-y-2'>
               <p className='text-destructive text-sm font-medium'>Errors found:</p>
@@ -229,7 +205,6 @@ export function ValidationResults({
               </ul>
             </div>
           )}
-
           <div className='flex gap-2 border-t pt-4'>
             {onCancel && (
               <Button variant='outline' onClick={onCancel} disabled={loading}>

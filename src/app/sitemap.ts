@@ -1,9 +1,7 @@
 import { MetadataRoute } from 'next';
 import { adminDb } from '@/lib/firebase/admin';
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://maliktechdairy.com';
-
   const routes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -24,18 +22,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
   ];
-
   // Add tenant subdomains if in production
   if (adminDb && process.env.NODE_ENV === 'production') {
     try {
       const tenantsSnapshot = await adminDb.collection('tenants').get();
-
       for (const tenantDoc of tenantsSnapshot.docs) {
         const configDoc = await tenantDoc.ref.collection('config').doc('main').get();
         if (configDoc.exists) {
           const config = configDoc.data();
           const subdomain = config?.subdomain;
-
           if (subdomain) {
             routes.push({
               url: `https://${subdomain}.${baseUrl.replace('https://', '')}`,
@@ -47,9 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
       }
     } catch (error) {
-      console.error('Error generating tenant sitemaps:', error);
     }
   }
-
   return routes;
 }

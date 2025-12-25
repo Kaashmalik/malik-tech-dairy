@@ -1,10 +1,8 @@
 // User Farms API - Get farms the user has access to
 // GET: Returns all farms/tenants where the user is a member
-
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase';
-
 interface TenantMember {
   id: string;
   tenant_id: string;
@@ -24,17 +22,13 @@ interface TenantMember {
     created_at: string;
   };
 }
-
 export async function GET() {
   try {
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
     const supabase = getSupabaseClient();
-
     // Get all tenant memberships for this user
     const { data: memberships, error: memberError } = await supabase
       .from('tenant_members')
@@ -61,22 +55,18 @@ export async function GET() {
       )
       .eq('user_id', userId)
       .eq('status', 'active');
-
     if (memberError) {
-      console.error('Error fetching memberships:', memberError);
       return NextResponse.json(
         { success: false, error: 'Failed to fetch farms', details: memberError.message },
         { status: 500 }
       );
     }
-
     // Also get user's applications
     const { data: applications } = (await supabase
       .from('farm_applications')
       .select('*')
       .eq('applicant_id', userId)
       .order('created_at', { ascending: false })) as { data: any[] | null };
-
     // Transform memberships to farm format
     const farms = ((memberships as TenantMember[]) || []).map(m => ({
       id: m.tenant_id,
@@ -88,7 +78,6 @@ export async function GET() {
       joinedAt: m.join_date,
       animalTypes: m.tenants?.animal_types || [],
     }));
-
     // Transform applications
     const appsList = (applications || []).map((app: any) => ({
       id: app.id,
@@ -99,7 +88,6 @@ export async function GET() {
       createdAt: app.created_at,
       reviewedAt: app.reviewed_at,
     }));
-
     return NextResponse.json({
       success: true,
       data: {
@@ -112,7 +100,6 @@ export async function GET() {
       },
     });
   } catch (error: any) {
-    console.error('Error in user farms API:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error', details: error?.message },
       { status: 500 }

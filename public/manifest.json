@@ -9,16 +9,16 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icons/icon-192.svg",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icons/icon-512.svg",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "categories": ["business", "productivity", "agriculture"],
@@ -28,15 +28,13 @@
       "name": "Add Animal",
       "short_name": "New Animal",
       "description": "Add a new animal to your farm",
-      "url": "/dashboard/animals/new",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/animals/new"
     },
     {
       "name": "Log Milk",
       "short_name": "Milk",
       "description": "Record milk production",
-      "url": "/dashboard/milk/new",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/milk/new"
     }
   ]
 }

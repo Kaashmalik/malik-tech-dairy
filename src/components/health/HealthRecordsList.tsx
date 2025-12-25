@@ -132,7 +132,7 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
                       <CardTitle className='text-lg'>
                         {!animalId && (
                           <Link
-                            href={`/dashboard/animals/${record.animalId}`}
+                            href={`/animals/${record.animalId}`}
                             className='hover:underline'
                           >
                             {getAnimalName(record.animalId)}

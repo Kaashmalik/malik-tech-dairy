@@ -1,27 +1,19 @@
 #!/usr/bin/env tsx
-
 /**
  * Migration Verification Script
  * Verifies all Phase 1 enhancement tables exist with proper structure
  * Run before deployment to ensure database is ready
  */
-
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
-
 // Load environment variables
 config({ path: '.env.local' });
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase credentials in environment variables');
   process.exit(1);
 }
-
 const supabase = createClient(supabaseUrl, supabaseKey);
-
 // Expected table definitions for Phase 1
 const expectedTables = [
   {
@@ -235,7 +227,6 @@ const expectedTables = [
     ],
   },
 ];
-
 async function checkTableExists(tableName: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
@@ -244,19 +235,14 @@ async function checkTableExists(tableName: string): Promise<boolean> {
       .eq('table_schema', 'public')
       .eq('table_name', tableName)
       .single();
-
     if (error) {
-      console.error(`❌ Error checking table ${tableName}:`, error);
       return false;
     }
-
     return !!data;
   } catch (error) {
-    console.error(`❌ Exception checking table ${tableName}:`, error);
     return false;
   }
 }
-
 async function checkTableColumns(tableName: string, requiredColumns: string[]): Promise<boolean> {
   try {
     const { data, error } = await supabase
@@ -265,27 +251,20 @@ async function checkTableColumns(tableName: string, requiredColumns: string[]): 
       .eq('table_schema', 'public')
       .eq('table_name', tableName)
       .in('column_name', requiredColumns);
-
     if (error) {
-      console.error(`❌ Error checking columns for ${tableName}:`, error);
       return false;
     }
-
     const foundColumns = data?.map(col => col.column_name) || [];
     const missingColumns = requiredColumns.filter(col => !foundColumns.includes(col));
-
     if (missingColumns.length > 0) {
       console.error(`❌ Table ${tableName} missing columns: ${missingColumns.join(', ')}`);
       return false;
     }
-
     return true;
   } catch (error) {
-    console.error(`❌ Exception checking columns for ${tableName}:`, error);
     return false;
   }
 }
-
 async function checkForeignKeys(
   tableName: string,
   foreignKeys: Array<{ from: string; to: string }>
@@ -299,75 +278,47 @@ async function checkForeignKeys(
         .eq('table_schema', 'public')
         .eq('table_name', tableName)
         .eq('constraint_type', 'FOREIGN KEY');
-
       if (error) {
-        console.error(`❌ Error checking foreign keys for ${tableName}:`, error);
         return false;
       }
-
       // Simplified check - just ensure some foreign keys exist
       if (!data || data.length === 0) {
-        console.error(`❌ Table ${tableName} has no foreign key constraints`);
         return false;
       }
     }
-
     return true;
   } catch (error) {
-    console.error(`❌ Exception checking foreign keys for ${tableName}:`, error);
     return false;
   }
 }
-
 async function verifyMigration(): Promise<void> {
-  console.log('🔍 Starting migration verification...\n');
-
   let allTablesExist = true;
   let allColumnsValid = true;
   let allForeignKeysValid = true;
-
   // Check each table
   for (const table of expectedTables) {
-    console.log(`📋 Checking table: ${table.name}`);
-
     // Check table exists
     const tableExists = await checkTableExists(table.name);
     if (!tableExists) {
-      console.error(`   ❌ Table ${table.name} does not exist`);
       allTablesExist = false;
       continue;
     }
-    console.log(`   ✅ Table ${table.name} exists`);
-
     // Check columns
     const columnsValid = await checkTableColumns(table.name, table.requiredColumns);
     if (!columnsValid) {
       allColumnsValid = false;
     } else {
-      console.log(`   ✅ All required columns present in ${table.name}`);
     }
-
     // Check foreign keys
     const foreignKeysValid = await checkForeignKeys(table.name, table.foreignKeys);
     if (!foreignKeysValid) {
       allForeignKeysValid = false;
     } else {
-      console.log(`   ✅ Foreign key constraints valid for ${table.name}`);
     }
-
-    console.log('');
   }
-
   // Summary
-  console.log('📊 Migration Verification Summary:');
-  console.log(`   Tables Exist: ${allTablesExist ? '✅' : '❌'}`);
-  console.log(`   Columns Valid: ${allColumnsValid ? '✅' : '❌'}`);
-  console.log(`   Foreign Keys Valid: ${allForeignKeysValid ? '✅' : '❌'}`);
-
   const migrationValid = allTablesExist && allColumnsValid && allForeignKeysValid;
-
   if (migrationValid) {
-    console.log('\n🎉 Migration verification PASSED! Database is ready for deployment.');
     process.exit(0);
   } else {
     console.log(
@@ -376,13 +327,10 @@ async function verifyMigration(): Promise<void> {
     process.exit(1);
   }
 }
-
 // Run verification
 if (require.main === module) {
   verifyMigration().catch(error => {
-    console.error('❌ Migration verification failed with exception:', error);
     process.exit(1);
   });
 }
-
 export { verifyMigration };

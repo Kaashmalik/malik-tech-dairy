@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,12 +14,10 @@ import {
   Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface BreedingTimelineProps {
   animalId: string;
   className?: string;
 }
-
 interface BreedingEvent {
   id: string;
   date: string;
@@ -31,15 +28,12 @@ interface BreedingEvent {
   outcome?: string;
   nextAction?: string;
 }
-
 export function BreedingTimeline({ animalId, className }: BreedingTimelineProps) {
   const [events, setEvents] = useState<BreedingEvent[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchBreedingEvents();
   }, [animalId]);
-
   const fetchBreedingEvents = async () => {
     try {
       setLoading(true);
@@ -94,15 +88,12 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
           nextAction: 'Monitor calf growth',
         },
       ];
-
       setEvents(mockEvents);
     } catch (error) {
-      console.error('Error fetching breeding events:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const getEventIcon = (type: string) => {
     switch (type) {
       case 'heat':
@@ -119,11 +110,9 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
         return <Calendar className='h-4 w-4' />;
     }
   };
-
   const getEventColor = (type: string, status: string) => {
     if (status === 'pending') return 'bg-gray-100 text-gray-600';
     if (status === 'scheduled') return 'bg-blue-100 text-blue-600';
-
     switch (type) {
       case 'heat':
         return 'bg-pink-100 text-pink-600';
@@ -139,7 +128,6 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
         return 'bg-gray-100 text-gray-600';
     }
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -152,7 +140,6 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
         return <Badge variant='outline'>Unknown</Badge>;
     }
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -160,18 +147,15 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
       year: 'numeric',
     });
   };
-
   const getDaysUntil = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
     const diffTime = date.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
     if (diffDays === 0) return 'Today';
     return `In ${diffDays} days`;
   };
-
   if (loading) {
     return (
       <Card className={cn('w-full', className)}>
@@ -191,7 +175,6 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
       </Card>
     );
   }
-
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
@@ -221,11 +204,9 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
               </div>
             </div>
           </div>
-
           {/* Timeline Events */}
           <div className='relative'>
             <div className='absolute bottom-0 left-4 top-0 w-0.5 bg-gray-200'></div>
-
             {events.map((event, index) => (
               <div key={event.id} className='relative flex items-start space-x-4 pb-6'>
                 <div
@@ -236,15 +217,12 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
                 >
                   {getEventIcon(event.type)}
                 </div>
-
                 <div className='min-w-0 flex-1'>
                   <div className='mb-2 flex items-center justify-between'>
                     <h4 className='text-sm font-medium text-gray-900'>{event.title}</h4>
                     {getStatusBadge(event.status)}
                   </div>
-
                   <p className='mb-1 text-sm text-gray-600'>{event.description}</p>
-
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-4 text-xs text-gray-500'>
                       <span className='flex items-center'>
@@ -253,12 +231,10 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
                       </span>
                       <span>{getDaysUntil(event.date)}</span>
                     </div>
-
                     {event.outcome && (
                       <span className='text-xs font-medium text-green-600'>{event.outcome}</span>
                     )}
                   </div>
-
                   {event.nextAction && (
                     <div className='mt-2 rounded bg-gray-50 p-2 text-xs text-gray-600'>
                       <strong>Next Action:</strong> {event.nextAction}
@@ -268,7 +244,6 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
               </div>
             ))}
           </div>
-
           {/* Breeding Statistics */}
           <div className='grid grid-cols-1 gap-4 rounded-lg bg-gray-50 p-4 md:grid-cols-3'>
             <div className='text-center'>
@@ -284,7 +259,6 @@ export function BreedingTimeline({ animalId, className }: BreedingTimelineProps)
               <div className='text-xs text-gray-600'>Average Days in Milk</div>
             </div>
           </div>
-
           {/* Quick Actions */}
           <div className='flex items-center space-x-2'>
             <Button variant='outline' size='sm'>

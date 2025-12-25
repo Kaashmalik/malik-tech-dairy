@@ -1,7 +1,21 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTenantLimits } from '../useTenantLimits';
-import * as limitsUtils from '@/lib/utils/limits';
+
+// Mock the limits utils module
+const mockCanAddAnimal = jest.fn().mockReturnValue(true);
+const mockCanAddUser = jest.fn().mockReturnValue(true);
+const mockHasFeature = jest.fn().mockReturnValue(true);
+const mockGetRemainingAnimalSlots = jest.fn().mockReturnValue(5);
+const mockGetRemainingUserSlots = jest.fn().mockReturnValue(3);
+
+jest.mock('@/lib/utils/limits', () => ({
+  canAddAnimal: (...args: unknown[]) => mockCanAddAnimal(...args),
+  canAddUser: (...args: unknown[]) => mockCanAddUser(...args),
+  hasFeature: (...args: unknown[]) => mockHasFeature(...args),
+  getRemainingAnimalSlots: (...args: unknown[]) => mockGetRemainingAnimalSlots(...args),
+  getRemainingUserSlots: (...args: unknown[]) => mockGetRemainingUserSlots(...args),
+}));
 
 // Mock the TenantProvider
 jest.mock('@/components/tenant/TenantProvider', () => ({
@@ -52,8 +66,6 @@ describe('useTenantLimits', () => {
   });
 
   it('should call canAddAnimal with correct parameters', async () => {
-    const canAddAnimalSpy = jest.spyOn(limitsUtils, 'canAddAnimal');
-
     const { result } = renderHook(() => useTenantLimits(), {
       wrapper: createWrapper(),
     });
@@ -62,7 +74,8 @@ describe('useTenantLimits', () => {
       expect(result.current.canAddAnimal).toBeDefined();
     });
 
-    expect(canAddAnimalSpy).toHaveBeenCalled();
+    // The hook should have called canAddAnimal during computation
+    expect(mockCanAddAnimal).toHaveBeenCalled();
   });
 
   it('should fetch animal count', async () => {
@@ -103,8 +116,6 @@ describe('useTenantLimits', () => {
   });
 
   it('should provide hasFeature function', async () => {
-    const hasFeatureSpy = jest.spyOn(limitsUtils, 'hasFeature');
-
     const { result } = renderHook(() => useTenantLimits(), {
       wrapper: createWrapper(),
     });
@@ -114,6 +125,9 @@ describe('useTenantLimits', () => {
     });
 
     result.current.hasFeature('reports');
-    expect(hasFeatureSpy).toHaveBeenCalled();
+    expect(mockHasFeature).toHaveBeenCalledWith(
+      expect.objectContaining({ features: ['reports'] }),
+      'reports'
+    );
   });
 });

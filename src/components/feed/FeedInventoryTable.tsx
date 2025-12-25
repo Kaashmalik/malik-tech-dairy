@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,11 +16,9 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface FeedInventoryTableProps {
   className?: string;
 }
-
 interface FeedItem {
   id: string;
   ingredientName: string;
@@ -41,7 +38,6 @@ interface FeedItem {
   stockStatus: 'critical' | 'low' | 'adequate' | 'overstock';
   daysOfSupply: number;
 }
-
 export function FeedInventoryTable({ className }: FeedInventoryTableProps) {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,11 +46,9 @@ export function FeedInventoryTable({ className }: FeedInventoryTableProps) {
     category: '',
     stockStatus: '',
   });
-
   useEffect(() => {
     fetchFeedItems();
   }, []);
-
   const fetchFeedItems = async () => {
     try {
       setLoading(true);
@@ -118,15 +112,12 @@ export function FeedInventoryTable({ className }: FeedInventoryTableProps) {
           daysOfSupply: 60,
         },
       ];
-
       setFeedItems(mockData);
     } catch (error) {
-      console.error('Error fetching feed items:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
@@ -135,7 +126,6 @@ export function FeedInventoryTable({ className }: FeedInventoryTableProps) {
       maximumFractionDigits: 0,
     }).format(amount);
   };
-
   const getStockStatusColor = (status: string) => {
     switch (status) {
       case 'critical':
@@ -150,13 +140,11 @@ export function FeedInventoryTable({ className }: FeedInventoryTableProps) {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getExpiryStatusColor = (days: number) => {
     if (days <= 30) return 'text-red-600';
     if (days <= 60) return 'text-yellow-600';
     return 'text-green-600';
   };
-
   if (loading) {
     return (
       <Card className={cn('w-full', className)}>
@@ -171,7 +159,6 @@ export function FeedInventoryTable({ className }: FeedInventoryTableProps) {
       </Card>
     );
   }
-
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
@@ -268,7 +255,6 @@ export function FeedInventoryTable({ className }: FeedInventoryTableProps) {
             </tbody>
           </table>
         </div>
-
         {/* Summary */}
         <div className='mt-4 rounded bg-gray-50 p-4'>
           <div className='grid grid-cols-1 gap-4 text-sm md:grid-cols-4'>

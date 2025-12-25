@@ -2,27 +2,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase';
-
+import { Animal, AnimalUpdate, ApiResponse, ApiError, createApiError, createApiResponse } from '@/lib/supabase/types';
 export const dynamic = 'force-dynamic';
-
 // GET: Get animal by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
       const supabase = getSupabaseClient();
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: animal, error } = await (supabase.from('animals') as any)
         .select('*')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
-        .single();
-
+        .single() as { data: Animal | null; error: any };
       if (error || !animal) {
-        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
+        return NextResponse.json(createApiError('Animal not found', 'NOT_FOUND'), { status: 404 });
       }
-
       // Transform to camelCase for frontend
       const transformedAnimal = {
         id: animal?.id,
@@ -46,15 +42,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: animal?.created_at,
         updatedAt: animal?.updated_at,
       };
-
       return NextResponse.json({ success: true, animal: transformedAnimal });
     } catch (error) {
-      console.error('Error fetching animal:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-
 // PUT: Update animal
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
@@ -62,7 +55,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const { id } = await params;
       const supabase = getSupabaseClient();
       const body = await req.json();
-
       // Check if animal exists
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: existing } = await (supabase.from('animals') as any)
@@ -70,11 +62,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
         .single();
-
       if (!existing) {
         return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
-
       // Check if tag is being updated and if it conflicts
       if (body.tag && body.tag !== existing?.tag) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -85,7 +75,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           .neq('id', id)
           .limit(1)
           .single();
-
         if (conflictingTag) {
           return NextResponse.json(
             { success: false, error: 'Animal with this tag already exists' },
@@ -93,12 +82,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           );
         }
       }
-
       const now = new Date().toISOString();
       const updateData: Record<string, unknown> = {
         updated_at: now,
       };
-
       // Map camelCase to snake_case
       if (body.tag !== undefined) updateData.tag = body.tag;
       if (body.name !== undefined) updateData.name = body.name;
@@ -114,7 +101,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (body.color !== undefined) updateData.color = body.color;
       if (body.notes !== undefined) updateData.notes = body.notes;
       if (body.customFields !== undefined) updateData.custom_fields = body.customFields;
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: updatedAnimal, error } = await (supabase.from('animals') as any)
         .update(updateData)
@@ -122,15 +108,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         .eq('tenant_id', context.tenantId)
         .select()
         .single();
-
       if (error) {
-        console.error('Error updating animal:', error);
         return NextResponse.json(
           { success: false, error: 'Failed to update animal', details: error.message },
           { status: 500 }
         );
       }
-
       // Transform to camelCase
       const transformedAnimal = {
         id: updatedAnimal?.id,
@@ -146,15 +129,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: updatedAnimal?.created_at,
         updatedAt: updatedAnimal?.updated_at,
       };
-
       return NextResponse.json({ success: true, animal: transformedAnimal });
     } catch (error) {
-      console.error('Error updating animal:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-
 // DELETE: Delete animal (soft delete)
 export async function DELETE(
   request: NextRequest,
@@ -164,7 +144,6 @@ export async function DELETE(
     try {
       const { id } = await params;
       const supabase = getSupabaseClient();
-
       // Check if animal exists
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: existing } = await (supabase.from('animals') as any)
@@ -172,11 +151,9 @@ export async function DELETE(
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
         .single();
-
       if (!existing) {
         return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
-
       // Soft delete: Update status instead of deleting
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('animals') as any)
@@ -186,18 +163,14 @@ export async function DELETE(
         })
         .eq('id', id)
         .eq('tenant_id', context.tenantId);
-
       if (error) {
-        console.error('Error deleting animal:', error);
         return NextResponse.json(
           { success: false, error: 'Failed to delete animal' },
           { status: 500 }
         );
       }
-
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Error deleting animal:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);

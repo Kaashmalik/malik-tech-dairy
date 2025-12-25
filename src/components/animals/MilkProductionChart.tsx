@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -16,12 +15,10 @@ import {
 } from 'recharts';
 import { TrendingUp, Droplets, Calendar, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface MilkProductionChartProps {
   animalId: string;
   className?: string;
 }
-
 interface MilkData {
   date: string;
   morningYield: number;
@@ -31,17 +28,14 @@ interface MilkData {
   butterfat: number;
   protein: number;
 }
-
 export function MilkProductionChart({ animalId, className }: MilkProductionChartProps) {
   const [milkData, setMilkData] = useState<MilkData[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [chartType, setChartType] = useState<'yield' | 'quality' | 'composition'>('yield');
-
   useEffect(() => {
     fetchMilkData();
   }, [animalId, timeRange]);
-
   const fetchMilkData = async () => {
     try {
       setLoading(true);
@@ -138,17 +132,14 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
           protein: 3.5,
         },
       ];
-
       // Filter data based on time range
       const filteredData = mockData.slice(-getTimeRangeDays(timeRange));
       setMilkData(filteredData);
     } catch (error) {
-      console.error('Error fetching milk data:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const getTimeRangeDays = (range: string) => {
     switch (range) {
       case '7d':
@@ -161,30 +152,24 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
         return 30;
     }
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
     });
   };
-
   const calculateAverage = (data: MilkData[], field: keyof MilkData) => {
     const values = data.map(d => Number(d[field])).filter(v => !isNaN(v));
     return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
   };
-
   const calculateTrend = (data: MilkData[], field: keyof MilkData) => {
     if (data.length < 2) return 0;
     const recent = data.slice(-7);
     const previous = data.slice(-14, -7);
-
     const recentAvg = calculateAverage(recent, field);
     const previousAvg = calculateAverage(previous, field);
-
     return previousAvg > 0 ? ((recentAvg - previousAvg) / previousAvg) * 100 : 0;
   };
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -205,7 +190,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
     }
     return null;
   };
-
   if (loading) {
     return (
       <Card className={cn('w-full', className)}>
@@ -223,12 +207,10 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
       </Card>
     );
   }
-
   const avgYield = calculateAverage(milkData, 'totalYield');
   const yieldTrend = calculateTrend(milkData, 'totalYield');
   const avgQuality = calculateAverage(milkData, 'qualityScore');
   const qualityTrend = calculateTrend(milkData, 'qualityScore');
-
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
@@ -301,7 +283,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
               </div>
             </div>
           </div>
-
           <div className='rounded-lg bg-green-50 p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -326,7 +307,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
               </div>
             </div>
           </div>
-
           <div className='rounded-lg bg-purple-50 p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -337,7 +317,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
             </div>
           </div>
         </div>
-
         {/* Chart Type Selector */}
         <div className='mb-6 flex items-center space-x-2'>
           <button
@@ -374,7 +353,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
             Milk Composition
           </button>
         </div>
-
         {/* Charts */}
         <div className='space-y-6'>
           {chartType === 'yield' && (
@@ -400,7 +378,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
               </ResponsiveContainer>
             </div>
           )}
-
           {chartType === 'quality' && (
             <div>
               <h3 className='mb-4 text-sm font-medium text-gray-700'>Milk Quality Score</h3>
@@ -422,7 +399,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
               </ResponsiveContainer>
             </div>
           )}
-
           {chartType === 'composition' && (
             <div>
               <h3 className='mb-4 text-sm font-medium text-gray-700'>Milk Composition (%)</h3>
@@ -453,7 +429,6 @@ export function MilkProductionChart({ animalId, className }: MilkProductionChart
             </div>
           )}
         </div>
-
         {/* Performance Insights */}
         <div className='mt-6 rounded-lg bg-gray-50 p-4'>
           <h3 className='mb-2 text-sm font-medium text-gray-700'>Performance Insights</h3>
