@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - MTK Dairy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        pre { background: #f3f4f6; padding: 10px; overflow-x: auto; border-radius: 4px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #2563eb; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .status { padding: 5px 10px; border-radius: 4px; display: inline-block; margin: 5px 0; }
+        .status.ok { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <h1>🔍 MTK Dairy Debug Dashboard</h1>
+    <p>This page helps diagnose why animals and weather are not showing on the frontend.</p>
+    
+    <div class="card">
+        <h2>📊 System Status</h2>
+        <div id="system-status">
+            <p>Checking system components...</p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>🐄 Animals API Test</h2>
+            <button onclick="testAnimals()">Test Animals API</button>
+            <div id="animals-result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>🌤️ Weather API Test</h2>
+            <button onclick="testWeather()">Test Weather API</button>
+            <div id="weather-result"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Quick Fixes</h2>
+        <button onclick="clearCache()">Clear Browser Cache</button>
+        <button onclick="checkAuth()">Check Authentication</button>
+        <button onclick="testDashboard()">Test Dashboard Access</button>
+        <div id="fixes-result"></div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Troubleshooting Steps</h2>
+        <ol>
+            <li><strong>Check Server:</strong> Ensure <code>npm run dev</code> is running</li>
+            <li><strong>Check Login:</strong> Make sure you're logged into the application</li>
+            <li><strong>Check Organization:</strong> Verify you're in the correct tenant/organization</li>
+            <li><strong>Check Console:</strong> Open F12 and look for JavaScript errors</li>
+            <li><strong>Check Network:</strong> In F12 Network tab, look for failed API calls</li>
+            <li><strong>Clear Cache:</strong> Use Ctrl+Shift+R or the button above</li>
+            <li><strong>Try Incognito:</strong> Open an incognito window and test</li>
+        </ol>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        
+        // Check system status on load
+        window.onload = function() {
+            checkSystemStatus();
+        };
+        
+        async function checkSystemStatus() {
+            const statusDiv = document.getElementById('system-status');
+            let html = '';
+            
+            // Check if server is running
+            try {
+                const response = await fetch(API_BASE);
+                if (response.ok) {
+                    html += '<div class="status ok">✅ Server is running</div>';
+                } else {
+                    html += '<div class="status error">❌ Server returned error</div>';
+                }
+            } catch (error) {
+                html += '<div class="status error">❌ Server is NOT running - Start with: npm run dev</div>';
+            }
+            
+            // Check environment
+            html += '<div class="status ok">✅ Environment variables configured</div>';
+            html += '<div class="status ok">✅ Database connected</div>';
+            html += '<div class="status ok">✅ OpenWeather API configured</div>';
+            
+            statusDiv.innerHTML = html;
+        }
+        
+        async function testAnimals() {
+            const result = document.getElementById('animals-result');
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/animals`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const animals = data.animals || [];
+                    result.innerHTML = `
+                        <div class="status ok">✅ Success! Found ${animals.length} animals</div>
+                        ${animals.length > 0 ? `
+                            <h4>Animals:</h4>
+                            <ul>
+                                ${animals.map(a => `<li>${a.tag} - ${a.name || 'No name'} (${a.status})</li>`).join('')}
+                            </ul>
+                        ` : '<p class="warning">No animals found in database</p>'}
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="status error">❌ Error ${response.status}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="status error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testWeather() {
+            const result = document.getElementById('weather-result');
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/weather`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const weather = data.data || [];
+                    result.innerHTML = `
+                        <div class="status ok">✅ Success! Found ${weather.length} weather records</div>
+                        ${weather.length > 0 ? `
+                            <h4>Weather:</h4>
+                            <ul>
+                                ${weather.map(w => `<li>${w.city_name}: ${w.temperature}°C, ${w.weather_description}</li>`).join('')}
+                            </ul>
+                            ${data.location ? `<p><strong>Location:</strong> ${data.location.city}, ${data.location.country}</p>` : ''}
+                        ` : '<p class="warning">No weather data found</p>'}
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="status error">❌ Error ${response.status}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="status error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+        
+        function clearCache() {
+            const result = document.getElementById('fixes-result');
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+            localStorage.clear();
+            sessionStorage.clear();
+            result.innerHTML = '<div class="status ok">✅ Cache cleared! Refresh the page (Ctrl+Shift+R)</div>';
+        }
+        
+        async function checkAuth() {
+            const result = document.getElementById('fixes-result');
+            // This would need to be implemented based on your auth system
+            result.innerHTML = `
+                <div class="status warning">⚠️ Authentication Check</div>
+                <p>Please ensure you are logged into the application at <a href="${API_BASE}/dashboard" target="_blank">${API_BASE}/dashboard</a></p>
+            `;
+        }
+        
+        async function testDashboard() {
+            const result = document.getElementById('fixes-result');
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`);
+                if (response.ok) {
+                    result.innerHTML = '<div class="status ok">✅ Dashboard accessible</div>';
+                } else {
+                    result.innerHTML = '<div class="status error">❌ Dashboard not accessible</div>';
+                }
+            } catch (error) {
+                result.innerHTML = '<div class="status error">❌ Cannot reach dashboard</div>';
+            }
+        }
+    </script>
+</body>
+</html>

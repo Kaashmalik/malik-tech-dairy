@@ -40,7 +40,8 @@ export function BreedingList() {
     queryFn: async () => {
       const res = await fetch('/api/animals');
       if (!res.ok) throw new Error('Failed to fetch animals');
-      return res.json();
+      const response = await res.json();
+      return response.data;
     },
   });
 
@@ -166,9 +167,16 @@ export function BreedingList() {
       ) : (
         <div className='grid gap-4'>
           {records.map(record => {
-            const daysUntilCalving = record.expectedCalvingDate
-              ? differenceInDays(new Date(record.expectedCalvingDate), new Date())
-              : null;
+            const daysUntilCalving = (() => {
+              try {
+                if (!record.expectedCalvingDate) return null;
+                const d = new Date(record.expectedCalvingDate);
+                if (isNaN(d.getTime())) return null;
+                return differenceInDays(d, new Date());
+              } catch {
+                return null;
+              }
+            })();
 
             return (
               <Card key={record.id}>
@@ -218,14 +226,32 @@ export function BreedingList() {
                     <div className='flex items-center gap-2'>
                       <Calendar className='text-muted-foreground h-4 w-4' />
                       <span className='text-muted-foreground'>Breeding Date:</span>
-                      <span>{format(new Date(record.breedingDate), 'MMM d, yyyy')}</span>
+                      <span>
+                        {(() => {
+                          try {
+                            const d = new Date(record.breedingDate);
+                            if (isNaN(d.getTime())) return 'N/A';
+                            return format(d, 'MMM d, yyyy');
+                          } catch {
+                            return 'N/A';
+                          }
+                        })()}
+                      </span>
                     </div>
                     {record.expectedCalvingDate && (
                       <div className='flex items-center gap-2'>
                         <Clock className='text-muted-foreground h-4 w-4' />
                         <span className='text-muted-foreground'>Expected Calving:</span>
                         <span className='font-semibold'>
-                          {format(new Date(record.expectedCalvingDate), 'MMM d, yyyy')}
+                          {(() => {
+                            try {
+                              const d = new Date(record.expectedCalvingDate!);
+                              if (isNaN(d.getTime())) return 'N/A';
+                              return format(d, 'MMM d, yyyy');
+                            } catch {
+                              return 'N/A';
+                            }
+                          })()}
                           {daysUntilCalving !== null && daysUntilCalving > 0 && (
                             <span className='text-muted-foreground ml-1'>
                               ({daysUntilCalving} days)
@@ -238,7 +264,17 @@ export function BreedingList() {
                       <div className='flex items-center gap-2'>
                         <CheckCircle2 className='h-4 w-4 text-green-500' />
                         <span className='text-muted-foreground'>Calved:</span>
-                        <span>{format(new Date(record.actualCalvingDate), 'MMM d, yyyy')}</span>
+                        <span>
+                          {(() => {
+                            try {
+                              const d = new Date(record.actualCalvingDate!);
+                              if (isNaN(d.getTime())) return 'N/A';
+                              return format(d, 'MMM d, yyyy');
+                            } catch {
+                              return 'N/A';
+                            }
+                          })()}
+                        </span>
                       </div>
                     )}
                     {record.sireId && (

@@ -7,6 +7,11 @@
 
 import { validateEnv } from '../src/lib/env.js';
 import chalk from 'chalk';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env.local or .env
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 console.log(chalk.blue('\n🔍 Validating Environment Variables...\n'));
 
@@ -36,7 +41,7 @@ if (process.env.NODE_ENV === 'production') {
   if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_test_')) {
     warnings.push('⚠️  Using Clerk test keys in production');
   }
-  
+
   if (process.env.RESEND_FROM_EMAIL?.includes('resend.dev')) {
     warnings.push('⚠️  Using Resend development email in production');
   }

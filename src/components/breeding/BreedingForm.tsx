@@ -24,13 +24,21 @@ interface BreedingFormProps {
   onSuccess: () => void;
 }
 
+// Define form data type where dates are strings (for HTML input)
+type BreedingFormData = Omit<Partial<BreedingRecord>, 'breedingDate' | 'expectedCalvingDate' | 'actualCalvingDate'> & {
+  breedingDate: string;
+  expectedCalvingDate?: string;
+  actualCalvingDate?: string;
+};
+
 export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingFormProps) {
   const { data: animals } = useQuery<{ animals: Animal[] }>({
     queryKey: ['animals'],
     queryFn: async () => {
       const res = await fetch('/api/animals');
       if (!res.ok) throw new Error('Failed to fetch animals');
-      return res.json();
+      const response = await res.json();
+      return response.data;
     },
   });
 
@@ -45,28 +53,28 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
     setValue,
     watch,
     formState: { errors },
-  } = useForm<Partial<BreedingRecord>>({
+  } = useForm<BreedingFormData>({
     defaultValues: record
       ? {
-          animalId: record.animalId,
-          breedingDate: format(new Date(record.breedingDate), 'yyyy-MM-dd'),
-          sireId: record.sireId || '',
-          expectedCalvingDate: record.expectedCalvingDate
-            ? format(new Date(record.expectedCalvingDate), 'yyyy-MM-dd')
-            : '',
-          actualCalvingDate: record.actualCalvingDate
-            ? format(new Date(record.actualCalvingDate), 'yyyy-MM-dd')
-            : '',
-          status: record.status,
-          notes: record.notes || '',
-        }
+        animalId: record.animalId,
+        breedingDate: format(new Date(record.breedingDate), 'yyyy-MM-dd'),
+        sireId: record.sireId || '',
+        expectedCalvingDate: record.expectedCalvingDate
+          ? format(new Date(record.expectedCalvingDate), 'yyyy-MM-dd')
+          : '',
+        actualCalvingDate: record.actualCalvingDate
+          ? format(new Date(record.actualCalvingDate), 'yyyy-MM-dd')
+          : '',
+        status: record.status,
+        notes: record.notes || '',
+      }
       : {
-          animalId: animalId || '',
-          breedingDate: format(new Date(), 'yyyy-MM-dd'),
-          sireId: '',
-          status: 'pregnant',
-          notes: '',
-        },
+        animalId: animalId || '',
+        breedingDate: format(new Date(), 'yyyy-MM-dd'),
+        sireId: '',
+        status: 'pregnant',
+        notes: '',
+      },
   });
 
   const mutation = useMutation({
@@ -92,8 +100,8 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
     },
   });
 
-  const onSubmit = (data: Partial<BreedingRecord>) => {
-    mutation.mutate(data);
+  const onSubmit = (data: BreedingFormData) => {
+    mutation.mutate(data as unknown as Partial<BreedingRecord>);
   };
 
   const breedingDate = watch('breedingDate');

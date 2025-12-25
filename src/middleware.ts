@@ -35,6 +35,7 @@ const isOrganizationRoute = createRouteMatcher([
   '/api/breeding(.*)',
   '/api/expenses(.*)',
   '/api/reports(.*)',
+  '/api/weather(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
@@ -57,6 +58,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   if (!userId && !isPublicRoute(req)) {
     const signInUrl = new URL('/sign-in', req.url);
     signInUrl.searchParams.set('redirect_url', req.url);
+    if (req.nextUrl.pathname.startsWith('/api')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.redirect(signInUrl);
   }
 
@@ -87,6 +91,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
     // If no orgId and user is on organization route, redirect to apply
     if (!orgId) {
+      if (req.nextUrl.pathname.startsWith('/api')) {
+        return NextResponse.json({ error: 'No organization found' }, { status: 403 });
+      }
       return NextResponse.redirect(new URL('/apply', req.url));
     }
   }

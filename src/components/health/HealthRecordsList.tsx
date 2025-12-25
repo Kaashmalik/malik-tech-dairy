@@ -35,7 +35,8 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
     queryFn: async () => {
       const res = await fetch('/api/animals');
       if (!res.ok) throw new Error('Failed to fetch animals');
-      return res.json();
+      const response = await res.json();
+      return response.data;
     },
     enabled: !animalId, // Only fetch if we need to show animal names
   });
@@ -174,7 +175,17 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
                   <div className='flex items-center gap-2'>
                     <Calendar className='text-muted-foreground h-4 w-4' />
                     <span className='text-muted-foreground'>Date:</span>
-                    <span>{format(new Date(record.date), 'MMM d, yyyy')}</span>
+                    <span>
+                      {(() => {
+                        try {
+                          const d = new Date(record.date);
+                          if (isNaN(d.getTime())) return 'N/A';
+                          return format(d, 'MMM d, yyyy');
+                        } catch {
+                          return 'N/A';
+                        }
+                      })()}
+                    </span>
                   </div>
                   {record.veterinarian && (
                     <div className='flex items-center gap-2'>
@@ -195,7 +206,15 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
                       <AlertCircle className='h-4 w-4 text-yellow-500' />
                       <span className='text-muted-foreground'>Next Due:</span>
                       <span className='font-semibold'>
-                        {format(new Date(record.nextDueDate), 'MMM d, yyyy')}
+                        {(() => {
+                          try {
+                            const d = new Date(record.nextDueDate!);
+                            if (isNaN(d.getTime())) return 'N/A';
+                            return format(d, 'MMM d, yyyy');
+                          } catch {
+                            return 'N/A';
+                          }
+                        })()}
                       </span>
                     </div>
                   )}

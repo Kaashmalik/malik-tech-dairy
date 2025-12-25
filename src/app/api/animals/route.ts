@@ -24,6 +24,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
+      console.log('GET /api/animals: Starting request', { tenantId: context.tenantId });
       const supabase = getSupabaseClient();
 
       const { data: animals, error } = (await supabase
@@ -33,13 +34,16 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: false })) as { data: AnimalFromDb[] | null; error: PostgrestError | null };
 
       if (error) {
+        console.error('GET /api/animals: Supabase error', error);
         throw new InternalServerError('Failed to fetch animals', error.message);
       }
 
+      console.log('GET /api/animals: Fetched count', animals?.length);
       const transformedAnimals = transformAnimals(animals || []);
 
       return successResponse({ animals: transformedAnimals });
     } catch (error) {
+      console.error('GET /api/animals: Caught error', error);
       return errorResponse(error);
     }
   })(request);

@@ -21,6 +21,16 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.state = { hasError: false, error: null, eventId: null };
   }
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    // Ignore Next.js redirects (NEXT_REDIRECT)
+    if ((error as any).digest?.startsWith('NEXT_REDIRECT')) {
+      // Return null or empty state update to let it bubble (though this pattern is tricky in class components)
+      // Actually, for Error Boundaries, if we return state, we show fallback.
+      // We can't easily rethrow. But we can avoid showing "Something went wrong".
+      // Best approach for redirects in App Router is NOT to catch them here.
+      // But since we are here, we can try to rethrow? No.
+      // We will set hasError to false? No, then it might render children which failed.
+      return { hasError: false };
+    }
     return { hasError: true, error };
   }
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {

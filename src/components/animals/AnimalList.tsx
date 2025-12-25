@@ -16,10 +16,15 @@ export function AnimalList() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['animals'],
     queryFn: async () => {
-      const res = await fetch('/api/animals');
-      if (!res.ok) throw new Error('Failed to fetch animals');
-      const data = await res.json();
-      return data.animals as Animal[];
+      try {
+        const res = await fetch('/api/animals');
+        if (!res.ok) throw new Error('Failed to fetch animals');
+        const response = await res.json();
+        return response.data.animals as Animal[];
+      } catch (error) {
+        console.error('Failed to fetch animals:', error);
+        throw error;
+      }
     },
   });
 

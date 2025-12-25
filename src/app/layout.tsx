@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Noto_Nastaliq_Urdu } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'sonner';
 import { PWARegister } from '@/components/PWARegister';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+// import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
 
@@ -74,11 +74,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ErrorBoundary>
-              {children}
-              <PWARegister />
-              <Toaster position='top-right' richColors />
-            </ErrorBoundary>
+            {children}
+            <PWARegister />
+            <Toaster position='top-right' richColors />
           </ThemeProvider>
         </body>
       </html>

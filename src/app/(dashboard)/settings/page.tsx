@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import LocationSettings from '@/components/settings/LocationSettings';
 import {
   Settings,
   Building2,
@@ -20,6 +21,7 @@ import {
   Users,
   CreditCard,
   ChevronRight,
+  MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -35,6 +37,12 @@ export default function SettingsPage() {
   });
 
   const settingsCategories = [
+    {
+      title: 'Farm Location',
+      description: 'Set your farm location for weather data',
+      icon: MapPin,
+      href: '/settings/location',
+    },
     {
       title: 'Farm Profile',
       description: 'Manage your farm details and branding',
@@ -85,12 +93,17 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs defaultValue="location" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="location">Location</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="location" className="space-y-6">
+          <LocationSettings />
+        </TabsContent>
 
         <TabsContent value="general" className="space-y-6">
           {/* Quick Links */}

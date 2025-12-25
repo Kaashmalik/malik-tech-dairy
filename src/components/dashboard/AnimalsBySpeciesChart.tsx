@@ -32,7 +32,8 @@ export function AnimalsBySpeciesChart() {
     queryFn: async () => {
       const res = await fetch('/api/animals');
       if (!res.ok) return { animals: [] };
-      return res.json();
+      const response = await res.json();
+      return response.data;
     },
   });
 

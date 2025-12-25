@@ -70,15 +70,18 @@ interface MedicineStats {
   totalValue: number;
 }
 
+// Enhanced category config with more farm-specific types
 const categoryConfig: Record<string, { color: string; icon: typeof Pill; label: string }> = {
   antibiotic: { color: 'bg-blue-100 text-blue-700', icon: Pill, label: 'Antibiotic' },
-  antiparasitic: { color: 'bg-amber-100 text-amber-700', icon: Syringe, label: 'Antiparasitic' },
   vaccine: { color: 'bg-green-100 text-green-700', icon: Syringe, label: 'Vaccine' },
-  supplement: { color: 'bg-purple-100 text-purple-700', icon: Pill, label: 'Supplement' },
-  painkiller: { color: 'bg-red-100 text-red-700', icon: Pill, label: 'Painkiller' },
-  'anti-inflammatory': { color: 'bg-orange-100 text-orange-700', icon: Pill, label: 'Anti-inflammatory' },
-  hormonal: { color: 'bg-pink-100 text-pink-700', icon: Syringe, label: 'Hormonal' },
-  other: { color: 'bg-gray-100 text-gray-700', icon: Package, label: 'Other' },
+  antiparasitic: { color: 'bg-amber-100 text-amber-700', icon: Syringe, label: 'Antiparasitic' },
+  supplement: { color: 'bg-purple-100 text-purple-700', icon: Pill, label: 'Supplement (Vit/Min)' },
+  painkiller: { color: 'bg-red-100 text-red-700', icon: Pill, label: 'Painkiller/NSAID' },
+  hormonal: { color: 'bg-pink-100 text-pink-700', icon: Syringe, label: 'Reproductive/Hormonal' },
+  disinfectant: { color: 'bg-cyan-100 text-cyan-700', icon: Package, label: 'Disinfectant/Sanitizer' },
+  electrolyte: { color: 'bg-yellow-100 text-yellow-700', icon: Package, label: 'Electrolyte/Fluid' },
+  topical: { color: 'bg-indigo-100 text-indigo-700', icon: Package, label: 'Topical/Ointment' },
+  other: { color: 'bg-gray-100 text-gray-700', icon: Package, label: 'Other/Equipment' },
 };
 
 const containerVariants = {
@@ -116,8 +119,8 @@ export default function MedicinePage() {
   const { data, isLoading, error } = useQuery<{ medicines: Medicine[]; stats: MedicineStats }>({
     queryKey: ['medicines', selectedCategory],
     queryFn: async () => {
-      const url = selectedCategory === 'all' 
-        ? '/api/medicine' 
+      const url = selectedCategory === 'all'
+        ? '/api/medicine'
         : `/api/medicine?category=${selectedCategory}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch medicines');
@@ -209,7 +212,7 @@ export default function MedicinePage() {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 p-6"
@@ -217,7 +220,7 @@ export default function MedicinePage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white"
@@ -227,7 +230,7 @@ export default function MedicinePage() {
             </div>
             Medicine Management
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
@@ -237,14 +240,14 @@ export default function MedicinePage() {
           </motion.p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
           >
             <Package className="mr-2 h-4 w-4" />
             Order Medicine
           </Button>
-          <Button 
+          <Button
             onClick={() => setShowAddDialog(true)}
             className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg hover:from-emerald-600 hover:to-teal-700"
           >
@@ -255,7 +258,7 @@ export default function MedicinePage() {
       </div>
 
       {/* Stats Cards */}
-      <motion.div 
+      <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -363,7 +366,7 @@ export default function MedicinePage() {
             >
               {filteredMedicines.map((medicine) => {
                 const catConfig = categoryConfig[medicine.category] || categoryConfig.other;
-                
+
                 return (
                   <motion.div
                     key={medicine.id}
@@ -371,14 +374,13 @@ export default function MedicinePage() {
                     whileHover={{ scale: 1.02 }}
                     className="group overflow-hidden rounded-xl border border-gray-200/50 bg-white shadow-sm transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <div className={`h-1 bg-gradient-to-r ${
-                      medicine.isExpired || medicine.status === 'out_of_stock' 
-                        ? 'from-red-500 to-rose-500' 
-                        : medicine.status === 'low' || medicine.isExpiringSoon
+                    <div className={`h-1 bg-gradient-to-r ${medicine.isExpired || medicine.status === 'out_of_stock'
+                      ? 'from-red-500 to-rose-500'
+                      : medicine.status === 'low' || medicine.isExpiringSoon
                         ? 'from-amber-500 to-orange-500'
                         : 'from-emerald-500 to-teal-500'
-                    }`} />
-                    
+                      }`} />
+
                     <div className="p-5">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
@@ -403,10 +405,9 @@ export default function MedicinePage() {
                         {medicine.expiryDate && (
                           <div className="rounded-lg bg-gray-50 p-2 dark:bg-slate-700/50">
                             <p className="text-xs text-gray-500 dark:text-slate-400">Expires</p>
-                            <p className={`font-semibold ${
-                              medicine.isExpired ? 'text-red-600' : 
+                            <p className={`font-semibold ${medicine.isExpired ? 'text-red-600' :
                               medicine.isExpiringSoon ? 'text-amber-600' : 'text-gray-900 dark:text-white'
-                            }`}>
+                              }`}>
                               {new Date(medicine.expiryDate).toLocaleDateString('en-PK')}
                             </p>
                           </div>
@@ -525,30 +526,37 @@ export default function MedicinePage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Category *</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Category *</label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="h-10 w-full rounded-lg border px-3"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-slate-950 dark:text-slate-50"
                 >
                   {Object.entries(categoryConfig).map(([key, config]) => (
-                    <option key={key} value={key}>{config.label}</option>
+                    <option key={key} value={key} className="bg-white dark:bg-slate-950">
+                      {config.label}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Unit</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Unit</label>
                 <select
                   value={formData.unit}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                  className="h-10 w-full rounded-lg border px-3"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-slate-950 dark:text-slate-50"
                 >
-                  <option value="ml">ml</option>
-                  <option value="tablets">tablets</option>
-                  <option value="bottles">bottles</option>
-                  <option value="vials">vials</option>
-                  <option value="sachets">sachets</option>
-                  <option value="kg">kg</option>
+                  <option value="ml" className="bg-white dark:bg-slate-950">ml (Milliliter)</option>
+                  <option value="l" className="bg-white dark:bg-slate-950">L (Liter)</option>
+                  <option value="mg" className="bg-white dark:bg-slate-950">mg (Milligram)</option>
+                  <option value="g" className="bg-white dark:bg-slate-950">g (Gram)</option>
+                  <option value="kg" className="bg-white dark:bg-slate-950">kg (Kilogram)</option>
+                  <option value="tablets" className="bg-white dark:bg-slate-950">Tablets/Bolus</option>
+                  <option value="bottles" className="bg-white dark:bg-slate-950">Bottles</option>
+                  <option value="vials" className="bg-white dark:bg-slate-950">Vials</option>
+                  <option value="doses" className="bg-white dark:bg-slate-950">Doses</option>
+                  <option value="tubes" className="bg-white dark:bg-slate-950">Tubes</option>
+                  <option value="sachets" className="bg-white dark:bg-slate-950">Sachets</option>
                 </select>
               </div>
             </div>
