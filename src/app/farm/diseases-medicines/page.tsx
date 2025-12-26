@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Virus, 
+  AlertCircle, 
   Pill, 
   Syringe, 
   Package, 
   Activity,
   TrendingUp,
   AlertTriangle,
-  Calendar
+  Calendar,
+  Microscope
 } from "lucide-react";
 import { DiseaseList } from "@/components/diseases/DiseaseList";
 import { MedicineList } from "@/components/medicines/MedicineList";
@@ -34,7 +35,7 @@ function DashboardStats() {
     upcomingVaccinations: 0,
   });
 
-  useState(() => {
+  useEffect(() => {
     // Fetch stats
     const fetchStats = async () => {
       try {
@@ -87,7 +88,7 @@ function DashboardStats() {
               <p className="text-sm font-medium text-gray-500">Diseases</p>
               <p className="text-2xl font-bold">{stats.totalDiseases}</p>
             </div>
-            <Virus className="h-8 w-8 text-blue-500" />
+            <Microscope className="h-8 w-8 text-blue-500" />
           </div>
         </CardContent>
       </Card>
@@ -272,7 +273,7 @@ export default function DiseasesMedicinesPage() {
                     className="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <span className="font-medium">Browse Diseases</span>
-                    <Virus className="h-4 w-4 text-gray-400" />
+                    <Microscope className="h-4 w-4 text-gray-400" />
                   </button>
                   <button
                     onClick={() => setActiveTab("medicines")}
