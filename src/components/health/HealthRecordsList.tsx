@@ -69,9 +69,9 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
   };
 
   const getAnimalName = (id: string) => {
-    if (!animals) return id;
-    const animal = animals.animals.find(a => a.id === id);
-    return animal ? `${animal.name} (${animal.tag})` : id;
+    if (!animals || !Array.isArray(animals)) return id;
+    const animal = animals.find(a => a.id === id);
+    return animal ? `${animal.name || 'Unnamed'} (${animal.tag})` : id;
   };
 
   if (isLoading) {

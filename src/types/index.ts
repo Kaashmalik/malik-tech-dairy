@@ -133,17 +133,119 @@ export interface HealthRecord {
   createdAt: Date;
 }
 
+// =============================================================================
+// BREEDING & PREGNANCY TYPES (Enhanced)
+// =============================================================================
+
+export type BreedingMethod = 'natural' | 'artificial_insemination';
+export type BreedingStatus =
+  | 'inseminated'
+  | 'check_pending'
+  | 'confirmed'
+  | 'not_pregnant'
+  | 'pregnant'
+  | 'delivered'
+  | 'failed'
+  | 'overdue';
+export type PregnancyCheckMethod = 'ultrasound' | 'blood_test' | 'rectal_palpation' | 'behavioral';
+export type PregnancyCheckResult = 'positive' | 'negative' | 'inconclusive';
+export type SemenStatus = 'available' | 'used' | 'expired' | 'damaged';
+
 export interface BreedingRecord {
   id: string;
   tenantId: string;
-  animalId: string;
+  animalId: string;              // Female animal being bred
+  sireId?: string;               // Male animal (for natural breeding)
   breedingDate: Date;
-  expectedCalvingDate?: Date;
-  actualCalvingDate?: Date;
-  sireId?: string;
-  status: 'pregnant' | 'calved' | 'failed' | 'in_progress';
+  breedingMethod: BreedingMethod;
+
+  // AI-specific fields
+  semenStrawId?: string;
+  semenSource?: string;          // Bull name or semen bank
+  inseminationTechnician?: string;
+
+  // Gestation tracking
+  species: AnimalSpecies;
+  gestationDays: number;
+  expectedDueDate?: Date;
+  actualBirthDate?: Date;
+  offspringCount?: number;
+
+  // Pregnancy confirmation
+  pregnancyConfirmed: boolean;
+  pregnancyConfirmedDate?: Date;
+  pregnancyCheckMethod?: PregnancyCheckMethod;
+
+  status: BreedingStatus;
   notes?: string;
   createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface PregnancyCheck {
+  id: string;
+  tenantId: string;
+  breedingRecordId: string;
+  animalId: string;
+  checkDate: Date;
+  checkMethod: PregnancyCheckMethod;
+  result: PregnancyCheckResult;
+  vetName?: string;
+  notes?: string;
+  cost?: number;
+  createdAt: Date;
+}
+
+export interface SemenInventory {
+  id: string;
+  tenantId: string;
+  strawCode: string;
+  bullName: string;
+  bullBreed?: string;
+  bullRegistrationNumber?: string;
+  sourceCenter?: string;         // Semen bank/center name
+  species: AnimalSpecies;
+  quantity: number;
+  purchaseDate?: Date;
+  expiryDate?: Date;
+  storageLocation?: string;
+  costPerStraw?: number;
+  status: SemenStatus;
+  notes?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+// Pregnant animal with countdown info (for dashboard)
+export interface PregnantAnimal {
+  id: string;
+  animal: Animal;
+  breedingRecord: BreedingRecord;
+  daysRemaining: number;
+  progressPercent: number;
+  nextCheckDue?: Date;
+  isOverdue: boolean;
+}
+
+// Heat detection types
+export type HeatDetectionMethod = 'visual' | 'activity_monitor' | 'milk_drop' | 'mucus_discharge' | 'mounting';
+export type HeatIntensity = 'weak' | 'moderate' | 'strong';
+export type HeatActionTaken = 'bred' | 'missed' | 'skipped' | 'pending';
+
+export interface HeatDetection {
+  id: string;
+  tenantId: string;
+  animalId: string;
+  detectionDate: Date;
+  detectionMethod?: HeatDetectionMethod;
+  heatIntensity?: HeatIntensity;
+  standingHeatObserved: boolean;
+  notes?: string;
+  actionTaken: HeatActionTaken;
+  breedingRecordId?: string;
+  detectedBy?: string;
+  createdAt: Date;
+  updatedAt?: Date;
 }
 
 export interface Expense {

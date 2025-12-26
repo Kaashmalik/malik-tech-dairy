@@ -1,6 +1,7 @@
 // File Upload API Route
 // POST: Upload file to Cloudinary
 import { auth } from '@clerk/nextjs/server';
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 // Configure Cloudinary
@@ -50,6 +51,15 @@ export async function POST(request: NextRequest) {
       general: 'mtk-dairy/uploads',
     };
     const folder = folderMap[type] || folderMap.general;
+    // Check for Cloudinary config
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      logger.error('Missing Cloudinary configuration');
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error: Missing Cloudinary keys' },
+        { status: 500 }
+      );
+    }
+
     // Upload to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(base64, {
       folder,
@@ -72,6 +82,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to upload file' }, { status: 500 });
+    logger.error('Upload error', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error during upload';
+    return NextResponse.json({ success: false, error: `Failed to upload file: ${errorMessage}` }, { status: 500 });
   }
 }

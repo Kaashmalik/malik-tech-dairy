@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Toast Notification System
  * Provides consistent and accessible toast notifications across the app
@@ -271,4 +273,4 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
-};
+};

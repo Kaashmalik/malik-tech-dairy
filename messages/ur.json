@@ -167,5 +167,97 @@
     "pending": "تصدیق زیر التواء",
     "verified": "تصدیق شدہ",
     "rejected": "مسترد"
+  },
+  "breeding": {
+    "title": "نسل بندی اور حمل مرکز",
+    "subtitle": "نطفہ آمیزی کا انتظام، حمل کی نگرانی، اور آنے والی پیدائشوں پر نظر رکھیں",
+    "tabs": {
+      "records": "نسل بندی ریکارڈز",
+      "pregnant": "حمل ڈیش بورڈ",
+      "checks": "حمل چیک",
+      "semen": "منی ذخیرہ"
+    },
+    "method": {
+      "natural": "قدرتی ملاپ",
+      "ai": "مصنوعی نطفہ آمیزی (AI)",
+      "naturalDesc": "فارم پر موجود سانڈ/نر کے ساتھ ملاپ",
+      "aiDesc": "تصدیق شدہ سیمن بینک سے منجمد سیمن کا استعمال"
+    },
+    "status": {
+      "inseminated": "نطفہ آمیزی ہوئی",
+      "checkPending": "چیک باقی",
+      "confirmed": "تصدیق شدہ",
+      "notPregnant": "حاملہ نہیں",
+      "pregnant": "حاملہ",
+      "delivered": "پیدائش ہوئی",
+      "failed": "ناکام",
+      "overdue": "تاخیر"
+    },
+    "form": {
+      "breedingDate": "ملاپ کی تاریخ",
+      "expectedDue": "متوقع پیدائش کی تاریخ",
+      "sire": "نر جانور (سانڈ)",
+      "semenStraw": "سیمن سٹرا",
+      "semenSource": "سیمن ذریعہ / سانڈ کا نام",
+      "technician": "AI ٹیکنیشن",
+      "female": "مادہ جانور",
+      "notes": "نوٹس"
+    },
+    "pregnancy": {
+      "daysRemaining": "باقی دن",
+      "progress": "پیش رفت",
+      "overdueAlert": "تاخیر کی الرٹ",
+      "checkDue": "چیک باقی",
+      "confirmed": "حمل کی تصدیق",
+      "awaitingConfirmation": "تصدیق کا انتظار"
+    },
+    "checks": {
+      "title": "حمل چیک",
+      "date": "چیک کی تاریخ",
+      "method": "چیک کا طریقہ",
+      "result": "نتیجہ",
+      "vet": "ویٹرنری ڈاکٹر",
+      "cost": "لاگت",
+      "ultrasound": "الٹراساؤنڈ",
+      "bloodTest": "خون/دودھ ٹیسٹ (PAG)",
+      "rectalPalpation": "ریکٹل معائنہ",
+      "behavioral": "رویے سے (حرارت واپس نہیں آئی)",
+      "positive": "حاملہ",
+      "negative": "حاملہ نہیں",
+      "inconclusive": "غیر یقینی"
+    },
+    "semen": {
+      "title": "منی ذخیرہ",
+      "subtitle": "مصنوعی نطفہ آمیزی کے لیے منجمد سیمن سٹرا کا انتظام",
+      "addSemen": "سیمن شامل کریں",
+      "strawCode": "سٹرا کوڈ",
+      "bullName": "سانڈ کا نام",
+      "bullBreed": "سانڈ کی نسل",
+      "bullRegNumber": "رجسٹریشن نمبر",
+      "sourceCenter": "ذریعہ مرکز",
+      "quantity": "مقدار",
+      "purchaseDate": "خریداری کی تاریخ",
+      "expiryDate": "میعاد ختم",
+      "storageLocation": "ذخیرہ کا مقام",
+      "costPerStraw": "فی سٹرا قیمت",
+      "available": "دستیاب",
+      "used": "استعمال شدہ",
+      "expired": "میعاد ختم",
+      "damaged": "خراب",
+      "lowStock": "کم اسٹاک"
+    },
+    "gestation": {
+      "cow": "283 دن",
+      "buffalo": "310 دن",
+      "goat": "150 دن",
+      "sheep": "150 دن",
+      "horse": "340 دن",
+      "chicken": "21 دن (انڈے سینا)"
+    },
+    "actions": {
+      "recordInsemination": "نطفہ آمیزی ریکارڈ کریں",
+      "addCheck": "حمل چیک شامل کریں",
+      "recordBirth": "پیدائش ریکارڈ کریں"
+    }
   }
 }

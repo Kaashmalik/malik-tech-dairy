@@ -113,6 +113,7 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('type', 'animal');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -206,8 +207,8 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
             <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 backdrop-blur">
               <Info className="h-4 w-4" />
               <span className="text-sm">
-                {maxAnimals === -1 
-                  ? `${currentAnimalCount} animals registered (Unlimited)` 
+                {maxAnimals === -1
+                  ? `${currentAnimalCount} animals registered (Unlimited)`
                   : `${currentAnimalCount} of ${maxAnimals} animals used`}
               </span>
               {!canAddAnimal && (
@@ -226,7 +227,7 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                 Animal Photo
               </label>
               <div className="flex items-center gap-4">
-                <div 
+                <div
                   className="relative h-32 w-32 overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 dark:border-slate-600 dark:bg-slate-800"
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -347,11 +348,10 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                         setSelectedSpecies(key);
                         setValue('species', key);
                       }}
-                      className={`flex flex-col items-center rounded-xl border-2 p-3 transition-all ${
-                        selectedSpecies === key
+                      className={`flex flex-col items-center rounded-xl border-2 p-3 transition-all ${selectedSpecies === key
                           ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
                           : 'border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-slate-800'
-                      }`}
+                        }`}
                     >
                       <span className="text-2xl">{config.emoji}</span>
                       <span className="mt-1 text-xs font-medium capitalize">{key}</span>
@@ -393,11 +393,10 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setValue('gender', 'male')}
-                    className={`flex-1 rounded-lg border-2 p-3 text-center font-medium transition-all ${
-                      watch('gender') === 'male'
+                    className={`flex-1 rounded-lg border-2 p-3 text-center font-medium transition-all ${watch('gender') === 'male'
                         ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20'
                         : 'border-gray-200 hover:border-gray-300 dark:border-slate-700'
-                    }`}
+                      }`}
                   >
                     ♂️ Male
                   </motion.button>
@@ -406,11 +405,10 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setValue('gender', 'female')}
-                    className={`flex-1 rounded-lg border-2 p-3 text-center font-medium transition-all ${
-                      watch('gender') === 'female'
+                    className={`flex-1 rounded-lg border-2 p-3 text-center font-medium transition-all ${watch('gender') === 'female'
                         ? 'border-pink-500 bg-pink-50 text-pink-700 dark:bg-pink-900/20'
                         : 'border-gray-200 hover:border-gray-300 dark:border-slate-700'
-                    }`}
+                      }`}
                   >
                     ♀️ Female
                   </motion.button>

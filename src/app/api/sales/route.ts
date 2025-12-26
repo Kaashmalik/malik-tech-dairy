@@ -1,7 +1,7 @@
 // API Route: Sales - Migrated to Supabase
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { createClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase';
 import { successResponse, errorResponse, ValidationError } from '@/lib/api/response';
 import { transformFromDb, transformToDb } from '@/lib/utils/transform';
 import { z } from 'zod';
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       const type = searchParams.get('type');
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
-      const supabase = createClient();
+      const supabase = getSupabaseClient();
       let query = supabase
         .from('sales')
         .select('*', { count: 'exact' })
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       
       // Validate request body
       const validatedData = saleSchema.parse(body);
-      const supabase = createClient();
+      const supabase = getSupabaseClient();
       
       // Calculate total
       const total = validatedData.quantity * validatedData.pricePerUnit;

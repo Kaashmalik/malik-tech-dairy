@@ -513,7 +513,7 @@ export const healthRecords = pgTable(
   })
 );
 
-// Breeding Records table
+// Breeding Records table (Enhanced with AI/Natural and Pregnancy Tracking)
 export const breedingRecords = pgTable(
   'breeding_records',
   {
@@ -526,18 +526,125 @@ export const breedingRecords = pgTable(
       .references(() => animals.id, { onDelete: 'cascade' }),
     sireId: text('sire_id').references(() => animals.id),
     breedingDate: timestamp('breeding_date').notNull(),
-    expectedCalvingDate: timestamp('expected_calving_date'),
-    actualCalvingDate: timestamp('actual_calving_date'),
-    status: varchar('status', { length: 20 }).notNull().default('in_progress'), // in_progress, pregnant, calved, failed
+    // Breeding method
+    breedingMethod: varchar('breeding_method', { length: 30 }).default('natural'), // natural, artificial_insemination
+    // AI-specific fields
+    semenStrawId: varchar('semen_straw_id', { length: 100 }),
+    semenSource: varchar('semen_source', { length: 255 }),
+    inseminationTechnician: varchar('insemination_technician', { length: 255 }),
+    // Species and gestation tracking
+    species: varchar('species', { length: 20 }),
+    gestationDays: integer('gestation_days').default(283),
+    expectedDueDate: timestamp('expected_due_date'),
+    actualBirthDate: timestamp('actual_birth_date'),
+    offspringCount: integer('offspring_count'),
+    // Pregnancy confirmation
+    pregnancyConfirmed: boolean('pregnancy_confirmed').default(false),
+    pregnancyConfirmedDate: timestamp('pregnancy_confirmed_date'),
+    pregnancyCheckMethod: varchar('pregnancy_check_method', { length: 50 }),
+    // Status: inseminated, check_pending, confirmed, not_pregnant, pregnant, delivered, failed, overdue
+    status: varchar('status', { length: 20 }).notNull().default('inseminated'),
     offspringId: text('offspring_id').references(() => animals.id),
     notes: text('notes'),
     recordedBy: text('recorded_by').references(() => platformUsers.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
   },
   table => ({
     tenantIdIdx: index('breeding_records_tenant_id_idx').on(table.tenantId),
     animalIdIdx: index('breeding_records_animal_id_idx').on(table.animalId),
     statusIdx: index('breeding_records_status_idx').on(table.status),
+    speciesIdx: index('breeding_records_species_idx').on(table.species),
+  })
+);
+
+// Pregnancy Checks table
+export const pregnancyChecks = pgTable(
+  'pregnancy_checks',
+  {
+    id: text('id').primaryKey(),
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    breedingRecordId: text('breeding_record_id').notNull(),
+    animalId: text('animal_id')
+      .notNull()
+      .references(() => animals.id, { onDelete: 'cascade' }),
+    checkDate: timestamp('check_date').notNull(),
+    checkMethod: varchar('check_method', { length: 50 }).notNull(), // ultrasound, blood_test, rectal_palpation, behavioral
+    result: varchar('result', { length: 20 }).notNull(), // positive, negative, inconclusive
+    vetName: varchar('vet_name', { length: 255 }),
+    notes: text('notes'),
+    cost: integer('cost'), // in smallest currency unit
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  table => ({
+    tenantIdIdx: index('pregnancy_checks_tenant_id_idx').on(table.tenantId),
+    breedingRecordIdIdx: index('pregnancy_checks_breeding_record_id_idx').on(table.breedingRecordId),
+    animalIdIdx: index('pregnancy_checks_animal_id_idx').on(table.animalId),
+    resultIdx: index('pregnancy_checks_result_idx').on(table.result),
+  })
+);
+
+// Semen Inventory table
+export const semenInventory = pgTable(
+  'semen_inventory',
+  {
+    id: text('id').primaryKey(),
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    strawCode: varchar('straw_code', { length: 100 }).notNull(),
+    bullName: varchar('bull_name', { length: 255 }).notNull(),
+    bullBreed: varchar('bull_breed', { length: 100 }),
+    bullRegistrationNumber: varchar('bull_registration_number', { length: 100 }),
+    sourceCenter: varchar('source_center', { length: 255 }),
+    species: varchar('species', { length: 50 }).notNull(), // cow, buffalo, goat, sheep, horse
+    quantity: integer('quantity').default(1),
+    purchaseDate: timestamp('purchase_date'),
+    expiryDate: timestamp('expiry_date'),
+    storageLocation: varchar('storage_location', { length: 100 }),
+    costPerStraw: integer('cost_per_straw'), // in smallest currency unit
+    status: varchar('status', { length: 20 }).default('available'), // available, used, expired, damaged
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  table => ({
+    tenantIdIdx: index('semen_inventory_tenant_id_idx').on(table.tenantId),
+    speciesIdx: index('semen_inventory_species_idx').on(table.species),
+    statusIdx: index('semen_inventory_status_idx').on(table.status),
+    strawCodeIdx: index('semen_inventory_straw_code_idx').on(table.strawCode),
+  })
+);
+
+// Heat Detections table
+export const heatDetections = pgTable(
+  'heat_detections',
+  {
+    id: text('id').primaryKey(),
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    animalId: text('animal_id')
+      .notNull()
+      .references(() => animals.id, { onDelete: 'cascade' }),
+    detectionDate: timestamp('detection_date').notNull(),
+    detectionMethod: varchar('detection_method', { length: 50 }), // visual, activity_monitor, milk_drop, mucus_discharge, mounting
+    heatIntensity: varchar('heat_intensity', { length: 20 }), // weak, moderate, strong
+    standingHeatObserved: boolean('standing_heat_observed').default(false),
+    notes: text('notes'),
+    actionTaken: varchar('action_taken', { length: 50 }).default('pending'), // bred, missed, skipped, pending
+    breedingRecordId: text('breeding_record_id'),
+    detectedBy: varchar('detected_by', { length: 255 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  table => ({
+    tenantIdIdx: index('heat_detections_tenant_id_idx').on(table.tenantId),
+    animalIdIdx: index('heat_detections_animal_id_idx').on(table.animalId),
+    detectionDateIdx: index('heat_detections_detection_date_idx').on(table.detectionDate),
   })
 );
 

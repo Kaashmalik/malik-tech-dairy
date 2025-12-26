@@ -1,6 +1,20 @@
 // Client-side Supabase configuration
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
+import { Database } from '@/types/database';
+import { SupabaseClient } from '@supabase/supabase-js';
 
-export const createClient = () => {
-  return createClientComponentClient();
+// Create a singleton client for the browser
+let client: SupabaseClient<Database> | null = null;
+
+export const createClientComponent = (): SupabaseClient<Database> => {
+  if (!client) {
+    client = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+  return client;
 };
+
+// Export as createClient for backward compatibility
+export const createClient = createClientComponent;

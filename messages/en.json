@@ -167,5 +167,97 @@
     "pending": "Pending Verification",
     "verified": "Verified",
     "rejected": "Rejected"
+  },
+  "breeding": {
+    "title": "Breeding & Pregnancy Center",
+    "subtitle": "Manage inseminations, track pregnancies, and monitor upcoming births",
+    "tabs": {
+      "records": "Breeding Records",
+      "pregnant": "Pregnancy Dashboard",
+      "checks": "Pregnancy Checks",
+      "semen": "Semen Inventory"
+    },
+    "method": {
+      "natural": "Natural Mating",
+      "ai": "Artificial Insemination (AI)",
+      "naturalDesc": "Breeding with a bull/sire present on the farm",
+      "aiDesc": "Using frozen semen from a certified semen bank"
+    },
+    "status": {
+      "inseminated": "Inseminated",
+      "checkPending": "Check Due",
+      "confirmed": "Confirmed",
+      "notPregnant": "Not Pregnant",
+      "pregnant": "Pregnant",
+      "delivered": "Delivered",
+      "failed": "Failed",
+      "overdue": "Overdue"
+    },
+    "form": {
+      "breedingDate": "Breeding Date",
+      "expectedDue": "Expected Due Date",
+      "sire": "Sire (Bull/Male Animal)",
+      "semenStraw": "Semen Straw",
+      "semenSource": "Semen Source / Bull Name",
+      "technician": "AI Technician",
+      "female": "Female Animal",
+      "notes": "Notes"
+    },
+    "pregnancy": {
+      "daysRemaining": "Days Remaining",
+      "progress": "Progress",
+      "overdueAlert": "Overdue Alert",
+      "checkDue": "Check Due",
+      "confirmed": "Pregnancy Confirmed",
+      "awaitingConfirmation": "Awaiting Confirmation"
+    },
+    "checks": {
+      "title": "Pregnancy Check",
+      "date": "Check Date",
+      "method": "Check Method",
+      "result": "Result",
+      "vet": "Veterinarian",
+      "cost": "Cost",
+      "ultrasound": "Ultrasound",
+      "bloodTest": "Blood/Milk Test (PAG)",
+      "rectalPalpation": "Rectal Palpation",
+      "behavioral": "Behavioral (Non-Return to Heat)",
+      "positive": "Pregnant",
+      "negative": "Not Pregnant",
+      "inconclusive": "Inconclusive"
+    },
+    "semen": {
+      "title": "Semen Inventory",
+      "subtitle": "Manage frozen semen straws for artificial insemination",
+      "addSemen": "Add Semen",
+      "strawCode": "Straw Code",
+      "bullName": "Bull Name",
+      "bullBreed": "Bull Breed",
+      "bullRegNumber": "Registration Number",
+      "sourceCenter": "Source Center",
+      "quantity": "Quantity",
+      "purchaseDate": "Purchase Date",
+      "expiryDate": "Expiry Date",
+      "storageLocation": "Storage Location",
+      "costPerStraw": "Cost per Straw",
+      "available": "Available",
+      "used": "Used",
+      "expired": "Expired",
+      "damaged": "Damaged",
+      "lowStock": "Low Stock"
+    },
+    "gestation": {
+      "cow": "283 days",
+      "buffalo": "310 days",
+      "goat": "150 days",
+      "sheep": "150 days",
+      "horse": "340 days",
+      "chicken": "21 days (incubation)"
+    },
+    "actions": {
+      "recordInsemination": "Record Insemination",
+      "addCheck": "Add Pregnancy Check",
+      "recordBirth": "Record Birth"
+    }
   }
 }

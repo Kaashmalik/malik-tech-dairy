@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { getSupabaseClient } from '@/lib/supabase';
 import { withTenantContext } from '@/lib/api/middleware';
 import { WeatherDataRow, TenantRow } from '@/types/weather';
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
         location: tenant.farm_location,
       });
     } catch (error) {
-      console.error('Weather GET error:', error);
+      logger.error('Weather GET error', error, { tenantId: context.tenantId });
       return NextResponse.json(
         { success: false, error: 'Internal server error' },
         { status: 500 }
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
         message: existing ? 'Weather data updated' : 'Weather data created',
       });
     } catch (error) {
-      console.error('Weather POST error:', error);
+      logger.error('Weather POST error', error, { tenantId: context.tenantId });
       return NextResponse.json(
         { success: false, error: 'Internal server error' },
         { status: 500 }
@@ -229,7 +230,7 @@ export async function PUT(request: NextRequest) {
         message: 'Weather data updated successfully',
       });
     } catch (error) {
-      console.error('Weather PUT error:', error);
+      logger.error('Weather PUT error', error, { tenantId: context.tenantId });
       return NextResponse.json(
         { success: false, error: 'Internal server error' },
         { status: 500 }
@@ -272,7 +273,7 @@ export async function DELETE(request: NextRequest) {
         message: 'Weather data deleted successfully',
       });
     } catch (error) {
-      console.error('Weather DELETE error:', error);
+      logger.error('Weather DELETE error', error, { tenantId: context.tenantId });
       return NextResponse.json(
         { success: false, error: 'Internal server error' },
         { status: 500 }

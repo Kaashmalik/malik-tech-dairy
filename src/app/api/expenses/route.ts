@@ -1,8 +1,9 @@
 // API Route: Expenses - Migrated to Supabase
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { createClient } from '@/lib/supabase';
-import { successResponse, errorResponse, ValidationError } from '@/lib/api/response';
+import { getSupabaseClient } from '@/lib/supabase';
+import { successResponse, errorResponse } from '@/lib/api/response';
+import { ValidationError } from '@/lib/api/errors';
 import { transformFromDb, transformToDb } from '@/lib/utils/transform';
 import { z } from 'zod';
 export const dynamic = 'force-dynamic';
@@ -25,9 +26,8 @@ export async function GET(request: NextRequest) {
       const category = searchParams.get('category');
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
-      const supabase = createClient();
-      let query = supabase
-        .from('expenses')
+      const supabase = getSupabaseClient();
+      let query = (supabase.from('expenses') as any)
         .select('*', { count: 'exact' })
         .eq('tenant_id', context.tenantId)
         .order('date', { ascending: false })
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         return errorResponse(error);
       }
       // Transform data from snake_case to camelCase
-      const expenses = data ? transformFromDb(data) : [];
+      const expenses = data ? (Array.isArray(data) ? data : [data]).map((item: any) => transformFromDb(item)) : [];
       return successResponse(expenses, {
         meta: {
           total: count || 0,
@@ -73,15 +73,14 @@ export async function POST(request: NextRequest) {
       
       // Validate request body
       const validatedData = expenseSchema.parse(body);
-      const supabase = createClient();
+      const supabase = getSupabaseClient();
       
       // Transform to snake_case for database
       const expenseData = transformToDb({
         ...validatedData,
         recordedBy: context.userId,
       });
-      const { data, error } = await supabase
-        .from('expenses')
+      const { data, error } = await (supabase.from('expenses') as any)
         .insert({
           ...expenseData,
           tenant_id: context.tenantId,
