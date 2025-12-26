@@ -1,12 +1,13 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  Animal,
+  Beef,
   Heart,
   Activity,
   TrendingUp,
@@ -137,7 +138,7 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
       <Card className={cn('w-full', className)}>
         <CardContent className='p-6'>
           <div className='text-center text-gray-500'>
-            <Animal className='mx-auto mb-4 h-12 w-12 opacity-50' />
+            <Beef className='mx-auto mb-4 h-12 w-12 opacity-50' />
             <p>Animal not found</p>
           </div>
         </CardContent>
@@ -152,14 +153,18 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
           <div className='flex items-center justify-between'>
             <div className='flex items-center space-x-4'>
               {animal.image ? (
-                <img
-                  src={animal.image}
-                  alt={animal.name}
-                  className='h-16 w-16 rounded-full object-cover'
-                />
+                <div className="relative h-16 w-16 overflow-hidden rounded-full">
+                  <Image
+                    src={animal.image}
+                    alt={animal.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
               ) : (
                 <div className='flex h-16 w-16 items-center justify-center rounded-full bg-gray-200'>
-                  <Animal className='h-8 w-8 text-gray-400' />
+                  <Beef className='h-8 w-8 text-gray-400' />
                 </div>
               )}
               <div>
@@ -188,7 +193,7 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
             {/* Basic Info Cards */}
             <div className='space-y-2'>
               <div className='flex items-center space-x-2'>
-                <Animal className='h-4 w-4 text-gray-500' />
+                <Beef className='h-4 w-4 text-gray-500' />
                 <span className='text-sm font-medium'>Species</span>
               </div>
               <p className='text-lg font-semibold capitalize'>{animal.species}</p>

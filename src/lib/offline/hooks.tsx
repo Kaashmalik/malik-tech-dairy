@@ -6,7 +6,7 @@ import { syncService } from './sync-service';
 // Generic offline query hook
 export function useOfflineQuery<T>(
   tenantId: string,
-  queryKey: string[],
+  queryKey: any[],
   offlineFetcher: (tenantId: string) => Promise<T[]>,
   networkFetcher: (tenantId: string) => Promise<T[]>,
   options?: {
@@ -130,8 +130,10 @@ export function useOfflineMutation<T, V>(
   mutationFn: (variables: V) => Promise<T>,
   offlineAction: (variables: V, tenantId: string) => Promise<string>,
   options?: {
-    onSuccess?: (data: T, variables: V) => void;
-    onError?: (error: Error, variables: V) => void;
+    onSuccess?: (data: T, variables: V, context?: unknown) => void;
+    onError?: (error: Error, variables: V, context?: unknown) => void;
+    onMutate?: (variables: V) => Promise<unknown>;
+    onSettled?: (data: T | undefined, error: Error | null, variables: V, context?: unknown) => void;
     invalidateQueries?: string[][];
   }
 ) {
@@ -160,23 +162,28 @@ export function useOfflineMutation<T, V>(
         return { success: true, offline: true } as T;
       }
     },
-    onSuccess: (data, variables) => {
+    onMutate: options?.onMutate,
+    onSuccess: (data, variables, context) => {
       // Invalidate related queries
       if (options?.invalidateQueries) {
         options.invalidateQueries.forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
       }
-      options?.onSuccess?.(data, variables);
+      options?.onSuccess?.(data, variables, context);
     },
-    onError: (error, variables) => {
-      options?.onError?.(error, variables);
+    onError: (error, variables, context) => {
+      options?.onError?.(error, variables, context);
+    },
+    onSettled: (data, error, variables, context) => {
+      options?.onSettled?.(data, error, variables, context);
     },
   });
   return mutation;
 }
 // Specific mutation hooks
 export function useOfflineCreateAnimal(tenantId: string) {
+  const queryClient = useQueryClient();
   return useOfflineMutation(
     tenantId,
     async (animalData: any) => {
@@ -193,6 +200,21 @@ export function useOfflineCreateAnimal(tenantId: string) {
     },
     {
       invalidateQueries: [['animals', tenantId]],
+      onMutate: async (newAnimal: any) => {
+        await queryClient.cancelQueries({ queryKey: ['animals', tenantId] });
+        const previousAnimals = queryClient.getQueryData(['animals', tenantId]);
+        queryClient.setQueryData(['animals', tenantId], (old: any[] = []) => [
+          { ...newAnimal, id: 'temp-' + Date.now(), isOptimistic: true },
+          ...old,
+        ]);
+        return { previousAnimals };
+      },
+      onError: (err, newAnimal, context: any) => {
+        queryClient.setQueryData(['animals', tenantId], context.previousAnimals);
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ['animals', tenantId] });
+      },
     }
   );
 }

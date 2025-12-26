@@ -1,7 +1,17 @@
 import { cn } from '@/lib/utils';
 
-function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('bg-muted animate-pulse rounded-md', className)} {...props} />;
+function Skeleton({ className, variant = "pulse", ...props }: React.HTMLAttributes<HTMLDivElement> & { variant?: "pulse" | "shimmer" }) {
+  return (
+    <div
+      className={cn(
+        "rounded-md bg-muted/50",
+        variant === "pulse" && "animate-pulse",
+        variant === "shimmer" && "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent dark:before:via-white/5",
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 // Card Skeleton
@@ -125,10 +135,10 @@ export function ChartSkeleton({ height = 300 }: { height?: number }) {
         {/* Fake chart lines */}
         <div className='absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2'>
           {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton 
-              key={i} 
-              className='w-8 rounded-t' 
-              style={{ height: `${Math.random() * 60 + 20}%` }} 
+            <Skeleton
+              key={i}
+              className='w-8 rounded-t'
+              style={{ height: `${Math.random() * 60 + 20}%` }}
             />
           ))}
         </div>
@@ -143,7 +153,7 @@ export function DashboardSkeleton() {
     <div className='space-y-8'>
       {/* Welcome Banner */}
       <Skeleton className='h-48 w-full rounded-2xl' />
-      
+
       {/* Stats Grid */}
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         <StatsCardSkeleton />
@@ -151,7 +161,7 @@ export function DashboardSkeleton() {
         <StatsCardSkeleton />
         <StatsCardSkeleton />
       </div>
-      
+
       {/* Charts */}
       <div className='grid gap-6 lg:grid-cols-2'>
         <div className='border-border rounded-xl border p-6'>
@@ -161,7 +171,7 @@ export function DashboardSkeleton() {
           <ChartSkeleton />
         </div>
       </div>
-      
+
       {/* Quick Actions */}
       <div className='border-border rounded-xl border p-6'>
         <Skeleton className='mb-6 h-6 w-32' />
@@ -195,7 +205,7 @@ export function AnimalDetailSkeleton() {
           <Skeleton className='h-10 w-10 rounded-lg' />
         </div>
       </div>
-      
+
       {/* Info Cards */}
       <div className='grid gap-4 md:grid-cols-3'>
         {Array.from({ length: 6 }).map((_, i) => (
@@ -205,7 +215,7 @@ export function AnimalDetailSkeleton() {
           </div>
         ))}
       </div>
-      
+
       {/* Tabs */}
       <div className='border-border rounded-xl border'>
         <div className='flex gap-4 border-b p-4'>

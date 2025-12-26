@@ -1,5 +1,5 @@
 // Client-side Supabase configuration
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
 
@@ -8,7 +8,7 @@ let client: SupabaseClient<Database> | null = null;
 
 export const createClientComponent = (): SupabaseClient<Database> => {
   if (!client) {
-    client = createClient<Database>(
+    client = createSupabaseClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );

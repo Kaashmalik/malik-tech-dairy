@@ -83,7 +83,7 @@ class CacheManager {
   static async get<T>(key: string): Promise<T | null> {
     if (!redis) return null;
     try {
-      const cached = await redis.get(key);
+      const cached = await redis.get<string>(key);
       return cached ? JSON.parse(cached) : null;
     } catch (error) {
       return null;
@@ -124,8 +124,8 @@ class OptimizedQueryBuilder {
   constructor(table: string) {
     this.query = this.supabase.from(table);
   }
-  select(columns: string = '*'): OptimizedQueryBuilder {
-    this.query = this.query.select(columns);
+  select(columns: string = '*', options?: any): OptimizedQueryBuilder {
+    this.query = this.query.select(columns, options);
     return this;
   }
   where(column: string, operator: string, value: any): OptimizedQueryBuilder {
@@ -134,6 +134,26 @@ class OptimizedQueryBuilder {
   }
   eq(column: string, value: any): OptimizedQueryBuilder {
     this.query = this.query.eq(column, value);
+    return this;
+  }
+
+  gte(column: string, value: any): OptimizedQueryBuilder {
+    this.query = this.query.gte(column, value);
+    return this;
+  }
+
+  lte(column: string, value: any): OptimizedQueryBuilder {
+    this.query = this.query.lte(column, value);
+    return this;
+  }
+
+  gt(column: string, value: any): OptimizedQueryBuilder {
+    this.query = this.query.gt(column, value);
+    return this;
+  }
+
+  lt(column: string, value: any): OptimizedQueryBuilder {
+    this.query = this.query.lt(column, value);
     return this;
   }
   in(column: string, values: any[]): OptimizedQueryBuilder {

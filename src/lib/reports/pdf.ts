@@ -44,23 +44,23 @@ export async function generatePDFReport(
     id: doc.id,
     ...doc.data(),
     date: doc.data().date,
-  }));
+  })) as any[];
 
   const expenses = expensesSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
     date: doc.data().date?.toDate(),
     amount: doc.data().amount,
-  }));
+  })) as any[];
 
   const sales = salesSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
     date: doc.data().date?.toDate(),
     total: doc.data().total,
-  }));
+  })) as any[];
 
-  const totalMilk = milkLogs.reduce((sum, log) => sum + (log.quantity || 0), 0);
+  const totalMilk = milkLogs.reduce((sum, log: any) => sum + (log.yield || 0), 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const totalSales = sales.reduce((sum, s) => sum + (s.total || 0), 0);
   const profit = totalSales - totalExpenses;
@@ -118,7 +118,7 @@ export async function generatePDFReport(
               .map(log => [
                 log.date || '',
                 log.session || '',
-                (log.quantity || 0).toFixed(2),
+                (log.yield || 0).toFixed(2),
                 log.animalId || '',
               ]),
           ],

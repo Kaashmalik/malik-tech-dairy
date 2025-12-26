@@ -3,7 +3,7 @@
 // Requires super_admin role
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '../../../../lib/supabase';
 // Helper to check if user is super admin
 async function isSuperAdmin(userId: string): Promise<boolean> {
   const supabase = getSupabaseClient();

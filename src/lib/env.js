@@ -8,11 +8,12 @@ export const validateEnv = () => {
   ];
 
   const missing = required.filter(key => !process.env[key]);
-  
+
   if (missing.length > 0) {
     console.error('Missing environment variables:', missing);
     process.exit(1);
   }
+  return { success: true };
 };
 
-validateEnv();
+

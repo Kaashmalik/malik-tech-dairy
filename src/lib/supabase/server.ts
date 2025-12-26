@@ -4,9 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { Database } from '@/types/database';
+
 // Connection pool for server-side operations
 let connectionPool: postgres.Sql | null = null;
-let supabaseClient: ReturnType<typeof createClient> | null = null;
+let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
 
 /**
  * Get Supabase connection pool (server-only)
@@ -60,7 +62,7 @@ export function getSupabaseClient() {
       throw new Error('Supabase credentials not configured');
     }
 
-    supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+    supabaseClient = createClient<Database>(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

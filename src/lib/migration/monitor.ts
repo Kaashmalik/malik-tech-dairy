@@ -82,7 +82,8 @@ export class MigrationMonitor {
     const { data: logs } = await this.supabase
       .from('migration_logs')
       .select('success, failure')
-      .gte('created_at', oneHourAgo);
+      .gte('created_at', oneHourAgo)
+      .returns<{ success: boolean; failure: boolean }[]>();
     const successCount = logs?.filter(log => log.success).length || 0;
     const failureCount = logs?.filter(log => log.failure).length || 0;
     const total = successCount + failureCount;
@@ -120,7 +121,7 @@ export class MigrationMonitor {
     await this.supabase.from('migration_metrics').insert({
       ...metrics,
       created_at: new Date().toISOString(),
-    });
+    } as any);
   }
   private async checkAlerts(metrics: MigrationMetrics): Promise<void> {
     // Check error rate threshold
@@ -156,7 +157,7 @@ export class MigrationMonitor {
       severity: this.getAlertSeverity(alertType),
       created_at: new Date().toISOString(),
       resolved: false,
-    });
+    } as any);
     // Send notification (implement based on your notification system)
     await this.sendNotification(alertType, details);
   }
@@ -317,12 +318,12 @@ export class MigrationMonitor {
   }
   private async checkDualWriteHealth(): Promise<boolean> {
     // Check if dual-write operations are working
-    const recentLogs = await this.supabase
+    const { data } = await this.supabase
       .from('migration_logs')
       .select('success')
       .order('created_at', { ascending: false })
-      .limit(10);
-    return recentLogs?.length > 0;
+      .returns<{ success: boolean }[]>();
+    return (data?.length || 0) > 0;
   }
   private async checkReconciliationHealth(): Promise<boolean> {
     try {

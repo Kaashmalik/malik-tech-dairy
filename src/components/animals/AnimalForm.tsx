@@ -13,6 +13,7 @@ import { useTenantLimits } from '@/hooks/useTenantLimits';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { usePostHogAnalytics } from '@/hooks/usePostHog';
+import { useOfflineCreateAnimal, useOfflineUpdateAnimal } from '@/lib/offline/hooks';
 import { CustomFieldsRenderer } from '@/components/custom-fields/CustomFieldsRenderer';
 import {
   Beef,
@@ -138,6 +139,10 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
       fileInputRef.current.value = '';
     }
   };
+  // Offline mutation hooks
+  const createAnimal = useOfflineCreateAnimal(initialData?.customFields?.tenantId as string || 'default-tenant'); // TODO: Get actual tenantId
+  const updateAnimal = useOfflineUpdateAnimal(initialData?.customFields?.tenantId as string || 'default-tenant');
+
   const onSubmit = async (data: AnimalFormData) => {
     if (!canAddAnimal && !animalId) {
       toast.error('Animal limit reached. Please upgrade your plan.');
@@ -145,28 +150,18 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
     }
     setIsSubmitting(true);
     try {
-      const url = animalId ? `/api/animals/${animalId}` : '/api/animals';
-      const method = animalId ? 'PUT' : 'POST';
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          customFields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined,
-        }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save animal');
-      }
-      toast.success(animalId ? 'Animal updated successfully' : 'Animal created successfully');
-      // Track event only on creation
-      if (!animalId) {
+      if (animalId) {
+        await updateAnimal.mutateAsync({ id: animalId, ...data });
+        toast.success('Animal updated successfully');
+      } else {
+        await createAnimal.mutateAsync({ ...data, tenantId: 'default-tenant' }); // Ensure tenantId is passed
+        toast.success('Animal created successfully');
         trackAnimalCreation({
           species: data.species,
           breed: data.breed,
         });
       }
+
       if (onSuccess) {
         onSuccess();
       } else {
@@ -349,8 +344,8 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                         setValue('species', key);
                       }}
                       className={`flex flex-col items-center rounded-xl border-2 p-3 transition-all ${selectedSpecies === key
-                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                          : 'border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-slate-800'
+                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                        : 'border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-slate-800'
                         }`}
                     >
                       <span className="text-2xl">{config.emoji}</span>
@@ -394,8 +389,8 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setValue('gender', 'male')}
                     className={`flex-1 rounded-lg border-2 p-3 text-center font-medium transition-all ${watch('gender') === 'male'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20'
-                        : 'border-gray-200 hover:border-gray-300 dark:border-slate-700'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20'
+                      : 'border-gray-200 hover:border-gray-300 dark:border-slate-700'
                       }`}
                   >
                     ♂️ Male
@@ -406,8 +401,8 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setValue('gender', 'female')}
                     className={`flex-1 rounded-lg border-2 p-3 text-center font-medium transition-all ${watch('gender') === 'female'
-                        ? 'border-pink-500 bg-pink-50 text-pink-700 dark:bg-pink-900/20'
-                        : 'border-gray-200 hover:border-gray-300 dark:border-slate-700'
+                      ? 'border-pink-500 bg-pink-50 text-pink-700 dark:bg-pink-900/20'
+                      : 'border-gray-200 hover:border-gray-300 dark:border-slate-700'
                       }`}
                   >
                     ♀️ Female

@@ -443,6 +443,115 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      },
+      farm_applications: {
+        Row: {
+          id: string
+          applicant_id: string
+          farm_name: string
+          owner_name: string
+          email: string
+          phone: string
+          address: string | null
+          city: string | null
+          province: string | null
+          animal_types: Json | null
+          estimated_animals: number | null
+          requested_plan: Database["public"]["Enums"]["subscription_plan"]
+          status: Database["public"]["Enums"]["farm_application_status"]
+          payment_slip_url: string | null
+          payment_slip_provider: Database["public"]["Enums"]["storage_provider"] | null
+          payment_amount: number | null
+          payment_date: string | null
+          payment_reference: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          review_notes: string | null
+          rejection_reason: string | null
+          assigned_tenant_id: string | null
+          assigned_farm_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          applicant_id: string
+          farm_name: string
+          owner_name: string
+          email: string
+          phone: string
+          address?: string | null
+          city?: string | null
+          province?: string | null
+          animal_types?: Json | null
+          estimated_animals?: number | null
+          requested_plan?: Database["public"]["Enums"]["subscription_plan"]
+          status?: Database["public"]["Enums"]["farm_application_status"]
+          payment_slip_url?: string | null
+          payment_slip_provider?: Database["public"]["Enums"]["storage_provider"] | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          payment_reference?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          review_notes?: string | null
+          rejection_reason?: string | null
+          assigned_tenant_id?: string | null
+          assigned_farm_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          applicant_id?: string
+          farm_name?: string
+          owner_name?: string
+          email?: string
+          phone?: string
+          address?: string | null
+          city?: string | null
+          province?: string | null
+          animal_types?: Json | null
+          estimated_animals?: number | null
+          requested_plan?: Database["public"]["Enums"]["subscription_plan"]
+          status?: Database["public"]["Enums"]["farm_application_status"]
+          payment_slip_url?: string | null
+          payment_slip_provider?: Database["public"]["Enums"]["storage_provider"] | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          payment_reference?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          review_notes?: string | null
+          rejection_reason?: string | null
+          assigned_tenant_id?: string | null
+          assigned_farm_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farm_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farm_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farm_applications_assigned_tenant_id_fkey"
+            columns: ["assigned_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Functions: {
@@ -498,28 +607,28 @@ export type MilkSession = "morning" | "evening"
 export type BreedingMethod = "natural" | "artificial_insemination"
 
 // Breeding status type
-export type BreedingStatus = 
-  | "inseminated" 
-  | "check_pending" 
-  | "confirmed" 
-  | "not_pregnant" 
-  | "pregnant" 
-  | "delivered" 
-  | "failed" 
+export type BreedingStatus =
+  | "inseminated"
+  | "check_pending"
+  | "confirmed"
+  | "not_pregnant"
+  | "pregnant"
+  | "delivered"
+  | "failed"
   | "overdue"
 
 // Health record type
 export type HealthRecordType = "vaccination" | "treatment" | "checkup" | "disease" | "surgery"
 
 // Expense category type
-export type ExpenseCategory = 
-  | "feed" 
-  | "medicine" 
-  | "labor" 
-  | "equipment" 
-  | "utilities" 
-  | "veterinary" 
-  | "maintenance" 
+export type ExpenseCategory =
+  | "feed"
+  | "medicine"
+  | "labor"
+  | "equipment"
+  | "utilities"
+  | "veterinary"
+  | "maintenance"
   | "other"
 
 // Sale type

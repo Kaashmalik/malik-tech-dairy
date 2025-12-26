@@ -2,6 +2,7 @@
 
 import { useTenantContext } from './TenantProvider';
 import { useEffect } from 'react';
+import Image from 'next/image';
 
 /**
  * Applies dynamic branding (colors, logo) from tenant config
@@ -44,7 +45,11 @@ export function TenantLogo({ className }: { className?: string }) {
   const { config } = useTenantContext();
 
   if (config?.logoUrl) {
-    return <img src={config.logoUrl} alt={config.farmName || 'Farm Logo'} className={className} />;
+    return (
+      <div className={className} style={{ position: 'relative', width: '32px', height: '32px' }}>
+        <Image src={config.logoUrl} alt={config.farmName || 'Farm Logo'} fill className="object-contain" sizes="32px" />
+      </div>
+    );
   }
 
   // Default logo

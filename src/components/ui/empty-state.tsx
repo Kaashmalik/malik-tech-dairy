@@ -34,19 +34,20 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center p-8 text-center', className)}>
+    <div className={cn('flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500', className)}>
       {icon && (
-        <div className='bg-muted text-muted-foreground mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
+        <div className='bg-primary/5 text-primary mb-6 flex h-20 w-20 items-center justify-center rounded-2xl ring-4 ring-primary/5 backdrop-blur-sm transition-transform hover:scale-110 duration-300'>
           {icon}
         </div>
       )}
-      <h3 className='mb-2 text-lg font-semibold'>{title}</h3>
-      <p className='text-muted-foreground mb-6 max-w-md'>{description}</p>
+      <h3 className='mb-3 text-xl font-bold tracking-tight text-foreground'>{title}</h3>
+      <p className='text-muted-foreground mb-8 max-w-sm text-base leading-relaxed'>{description}</p>
       {action && (
         <button
           onClick={action.onClick}
-          className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 transition-colors'
+          className='bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-95 inline-flex items-center gap-2 rounded-xl px-6 py-2.5 font-medium transition-all duration-200'
         >
+          <PlusCircle className="h-4 w-4" />
           {action.label}
         </button>
       )}
@@ -62,7 +63,7 @@ export function EmptyAnimals({ onAdd }: { onAdd?: () => void }) {
       title='No animals yet'
       description='Start by adding your first animal to track its health, milk production, and breeding records.'
       action={
-        onAdd ? { label: 'Add Animal', onClick: onAdd } : { label: 'Add Animal', onClick: () => {} }
+        onAdd ? { label: 'Add Animal', onClick: onAdd } : { label: 'Add Animal', onClick: () => { } }
       }
     />
   );
@@ -75,7 +76,7 @@ export function EmptyMilkRecords({ onLog }: { onLog?: () => void }) {
       title='No milk records'
       description='Log your first milk production entry to start tracking yields and trends.'
       action={
-        onLog ? { label: 'Log Milk', onClick: onLog } : { label: 'Log Milk', onClick: () => {} }
+        onLog ? { label: 'Log Milk', onClick: onLog } : { label: 'Log Milk', onClick: () => { } }
       }
     />
   );
@@ -88,7 +89,7 @@ export function EmptyHealthRecords({ onAdd }: { onAdd?: () => void }) {
       title='No health records'
       description='Keep track of vaccinations, treatments, and health checkups for your animals.'
       action={
-        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => {} }
+        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => { } }
       }
     />
   );
@@ -101,7 +102,7 @@ export function EmptyBreedingRecords({ onAdd }: { onAdd?: () => void }) {
       title='No breeding records'
       description='Monitor breeding cycles, pregnancies, and birth records for better herd management.'
       action={
-        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => {} }
+        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => { } }
       }
     />
   );
@@ -114,7 +115,7 @@ export function EmptyDiseaseRecords({ onAdd }: { onAdd?: () => void }) {
       title='No disease records'
       description='Track disease outbreaks, treatments, and prevention measures for herd health.'
       action={
-        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => {} }
+        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => { } }
       }
     />
   );
@@ -127,7 +128,7 @@ export function EmptyFinanceRecords({ onAdd }: { onAdd?: () => void }) {
       title='No financial records'
       description="Track expenses and income to monitor your farm's financial health."
       action={
-        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => {} }
+        onAdd ? { label: 'Add Record', onClick: onAdd } : { label: 'Add Record', onClick: () => { } }
       }
     />
   );
@@ -166,7 +167,7 @@ export function EmptyUpload({ onUpload }: { onUpload?: () => void }) {
       action={
         onUpload
           ? { label: 'Select File', onClick: onUpload }
-          : { label: 'Select File', onClick: () => {} }
+          : { label: 'Select File', onClick: () => { } }
       }
     />
   );
@@ -181,7 +182,7 @@ export function EmptyExports({ onExport }: { onExport?: () => void }) {
       action={
         onExport
           ? { label: 'Create Export', onClick: onExport }
-          : { label: 'Create Export', onClick: () => {} }
+          : { label: 'Create Export', onClick: () => { } }
       }
     />
   );
@@ -206,7 +207,7 @@ export function EmptyError({ onRetry }: { onRetry?: () => void }) {
       action={
         onRetry
           ? { label: 'Try Again', onClick: onRetry }
-          : { label: 'Try Again', onClick: () => {} }
+          : { label: 'Try Again', onClick: () => { } }
       }
     />
   );

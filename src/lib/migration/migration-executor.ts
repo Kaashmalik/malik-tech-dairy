@@ -169,7 +169,7 @@ export class MigrationExecutor {
   }
 }
 // Export for use in migration scripts
-export { MigrationExecutor };
+
 // Usage example:
 // const executor = new MigrationExecutor();
 // const result = await executor.executeFullMigration();

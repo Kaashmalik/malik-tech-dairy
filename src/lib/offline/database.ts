@@ -31,6 +31,7 @@ export interface QueuedMutation {
 }
 
 export interface SyncStatus {
+  tenantId: string;
   lastSync: number;
   isOnline: boolean;
   pendingMutations: number;
@@ -49,9 +50,9 @@ class OfflineDatabase extends Dexie {
 
     // Define schema
     this.version(1).stores({
-      animals: 'id, tenant_id, tag, species, _synced, _lastModified, _deleted',
-      milkLogs: 'id, tenant_id, animal_id, date, _synced, _lastModified, _deleted',
-      healthRecords: 'id, tenant_id, animal_id, date, _synced, _lastModified, _deleted',
+      animals: 'id, tenantId, tag, species, _synced, _lastModified, _deleted',
+      milkLogs: 'id, tenantId, animalId, date, _synced, _lastModified, _deleted',
+      healthRecords: 'id, tenantId, animalId, date, _synced, _lastModified, _deleted',
       queuedMutations: 'id, tenantId, table, timestamp, retryCount',
       syncStatus: 'tenantId',
     });
@@ -65,7 +66,7 @@ export class OfflineDB {
   // ANIMALS
   static async getAnimals(tenantId: string): Promise<OfflineAnimal[]> {
     return await db.animals
-      .where('tenant_id')
+      .where('tenantId')
       .equals(tenantId)
       .and(animal => !animal._deleted)
       .toArray();
@@ -73,7 +74,7 @@ export class OfflineDB {
 
   static async getAnimal(id: string, tenantId: string): Promise<OfflineAnimal | undefined> {
     return await db.animals
-      .where('[id+tenant_id]')
+      .where('[id+tenantId]')
       .equals([id, tenantId])
       .and(animal => !animal._deleted)
       .first();
@@ -89,7 +90,7 @@ export class OfflineDB {
     await db.animals.add({
       ...animal,
       id,
-      tenant_id: tenantId,
+      tenantId: tenantId,
       _synced: false,
       _lastModified: now,
     });
@@ -100,7 +101,7 @@ export class OfflineDB {
       tenantId,
       table: 'animals',
       operation: 'create',
-      data: { ...animal, id, tenant_id: tenantId },
+      data: { ...animal, id, tenantId: tenantId },
       timestamp: now,
       retryCount: 0,
     });
@@ -127,7 +128,7 @@ export class OfflineDB {
       tenantId,
       table: 'animals',
       operation: 'update',
-      data: { id, ...updates, tenant_id: tenantId },
+      data: { id, ...updates, tenantId: tenantId },
       timestamp: now,
       retryCount: 0,
     });
@@ -149,7 +150,7 @@ export class OfflineDB {
       tenantId,
       table: 'animals',
       operation: 'delete',
-      data: { id, tenant_id: tenantId },
+      data: { id, tenantId: tenantId },
       timestamp: now,
       retryCount: 0,
     });
@@ -162,12 +163,12 @@ export class OfflineDB {
     limit = 30
   ): Promise<OfflineMilkLog[]> {
     let query = db.milkLogs
-      .where('tenant_id')
+      .where('tenantId')
       .equals(tenantId)
       .and(log => !log._deleted);
 
     if (animalId) {
-      query = query.and(log => log.animal_id === animalId);
+      query = query.and(log => log.animalId === animalId);
     }
 
     return await query
@@ -186,7 +187,7 @@ export class OfflineDB {
     await db.milkLogs.add({
       ...log,
       id,
-      tenant_id: tenantId,
+      tenantId: tenantId,
       _synced: false,
       _lastModified: now,
     });
@@ -197,7 +198,7 @@ export class OfflineDB {
       tenantId,
       table: 'milk_logs',
       operation: 'create',
-      data: { ...log, id, tenant_id: tenantId },
+      data: { ...log, id, tenantId: tenantId },
       timestamp: now,
       retryCount: 0,
     });
@@ -212,12 +213,12 @@ export class OfflineDB {
     limit = 30
   ): Promise<OfflineHealthRecord[]> {
     let query = db.healthRecords
-      .where('tenant_id')
+      .where('tenantId')
       .equals(tenantId)
       .and(record => !record._deleted);
 
     if (animalId) {
-      query = query.and(record => record.animal_id === animalId);
+      query = query.and(record => record.animalId === animalId);
     }
 
     return await query
@@ -245,7 +246,7 @@ export class OfflineDB {
     await db.healthRecords.add({
       ...record,
       id,
-      tenant_id: tenantId,
+      tenantId: tenantId,
       _synced: false,
       _lastModified: now,
     });
@@ -256,7 +257,7 @@ export class OfflineDB {
       tenantId,
       table: 'health_records',
       operation: 'create',
-      data: { ...record, id, tenant_id: tenantId },
+      data: { ...record, id, tenantId: tenantId },
       timestamp: now,
       retryCount: 0,
     });
@@ -279,7 +280,7 @@ export class OfflineDB {
 
   static async incrementRetryCount(id: string): Promise<void> {
     await db.queuedMutations.update(id, {
-      retryCount: Dexie.raw('retryCount + 1'),
+      retryCount: (Dexie as any).raw('retryCount + 1'),
     });
   }
 
@@ -289,8 +290,15 @@ export class OfflineDB {
   }
 
   static async updateSyncStatus(tenantId: string, updates: Partial<SyncStatus>): Promise<void> {
-    await db.syncStatus.put({
+    const current = await this.getSyncStatus(tenantId) || {
       tenantId,
+      lastSync: 0,
+      isOnline: true,
+      pendingMutations: 0,
+      syncInProgress: false
+    };
+    await db.syncStatus.put({
+      ...current,
       ...updates,
     });
   }
@@ -302,13 +310,13 @@ export class OfflineDB {
 
     // Delete old synced records
     await db.milkLogs
-      .where('tenant_id')
+      .where('tenantId')
       .equals(tenantId)
       .and(log => log._synced && new Date(log.date) < cutoffDate)
       .delete();
 
     await db.healthRecords
-      .where('tenant_id')
+      .where('tenantId')
       .equals(tenantId)
       .and(record => record._synced && new Date(record.date) < cutoffDate)
       .delete();

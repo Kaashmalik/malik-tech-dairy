@@ -2,13 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { AnimalForm } from './AnimalForm';
 import { RealtimeMilkLogs } from './RealtimeMilkLogs';
 import { CustomFieldsRenderer } from '@/components/custom-fields/CustomFieldsRenderer';
-import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { Animal, CustomField } from '@/types';

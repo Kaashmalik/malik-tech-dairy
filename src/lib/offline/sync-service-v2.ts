@@ -46,11 +46,12 @@ interface MTKDairyDB extends DBSchema {
   };
   // App state
   app_state: {
-    key: string;
-    value: {
-      lastSync: number;
-      tenantId: string;
-      userId: string;
+    app_state: {
+      key: string;
+      value: {
+        key: string;
+        value: any;
+      };
     };
   };
 }
@@ -101,12 +102,12 @@ class OfflineSyncService {
   async save(tableName: keyof MTKDairyDB, data: any) {
     if (!this.db) throw new Error('DB not initialized');
 
-    const tx = this.db.transaction(tableName, 'readwrite');
+    const tx = this.db.transaction(tableName as any, 'readwrite');
     await tx.store.put(data);
     await tx.done;
 
     // Add to sync queue
-    await this.addToSyncQueue(tableName, 'update', data);
+    await this.addToSyncQueue(tableName as string, 'update', data);
   }
 
   // Get data from IndexedDB
@@ -273,7 +274,7 @@ class OfflineSyncService {
 
     const stores = ['animals', 'milk_logs', 'health_records', 'sync_queue', 'app_state'];
     for (const store of stores) {
-      const tx = this.db.transaction(store as keyof MTKDairyDB, 'readwrite');
+      const tx = this.db.transaction(store as any, 'readwrite');
       await tx.store.clear();
       await tx.done;
     }
