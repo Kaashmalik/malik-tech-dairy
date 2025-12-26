@@ -212,7 +212,7 @@ export default function DiseasesMedicinesPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Virus className="h-5 w-5" />
+                  <Microscope className="h-5 w-5" />
                   Common Diseases
                 </CardTitle>
                 <CardDescription>
