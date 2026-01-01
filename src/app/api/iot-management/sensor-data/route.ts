@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { sensorData, iotDevices, animals, sensorDataRelations } from '@/db/schema';
 import { eq, and, desc, gte, lte, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';

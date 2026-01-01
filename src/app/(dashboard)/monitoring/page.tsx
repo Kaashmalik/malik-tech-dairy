@@ -85,8 +85,16 @@ export default function MonitoringDashboard() {
   useEffect(() => {
     const generateMetrics = () => {
       const now = Date.now();
-      const intervals = timeRange === '1h' ? 60 : timeRange === '24h' ? 1440 : timeRange === '7d' ? 10080 : 43200;
-      const intervalMs = (timeRange === '1h' ? 3600000 : timeRange === '24h' ? 86400000 : timeRange === '7d' ? 604800000 : 2592000000) / intervals;
+      const intervals =
+        timeRange === '1h' ? 60 : timeRange === '24h' ? 1440 : timeRange === '7d' ? 10080 : 43200;
+      const intervalMs =
+        (timeRange === '1h'
+          ? 3600000
+          : timeRange === '24h'
+            ? 86400000
+            : timeRange === '7d'
+              ? 604800000
+              : 2592000000) / intervals;
 
       const requests = Array.from({ length: Math.min(intervals, 100) }, (_, i) => ({
         timestamp: new Date(now - (intervals - i) * intervalMs).toISOString(),
@@ -132,11 +140,11 @@ export default function MonitoringDashboard() {
   const getAlertIcon = (type: string) => {
     switch (type) {
       case 'critical':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className='h-4 w-4 text-red-500' />;
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+        return <AlertTriangle className='h-4 w-4 text-yellow-500' />;
       default:
-        return <CheckCircle className="h-4 w-4 text-blue-500" />;
+        return <CheckCircle className='h-4 w-4 text-blue-500' />;
     }
   };
 
@@ -148,22 +156,22 @@ export default function MonitoringDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className='min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6'>
+      <div className='mx-auto max-w-7xl space-y-6'>
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className='flex items-center justify-between'>
           <div>
-            <h1 className="text-3xl font-bold text-white">System Monitoring</h1>
-            <p className="text-white/60">Real-time performance and health metrics</p>
+            <h1 className='text-3xl font-bold text-white'>System Monitoring</h1>
+            <p className='text-white/60'>Real-time performance and health metrics</p>
           </div>
-          <div className="flex gap-2">
-            {(['1h', '24h', '7d', '30d'] as const).map((range) => (
+          <div className='flex gap-2'>
+            {(['1h', '24h', '7d', '30d'] as const).map(range => (
               <Button
                 key={range}
                 variant={timeRange === range ? 'default' : 'outline'}
-                size="sm"
+                size='sm'
                 onClick={() => setTimeRange(range)}
-                className="border-white/20 text-white hover:bg-white/10"
+                className='border-white/20 text-white hover:bg-white/10'
               >
                 {range}
               </Button>
@@ -172,75 +180,73 @@ export default function MonitoringDashboard() {
         </div>
 
         {/* System Health */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-white/60 text-sm">API Status</p>
-                  <Badge className={getStatusColor(systemHealth.api)}>
-                    {systemHealth.api}
-                  </Badge>
+                  <p className='text-sm text-white/60'>API Status</p>
+                  <Badge className={getStatusColor(systemHealth.api)}>{systemHealth.api}</Badge>
                 </div>
-                <Server className="h-8 w-8 text-white/40" />
+                <Server className='h-8 w-8 text-white/40' />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-white/60 text-sm">Database</p>
+                  <p className='text-sm text-white/60'>Database</p>
                   <Badge className={getStatusColor(systemHealth.database)}>
                     {systemHealth.database}
                   </Badge>
                 </div>
-                <Database className="h-8 w-8 text-white/40" />
+                <Database className='h-8 w-8 text-white/40' />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-white/60 text-sm">Uptime</p>
-                  <p className="text-2xl font-bold text-white">{systemHealth.uptime}%</p>
+                  <p className='text-sm text-white/60'>Uptime</p>
+                  <p className='text-2xl font-bold text-white'>{systemHealth.uptime}%</p>
                 </div>
-                <Activity className="h-8 w-8 text-white/40" />
+                <Activity className='h-8 w-8 text-white/40' />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <p className="text-white/60 text-sm">Avg Response</p>
-                  <p className="text-2xl font-bold text-white">{systemHealth.responseTime}ms</p>
+                  <p className='text-sm text-white/60'>Avg Response</p>
+                  <p className='text-2xl font-bold text-white'>{systemHealth.responseTime}ms</p>
                 </div>
-                <Clock className="h-8 w-8 text-white/40" />
+                <Clock className='h-8 w-8 text-white/40' />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Activity className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2 text-white'>
+                <Activity className='h-5 w-5' />
                 Request Volume
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width='100%' height={300}>
                 <AreaChart data={metrics.requests}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="timestamp" stroke="rgba(255,255,255,0.5)" />
-                  <YAxis stroke="rgba(255,255,255,0.5)" />
+                  <CartesianGrid strokeDasharray='3 3' stroke='rgba(255,255,255,0.1)' />
+                  <XAxis dataKey='timestamp' stroke='rgba(255,255,255,0.5)' />
+                  <YAxis stroke='rgba(255,255,255,0.5)' />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'rgba(0,0,0,0.8)',
@@ -248,10 +254,10 @@ export default function MonitoringDashboard() {
                     }}
                   />
                   <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
+                    type='monotone'
+                    dataKey='value'
+                    stroke='#3b82f6'
+                    fill='#3b82f6'
                     fillOpacity={0.3}
                   />
                 </AreaChart>
@@ -259,19 +265,19 @@ export default function MonitoringDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2 text-white'>
+                <TrendingUp className='h-5 w-5' />
                 Response Time
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width='100%' height={300}>
                 <LineChart data={metrics.responseTime}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="timestamp" stroke="rgba(255,255,255,0.5)" />
-                  <YAxis stroke="rgba(255,255,255,0.5)" />
+                  <CartesianGrid strokeDasharray='3 3' stroke='rgba(255,255,255,0.1)' />
+                  <XAxis dataKey='timestamp' stroke='rgba(255,255,255,0.5)' />
+                  <YAxis stroke='rgba(255,255,255,0.5)' />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'rgba(0,0,0,0.8)',
@@ -279,9 +285,9 @@ export default function MonitoringDashboard() {
                     }}
                   />
                   <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#10b981"
+                    type='monotone'
+                    dataKey='value'
+                    stroke='#10b981'
                     strokeWidth={2}
                     dot={false}
                   />
@@ -292,49 +298,49 @@ export default function MonitoringDashboard() {
         </div>
 
         {/* Charts Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Users className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2 text-white'>
+                <Users className='h-5 w-5' />
                 Active Users
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width='100%' height={200}>
                 <BarChart data={metrics.activeUsers.slice(-20)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="timestamp" stroke="rgba(255,255,255,0.5)" />
-                  <YAxis stroke="rgba(255,255,255,0.5)" />
+                  <CartesianGrid strokeDasharray='3 3' stroke='rgba(255,255,255,0.1)' />
+                  <XAxis dataKey='timestamp' stroke='rgba(255,255,255,0.5)' />
+                  <YAxis stroke='rgba(255,255,255,0.5)' />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'rgba(0,0,0,0.8)',
                       border: '1px solid rgba(255,255,255,0.2)',
                     }}
                   />
-                  <Bar dataKey="value" fill="#8b5cf6" />
+                  <Bar dataKey='value' fill='#8b5cf6' />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Zap className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2 text-white'>
+                <Zap className='h-5 w-5' />
                 Error Rate
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-white/60">Current</span>
-                  <span className="text-2xl font-bold text-red-400">2.3%</span>
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-white/60'>Current</span>
+                  <span className='text-2xl font-bold text-red-400'>2.3%</span>
                 </div>
-                <Progress value={2.3} className="h-2" />
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-400 flex items-center gap-1">
-                    <TrendingDown className="h-3 w-3" />
+                <Progress value={2.3} className='h-2' />
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='flex items-center gap-1 text-green-400'>
+                    <TrendingDown className='h-3 w-3' />
                     -0.5% from last hour
                   </span>
                 </div>
@@ -342,24 +348,24 @@ export default function MonitoringDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-xl bg-white/5 border-white/10">
+          <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Database className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2 text-white'>
+                <Database className='h-5 w-5' />
                 Resource Usage
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width='100%' height={200}>
                 <PieChart>
                   <Pie
                     data={pieData}
-                    cx="50%"
-                    cy="50%"
+                    cx='50%'
+                    cy='50%'
                     innerRadius={60}
                     outerRadius={80}
                     paddingAngle={5}
-                    dataKey="value"
+                    dataKey='value'
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -378,28 +384,28 @@ export default function MonitoringDashboard() {
         </div>
 
         {/* Alerts Section */}
-        <Card className="backdrop-blur-xl bg-white/5 border-white/10">
+        <Card className='border-white/10 bg-white/5 backdrop-blur-xl'>
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+            <CardTitle className='flex items-center gap-2 text-white'>
+              <AlertTriangle className='h-5 w-5' />
               Recent Alerts
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {alerts.map((alert) => (
+            <div className='space-y-3'>
+              {alerts.map(alert => (
                 <div
                   key={alert.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
+                  className='flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3'
                 >
-                  <div className="flex items-center gap-3">
+                  <div className='flex items-center gap-3'>
                     {getAlertIcon(alert.type)}
                     <div>
-                      <p className="text-white font-medium">{alert.message}</p>
-                      <p className="text-white/60 text-sm">{alert.timestamp}</p>
+                      <p className='font-medium text-white'>{alert.message}</p>
+                      <p className='text-sm text-white/60'>{alert.timestamp}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
+                  <Button variant='ghost' size='sm' className='text-white/60 hover:text-white'>
                     View Details
                   </Button>
                 </div>

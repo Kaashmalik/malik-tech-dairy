@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { taskAssignments, animals, platformUsers, taskAssignmentsRelations } from '@/db/schema';
 import { eq, and, ilike, desc, gte, lte, inArray, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
@@ -73,17 +73,16 @@ export async function GET(request: NextRequest) {
     }
     if (query.overdue === true) {
       whereConditions.push(
-        and(
-          lte(taskAssignments.dueDate, new Date()),
-          inArray(taskAssignments.status, ['pending', 'in_progress'])
-        )
+        sql`${taskAssignments.dueDate} <= ${new Date()} AND ${taskAssignments.status} IN ('pending', 'in_progress')`
       );
     }
+    // Create combined where clause
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
     // Get total count
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(taskAssignments)
-      .where(and(...whereConditions));
+      .where(whereClause);
     const total = totalCountResult[0]?.count || 0;
     // Get task assignments with relations
     const tasksList = await db

@@ -7,7 +7,7 @@ export async function GET() {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    const { getSupabaseClient } = await import('@/lib/supabase');
+    const { getSupabaseClient } = await import('@/lib/supabase/server');
     const supabase = getSupabaseClient();
     const { data: payments, error } = await supabase
       .from('payments')

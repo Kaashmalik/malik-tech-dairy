@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 /**
  * Enterprise Keyboard Shortcuts Hook for MTK Dairy
- * 
+ *
  * Provides global keyboard shortcuts for power users.
  * Shortcuts are disabled when focused on input elements.
  */
@@ -96,11 +96,11 @@ const createDefaultShortcuts = (router: ReturnType<typeof useRouter>): KeyboardS
 
 function isInputElement(element: EventTarget | null): boolean {
   if (!element || !(element instanceof HTMLElement)) return false;
-  
+
   const tagName = element.tagName.toLowerCase();
   if (['input', 'textarea', 'select'].includes(tagName)) return true;
   if (element.isContentEditable) return true;
-  
+
   return false;
 }
 
@@ -110,7 +110,7 @@ function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut): bool
   const altMatches = !!shortcut.alt === event.altKey;
   const shiftMatches = !!shortcut.shift === event.shiftKey;
   const metaMatches = !!shortcut.meta === event.metaKey;
-  
+
   return keyMatches && ctrlMatches && altMatches && shiftMatches && metaMatches;
 }
 
@@ -139,7 +139,7 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
       // Handle key sequences (e.g., 'g' then 'd' for dashboard)
       if (!event.ctrlKey && !event.altKey && !event.metaKey) {
         sequenceRef.current.push(event.key.toLowerCase());
-        
+
         // Clear sequence after 1 second of inactivity
         if (sequenceTimeoutRef.current) {
           clearTimeout(sequenceTimeoutRef.current);

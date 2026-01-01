@@ -1,7 +1,7 @@
 // API Route: Health Records (Vaccination, Treatment, Checkup, Disease) - Supabase-based
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { createHealthRecordSchema } from '@/lib/validations/health';
 import { encrypt, decrypt } from '@/lib/encryption';
 import { v4 as uuidv4 } from 'uuid';
@@ -41,13 +41,14 @@ export async function GET(request: NextRequest) {
         );
       }
       // Transform and decrypt notes
-      const transformedRecords = transformHealthRecords(records as HealthRecordFromDb[] || []).map(record => {
-        let notes = record.notes;
+      const transformedRecords = transformHealthRecords(
+        (records as HealthRecordFromDb[]) || []
+      ).map(record => {
+        let notes = (record as any).notes;
         if (notes && typeof notes === 'string') {
           try {
             notes = decrypt(notes);
-          } catch {
-          }
+          } catch {}
         }
         return { ...record, notes };
       });

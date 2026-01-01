@@ -9,9 +9,9 @@ const supabase = createClient(
 async function verifyData() {
   try {
     console.log('Verifying data for kaash0542@gmail.com...\n');
-    
+
     const tenantId = 'org_36Pn5ejZHWxT3ZdlWh4Fr2vS1Cc';
-    
+
     // Check milk logs
     console.log('=== Milk Logs ===');
     const { data: milkData, error: milkError } = await supabase
@@ -19,7 +19,7 @@ async function verifyData() {
       .select('*')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
-    
+
     if (milkError) {
       console.error('Error:', milkError.message);
     } else {
@@ -27,10 +27,12 @@ async function verifyData() {
       milkData.forEach(record => {
         const liters = (record.quantity / 1000).toFixed(1);
         const fatPercent = (record.fat / 100).toFixed(1);
-        console.log(`  - ${record.date} ${record.session}: ${liters}L (Fat: ${fatPercent}%, Quality: ${record.quality}/10)`);
+        console.log(
+          `  - ${record.date} ${record.session}: ${liters}L (Fat: ${fatPercent}%, Quality: ${record.quality}/10)`
+        );
       });
     }
-    
+
     // Check health records structure
     console.log('\n=== Health Records Schema ===');
     const { data: healthSample, error: healthError } = await supabase
@@ -38,7 +40,7 @@ async function verifyData() {
       .select('*')
       .eq('tenant_id', tenantId)
       .limit(1);
-    
+
     if (healthError && healthError.code !== 'PGRST116') {
       console.log('Health records table exists with error:', healthError.message);
     } else if (healthSample && healthSample.length > 0) {
@@ -46,7 +48,7 @@ async function verifyData() {
     } else {
       console.log('No health records found');
     }
-    
+
     // Check medicine inventory structure
     console.log('\n=== Medicine Inventory Schema ===');
     const { data: medSample, error: medError } = await supabase
@@ -54,7 +56,7 @@ async function verifyData() {
       .select('*')
       .eq('tenant_id', tenantId)
       .limit(1);
-    
+
     if (medError && medError.code !== 'PGRST116') {
       console.log('Medicine inventory table exists with error:', medError.message);
     } else if (medSample && medSample.length > 0) {
@@ -62,7 +64,7 @@ async function verifyData() {
     } else {
       console.log('No medicine records found');
     }
-    
+
     // Summary
     console.log('\n=== Summary ===');
     console.log('✅ Animals: 2 records');
@@ -71,7 +73,6 @@ async function verifyData() {
     console.log('❌ Medicine Inventory: Table exists but schema mismatch');
     console.log('❌ Assets: Table does not exist');
     console.log('❌ Other modules: Tables exist but may have schema issues');
-    
   } catch (error) {
     console.error('Error:', error);
   }

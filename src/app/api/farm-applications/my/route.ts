@@ -1,7 +1,7 @@
 // API Route: Get current user's farm applications
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { farmApplications } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 export const dynamic = 'force-dynamic';

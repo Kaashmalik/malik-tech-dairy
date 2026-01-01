@@ -1,6 +1,6 @@
 // Enterprise Performance Optimization Layer
 // Multi-layer caching, query optimization, and performance monitoring
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { Redis } from '@upstash/redis';
 import { performance } from 'perf_hooks';
 // Redis client for caching (with error handling)
@@ -93,8 +93,7 @@ class CacheManager {
     if (!redis) return;
     try {
       await redis.setex(key, ttl, JSON.stringify(value));
-    } catch (error) {
-    }
+    } catch (error) {}
   }
   static async invalidate(pattern: string): Promise<void> {
     if (!redis) return;
@@ -103,8 +102,7 @@ class CacheManager {
       if (keys.length > 0) {
         await redis.del(...keys);
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
   static async invalidateByTags(tags: string[]): Promise<void> {
     if (!redis) return;

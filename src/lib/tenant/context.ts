@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { tenants, tenantMembers, platformUsers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 /**
@@ -7,6 +7,8 @@ import { eq } from 'drizzle-orm';
  */
 export interface TenantContext {
   tenantId: string;
+  /** @deprecated Use tenantId instead */
+  id: string;
   userId: string;
   userRole: string;
   organizationId: string;
@@ -17,8 +19,7 @@ export interface TenantContext {
  * This replaces all hardcoded 'tenant_placeholder' usage
  */
 export async function getTenantContext(): Promise<TenantContext> {
-  const { userId } = auth();
-  const { orgId, orgRole } = auth();
+  const { userId, orgId, orgRole } = await auth();
   if (!userId) {
     throw new Error('User authentication required');
   }
@@ -45,6 +46,7 @@ export async function getTenantContext(): Promise<TenantContext> {
   }
   return {
     tenantId,
+    id: tenantId, // Alias for backwards compatibility
     userId,
     userRole,
     organizationId,
@@ -67,7 +69,7 @@ async function resolveUserRoleFromDatabase(userId: string, tenantId: string): Pr
     }
     // If no membership found, check if user is super admin
     const user = await db.select().from(platformUsers).where(eq(platformUsers.id, userId)).limit(1);
-    if (user.length > 0 && user[0].role === 'super_admin') {
+    if (user.length > 0 && user[0].platformRole === 'super_admin') {
       return 'super_admin';
     }
     return 'guest';
@@ -140,7 +142,7 @@ export async function validateTenantAccess(resourceTenantId: string): Promise<bo
  */
 export async function getUserTenants() {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return [];
     }

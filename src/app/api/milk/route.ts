@@ -1,7 +1,7 @@
 // API Route: List & Create Milk Logs (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { createMilkLogSchema } from '@/lib/validations/milk';
 import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         );
       }
       // Transform to camelCase for frontend
-      const transformedLogs = transformMilkLogs(logs as MilkLogFromDb[] || []);
+      const transformedLogs = transformMilkLogs((logs as MilkLogFromDb[]) || []);
       return NextResponse.json({ success: true, logs: transformedLogs });
     } catch (error) {
       return NextResponse.json(

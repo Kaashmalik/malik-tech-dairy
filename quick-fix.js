@@ -28,7 +28,6 @@ try {
   console.log('2. Open browser to: http://localhost:3000/dashboard');
   console.log('3. Log in with your account');
   console.log('4. Animals and Weather should now be visible!');
-
 } catch (error) {
   console.error('Fix failed:', error);
 }

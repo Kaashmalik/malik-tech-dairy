@@ -154,14 +154,14 @@ export type SemenStatus = 'available' | 'used' | 'expired' | 'damaged';
 export interface BreedingRecord {
   id: string;
   tenantId: string;
-  animalId: string;              // Female animal being bred
-  sireId?: string;               // Male animal (for natural breeding)
+  animalId: string; // Female animal being bred
+  sireId?: string; // Male animal (for natural breeding)
   breedingDate: Date;
   breedingMethod: BreedingMethod;
 
   // AI-specific fields
   semenStrawId?: string;
-  semenSource?: string;          // Bull name or semen bank
+  semenSource?: string; // Bull name or semen bank
   inseminationTechnician?: string;
 
   // Gestation tracking
@@ -203,7 +203,7 @@ export interface SemenInventory {
   bullName: string;
   bullBreed?: string;
   bullRegistrationNumber?: string;
-  sourceCenter?: string;         // Semen bank/center name
+  sourceCenter?: string; // Semen bank/center name
   species: AnimalSpecies;
   quantity: number;
   purchaseDate?: Date;
@@ -228,7 +228,12 @@ export interface PregnantAnimal {
 }
 
 // Heat detection types
-export type HeatDetectionMethod = 'visual' | 'activity_monitor' | 'milk_drop' | 'mucus_discharge' | 'mounting';
+export type HeatDetectionMethod =
+  | 'visual'
+  | 'activity_monitor'
+  | 'milk_drop'
+  | 'mucus_discharge'
+  | 'mounting';
 export type HeatIntensity = 'weak' | 'moderate' | 'strong';
 export type HeatActionTaken = 'bred' | 'missed' | 'skipped' | 'pending';
 

@@ -16,7 +16,7 @@ try {
   console.log('2️⃣ Clearing cache...');
   const fs = require('fs');
   const path = require('path');
-  
+
   const nextDir = path.join(__dirname, '.next');
   if (fs.existsSync(nextDir)) {
     fs.rmSync(nextDir, { recursive: true, force: true });
@@ -28,7 +28,6 @@ try {
   console.log('1. cd "d:\\MalikTech\\MalikTech-dairy\\malik-tech-dairy"');
   console.log('2. npm run dev');
   console.log('3. Open browser to: http://localhost:3000/dashboard');
-  
 } catch (error) {
   console.error('Error:', error.message);
 }

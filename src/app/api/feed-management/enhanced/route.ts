@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { eq, and, or, ilike, gte, lte, desc, asc, sql, between } from 'drizzle-orm';
-import { getDrizzle, getSupabaseClient } from '@/lib/supabase';
+import { getDrizzle, getSupabaseClient } from '@/lib/supabase/server';
 import { feedInventory, animals, tenants } from '@/db/schema';
 import { getTenantContext } from '@/lib/tenant/context';
 // Note: nutrition_requirements accessed via Supabase REST API

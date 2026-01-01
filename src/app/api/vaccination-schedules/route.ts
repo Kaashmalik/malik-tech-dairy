@@ -1,50 +1,50 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentTenant } from "@/lib/supabase/tenant";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { getTenantContext } from '@/lib/tenant/context';
 
 // GET /api/vaccination-schedules - Fetch all vaccination schedules
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const tenant = await getTenantContext();
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
-    const species = searchParams.get("species");
-    const priority = searchParams.get("priority");
-    const governmentProgram = searchParams.get("government_program");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const species = searchParams.get('species');
+    const priority = searchParams.get('priority');
+    const governmentProgram = searchParams.get('government_program');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
 
     let query = supabase
-      .from("vaccination_schedules")
-      .select(`
+      .from('vaccination_schedules')
+      .select(
+        `
         *,
         disease:diseases(id, name, category),
         vaccine_medicine:medicines(id, name, brand_name, manufacturer)
-      `, { count: "exact" })
-      .order("species")
-      .order("priority", { ascending: false })
-      .order("animal_age_start_months");
+      `,
+        { count: 'exact' }
+      )
+      .order('species')
+      .order('priority', { ascending: false })
+      .order('animal_age_start_months');
 
     // Apply filters
     if (species) {
-      query = query.eq("species", species);
+      query = query.eq('species', species);
     }
 
     if (priority) {
-      query = query.eq("priority", priority);
+      query = query.eq('priority', priority);
     }
 
     if (governmentProgram !== null) {
-      query = query.eq("government_program", governmentProgram === "true");
+      query = query.eq('government_program', governmentProgram === 'true');
     }
 
     // Apply pagination
@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
     const { data: schedules, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching vaccination schedules:", error);
+      console.error('Error fetching vaccination schedules:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to fetch vaccination schedules" },
+        { success: false, error: 'Failed to fetch vaccination schedules' },
         { status: 500 }
       );
     }
@@ -73,25 +73,19 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error in vaccination schedules GET:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in vaccination schedules GET:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // POST /api/vaccination-schedules - Create a new vaccination schedule
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const tenant = await getTenantContext();
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -99,14 +93,14 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!body.species || !body.animal_age_start_months || !body.dose_number) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields" },
+        { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
     // Create vaccination schedule
     const { data: schedule, error } = await supabase
-      .from("vaccination_schedules")
+      .from('vaccination_schedules')
       .insert({
         disease_id: body.disease_id,
         vaccine_medicine_id: body.vaccine_medicine_id,
@@ -120,7 +114,7 @@ export async function POST(request: NextRequest) {
         recommended_months: body.recommended_months || [],
         route: body.route,
         dosage: body.dosage,
-        priority: body.priority || "recommended",
+        priority: body.priority || 'recommended',
         government_program: body.government_program || false,
         notes: body.notes,
       })
@@ -128,9 +122,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error creating vaccination schedule:", error);
+      console.error('Error creating vaccination schedule:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to create vaccination schedule" },
+        { success: false, error: 'Failed to create vaccination schedule' },
         { status: 500 }
       );
     }
@@ -138,13 +132,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: schedule,
-      message: "Vaccination schedule created successfully",
+      message: 'Vaccination schedule created successfully',
     });
   } catch (error) {
-    console.error("Error in vaccination schedules POST:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in vaccination schedules POST:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

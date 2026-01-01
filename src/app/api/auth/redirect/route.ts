@@ -1,7 +1,7 @@
 // Smart redirect after sign-in based on user role and org status
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 export async function GET() {
   try {

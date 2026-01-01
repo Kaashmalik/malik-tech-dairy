@@ -76,8 +76,7 @@ export default function MigrationDashboard() {
       if (response.ok) {
         fetchDashboardData(); // Refresh data
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
   const getPhaseColor = (phase: string) => {
     const colors: Record<string, string> = {
@@ -95,7 +94,6 @@ export default function MigrationDashboard() {
       CRITICAL: 'text-red-600',
       PASSED: 'text-green-600',
       FAILED: 'text-red-600',
-      WARNING: 'text-yellow-600',
     };
     return colors[status] || 'text-gray-600';
   };

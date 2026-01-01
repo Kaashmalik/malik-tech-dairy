@@ -153,13 +153,13 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
           <div className='flex items-center justify-between'>
             <div className='flex items-center space-x-4'>
               {animal.image ? (
-                <div className="relative h-16 w-16 overflow-hidden rounded-full">
+                <div className='relative h-16 w-16 overflow-hidden rounded-full'>
                   <Image
                     src={animal.image}
                     alt={animal.name}
                     fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className='object-cover'
+                    sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                   />
                 </div>
               ) : (

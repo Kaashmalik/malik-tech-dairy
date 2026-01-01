@@ -68,11 +68,11 @@ export function DashboardHeader() {
   }, []);
 
   // Get farm name from Clerk organization - use placeholder during SSR
-  const farmName = mounted ? (organization?.name || 'Your Farm') : 'Your Farm';
+  const farmName = mounted ? organization?.name || 'Your Farm' : 'Your Farm';
 
   // Get user display name - use placeholder during SSR
   const userDisplayName = mounted
-    ? (user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress || 'User')
+    ? user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress || 'User'
     : 'User';
 
   // Handle sign out
@@ -159,7 +159,7 @@ export function DashboardHeader() {
 
   return (
     <>
-      <header className='sticky top-0 z-50 w-full glass-panel border-b border-white/20 dark:border-white/10'>
+      <header className='glass-panel sticky top-0 z-50 w-full border-b border-white/20 dark:border-white/10'>
         <div className='container flex h-16 items-center justify-between px-4'>
           {/* Logo & Farm Name */}
           <div className='flex items-center gap-4'>
@@ -178,7 +178,7 @@ export function DashboardHeader() {
           </div>
 
           {!mounted ? (
-            <div className="flex-1" /> /* Skeleton or empty during API load/SSR to verify hydration */
+            <div className='flex-1' /> /* Skeleton or empty during API load/SSR to verify hydration */
           ) : (
             /* Full Navigation */
             <>
@@ -198,8 +198,7 @@ export function DashboardHeader() {
                 </div>
               </div>
               {/* Desktop Navigation */}
-              <nav className='hidden items-center gap-1 rounded-2xl bg-white/40 p-1 lg:flex dark:bg-slate-800/40 backdrop-blur-sm border border-white/10'>
-
+              <nav className='hidden items-center gap-1 rounded-2xl border border-white/10 bg-white/40 p-1 backdrop-blur-sm lg:flex dark:bg-slate-800/40'>
                 {navItems.slice(0, 7).map(item => {
                   if (!canAccessModule(item.module)) return null;
                   const active = isActive(item.href);
@@ -207,10 +206,11 @@ export function DashboardHeader() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ${active
-                        ? 'bg-white shadow-sm text-emerald-700 dark:bg-slate-700 dark:text-emerald-400'
-                        : 'text-gray-600 hover:bg-white/50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-white'
-                        }`}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                        active
+                          ? 'bg-white text-emerald-700 shadow-sm dark:bg-slate-700 dark:text-emerald-400'
+                          : 'text-gray-600 hover:bg-white/50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-white'
+                      }`}
                     >
                       <item.icon className={`h-4 w-4 ${active ? 'text-emerald-500' : ''}`} />
                       {item.label}
@@ -220,15 +220,19 @@ export function DashboardHeader() {
                 {/* Simple Dropdown for 'More' could be added here if needed */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="hidden xl:flex gap-1 px-2 text-gray-500 dark:text-gray-400">
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='hidden gap-1 px-2 text-gray-500 xl:flex dark:text-gray-400'
+                    >
                       More...
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     {navItems.slice(7).map(item => (
                       <DropdownMenuItem key={item.href} asChild>
-                        <Link href={item.href} className="flex items-center gap-2">
-                          <item.icon className="h-4 w-4" /> {item.label}
+                        <Link href={item.href} className='flex items-center gap-2'>
+                          <item.icon className='h-4 w-4' /> {item.label}
                         </Link>
                       </DropdownMenuItem>
                     ))}
@@ -253,7 +257,7 @@ export function DashboardHeader() {
 
                 {/* Search button */}
                 <button
-                  className='group hidden rounded-xl bg-white/50 p-2.5 transition-colors hover:bg-white/80 md:flex dark:bg-slate-800/50 dark:hover:bg-slate-700/50 border border-white/20'
+                  className='group hidden rounded-xl border border-white/20 bg-white/50 p-2.5 transition-colors hover:bg-white/80 md:flex dark:bg-slate-800/50 dark:hover:bg-slate-700/50'
                   title='Search (⌘K)'
                   aria-label='Search'
                 >
@@ -265,15 +269,15 @@ export function DashboardHeader() {
 
                 {/* Notifications */}
                 <button
-                  className='relative rounded-xl bg-white/50 p-2.5 transition-colors hover:bg-white/80 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 border border-white/20'
+                  className='relative rounded-xl border border-white/20 bg-white/50 p-2.5 transition-colors hover:bg-white/80 dark:bg-slate-800/50 dark:hover:bg-slate-700/50'
                   aria-label='Notifications'
                 >
                   <Bell className='h-4 w-4 text-gray-500 dark:text-slate-400' />
-                  <span className='absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 animate-pulse'></span>
+                  <span className='absolute right-2 top-2 h-2 w-2 animate-pulse rounded-full bg-red-500'></span>
                 </button>
 
                 {userRole && (
-                  <span className='hidden rounded-full border border-emerald-200/50 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 px-3 py-1.5 text-xs font-medium text-emerald-700 md:block dark:border-emerald-700/30 dark:from-emerald-900/30 dark:to-teal-900/30 dark:text-emerald-400 glass-panel'>
+                  <span className='glass-panel hidden rounded-full border border-emerald-200/50 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 px-3 py-1.5 text-xs font-medium text-emerald-700 md:block dark:border-emerald-700/30 dark:from-emerald-900/30 dark:to-teal-900/30 dark:text-emerald-400'>
                     {ROLE_DISPLAY_NAMES[userRole]}
                   </span>
                 )}
@@ -283,7 +287,7 @@ export function DashboardHeader() {
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant='ghost'
-                        className='relative h-9 w-9 rounded-full p-0 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-white hover:bg-gray-100 dark:ring-offset-slate-900 dark:hover:bg-slate-800 transition-all active:scale-95'
+                        className='relative h-9 w-9 rounded-full p-0 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-white transition-all hover:bg-gray-100 active:scale-95 dark:ring-offset-slate-900 dark:hover:bg-slate-800'
                         aria-label='User menu'
                       >
                         <div className='flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-sm font-semibold text-white shadow-md'>
@@ -291,7 +295,11 @@ export function DashboardHeader() {
                         </div>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className='w-64 glass-panel border-white/20' align='end' forceMount>
+                    <DropdownMenuContent
+                      className='glass-panel w-64 border-white/20'
+                      align='end'
+                      forceMount
+                    >
                       <DropdownMenuLabel className='font-normal'>
                         <div className='flex flex-col space-y-1'>
                           <p className='text-sm font-medium leading-none'>{userDisplayName}</p>
@@ -308,7 +316,7 @@ export function DashboardHeader() {
                           </div>
                         </div>
                       </DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-700/50" />
+                      <DropdownMenuSeparator className='bg-gray-200/50 dark:bg-gray-700/50' />
 
                       {/* User Profile Section */}
                       <DropdownMenuGroup>
@@ -326,7 +334,7 @@ export function DashboardHeader() {
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
 
-                      <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-700/50" />
+                      <DropdownMenuSeparator className='bg-gray-200/50 dark:bg-gray-700/50' />
 
                       {/* Organization Management */}
                       <DropdownMenuGroup>
@@ -335,7 +343,7 @@ export function DashboardHeader() {
                             <Building className='mr-2 h-4 w-4' />
                             Organization
                           </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent className='w-48 glass-panel'>
+                          <DropdownMenuSubContent className='glass-panel w-48'>
                             <DropdownMenuItem asChild>
                               <Link href='/settings/domain' className='cursor-pointer'>
                                 Domain Settings
@@ -358,10 +366,13 @@ export function DashboardHeader() {
                       {/* Super Admin Section */}
                       {isSuperAdmin && (
                         <>
-                          <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-700/50" />
+                          <DropdownMenuSeparator className='bg-gray-200/50 dark:bg-gray-700/50' />
                           <DropdownMenuGroup>
                             <DropdownMenuItem asChild>
-                              <Link href='/super-admin' className='flex cursor-pointer items-center'>
+                              <Link
+                                href='/super-admin'
+                                className='flex cursor-pointer items-center'
+                              >
                                 <Shield className='mr-2 h-4 w-4' />
                                 <div className='flex w-full items-center justify-between'>
                                   <span>Admin Dashboard</span>
@@ -384,7 +395,7 @@ export function DashboardHeader() {
                         </>
                       )}
 
-                      <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-700/50" />
+                      <DropdownMenuSeparator className='bg-gray-200/50 dark:bg-gray-700/50' />
 
                       {/* Help & Support */}
                       <DropdownMenuGroup>
@@ -396,7 +407,7 @@ export function DashboardHeader() {
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
 
-                      <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-700/50" />
+                      <DropdownMenuSeparator className='bg-gray-200/50 dark:bg-gray-700/50' />
 
                       {/* Sign Out */}
                       <DropdownMenuItem
@@ -413,7 +424,7 @@ export function DashboardHeader() {
                 {/* Mobile menu button */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className='rounded-xl bg-white/50 p-2 transition-colors hover:bg-white/80 lg:hidden dark:bg-slate-800/50 dark:hover:bg-slate-700/50 border border-white/20'
+                  className='rounded-xl border border-white/20 bg-white/50 p-2 transition-colors hover:bg-white/80 lg:hidden dark:bg-slate-800/50 dark:hover:bg-slate-700/50'
                   aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 >
                   {mobileMenuOpen ? (
@@ -436,17 +447,18 @@ export function DashboardHeader() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className='fixed inset-0 top-16 z-40 bg-white/95 backdrop-blur-xl lg:hidden dark:bg-slate-900/95 border-t border-gray-200 dark:border-gray-800'
+            className='fixed inset-0 top-16 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-xl lg:hidden dark:border-gray-800 dark:bg-slate-900/95'
           >
             <nav className='container max-h-[calc(100vh-4rem)] space-y-1 overflow-y-auto px-4 py-4'>
               {/* Debug: Always show Dashboard as fallback */}
               <Link
                 href='/dashboard'
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${isActive('/dashboard')
-                  ? 'bg-emerald-100/50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'text-gray-700 hover:bg-gray-100/50 dark:text-slate-300 dark:hover:bg-slate-800/50'
-                  }`}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${
+                  isActive('/dashboard')
+                    ? 'bg-emerald-100/50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    : 'text-gray-700 hover:bg-gray-100/50 dark:text-slate-300 dark:hover:bg-slate-800/50'
+                }`}
               >
                 <Home className='h-5 w-5' />
                 Dashboard
@@ -461,10 +473,11 @@ export function DashboardHeader() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${active
-                      ? 'bg-emerald-100/50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'text-gray-700 hover:bg-gray-100/50 dark:text-slate-300 dark:hover:bg-slate-800/50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${
+                      active
+                        ? 'bg-emerald-100/50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : 'text-gray-700 hover:bg-gray-100/50 dark:text-slate-300 dark:hover:bg-slate-800/50'
+                    }`}
                   >
                     <item.icon className='h-5 w-5' />
                     {item.label}

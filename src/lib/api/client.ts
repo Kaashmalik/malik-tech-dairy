@@ -1,6 +1,6 @@
 /**
  * Centralized API Client for MTK Dairy
- * 
+ *
  * Provides type-safe HTTP methods with consistent error handling.
  */
 
@@ -43,7 +43,7 @@ class ApiClient {
     options?: RequestOptions
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -170,7 +170,7 @@ export const apiHelpers = {
 
   // Health Records
   health: {
-    list: (animalId?: string) => 
+    list: (animalId?: string) =>
       api.get<{ records: any[] }>(`/api/health/records${animalId ? `?animalId=${animalId}` : ''}`),
     get: (id: string) => api.get<{ record: any }>(`/api/health/records/${id}`),
     create: (data: any) => api.post<{ record: any }>('/api/health/records', data),

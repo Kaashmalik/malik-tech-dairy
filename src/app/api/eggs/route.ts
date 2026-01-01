@@ -1,7 +1,7 @@
 // API Route: List & Create Egg Logs (for Poultry) - Supabase-based
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 export const dynamic = 'force-dynamic';
@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
       const date = searchParams.get('date');
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
-      
+
       // Check if table exists first
       const { data: tableExists, error: checkError } = await supabase
         .from('egg_logs')
         .select('id')
         .limit(1);
-      
+
       if (checkError && checkError.code === 'PGRST116') {
         // Table doesn't exist
         return NextResponse.json({
@@ -29,22 +29,22 @@ export async function GET(request: NextRequest) {
           message: 'Egg tracking not available',
         });
       }
-      
+
       let query = supabase
         .from('egg_logs')
         .select('*')
         .eq('tenant_id', context.tenantId)
         .order('date', { ascending: false })
         .limit(100);
-        
+
       if (date) {
         query = query.eq('date', date);
       } else if (startDate && endDate) {
         query = query.gte('date', startDate).lte('date', endDate);
       }
-      
+
       const { data: logs, error } = (await query) as { data: any[] | null; error: any };
-      
+
       if (error) {
         // Return empty logs for graceful degradation
         return NextResponse.json({
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           message: 'No egg data available',
         });
       }
-      
+
       // Transform to camelCase
       const transformedLogs = (logs || []).map((log: any) => ({
         id: log.id,
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         recordedBy: log.recorded_by,
         createdAt: log.created_at,
       }));
-      
+
       return NextResponse.json({ success: true, logs: transformedLogs });
     } catch (error) {
       return NextResponse.json({

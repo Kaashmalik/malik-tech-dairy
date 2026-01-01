@@ -1,44 +1,56 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2, AlertCircle, Stethoscope } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Plus, Trash2, AlertCircle, Stethoscope } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const treatmentSchema = z.object({
-  animal_id: z.string().min(1, "Animal is required"),
+  animal_id: z.string().min(1, 'Animal is required'),
   disease_id: z.string().optional(),
   condition_name: z.string().optional(),
   symptoms_observed: z.array(z.string()).optional(),
   diagnosis_date: z.date(),
-  diagnosed_by: z.string().min(1, "Diagnosed by is required"),
+  diagnosed_by: z.string().min(1, 'Diagnosed by is required'),
   diagnosis_method: z.string().optional(),
-  severity: z.enum(["mild", "moderate", "severe", "critical"]).default("moderate"),
+  severity: z.enum(['mild', 'moderate', 'severe', 'critical']).default('moderate'),
   treatment_protocol_id: z.string().optional(),
   treatment_start_date: z.date(),
   treatment_end_date: z.date().optional(),
-  medicines_given: z.array(z.object({
-    medicine_id: z.string(),
-    dosage: z.string(),
-    frequency: z.string(),
-    duration: z.string(),
-  })).optional(),
-  status: z.enum(["in_treatment", "recovering", "recovered", "chronic", "deceased"]).default("in_treatment"),
+  medicines_given: z
+    .array(
+      z.object({
+        medicine_id: z.string(),
+        dosage: z.string(),
+        frequency: z.string(),
+        duration: z.string(),
+      })
+    )
+    .optional(),
+  status: z
+    .enum(['in_treatment', 'recovering', 'recovered', 'chronic', 'deceased'])
+    .default('in_treatment'),
   outcome_notes: z.string().optional(),
   follow_up_required: z.boolean().default(false),
   next_follow_up_date: z.date().optional(),
@@ -92,8 +104,10 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
   const [protocols, setProtocols] = useState<TreatmentProtocol[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDisease, setSelectedDisease] = useState<Disease | null>(null);
-  const [customSymptoms, setCustomSymptoms] = useState<string>("");
-  const [medicinesList, setMedicinesList] = useState<TreatmentFormData["medicines_given"]>([]);
+  const [customSymptoms, setCustomSymptoms] = useState<string>('');
+  const [medicinesList, setMedicinesList] = useState<
+    NonNullable<TreatmentFormData['medicines_given']>
+  >([]);
 
   const {
     register,
@@ -104,19 +118,22 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
     getValues,
     reset,
   } = useForm<TreatmentFormData>({
-    resolver: zodResolver(treatmentSchema),
+    resolver: zodResolver(treatmentSchema) as any,
     defaultValues: {
       diagnosis_date: new Date(),
       treatment_start_date: new Date(),
       symptoms_observed: [],
       medicines_given: [],
+      status: 'in_treatment',
+      severity: 'moderate',
+      follow_up_required: false,
     },
   });
 
-  const watchedAnimalId = watch("animal_id");
-  const watchedDiseaseId = watch("disease_id");
-  const watchedSeverity = watch("severity");
-  const followUpRequired = watch("follow_up_required");
+  const watchedAnimalId = watch('animal_id');
+  const watchedDiseaseId = watch('disease_id');
+  const watchedSeverity = watch('severity');
+  const followUpRequired = watch('follow_up_required');
 
   useEffect(() => {
     fetchAnimals();
@@ -126,16 +143,16 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
 
   useEffect(() => {
     if (animalId) {
-      setValue("animal_id", animalId);
+      setValue('animal_id', animalId);
     }
   }, [animalId, setValue]);
 
   useEffect(() => {
     if (watchedDiseaseId) {
-      const disease = diseases.find((d) => d.id === watchedDiseaseId);
+      const disease = diseases.find(d => d.id === watchedDiseaseId);
       setSelectedDisease(disease || null);
       if (disease) {
-        setValue("symptoms_observed", disease.symptoms.slice(0, 3));
+        setValue('symptoms_observed', disease.symptoms.slice(0, 3));
       }
     }
   }, [watchedDiseaseId, diseases, setValue]);
@@ -148,76 +165,78 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
 
   const fetchAnimals = async () => {
     try {
-      const response = await fetch("/api/animals");
+      const response = await fetch('/api/animals');
       const data = await response.json();
       if (data.success) {
         setAnimals(data.data);
       }
     } catch (error) {
-      console.error("Error fetching animals:", error);
+      console.error('Error fetching animals:', error);
     }
   };
 
   const fetchDiseases = async () => {
     try {
-      const response = await fetch("/api/diseases");
+      const response = await fetch('/api/diseases');
       const data = await response.json();
       if (data.success) {
         setDiseases(data.data);
       }
     } catch (error) {
-      console.error("Error fetching diseases:", error);
+      console.error('Error fetching diseases:', error);
     }
   };
 
   const fetchMedicines = async () => {
     try {
-      const response = await fetch("/api/medicines?available_only=true");
+      const response = await fetch('/api/medicines?available_only=true');
       const data = await response.json();
       if (data.success) {
         setMedicines(data.data);
       }
     } catch (error) {
-      console.error("Error fetching medicines:", error);
+      console.error('Error fetching medicines:', error);
     }
   };
 
   const fetchProtocols = async () => {
     if (!watchedDiseaseId || !watchedSeverity) return;
-    
+
     try {
-      const response = await fetch(`/api/treatment-protocols?disease_id=${watchedDiseaseId}&severity=${watchedSeverity}`);
+      const response = await fetch(
+        `/api/treatment-protocols?disease_id=${watchedDiseaseId}&severity=${watchedSeverity}`
+      );
       const data = await response.json();
       if (data.success) {
         setProtocols(data.data);
       }
     } catch (error) {
-      console.error("Error fetching protocols:", error);
+      console.error('Error fetching protocols:', error);
     }
   };
 
   const handleSymptomToggle = (symptom: string) => {
-    const currentSymptoms = getValues("symptoms_observed") || [];
+    const currentSymptoms = getValues('symptoms_observed') || [];
     const newSymptoms = currentSymptoms.includes(symptom)
-      ? currentSymptoms.filter((s) => s !== symptom)
+      ? currentSymptoms.filter(s => s !== symptom)
       : [...currentSymptoms, symptom];
-    setValue("symptoms_observed", newSymptoms);
+    setValue('symptoms_observed', newSymptoms);
   };
 
   const handleAddCustomSymptom = () => {
     if (customSymptoms.trim()) {
-      const currentSymptoms = getValues("symptoms_observed") || [];
-      setValue("symptoms_observed", [...currentSymptoms, customSymptoms.trim()]);
-      setCustomSymptoms("");
+      const currentSymptoms = getValues('symptoms_observed') || [];
+      setValue('symptoms_observed', [...currentSymptoms, customSymptoms.trim()]);
+      setCustomSymptoms('');
     }
   };
 
   const addMedicine = () => {
     const newMedicine = {
-      medicine_id: "",
-      dosage: "",
-      frequency: "",
-      duration: "",
+      medicine_id: '',
+      dosage: '',
+      frequency: '',
+      duration: '',
     };
     setMedicinesList([...medicinesList, newMedicine]);
   };
@@ -226,19 +245,19 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
     const updated = [...medicinesList];
     updated[index] = { ...updated[index], [field]: value };
     setMedicinesList(updated);
-    setValue("medicines_given", updated);
+    setValue('medicines_given', updated);
   };
 
   const removeMedicine = (index: number) => {
     const updated = medicinesList.filter((_, i) => i !== index);
     setMedicinesList(updated);
-    setValue("medicines_given", updated);
+    setValue('medicines_given', updated);
   };
 
   const onSubmit = async (data: TreatmentFormData) => {
     try {
       setLoading(true);
-      
+
       const payload = {
         ...data,
         diagnosis_date: data.diagnosis_date.toISOString(),
@@ -247,10 +266,10 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
         next_follow_up_date: data.next_follow_up_date?.toISOString(),
       };
 
-      const response = await fetch("/api/animal-treatments", {
-        method: "POST",
+      const response = await fetch('/api/animal-treatments', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       });
@@ -258,86 +277,85 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
       const result = await response.json();
 
       if (result.success) {
-        toast.success("Treatment recorded successfully");
+        toast.success('Treatment recorded successfully');
         reset();
         setMedicinesList([]);
         setSelectedDisease(null);
         if (onSuccess) onSuccess();
       } else {
-        toast.error(result.error || "Failed to record treatment");
+        toast.error(result.error || 'Failed to record treatment');
       }
     } catch (error) {
-      console.error("Error submitting treatment:", error);
-      toast.error("Error recording treatment");
+      console.error('Error submitting treatment:', error);
+      toast.error('Error recording treatment');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Stethoscope className="h-5 w-5" />
+          <CardTitle className='flex items-center gap-2'>
+            <Stethoscope className='h-5 w-5' />
             Record Animal Treatment
           </CardTitle>
-          <CardDescription>
-            Record diagnosis and treatment details for the animal
-          </CardDescription>
+          <CardDescription>Record diagnosis and treatment details for the animal</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit as any)} className='space-y-6'>
             {/* Animal Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div>
-                <Label htmlFor="animal_id">Animal *</Label>
+                <Label htmlFor='animal_id'>Animal *</Label>
                 <Select
                   value={watchedAnimalId}
-                  onValueChange={(value) => setValue("animal_id", value)}
+                  onValueChange={value => setValue('animal_id', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select an animal" />
+                    <SelectValue placeholder='Select an animal' />
                   </SelectTrigger>
                   <SelectContent>
-                    {animals.map((animal) => (
+                    {animals.map(animal => (
                       <SelectItem key={animal.id} value={animal.id}>
-                        {animal.tagId} - {animal.name || "Unnamed"} ({animal.species} - {animal.breed})
+                        {animal.tagId} - {animal.name || 'Unnamed'} ({animal.species} -{' '}
+                        {animal.breed})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {errors.animal_id && (
-                  <p className="text-sm text-red-500 mt-1">{errors.animal_id.message}</p>
+                  <p className='mt-1 text-sm text-red-500'>{errors.animal_id.message}</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="diagnosed_by">Diagnosed By *</Label>
+                <Label htmlFor='diagnosed_by'>Diagnosed By *</Label>
                 <Input
-                  id="diagnosed_by"
-                  {...register("diagnosed_by")}
-                  placeholder="Veterinarian name"
+                  id='diagnosed_by'
+                  {...register('diagnosed_by')}
+                  placeholder='Veterinarian name'
                 />
                 {errors.diagnosed_by && (
-                  <p className="text-sm text-red-500 mt-1">{errors.diagnosed_by.message}</p>
+                  <p className='mt-1 text-sm text-red-500'>{errors.diagnosed_by.message}</p>
                 )}
               </div>
             </div>
 
             {/* Disease Selection */}
-            <div className="space-y-4">
+            <div className='space-y-4'>
               <div>
-                <Label htmlFor="disease_id">Disease (if known)</Label>
+                <Label htmlFor='disease_id'>Disease (if known)</Label>
                 <Select
                   value={watchedDiseaseId}
-                  onValueChange={(value) => setValue("disease_id", value)}
+                  onValueChange={value => setValue('disease_id', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select or search disease" />
+                    <SelectValue placeholder='Select or search disease' />
                   </SelectTrigger>
                   <SelectContent>
-                    {diseases.map((disease) => (
+                    {diseases.map(disease => (
                       <SelectItem key={disease.id} value={disease.id}>
                         {disease.name}
                       </SelectItem>
@@ -348,44 +366,44 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
 
               {!watchedDiseaseId && (
                 <div>
-                  <Label htmlFor="condition_name">Condition Name</Label>
+                  <Label htmlFor='condition_name'>Condition Name</Label>
                   <Input
-                    id="condition_name"
-                    {...register("condition_name")}
-                    placeholder="Describe the condition"
+                    id='condition_name'
+                    {...register('condition_name')}
+                    placeholder='Describe the condition'
                   />
                 </div>
               )}
             </div>
 
             {/* Symptoms */}
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <Label>Symptoms Observed</Label>
               {selectedDisease && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {selectedDisease.symptoms.map((symptom) => (
-                    <div key={symptom} className="flex items-center space-x-2">
+                <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
+                  {selectedDisease.symptoms.map(symptom => (
+                    <div key={symptom} className='flex items-center space-x-2'>
                       <Checkbox
                         id={`symptom-${symptom}`}
-                        checked={getValues("symptoms_observed")?.includes(symptom)}
+                        checked={getValues('symptoms_observed')?.includes(symptom)}
                         onCheckedChange={() => handleSymptomToggle(symptom)}
                       />
-                      <Label htmlFor={`symptom-${symptom}`} className="text-sm">
+                      <Label htmlFor={`symptom-${symptom}`} className='text-sm'>
                         {symptom}
                       </Label>
                     </div>
                   ))}
                 </div>
               )}
-              
-              <div className="flex gap-2">
+
+              <div className='flex gap-2'>
                 <Input
-                  placeholder="Add custom symptom"
+                  placeholder='Add custom symptom'
                   value={customSymptoms}
-                  onChange={(e) => setCustomSymptoms(e.target.value)}
+                  onChange={e => setCustomSymptoms(e.target.value)}
                 />
-                <Button type="button" onClick={handleAddCustomSymptom}>
-                  <Plus className="h-4 w-4" />
+                <Button type='button' onClick={handleAddCustomSymptom}>
+                  <Plus className='h-4 w-4' />
                 </Button>
               </div>
             </div>
@@ -393,31 +411,31 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
             <Separator />
 
             {/* Diagnosis Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <div>
                 <Label>Diagnosis Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
+                      variant='outline'
                       className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !watch("diagnosis_date") && "text-muted-foreground"
+                        'w-full justify-start text-left font-normal',
+                        !watch('diagnosis_date') && 'text-muted-foreground'
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {watch("diagnosis_date") ? (
-                        format(watch("diagnosis_date"), "PPP")
+                      <CalendarIcon className='mr-2 h-4 w-4' />
+                      {watch('diagnosis_date') ? (
+                        format(watch('diagnosis_date'), 'PPP')
                       ) : (
                         <span>Pick a date</span>
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className='w-auto p-0'>
                     <Calendar
-                      mode="single"
-                      selected={watch("diagnosis_date")}
-                      onSelect={(date) => date && setValue("diagnosis_date", date)}
+                      mode='single'
+                      selected={watch('diagnosis_date')}
+                      onSelect={date => date && setValue('diagnosis_date', date)}
                       initialFocus
                     />
                   </PopoverContent>
@@ -425,38 +443,38 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
               </div>
 
               <div>
-                <Label htmlFor="diagnosis_method">Diagnosis Method</Label>
+                <Label htmlFor='diagnosis_method'>Diagnosis Method</Label>
                 <Select
-                  value={watch("diagnosis_method")}
-                  onValueChange={(value) => setValue("diagnosis_method", value)}
+                  value={watch('diagnosis_method')}
+                  onValueChange={value => setValue('diagnosis_method', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select method" />
+                    <SelectValue placeholder='Select method' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="clinical_exam">Clinical Examination</SelectItem>
-                    <SelectItem value="lab_test">Laboratory Test</SelectItem>
-                    <SelectItem value="ultrasound">Ultrasound</SelectItem>
-                    <SelectItem value="x_ray">X-Ray</SelectItem>
-                    <SelectItem value="necropsy">Necropsy</SelectItem>
+                    <SelectItem value='clinical_exam'>Clinical Examination</SelectItem>
+                    <SelectItem value='lab_test'>Laboratory Test</SelectItem>
+                    <SelectItem value='ultrasound'>Ultrasound</SelectItem>
+                    <SelectItem value='x_ray'>X-Ray</SelectItem>
+                    <SelectItem value='necropsy'>Necropsy</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="severity">Severity</Label>
+                <Label htmlFor='severity'>Severity</Label>
                 <Select
-                  value={watch("severity")}
-                  onValueChange={(value: any) => setValue("severity", value)}
+                  value={watch('severity')}
+                  onValueChange={(value: any) => setValue('severity', value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mild">Mild</SelectItem>
-                    <SelectItem value="moderate">Moderate</SelectItem>
-                    <SelectItem value="severe">Severe</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value='mild'>Mild</SelectItem>
+                    <SelectItem value='moderate'>Moderate</SelectItem>
+                    <SelectItem value='severe'>Severe</SelectItem>
+                    <SelectItem value='critical'>Critical</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -465,16 +483,16 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
             {/* Treatment Protocol */}
             {protocols.length > 0 && (
               <div>
-                <Label htmlFor="treatment_protocol_id">Treatment Protocol</Label>
+                <Label htmlFor='treatment_protocol_id'>Treatment Protocol</Label>
                 <Select
-                  value={watch("treatment_protocol_id")}
-                  onValueChange={(value) => setValue("treatment_protocol_id", value)}
+                  value={watch('treatment_protocol_id')}
+                  onValueChange={value => setValue('treatment_protocol_id', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a protocol" />
+                    <SelectValue placeholder='Select a protocol' />
                   </SelectTrigger>
                   <SelectContent>
-                    {protocols.map((protocol) => (
+                    {protocols.map(protocol => (
                       <SelectItem key={protocol.id} value={protocol.id}>
                         {protocol.name}
                       </SelectItem>
@@ -487,31 +505,31 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
             <Separator />
 
             {/* Treatment Dates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div>
                 <Label>Treatment Start Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
+                      variant='outline'
                       className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !watch("treatment_start_date") && "text-muted-foreground"
+                        'w-full justify-start text-left font-normal',
+                        !watch('treatment_start_date') && 'text-muted-foreground'
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {watch("treatment_start_date") ? (
-                        format(watch("treatment_start_date"), "PPP")
+                      <CalendarIcon className='mr-2 h-4 w-4' />
+                      {watch('treatment_start_date') ? (
+                        format(watch('treatment_start_date'), 'PPP')
                       ) : (
                         <span>Pick a date</span>
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className='w-auto p-0'>
                     <Calendar
-                      mode="single"
-                      selected={watch("treatment_start_date")}
-                      onSelect={(date) => date && setValue("treatment_start_date", date)}
+                      mode='single'
+                      selected={watch('treatment_start_date')}
+                      onSelect={date => date && setValue('treatment_start_date', date)}
                       initialFocus
                     />
                   </PopoverContent>
@@ -523,25 +541,25 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
+                      variant='outline'
                       className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !watch("treatment_end_date") && "text-muted-foreground"
+                        'w-full justify-start text-left font-normal',
+                        !watch('treatment_end_date') && 'text-muted-foreground'
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {watch("treatment_end_date") ? (
-                        format(watch("treatment_end_date"), "PPP")
+                      <CalendarIcon className='mr-2 h-4 w-4' />
+                      {watch('treatment_end_date') ? (
+                        format(watch('treatment_end_date')!, 'PPP')
                       ) : (
                         <span>Pick a date</span>
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className='w-auto p-0'>
                     <Calendar
-                      mode="single"
-                      selected={watch("treatment_end_date")}
-                      onSelect={(date) => date && setValue("treatment_end_date", date)}
+                      mode='single'
+                      selected={watch('treatment_end_date')}
+                      onSelect={date => date && setValue('treatment_end_date', date)}
                       initialFocus
                     />
                   </PopoverContent>
@@ -550,26 +568,26 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
             </div>
 
             {/* Medicines */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between'>
                 <Label>Medicines Administered</Label>
-                <Button type="button" onClick={addMedicine} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button type='button' onClick={addMedicine} size='sm'>
+                  <Plus className='mr-2 h-4 w-4' />
                   Add Medicine
                 </Button>
               </div>
 
               {medicinesList.map((medicine, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                <div key={index} className='grid grid-cols-1 gap-2 md:grid-cols-5'>
                   <Select
                     value={medicine.medicine_id}
-                    onValueChange={(value) => updateMedicine(index, "medicine_id", value)}
+                    onValueChange={value => updateMedicine(index, 'medicine_id', value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Medicine" />
+                      <SelectValue placeholder='Medicine' />
                     </SelectTrigger>
                     <SelectContent>
-                      {medicines.map((med) => (
+                      {medicines.map(med => (
                         <SelectItem key={med.id} value={med.id}>
                           {med.name}
                         </SelectItem>
@@ -578,30 +596,30 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
                   </Select>
 
                   <Input
-                    placeholder="Dosage"
+                    placeholder='Dosage'
                     value={medicine.dosage}
-                    onChange={(e) => updateMedicine(index, "dosage", e.target.value)}
+                    onChange={e => updateMedicine(index, 'dosage', e.target.value)}
                   />
 
                   <Input
-                    placeholder="Frequency"
+                    placeholder='Frequency'
                     value={medicine.frequency}
-                    onChange={(e) => updateMedicine(index, "frequency", e.target.value)}
+                    onChange={e => updateMedicine(index, 'frequency', e.target.value)}
                   />
 
                   <Input
-                    placeholder="Duration"
+                    placeholder='Duration'
                     value={medicine.duration}
-                    onChange={(e) => updateMedicine(index, "duration", e.target.value)}
+                    onChange={e => updateMedicine(index, 'duration', e.target.value)}
                   />
 
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
+                    type='button'
+                    variant='outline'
+                    size='icon'
                     onClick={() => removeMedicine(index)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className='h-4 w-4' />
                   </Button>
                 </div>
               ))}
@@ -610,33 +628,33 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
             <Separator />
 
             {/* Status and Follow-up */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <div>
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor='status'>Status</Label>
                 <Select
-                  value={watch("status")}
-                  onValueChange={(value: any) => setValue("status", value)}
+                  value={watch('status')}
+                  onValueChange={(value: any) => setValue('status', value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="in_treatment">In Treatment</SelectItem>
-                    <SelectItem value="recovering">Recovering</SelectItem>
-                    <SelectItem value="recovered">Recovered</SelectItem>
-                    <SelectItem value="chronic">Chronic</SelectItem>
-                    <SelectItem value="deceased">Deceased</SelectItem>
+                    <SelectItem value='in_treatment'>In Treatment</SelectItem>
+                    <SelectItem value='recovering'>Recovering</SelectItem>
+                    <SelectItem value='recovered'>Recovered</SelectItem>
+                    <SelectItem value='chronic'>Chronic</SelectItem>
+                    <SelectItem value='deceased'>Deceased</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2 pt-6">
+              <div className='flex items-center space-x-2 pt-6'>
                 <Checkbox
-                  id="follow_up_required"
+                  id='follow_up_required'
                   checked={followUpRequired}
-                  onCheckedChange={(checked) => setValue("follow_up_required", checked as boolean)}
+                  onCheckedChange={checked => setValue('follow_up_required', checked as boolean)}
                 />
-                <Label htmlFor="follow_up_required">Follow-up Required</Label>
+                <Label htmlFor='follow_up_required'>Follow-up Required</Label>
               </div>
 
               {followUpRequired && (
@@ -645,25 +663,25 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
-                        variant="outline"
+                        variant='outline'
                         className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !watch("next_follow_up_date") && "text-muted-foreground"
+                          'w-full justify-start text-left font-normal',
+                          !watch('next_follow_up_date') && 'text-muted-foreground'
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {watch("next_follow_up_date") ? (
-                          format(watch("next_follow_up_date"), "PPP")
+                        <CalendarIcon className='mr-2 h-4 w-4' />
+                        {watch('next_follow_up_date') ? (
+                          format(watch('next_follow_up_date')!, 'PPP')
                         ) : (
                           <span>Pick a date</span>
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className='w-auto p-0'>
                       <Calendar
-                        mode="single"
-                        selected={watch("next_follow_up_date")}
-                        onSelect={(date) => date && setValue("next_follow_up_date", date)}
+                        mode='single'
+                        selected={watch('next_follow_up_date')}
+                        onSelect={date => date && setValue('next_follow_up_date', date)}
                         initialFocus
                       />
                     </PopoverContent>
@@ -674,24 +692,24 @@ export function AnimalTreatmentForm({ animalId, onSuccess, onCancel }: AnimalTre
 
             {/* Notes */}
             <div>
-              <Label htmlFor="notes">Additional Notes</Label>
+              <Label htmlFor='notes'>Additional Notes</Label>
               <Textarea
-                id="notes"
-                {...register("notes")}
-                placeholder="Any additional notes about the treatment..."
+                id='notes'
+                {...register('notes')}
+                placeholder='Any additional notes about the treatment...'
                 rows={3}
               />
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex justify-end gap-2">
+            <div className='flex justify-end gap-2'>
               {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button type='button' variant='outline' onClick={onCancel}>
                   Cancel
                 </Button>
               )}
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Record Treatment"}
+              <Button type='submit' disabled={loading}>
+                {loading ? 'Saving...' : 'Record Treatment'}
               </Button>
             </div>
           </form>

@@ -104,12 +104,12 @@ class ProfessionalWeatherService {
    */
   async getCurrentWeatherByCoords(lat: number, lon: number): Promise<OpenWeatherResponse> {
     const url = `${this.baseUrl}/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Weather API error: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
@@ -118,12 +118,12 @@ class ProfessionalWeatherService {
    */
   async getForecast(lat: number, lon: number): Promise<any> {
     const url = `${this.baseUrl}/forecast?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Weather API error: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
@@ -132,19 +132,23 @@ class ProfessionalWeatherService {
    */
   async getCurrentWeather(city: string): Promise<OpenWeatherResponse> {
     const url = `${this.baseUrl}/weather?q=${city}&appid=${this.apiKey}&units=metric`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Weather API error: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
   /**
    * Transform OpenWeather data to our database format
    */
-  transformWeatherData(data: OpenWeatherResponse, tenantId: string, farmLocation?: FarmLocation): Omit<WeatherData, 'id' | 'created_at' | 'updated_at'> {
+  transformWeatherData(
+    data: OpenWeatherResponse,
+    tenantId: string,
+    farmLocation?: FarmLocation
+  ): Omit<WeatherData, 'id' | 'created_at' | 'updated_at'> {
     return {
       tenant_id: tenantId,
       city_name: farmLocation?.city || data.name,
@@ -169,14 +173,17 @@ class ProfessionalWeatherService {
       snow_3h: data.snow?.['3h'],
       sunrise: new Date(data.sys.sunrise * 1000).toISOString(),
       sunset: new Date(data.sys.sunset * 1000).toISOString(),
-      data_timestamp: new Date(data.dt * 1000).toISOString()
+      data_timestamp: new Date(data.dt * 1000).toISOString(),
     };
   }
 
   /**
    * Get weather for a specific tenant based on their farm location
    */
-  async getTenantWeather(tenantId: string, farmLocation: FarmLocation): Promise<OpenWeatherResponse> {
+  async getTenantWeather(
+    tenantId: string,
+    farmLocation: FarmLocation
+  ): Promise<OpenWeatherResponse> {
     try {
       // First try to get weather by exact coordinates
       return await this.getCurrentWeatherByCoords(farmLocation.latitude, farmLocation.longitude);
@@ -190,22 +197,24 @@ class ProfessionalWeatherService {
   /**
    * Get weather for multiple tenants
    */
-  async getMultipleTenantsWeather(tenants: Array<{ id: string; farm_location: FarmLocation }>): Promise<Array<{ tenantId: string; weather: OpenWeatherResponse; location: FarmLocation }>> {
+  async getMultipleTenantsWeather(
+    tenants: Array<{ id: string; farm_location: FarmLocation }>
+  ): Promise<Array<{ tenantId: string; weather: OpenWeatherResponse; location: FarmLocation }>> {
     const results = [];
-    
+
     for (const tenant of tenants) {
       try {
         const weather = await this.getTenantWeather(tenant.id, tenant.farm_location);
-        results.push({ 
-          tenantId: tenant.id, 
-          weather, 
-          location: tenant.farm_location 
+        results.push({
+          tenantId: tenant.id,
+          weather,
+          location: tenant.farm_location,
         });
       } catch (error) {
         console.error(`Failed to fetch weather for tenant ${tenant.id}:`, error);
       }
     }
-    
+
     return results;
   }
 
@@ -214,7 +223,7 @@ class ProfessionalWeatherService {
    */
   getFarmingRecommendations(weather: WeatherData): string[] {
     const recommendations: string[] = [];
-    
+
     // Temperature-based recommendations
     if (weather.temperature > 35) {
       recommendations.push('🌡️ Extreme heat! Provide shade and cool water immediately');
@@ -229,7 +238,7 @@ class ProfessionalWeatherService {
       recommendations.push('🌾 Increase feed by 10-20% for energy');
       recommendations.push('🔥 Check water heaters to prevent freezing');
     }
-    
+
     // Rain-based recommendations
     if (weather.rain_1h && weather.rain_1h > 10) {
       recommendations.push('🌧️ Heavy rain! Move all animals to covered areas');
@@ -239,7 +248,7 @@ class ProfessionalWeatherService {
       recommendations.push('🌧️ Moderate rain! Keep animals in covered areas');
       recommendations.push('📅 Postpone grazing until rain stops');
     }
-    
+
     // Wind-based recommendations
     if (weather.wind_speed > 40) {
       recommendations.push('💨 Strong winds! Secure all loose equipment');
@@ -248,7 +257,7 @@ class ProfessionalWeatherService {
     } else if (weather.wind_speed > 25) {
       recommendations.push('💨 Windy conditions! Secure outdoor items');
     }
-    
+
     // Humidity-based recommendations
     if (weather.humidity > 85) {
       recommendations.push('💦 Very high humidity! Risk of heat stress');
@@ -258,7 +267,7 @@ class ProfessionalWeatherService {
     } else if (weather.humidity > 70) {
       recommendations.push('💦 High humidity! Ensure good ventilation');
     }
-    
+
     // Weather condition recommendations
     switch (weather.weather_main.toLowerCase()) {
       case 'rain':
@@ -296,13 +305,13 @@ class ProfessionalWeatherService {
         recommendations.push('💧 Lightly water dusty areas');
         break;
     }
-    
+
     // Time-based recommendations
     const currentHour = new Date().getHours();
     if (currentHour >= 10 && currentHour <= 15 && weather.temperature > 30) {
       recommendations.push('🕐 Peak heat hours! Maximum supervision required');
     }
-    
+
     return recommendations;
   }
 
@@ -314,26 +323,28 @@ class ProfessionalWeatherService {
     if (weather.temperature > 40 || weather.temperature < 5) return 'extreme';
     if (weather.wind_speed > 50) return 'extreme';
     if (weather.rain_1h && weather.rain_1h > 20) return 'extreme';
-    
+
     // High conditions
     if (weather.temperature > 35 || weather.temperature < 10) return 'high';
     if (weather.wind_speed > 35) return 'high';
     if (weather.rain_1h && weather.rain_1h > 10) return 'high';
     if (weather.humidity > 85 && weather.temperature > 30) return 'high';
-    
+
     // Moderate conditions
     if (weather.temperature > 30 || weather.temperature < 15) return 'moderate';
     if (weather.wind_speed > 25) return 'moderate';
     if (weather.rain_1h && weather.rain_1h > 2) return 'moderate';
     if (weather.humidity > 75) return 'moderate';
-    
+
     return 'normal';
   }
 
   /**
    * Save weather data to database
    */
-  async saveWeatherData(data: Omit<WeatherData, 'id' | 'created_at' | 'updated_at'>): Promise<WeatherData> {
+  async saveWeatherData(
+    data: Omit<WeatherData, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<WeatherData> {
     const response = await fetch('/api/weather', {
       method: 'POST',
       headers: {
@@ -341,11 +352,11 @@ class ProfessionalWeatherService {
       },
       body: JSON.stringify(data),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to save weather data');
     }
-    
+
     return response.json();
   }
 
@@ -354,17 +365,19 @@ class ProfessionalWeatherService {
    */
   async getWeatherData(tenantId: string): Promise<WeatherData[]> {
     const response = await fetch('/api/weather?limit=10');
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch weather data');
     }
-    
+
     const result = await response.json();
     return result.data || [];
   }
 }
 
 // Create singleton instance
-export const professionalWeatherService = new ProfessionalWeatherService(process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || '');
+export const professionalWeatherService = new ProfessionalWeatherService(
+  process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || ''
+);
 
 export default professionalWeatherService;

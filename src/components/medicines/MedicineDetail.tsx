@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-  Pill, 
-  Package, 
-  Shield, 
-  Clock, 
-  AlertTriangle, 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Pill,
+  Package,
+  Shield,
+  Clock,
+  AlertTriangle,
   Thermometer,
   DollarSign,
   Star,
@@ -19,8 +19,8 @@ import {
   Syringe,
   Baby,
   Milk,
-  Steak
-} from "lucide-react";
+  Beef,
+} from 'lucide-react';
 
 interface Medicine {
   id: string;
@@ -68,114 +68,110 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`h-4 w-4 ${
-          i < rating ? "text-yellow-500 fill-current" : "text-gray-300"
-        }`}
+        className={`h-4 w-4 ${i < rating ? 'fill-current text-yellow-500' : 'text-gray-300'}`}
       />
     ));
   };
 
   const getSafetyIcon = (safe?: boolean) => {
     if (safe === true) {
-      return <Shield className="h-4 w-4 text-green-500" />;
+      return <Shield className='h-4 w-4 text-green-500' />;
     } else if (safe === false) {
-      return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      return <AlertTriangle className='h-4 w-4 text-red-500' />;
     }
-    return <Info className="h-4 w-4 text-gray-400" />;
+    return <Info className='h-4 w-4 text-gray-400' />;
   };
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-start justify-between">
+      <div className='space-y-2'>
+        <div className='flex items-start justify-between'>
           <div>
-            <h2 className="text-2xl font-bold">{medicine.name}</h2>
+            <h2 className='text-2xl font-bold'>{medicine.name}</h2>
             {medicine.genericName && (
-              <p className="text-lg text-gray-600">Generic: {medicine.genericName}</p>
+              <p className='text-lg text-gray-600'>Generic: {medicine.genericName}</p>
             )}
             {medicine.brandName && (
-              <p className="text-sm text-gray-500">Brand: {medicine.brandName}</p>
+              <p className='text-sm text-gray-500'>Brand: {medicine.brandName}</p>
             )}
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className='flex flex-col items-end gap-2'>
             {medicine.prescriptionRequired && (
-              <Badge variant="destructive">Prescription Required</Badge>
+              <Badge variant='destructive'>Prescription Required</Badge>
             )}
-            <Badge variant={medicine.availableInPakistan ? "default" : "secondary"}>
-              {medicine.availableInPakistan ? "Available in Pakistan" : "Not Available"}
+            <Badge variant={medicine.availableInPakistan ? 'default' : 'secondary'}>
+              {medicine.availableInPakistan ? 'Available in Pakistan' : 'Not Available'}
             </Badge>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline" className="capitalize">
+        <div className='flex flex-wrap gap-2'>
+          <Badge variant='outline' className='capitalize'>
             {medicine.category}
           </Badge>
-          <Badge variant="outline" className="capitalize">
+          <Badge variant='outline' className='capitalize'>
             {medicine.form}
           </Badge>
-          <Badge variant="outline" className="capitalize">
+          <Badge variant='outline' className='capitalize'>
             {medicine.route}
           </Badge>
-          {medicine.strength && (
-            <Badge variant="secondary">{medicine.strength}</Badge>
-          )}
+          {medicine.strength && <Badge variant='secondary'>{medicine.strength}</Badge>}
         </div>
       </div>
 
       {/* Rating and Popularity */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-4">
+      <div className='flex items-center justify-between rounded-lg bg-gray-50 p-4'>
+        <div className='flex items-center gap-4'>
           <div>
-            <p className="text-sm text-gray-500">Effectiveness Rating</p>
-            <div className="flex items-center gap-2">
-              <div className="flex">{renderStars(Math.round(medicine.effectivenessRating))}</div>
-              <span className="font-medium">{medicine.effectivenessRating}/5.0</span>
+            <p className='text-sm text-gray-500'>Effectiveness Rating</p>
+            <div className='flex items-center gap-2'>
+              <div className='flex'>{renderStars(Math.round(medicine.effectivenessRating))}</div>
+              <span className='font-medium'>{medicine.effectivenessRating}/5.0</span>
             </div>
           </div>
-          <div className="h-8 w-px bg-gray-300"></div>
+          <div className='h-8 w-px bg-gray-300'></div>
           <div>
-            <p className="text-sm text-gray-500">Popularity</p>
-            <p className="font-medium">{medicine.popularityScore}%</p>
+            <p className='text-sm text-gray-500'>Popularity</p>
+            <p className='font-medium'>{medicine.popularityScore}%</p>
           </div>
         </div>
         {medicine.priceRangePkr && (
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">PKR {medicine.priceRangePkr}</span>
+          <div className='flex items-center gap-2'>
+            <DollarSign className='h-4 w-4 text-gray-500' />
+            <span className='font-medium'>PKR {medicine.priceRangePkr}</span>
           </div>
         )}
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="dosage">Dosage</TabsTrigger>
-          <TabsTrigger value="safety">Safety</TabsTrigger>
-          <TabsTrigger value="storage">Storage</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+      <Tabs defaultValue='overview' className='w-full'>
+        <TabsList className='grid w-full grid-cols-5'>
+          <TabsTrigger value='overview'>Overview</TabsTrigger>
+          <TabsTrigger value='dosage'>Dosage</TabsTrigger>
+          <TabsTrigger value='safety'>Safety</TabsTrigger>
+          <TabsTrigger value='storage'>Storage</TabsTrigger>
+          <TabsTrigger value='inventory'>Inventory</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TabsContent value='overview' className='space-y-4'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Product Information</CardTitle>
+                <CardTitle className='text-lg'>Product Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className='space-y-3'>
                 {medicine.manufacturer && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Manufacturer</p>
+                    <p className='text-sm font-medium text-gray-500'>Manufacturer</p>
                     <p>{medicine.manufacturer}</p>
                   </div>
                 )}
                 {medicine.packSizes && medicine.packSizes.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Available Pack Sizes</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                    <p className='text-sm font-medium text-gray-500'>Available Pack Sizes</p>
+                    <div className='mt-1 flex flex-wrap gap-1'>
                       {medicine.packSizes.map((size, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} variant='outline' className='text-xs'>
                           {size}
                         </Badge>
                       ))}
@@ -184,7 +180,7 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
                 )}
                 {medicine.shelfLifeMonths && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Shelf Life</p>
+                    <p className='text-sm font-medium text-gray-500'>Shelf Life</p>
                     <p>{medicine.shelfLifeMonths} months</p>
                   </div>
                 )}
@@ -193,24 +189,24 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Usage Information</CardTitle>
+                <CardTitle className='text-lg'>Usage Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className='space-y-3'>
                 {medicine.dosageInstructions && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Dosage Instructions</p>
+                    <p className='text-sm font-medium text-gray-500'>Dosage Instructions</p>
                     <p>{medicine.dosageInstructions}</p>
                   </div>
                 )}
                 {medicine.frequency && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Frequency</p>
+                    <p className='text-sm font-medium text-gray-500'>Frequency</p>
                     <p>{medicine.frequency}</p>
                   </div>
                 )}
                 {medicine.durationDays && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Duration</p>
+                    <p className='text-sm font-medium text-gray-500'>Duration</p>
                     <p>{medicine.durationDays} days</p>
                   </div>
                 )}
@@ -221,44 +217,47 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
           {medicine.notes && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Additional Notes</CardTitle>
+                <CardTitle className='text-lg'>Additional Notes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{medicine.notes}</p>
+                <p className='text-sm'>{medicine.notes}</p>
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
         {/* Dosage Tab */}
-        <TabsContent value="dosage" className="space-y-4">
+        <TabsContent value='dosage' className='space-y-4'>
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Dosage Information</CardTitle>
-              <CardDescription>
-                Recommended dosage by species
-              </CardDescription>
+              <CardTitle className='text-lg'>Dosage Information</CardTitle>
+              <CardDescription>Recommended dosage by species</CardDescription>
             </CardHeader>
             <CardContent>
               {medicine.dosagePerKg && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-500">General Dosage</p>
-                  <p className="text-lg">{medicine.dosagePerKg}</p>
+                <div className='mb-4'>
+                  <p className='text-sm font-medium text-gray-500'>General Dosage</p>
+                  <p className='text-lg'>{medicine.dosagePerKg}</p>
                 </div>
               )}
-              
+
               {medicine.speciesDosage && Object.keys(medicine.speciesDosage).length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-500">Species-Specific Dosage</p>
-                  {Object.entries(medicine.speciesDosage).map(([species, dosage]: [string, any]) => (
-                    <div key={species} className="flex items-center justify-between p-3 border rounded-lg">
-                      <span className="font-medium capitalize">{species}</span>
-                      <div className="text-right">
-                        <p className="text-sm">{dosage.dose}</p>
-                        <p className="text-xs text-gray-500">{dosage.route}</p>
+                <div className='space-y-3'>
+                  <p className='text-sm font-medium text-gray-500'>Species-Specific Dosage</p>
+                  {Object.entries(medicine.speciesDosage).map(
+                    ([species, dosage]: [string, any]) => (
+                      <div
+                        key={species}
+                        className='flex items-center justify-between rounded-lg border p-3'
+                      >
+                        <span className='font-medium capitalize'>{species}</span>
+                        <div className='text-right'>
+                          <p className='text-sm'>{dosage.dose}</p>
+                          <p className='text-xs text-gray-500'>{dosage.route}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               )}
             </CardContent>
@@ -266,73 +265,81 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
         </TabsContent>
 
         {/* Safety Tab */}
-        <TabsContent value="safety" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TabsContent value='safety' className='space-y-4'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
+                <CardTitle className='flex items-center gap-2 text-lg'>
+                  <Shield className='h-5 w-5' />
                   Safety Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+              <CardContent className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
                     {getSafetyIcon(medicine.pregnancySafe)}
-                    <span className="text-sm font-medium">Pregnancy Safe</span>
+                    <span className='text-sm font-medium'>Pregnancy Safe</span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    {medicine.pregnancySafe === true ? "Yes" : medicine.pregnancySafe === false ? "No" : "Unknown"}
-                  </span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getSafetyIcon(medicine.lactationSafe)}
-                    <span className="text-sm font-medium">Lactation Safe</span>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    {medicine.lactationSafe === true ? "Yes" : medicine.lactationSafe === false ? "No" : "Unknown"}
+                  <span className='text-sm text-gray-500'>
+                    {medicine.pregnancySafe === true
+                      ? 'Yes'
+                      : medicine.pregnancySafe === false
+                        ? 'No'
+                        : 'Unknown'}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Milk className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-medium">Milk Withdrawal</span>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    {getSafetyIcon(medicine.lactationSafe)}
+                    <span className='text-sm font-medium'>Lactation Safe</span>
+                  </div>
+                  <span className='text-sm text-gray-500'>
+                    {medicine.lactationSafe === true
+                      ? 'Yes'
+                      : medicine.lactationSafe === false
+                        ? 'No'
+                        : 'Unknown'}
+                  </span>
                 </div>
-                <p className="text-sm">
-                  {medicine.withdrawalPeriodMilk !== undefined 
-                    ? `${medicine.withdrawalPeriodMilk} days` 
-                    : "No data available"}
+
+                <div className='flex items-center gap-2'>
+                  <Milk className='h-4 w-4 text-blue-500' />
+                  <span className='text-sm font-medium'>Milk Withdrawal</span>
+                </div>
+                <p className='text-sm'>
+                  {medicine.withdrawalPeriodMilk !== undefined
+                    ? `${medicine.withdrawalPeriodMilk} days`
+                    : 'No data available'}
                 </p>
 
-                <div className="flex items-center gap-2">
-                  <Steak className="h-4 w-4 text-red-500" />
-                  <span className="text-sm font-medium">Meat Withdrawal</span>
+                <div className='flex items-center gap-2'>
+                  <Beef className='h-4 w-4 text-red-500' />
+                  <span className='text-sm font-medium'>Meat Withdrawal</span>
                 </div>
-                <p className="text-sm">
-                  {medicine.withdrawalPeriodMeat !== undefined 
-                    ? `${medicine.withdrawalPeriodMeat} days` 
-                    : "No data available"}
+                <p className='text-sm'>
+                  {medicine.withdrawalPeriodMeat !== undefined
+                    ? `${medicine.withdrawalPeriodMeat} days`
+                    : 'No data available'}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5" />
+                <CardTitle className='flex items-center gap-2 text-lg'>
+                  <AlertTriangle className='h-5 w-5' />
                   Warnings & Precautions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className='space-y-4'>
                 {medicine.contraindications && medicine.contraindications.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500 mb-2">Contraindications</p>
-                    <ul className="space-y-1">
+                    <p className='mb-2 text-sm font-medium text-gray-500'>Contraindications</p>
+                    <ul className='space-y-1'>
                       {medicine.contraindications.map((contra, index) => (
-                        <li key={index} className="text-sm flex items-start gap-2">
-                          <span className="text-red-500 mt-1">•</span>
+                        <li key={index} className='flex items-start gap-2 text-sm'>
+                          <span className='mt-1 text-red-500'>•</span>
                           <span>{contra}</span>
                         </li>
                       ))}
@@ -342,11 +349,11 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
 
                 {medicine.sideEffects && medicine.sideEffects.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500 mb-2">Side Effects</p>
-                    <ul className="space-y-1">
+                    <p className='mb-2 text-sm font-medium text-gray-500'>Side Effects</p>
+                    <ul className='space-y-1'>
                       {medicine.sideEffects.map((effect, index) => (
-                        <li key={index} className="text-sm flex items-start gap-2">
-                          <span className="text-orange-500 mt-1">•</span>
+                        <li key={index} className='flex items-start gap-2 text-sm'>
+                          <span className='mt-1 text-orange-500'>•</span>
                           <span>{effect}</span>
                         </li>
                       ))}
@@ -356,11 +363,11 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
 
                 {medicine.drugInteractions && medicine.drugInteractions.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500 mb-2">Drug Interactions</p>
-                    <ul className="space-y-1">
+                    <p className='mb-2 text-sm font-medium text-gray-500'>Drug Interactions</p>
+                    <ul className='space-y-1'>
                       {medicine.drugInteractions.map((interaction, index) => (
-                        <li key={index} className="text-sm flex items-start gap-2">
-                          <span className="text-purple-500 mt-1">•</span>
+                        <li key={index} className='flex items-start gap-2 text-sm'>
+                          <span className='mt-1 text-purple-500'>•</span>
                           <span>{interaction}</span>
                         </li>
                       ))}
@@ -373,35 +380,36 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
         </TabsContent>
 
         {/* Storage Tab */}
-        <TabsContent value="storage" className="space-y-4">
+        <TabsContent value='storage' className='space-y-4'>
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2 text-lg'>
+                <Package className='h-5 w-5' />
                 Storage Requirements
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className='space-y-4'>
               {medicine.storageConditions && (
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Storage Conditions</p>
+                  <p className='text-sm font-medium text-gray-500'>Storage Conditions</p>
                   <p>{medicine.storageConditions}</p>
                 </div>
               )}
-              
+
               {medicine.shelfLifeMonths && (
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Shelf Life</p>
+                  <p className='text-sm font-medium text-gray-500'>Shelf Life</p>
                   <p>{medicine.shelfLifeMonths} months from date of manufacture</p>
                 </div>
               )}
 
               <Alert>
-                <Info className="h-4 w-4" />
+                <Info className='h-4 w-4' />
                 <AlertTitle>Storage Tips</AlertTitle>
                 <AlertDescription>
-                  Always store medicines in their original packaging, away from direct sunlight and out of reach of children.
-                  Check expiry dates before use and dispose of expired medicines properly.
+                  Always store medicines in their original packaging, away from direct sunlight and
+                  out of reach of children. Check expiry dates before use and dispose of expired
+                  medicines properly.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -409,32 +417,36 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
         </TabsContent>
 
         {/* Inventory Tab */}
-        <TabsContent value="inventory" className="space-y-4">
+        <TabsContent value='inventory' className='space-y-4'>
           {medicine.inventory && medicine.inventory.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Current Stock</CardTitle>
-                <CardDescription>
-                  Your inventory for this medicine
-                </CardDescription>
+                <CardTitle className='text-lg'>Current Stock</CardTitle>
+                <CardDescription>Your inventory for this medicine</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className='space-y-3'>
                   {medicine.inventory.map((item: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={index}
+                      className='flex items-center justify-between rounded-lg border p-3'
+                    >
                       <div>
-                        <p className="font-medium">Batch: {item.batch_number || "N/A"}</p>
-                        <p className="text-sm text-gray-500">
-                          Quantity: {item.quantity} {item.unit || "units"}
+                        <p className='font-medium'>Batch: {item.batch_number || 'N/A'}</p>
+                        <p className='text-sm text-gray-500'>
+                          Quantity: {item.quantity} {item.unit || 'units'}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Expiry</p>
-                        <p className={`text-sm font-medium ${
-                          new Date(item.expiry_date) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                            ? "text-red-600"
-                            : "text-gray-900"
-                        }`}>
+                      <div className='text-right'>
+                        <p className='text-sm text-gray-500'>Expiry</p>
+                        <p
+                          className={`text-sm font-medium ${
+                            new Date(item.expiry_date) <
+                            new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                              ? 'text-red-600'
+                              : 'text-gray-900'
+                          }`}
+                        >
                           {new Date(item.expiry_date).toLocaleDateString()}
                         </p>
                       </div>
@@ -445,11 +457,13 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
             </Card>
           ) : (
             <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Stock Available</h3>
-                  <p className="text-gray-500 mb-4">This medicine is not currently in your inventory</p>
+              <CardContent className='pt-6'>
+                <div className='py-8 text-center'>
+                  <Package className='mx-auto mb-4 h-12 w-12 text-gray-400' />
+                  <h3 className='mb-2 text-lg font-medium text-gray-900'>No Stock Available</h3>
+                  <p className='mb-4 text-gray-500'>
+                    This medicine is not currently in your inventory
+                  </p>
                   <Button>Add to Inventory</Button>
                 </div>
               </CardContent>
@@ -459,18 +473,19 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
           {medicine.treats_diseases && medicine.treats_diseases.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Treats Diseases</CardTitle>
-                <CardDescription>
-                  Diseases this medicine is used for
-                </CardDescription>
+                <CardTitle className='text-lg'>Treats Diseases</CardTitle>
+                <CardDescription>Diseases this medicine is used for</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {medicine.treats_diseases.map((treatment: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded">
-                      <span className="font-medium">{treatment.disease?.name}</span>
-                      <Badge variant="outline">
-                        {treatment.is_primary_treatment ? "Primary" : "Secondary"}
+                    <div
+                      key={index}
+                      className='flex items-center justify-between rounded border p-2'
+                    >
+                      <span className='font-medium'>{treatment.disease?.name}</span>
+                      <Badge variant='outline'>
+                        {treatment.is_primary_treatment ? 'Primary' : 'Secondary'}
                       </Badge>
                     </div>
                   ))}
@@ -484,13 +499,11 @@ export function MedicineDetail({ medicine, onClose }: MedicineDetailProps) {
       <Separator />
 
       {/* Actions */}
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onClose}>
+      <div className='flex justify-end gap-2'>
+        <Button variant='outline' onClick={onClose}>
           Close
         </Button>
-        <Button>
-          Add to Inventory
-        </Button>
+        <Button>Add to Inventory</Button>
       </div>
     </div>
   );

@@ -3,9 +3,11 @@
 ## Fix 1: Tenant Isolation Security Issue
 
 ### Problem
+
 Several API routes are missing tenant_id filters, causing potential data leaks.
 
 ### Solution
+
 Create a middleware helper that enforces tenant isolation:
 
 ```typescript
@@ -17,31 +19,30 @@ export async function withTenantIsolation<T>(
   queryFn: (tenantId: string) => Promise<T>
 ): Promise<T> {
   const { userId, orgId } = await auth();
-  
+
   if (!userId || !orgId) {
     throw new Error('Unauthorized: No tenant context');
   }
-  
+
   // Ensure orgId is used as tenant_id
   return queryFn(orgId);
 }
 
 // Usage in API routes
 export async function GET(request: NextRequest) {
-  return withTenantIsolation(async (tenantId) => {
+  return withTenantIsolation(async tenantId => {
     const supabase = createClient();
-    const { data } = await supabase
-      .from('animals')
-      .select('*')
-      .eq('tenant_id', tenantId); // Always filtered!
-    
+    const { data } = await supabase.from('animals').select('*').eq('tenant_id', tenantId); // Always filtered!
+
     return successResponse(data);
   });
 }
 ```
 
 ### Apply to All Routes
+
 Update these files immediately:
+
 - `/api/animals/[id]/route.ts`
 - `/api/milk/route.ts`
 - `/api/health/records/route.ts`
@@ -50,11 +51,13 @@ Update these files immediately:
 ## Fix 2: Generate Supabase Types
 
 ### Generate Types
+
 ```bash
 npx supabase gen types typescript --project-id gdditqkvzlpnklcoxspj > src/types/supabase.ts
 ```
 
 ### Update Type Imports
+
 ```typescript
 // Before
 const { data } = (supabase.from('email_subscriptions') as any).select('*');
@@ -72,18 +75,19 @@ const { data } = await supabase
 ## Fix 3: Standardize API Responses
 
 ### Response Helper (Already exists, ensure all routes use it)
+
 ```typescript
 // src/lib/api/response.ts
 export const successResponse = <T>(data: T, message?: string) => ({
   success: true,
   data,
-  message
+  message,
 });
 
 export const errorResponse = (error: string, code?: string) => ({
   success: false,
   error,
-  code
+  code,
 });
 
 // Usage
@@ -101,6 +105,7 @@ export async function POST(request: NextRequest) {
 ## Fix 4: Add Error Boundaries
 
 ### Create Error Boundary Component
+
 ```typescript
 // src/components/ErrorBoundary.tsx
 'use client';
@@ -164,6 +169,7 @@ export class ErrorBoundary extends Component<Props, State> {
 ```
 
 ### Wrap Route Groups
+
 ```typescript
 // src/app/(dashboard)/layout.tsx
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -185,6 +191,7 @@ export default function DashboardLayout({
 ## Fix 5: Secure Public Routes
 
 ### Remove or Secure Unprotected Endpoints
+
 ```typescript
 // DELETE or secure this route:
 // src/app/api/public/data/route.ts
@@ -204,6 +211,7 @@ export async function GET() {
 ## Fix 6: Input Validation with Zod
 
 ### Create Validation Schemas
+
 ```typescript
 // src/lib/validations/animals.ts
 import { z } from 'zod';
@@ -214,13 +222,14 @@ export const createAnimalSchema = z.object({
   dateOfBirth: z.string().datetime().optional(),
   breed: z.enum(['holstein', 'jersey', 'buffalo', 'sahiwal']),
   gender: z.enum(['male', 'female']),
-  tenantId: z.string().optional() // Will be set from auth
+  tenantId: z.string().optional(), // Will be set from auth
 });
 
 export type CreateAnimalInput = z.infer<typeof createAnimalSchema>;
 ```
 
 ### Use in API Routes
+
 ```typescript
 // src/app/api/animals/route.ts
 import { createAnimalSchema } from '@/lib/validations/animals';
@@ -229,11 +238,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validated = createAnimalSchema.parse(body);
-    
+
     // Add tenant_id from auth
     const { orgId } = await auth();
     const data = { ...validated, tenantId: orgId };
-    
+
     // ... save to database
     return successResponse(result);
   } catch (error) {
@@ -251,6 +260,7 @@ export async function POST(request: NextRequest) {
 ## Implementation Checklist
 
 ### Today (Day 1)
+
 - [ ] Run `npx supabase gen types` to generate types
 - [ ] Create `withTenantIsolation` helper
 - [ ] Fix tenant isolation in all API routes
@@ -258,6 +268,7 @@ export async function POST(request: NextRequest) {
 - [ ] Remove/secure public API endpoints
 
 ### Tomorrow (Day 2)
+
 - [ ] Replace all `any` types with proper types
 - [ ] Add Zod validation to all forms/APIs
 - [ ] Ensure all routes use standardized responses
@@ -265,6 +276,7 @@ export async function POST(request: NextRequest) {
 - [ ] Run `npm run typecheck` - should have 0 errors
 
 ### Verification Commands
+
 ```bash
 # Check TypeScript errors
 npm run typecheck

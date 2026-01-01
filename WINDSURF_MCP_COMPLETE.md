@@ -1,6 +1,7 @@
 # Complete Windsurf MCP Supabase Setup
 
 ## Current Status ✅
+
 - MCP Server starts successfully
 - Token is valid
 - Configuration is correct
@@ -52,6 +53,7 @@ Your current config is correct:
 ### 4. Test the Connection
 
 Try these commands in the chat:
+
 - "List all tables in my Supabase database"
 - "Show me the animals table structure"
 - "Count rows in the milk_logs table"
@@ -59,9 +61,11 @@ Try these commands in the chat:
 ### 5. If Still Not Working - Try These Fixes
 
 #### Fix A: Check Windsurf Version
+
 Make sure you have the latest version of Windsurf that supports MCP servers.
 
 #### Fix B: Use Full Path
+
 Try using the full path to npx:
 
 ```json
@@ -80,6 +84,7 @@ Try using the full path to npx:
 ```
 
 #### Fix C: Alternative Installation
+
 Install the MCP server globally:
 
 ```bash
@@ -103,6 +108,7 @@ Then update config:
 ```
 
 #### Fix D: Check Windows PATH
+
 Ensure Node.js and npm are in your PATH:
 
 1. Open Command Prompt
@@ -113,6 +119,7 @@ Ensure Node.js and npm are in your PATH:
 ### 6. Verify Everything Works
 
 Once connected, you should be able to:
+
 - ✅ List tables
 - ✅ Query data
 - ✅ Create tables
@@ -120,16 +127,17 @@ Once connected, you should be able to:
 
 ### 7. Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| "Server not found" | Reload MCP servers |
-| "Unauthorized" | Check token is service_role key |
-| "Command not found" | Install Node.js or use full path |
-| "Connection timeout" | Check internet/firewall |
+| Issue                | Solution                         |
+| -------------------- | -------------------------------- |
+| "Server not found"   | Reload MCP servers               |
+| "Unauthorized"       | Check token is service_role key  |
+| "Command not found"  | Install Node.js or use full path |
+| "Connection timeout" | Check internet/firewall          |
 
 ### 8. Debug Mode
 
 To see what's happening:
+
 1. Open Windsurf
 2. Press `Ctrl+Shift+P`
 3. Type "Developer: Show Logs"
@@ -146,6 +154,7 @@ To see what's happening:
 ## Need Help?
 
 If it still doesn't work:
+
 1. Check Windsurf documentation for MCP
 2. Look at the MCP server logs
 3. Try the manual test script I created

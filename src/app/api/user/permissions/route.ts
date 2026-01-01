@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { auth } from '@clerk/nextjs/server';
 export async function GET(request: NextRequest) {
   try {
@@ -31,11 +31,11 @@ export async function GET(request: NextRequest) {
     const userId = authUserId;
     const supabase = getSupabaseClient();
     // Check if super admin first from platform_users table
-    const { data: platformUser, error: platformError } = await supabase
+    const { data: platformUser, error: platformError } = (await supabase
       .from('platform_users')
       .select('platform_role')
       .eq('id', userId)
-      .single() as { data: { platform_role: string } | null; error: unknown };
+      .single()) as { data: { platform_role: string } | null; error: unknown };
     if (!platformError && platformUser?.platform_role === 'super_admin') {
       return NextResponse.json({
         userRole: 'super_admin',
@@ -44,12 +44,12 @@ export async function GET(request: NextRequest) {
       });
     }
     // Get tenant-specific role from tenant_members table
-    const { data: member, error: memberError } = await supabase
+    const { data: member, error: memberError } = (await supabase
       .from('tenant_members')
       .select('role')
       .eq('user_id', userId)
       .eq('tenant_id', tenantId)
-      .single() as { data: { role: string } | null; error: unknown };
+      .single()) as { data: { role: string } | null; error: unknown };
     if (!memberError && member) {
       return NextResponse.json({
         userRole: member.role,

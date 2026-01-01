@@ -1,7 +1,7 @@
 // API Route: Expenses - Migrated to Supabase
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { ValidationError } from '@/lib/api/errors';
 import { transformFromDb, transformToDb } from '@/lib/utils/transform';
@@ -51,7 +51,9 @@ export async function GET(request: NextRequest) {
         return errorResponse(error);
       }
       // Transform data from snake_case to camelCase
-      const expenses = data ? (Array.isArray(data) ? data : [data]).map((item: any) => transformFromDb(item)) : [];
+      const expenses = data
+        ? (Array.isArray(data) ? data : [data]).map((item: any) => transformFromDb(item))
+        : [];
       return successResponse(expenses, {
         meta: {
           total: count || 0,
@@ -70,11 +72,11 @@ export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const body = await req.json();
-      
+
       // Validate request body
       const validatedData = expenseSchema.parse(body);
       const supabase = getSupabaseClient();
-      
+
       // Transform to snake_case for database
       const expenseData = transformToDb({
         ...validatedData,
@@ -99,11 +101,10 @@ export async function POST(request: NextRequest) {
         status: 201,
       });
     } catch (error) {
-      
       if (error instanceof z.ZodError) {
         return errorResponse(ValidationError.fromZodError(error));
       }
-      
+
       return errorResponse(error);
     }
   })(request);

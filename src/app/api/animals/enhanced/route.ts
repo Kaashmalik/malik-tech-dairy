@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { getTenantContext } from '@/lib/tenant/context';
 import { z } from 'zod';
 // Enhanced query schema for advanced filtering
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    const tenantContext = await getTenantContext(userId);
+    const tenantContext = await getTenantContext();
     if (!tenantContext) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }

@@ -34,14 +34,10 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: 'border bg-background text-foreground',
-        destructive:
-          'destructive border-destructive bg-destructive text-destructive-foreground',
-        success:
-          'border-green-200 bg-green-50 text-green-900',
-        warning:
-          'border-yellow-200 bg-yellow-50 text-yellow-900',
-        info:
-          'border-blue-200 bg-blue-50 text-blue-900',
+        destructive: 'destructive border-destructive bg-destructive text-destructive-foreground',
+        success: 'border-green-200 bg-green-50 text-green-900',
+        warning: 'border-yellow-200 bg-yellow-50 text-yellow-900',
+        info: 'border-blue-200 bg-blue-50 text-blue-900',
       },
     },
     defaultVariants: {
@@ -52,8 +48,7 @@ const toastVariants = cva(
 
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
@@ -72,7 +67,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      'inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive',
+      'ring-offset-background hover:bg-secondary focus:ring-ring group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
       className
     )}
     {...props}
@@ -87,7 +82,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      'absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600',
+      'text-foreground/50 hover:text-foreground absolute right-2 top-2 rounded-md p-1 opacity-0 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600',
       className
     )}
     toast-close=''
@@ -102,11 +97,7 @@ const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn('text-sm font-semibold', className)}
-    {...props}
-  />
+  <ToastPrimitives.Title ref={ref} className={cn('text-sm font-semibold', className)} {...props} />
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
@@ -145,12 +136,7 @@ const getToastIcon = (variant: ToastProps['variant']) => {
 };
 
 // Enhanced Toast with icon
-export function EnhancedToast({
-  className,
-  variant,
-  children,
-  ...props
-}: ToastProps) {
+export function EnhancedToast({ className, variant, children, ...props }: ToastProps) {
   return (
     <Toast className={cn(toastVariants({ variant }), className)} variant={variant} {...props}>
       <div className='grid gap-1'>
@@ -189,14 +175,16 @@ export function useToast() {
 
 // Toast provider with state management
 export function ToastProviderWithState({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<Array<{
-    id: string;
-    title?: string;
-    description?: string;
-    variant?: VariantProps<typeof toastVariants>['variant'];
-    duration?: number;
-    action?: ToastActionElement;
-  }>>([]);
+  const [toasts, setToasts] = React.useState<
+    Array<{
+      id: string;
+      title?: string;
+      description?: string;
+      variant?: VariantProps<typeof toastVariants>['variant'];
+      duration?: number;
+      action?: ToastActionElement;
+    }>
+  >([]);
 
   const toast = React.useCallback(
     ({
@@ -213,11 +201,11 @@ export function ToastProviderWithState({ children }: { children: React.ReactNode
       action?: ToastActionElement;
     }) => {
       const id = Math.random().toString(36).substr(2, 9);
-      setToasts((prev) => [...prev, { id, title, description, variant, duration, action }]);
-      
+      setToasts(prev => [...prev, { id, title, description, variant, duration, action }]);
+
       if (duration > 0) {
         setTimeout(() => {
-          setToasts((prev) => prev.filter((t) => t.id !== id));
+          setToasts(prev => prev.filter(t => t.id !== id));
         }, duration);
       }
     },
@@ -225,7 +213,7 @@ export function ToastProviderWithState({ children }: { children: React.ReactNode
   );
 
   const dismiss = React.useCallback((toastId: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== toastId));
+    setToasts(prev => prev.filter(t => t.id !== toastId));
   }, []);
 
   return (
@@ -233,7 +221,7 @@ export function ToastProviderWithState({ children }: { children: React.ReactNode
       <ToastProvider>
         {children}
         {toasts.map(({ id, title, description, variant, action }) => (
-          <Toast key={id} variant={variant} onOpenChange={(open) => !open && dismiss(id)}>
+          <Toast key={id} variant={variant} onOpenChange={open => !open && dismiss(id)}>
             <div className='grid gap-1'>
               <div className='flex items-center gap-2'>
                 {getToastIcon(variant)}
@@ -256,12 +244,9 @@ export const toast = {
   success: (title: string, description?: string) => {
     // This will be replaced by the actual implementation when integrated
   },
-  error: (title: string, description?: string) => {
-  },
-  warning: (title: string, description?: string) => {
-  },
-  info: (title: string, description?: string) => {
-  },
+  error: (title: string, description?: string) => {},
+  warning: (title: string, description?: string) => {},
+  info: (title: string, description?: string) => {},
 };
 
 export {

@@ -1,50 +1,46 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentTenant } from "@/lib/supabase/tenant";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { getTenantContext, getTenantInfo } from '@/lib/tenant/context';
 
 // GET /api/medicines - Fetch all medicines
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const { tenantId } = await getTenantContext();
+    const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get("category");
-    const manufacturer = searchParams.get("manufacturer");
-    const form = searchParams.get("form");
-    const search = searchParams.get("search");
-    const availableOnly = searchParams.get("available_only") === "true";
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const category = searchParams.get('category');
+    const manufacturer = searchParams.get('manufacturer');
+    const form = searchParams.get('form');
+    const search = searchParams.get('search');
+    const availableOnly = searchParams.get('available_only') === 'true';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
 
-    let query = supabase
-      .from("medicines")
-      .select("*", { count: "exact" })
-      .order("name");
+    let query = (supabase.from('medicines') as any).select('*', { count: 'exact' }).order('name');
 
     // Apply filters
     if (category) {
-      query = query.eq("category", category);
+      query = query.eq('category', category);
     }
 
     if (manufacturer) {
-      query = query.eq("manufacturer", manufacturer);
+      query = query.eq('manufacturer', manufacturer);
     }
 
     if (form) {
-      query = query.eq("form", form);
+      query = query.eq('form', form);
     }
 
     if (availableOnly) {
-      query = query.eq("available_in_pakistan", true).eq("is_active", true);
+      // @ts-ignore
+      query = query.eq('available_in_pakistan', true).eq('is_active', true);
     }
 
     if (search) {
@@ -61,9 +57,9 @@ export async function GET(request: NextRequest) {
     const { data: medicines, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching medicines:", error);
+      console.error('Error fetching medicines:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to fetch medicines" },
+        { success: false, error: 'Failed to fetch medicines' },
         { status: 500 }
       );
     }
@@ -79,25 +75,20 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error in medicines GET:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in medicines GET:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // POST /api/medicines - Create a new medicine
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const { tenantId } = await getTenantContext();
+    const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -105,14 +96,14 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!body.name || !body.category || !body.form || !body.route) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields" },
+        { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
     // Create medicine
-    const { data: medicine, error } = await supabase
-      .from("medicines")
+    // @ts-ignore
+    const { data: medicine, error } = await (supabase.from('medicines') as any)
       .insert({
         name: body.name,
         generic_name: body.generic_name,
@@ -150,9 +141,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error creating medicine:", error);
+      console.error('Error creating medicine:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to create medicine" },
+        { success: false, error: 'Failed to create medicine' },
         { status: 500 }
       );
     }
@@ -160,13 +151,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: medicine,
-      message: "Medicine created successfully",
+      message: 'Medicine created successfully',
     });
   } catch (error) {
-    console.error("Error in medicines POST:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in medicines POST:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

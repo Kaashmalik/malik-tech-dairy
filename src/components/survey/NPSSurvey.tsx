@@ -51,8 +51,7 @@ export function NPSSurvey({ onClose, autoShow = false }: NPSSurveyProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ score, feedback }),
       });
-    } catch (error) {
-    }
+    } catch (error) {}
     // Mark as submitted
     if (userId) {
       localStorage.setItem(`nps_survey_${userId}`, Date.now().toString());

@@ -1,6 +1,6 @@
 // Database Migration Plan: Firebase to Supabase
 // This file outlines the complete migration strategy
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { adminDb } from '@/lib/firebase/admin';
 interface MigrationPlan {
   collection: string;
@@ -49,6 +49,9 @@ const MIGRATION_PLANS: MigrationPlan[] = [
 export class DatabaseMigrator {
   private supabase = getSupabaseClient();
   async migrateCollection(plan: MigrationPlan): Promise<void> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
     let lastDoc: any = null;
     let totalMigrated = 0;
     while (true) {
@@ -93,6 +96,9 @@ export class DatabaseMigrator {
     }
   }
   async verifyMigration(): Promise<void> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
     for (const plan of MIGRATION_PLANS) {
       // Count Firebase documents
       const firebaseCount = await adminDb

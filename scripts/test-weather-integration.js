@@ -9,23 +9,23 @@ const supabase = createClient(
 async function testWeatherIntegration() {
   try {
     console.log('🌤️ Testing Weather Integration for MTK Dairy\n');
-    
+
     const tenantId = 'org_36Pn5ejZHWxT3ZdlWh4Fr2vS1Cc';
-    
+
     // Test 1: Check if weather table exists
     console.log('1️⃣ Checking weather_data table...');
     const { data: tableCheck, error: tableError } = await supabase
       .from('weather_data')
       .select('id')
       .limit(1);
-    
+
     if (tableError && tableError.code === 'PGRST116') {
       console.log('   ❌ weather_data table does not exist');
       return;
     } else {
       console.log('   ✅ weather_data table exists');
     }
-    
+
     // Test 2: Add sample weather data
     console.log('\n2️⃣ Adding sample weather data...');
     const sampleWeather = [
@@ -51,7 +51,7 @@ async function testWeatherIntegration() {
         sunset: new Date().toISOString(),
         data_timestamp: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       },
       {
         id: `weather_alipur_${Date.now()}`,
@@ -75,7 +75,7 @@ async function testWeatherIntegration() {
         sunset: new Date().toISOString(),
         data_timestamp: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       },
       {
         id: `weather_muzzafargarh_${Date.now()}`,
@@ -100,23 +100,20 @@ async function testWeatherIntegration() {
         sunset: new Date().toISOString(),
         data_timestamp: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
+        updated_at: new Date().toISOString(),
+      },
     ];
-    
+
     for (const weather of sampleWeather) {
-      const { data, error } = await supabase
-        .from('weather_data')
-        .insert(weather)
-        .select();
-      
+      const { data, error } = await supabase.from('weather_data').insert(weather).select();
+
       if (error) {
         console.log(`   ❌ Error adding weather for ${weather.city_name}: ${error.message}`);
       } else {
         console.log(`   ✅ Added weather data for ${weather.city_name}`);
       }
     }
-    
+
     // Test 3: Retrieve weather data
     console.log('\n3️⃣ Retrieving weather data...');
     const { data: weatherData, error: fetchError } = await supabase
@@ -124,12 +121,12 @@ async function testWeatherIntegration() {
       .select('*')
       .eq('tenant_id', tenantId)
       .order('data_timestamp', { ascending: false });
-    
+
     if (fetchError) {
       console.log(`   ❌ Error fetching weather: ${fetchError.message}`);
     } else {
       console.log(`   ✅ Found ${weatherData.length} weather records`);
-      
+
       // Display summary
       console.log('\n📊 Weather Summary:');
       weatherData.forEach(record => {
@@ -139,42 +136,44 @@ async function testWeatherIntegration() {
         console.log(`   • ${record.city_name}: ${temp}°C, ${condition} (${time})`);
       });
     }
-    
+
     // Test 4: Check API endpoints
     console.log('\n4️⃣ Testing API endpoints...');
-    
+
     // Test GET endpoint
     try {
       const response = await fetch('http://localhost:3000/api/weather?limit=5', {
         headers: {
-          'Cookie': '__session=test-session' // Add session cookie if needed
-        }
+          Cookie: '__session=test-session', // Add session cookie if needed
+        },
       });
-      
+
       if (response.ok) {
         const result = await response.json();
-        console.log(`   ✅ GET /api/weather working - returned ${result.data?.length || 0} records`);
+        console.log(
+          `   ✅ GET /api/weather working - returned ${result.data?.length || 0} records`
+        );
       } else {
         console.log(`   ⚠️ GET /api/weather returned ${response.status}`);
       }
     } catch (err) {
       console.log(`   ⚠️ Could not test GET endpoint (server may not be running)`);
     }
-    
+
     // Test 5: Farming recommendations
     console.log('\n5️⃣ Testing farming recommendations...');
-    
+
     if (weatherData && weatherData.length > 0) {
       const hotWeather = weatherData.find(w => w.temperature > 30);
       const rainyWeather = weatherData.find(w => w.weather_main === 'Rain');
-      
+
       if (hotWeather) {
         console.log(`   🌡️ Hot weather (${hotWeather.city_name}):`);
         console.log(`      - Ensure shade and cool water for animals`);
         console.log(`      - Increase water availability`);
         console.log(`      - Monitor for heat stress`);
       }
-      
+
       if (rainyWeather) {
         console.log(`   🌧️ Rainy weather (${rainyWeather.city_name}):`);
         console.log(`      - Keep animals in covered areas`);
@@ -182,7 +181,7 @@ async function testWeatherIntegration() {
         console.log(`      - Check feed storage for moisture`);
       }
     }
-    
+
     console.log('\n✅ Weather integration test completed!');
     console.log('\n📝 Next Steps:');
     console.log('1. Add your OpenWeather API key to .env.local:');
@@ -190,7 +189,6 @@ async function testWeatherIntegration() {
     console.log('2. The weather widget will appear on your dashboard');
     console.log('3. Weather data updates every 30 minutes automatically');
     console.log('4. You can view weather for Jatoi, Ali Pur, and Muzzafargarh');
-    
   } catch (error) {
     console.error('Test failed:', error);
   }

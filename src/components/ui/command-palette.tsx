@@ -34,7 +34,7 @@ export function CommandPalette() {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        setOpen(open => !open);
       }
     };
 
@@ -49,36 +49,36 @@ export function CommandPalette() {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search..." />
+      <CommandInput placeholder='Type a command or search...' />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
 
-        <CommandGroup heading="Suggestions">
+        <CommandGroup heading='Suggestions'>
           <CommandItem onSelect={() => runCommand(() => router.push('/dashboard'))}>
-            <LayoutDashboard className="mr-2 h-4 w-4" />
+            <LayoutDashboard className='mr-2 h-4 w-4' />
             <span>Dashboard</span>
             <CommandShortcut>⌘D</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/calendar'))}>
-            <Calendar className="mr-2 h-4 w-4" />
+            <Calendar className='mr-2 h-4 w-4' />
             <span>Calendar</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/finance'))}>
-            <CreditCard className="mr-2 h-4 w-4" />
+            <CreditCard className='mr-2 h-4 w-4' />
             <span>Finance</span>
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
-        <CommandGroup heading="Settings">
+        <CommandGroup heading='Settings'>
           <CommandItem onSelect={() => runCommand(() => router.push('/profile'))}>
-            <User className="mr-2 h-4 w-4" />
+            <User className='mr-2 h-4 w-4' />
             <span>Profile</span>
             <CommandShortcut>⌘P</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/settings'))}>
-            <Settings className="mr-2 h-4 w-4" />
+            <Settings className='mr-2 h-4 w-4' />
             <span>Settings</span>
             <CommandShortcut>⌘S</CommandShortcut>
           </CommandItem>
@@ -86,17 +86,17 @@ export function CommandPalette() {
 
         <CommandSeparator />
 
-        <CommandGroup heading="Theme">
+        <CommandGroup heading='Theme'>
           <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
-            <Sun className="mr-2 h-4 w-4" />
+            <Sun className='mr-2 h-4 w-4' />
             <span>Light</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
-            <Moon className="mr-2 h-4 w-4" />
+            <Moon className='mr-2 h-4 w-4' />
             <span>Dark</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
-            <Laptop className="mr-2 h-4 w-4" />
+            <Laptop className='mr-2 h-4 w-4' />
             <span>System</span>
           </CommandItem>
         </CommandGroup>

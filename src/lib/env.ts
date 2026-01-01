@@ -18,7 +18,9 @@ const envSchema = z.object({
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1, 'Firebase auth domain is required'),
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1, 'Firebase project ID is required'),
   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1, 'Firebase storage bucket is required'),
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1, 'Firebase messaging sender ID is required'),
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z
+    .string()
+    .min(1, 'Firebase messaging sender ID is required'),
   NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1, 'Firebase app ID is required'),
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_FIREBASE_DATABASE_URL: z.string().url('Invalid Firebase database URL'),
@@ -47,14 +49,16 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPPORT_EMAIL: z.string().email('Invalid support email'),
 
   // Feature Flags
-  REQUIRE_ADMIN_APPROVAL: z.string().transform((val) => val === 'true'),
-  FREE_PLAN_FEATURE_LIMITS: z.string().transform((val) => val === 'true'),
-  PROFESSIONAL_PLAN_FEATURE_LIMITS: z.string().transform((val) => val === 'true'),
-  FARM_PLAN_FEATURE_LIMITS: z.string().transform((val) => val === 'true'),
-  ENTERPRISE_PLAN_FEATURE_LIMITS: z.string().transform((val) => val === 'true'),
+  REQUIRE_ADMIN_APPROVAL: z.string().transform(val => val === 'true'),
+  FREE_PLAN_FEATURE_LIMITS: z.string().transform(val => val === 'true'),
+  PROFESSIONAL_PLAN_FEATURE_LIMITS: z.string().transform(val => val === 'true'),
+  FARM_PLAN_FEATURE_LIMITS: z.string().transform(val => val === 'true'),
+  ENTERPRISE_PLAN_FEATURE_LIMITS: z.string().transform(val => val === 'true'),
 
   // Security
-  ENCRYPTION_KEY: z.string().length(64, 'Encryption key must be 64 characters (32 bytes hex encoded)'),
+  ENCRYPTION_KEY: z
+    .string()
+    .length(64, 'Encryption key must be 64 characters (32 bytes hex encoded)'),
 
   // Environment
   NODE_ENV: z.enum(['development', 'production', 'test']),
@@ -95,7 +99,7 @@ export function validateEnv() {
     return { success: true, env };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      error.errors.forEach((err) => {
+      error.errors.forEach(err => {
         console.error(`   • ${err.path.join('.')}: ${err.message}`);
       });
 

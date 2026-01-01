@@ -1,7 +1,7 @@
 // API to join user to their approved organization
 import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 // Types for database records
 interface FarmApplication {
   id: string;
@@ -103,8 +103,7 @@ export async function POST() {
             break;
           }
         }
-      } catch (searchError) {
-      }
+      } catch (searchError) {}
       // If no existing org found, try to create one
       if (!foundOrg) {
         const slugVariations = [
@@ -183,8 +182,7 @@ export async function POST() {
           },
         });
       }
-    } catch (checkError) {
-    }
+    } catch (checkError) {}
     // Add user to organization
     try {
       await clerk.organizations.createOrganizationMembership({

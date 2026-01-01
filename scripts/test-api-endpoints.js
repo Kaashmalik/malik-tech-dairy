@@ -3,9 +3,9 @@ require('dotenv').config({ path: '.env.local' });
 
 async function testAPIEndpoints() {
   console.log('🔍 Testing API Endpoints\n');
-  
+
   const baseUrl = 'http://localhost:3000';
-  
+
   // Test animals endpoint
   console.log('1️⃣ Testing /api/animals...');
   try {
@@ -17,7 +17,7 @@ async function testAPIEndpoints() {
         console.log('   Sample animal:', {
           tag: data.animals[0].tag,
           name: data.animals[0].name,
-          status: data.animals[0].status
+          status: data.animals[0].status,
         });
       }
     } else {
@@ -29,7 +29,7 @@ async function testAPIEndpoints() {
     console.log(`   ❌ Error: ${error.message}`);
     console.log('   Make sure the server is running on http://localhost:3000');
   }
-  
+
   // Test weather endpoint
   console.log('\n2️⃣ Testing /api/weather...');
   try {
@@ -41,7 +41,7 @@ async function testAPIEndpoints() {
         console.log('   Sample weather:', {
           city: data.data[0].city_name,
           temperature: data.data[0].temperature,
-          condition: data.data[0].weather_description
+          condition: data.data[0].weather_description,
         });
       }
     } else {
@@ -53,11 +53,13 @@ async function testAPIEndpoints() {
     console.log(`   ❌ Error: ${error.message}`);
     console.log('   Make sure the server is running on http://localhost:3000');
   }
-  
+
   // Test manual weather sync
   console.log('\n3️⃣ Testing manual weather sync...');
   try {
-    const response = await fetch(`${baseUrl}/api/weather/sync?tenantId=org_36Pn5ejZHWxT3ZdlWh4Fr2vS1Cc`);
+    const response = await fetch(
+      `${baseUrl}/api/weather/sync?tenantId=org_36Pn5ejZHWxT3ZdlWh4Fr2vS1Cc`
+    );
     if (response.ok) {
       const data = await response.json();
       console.log(`   ✅ Success: ${data.message}`);
@@ -72,7 +74,7 @@ async function testAPIEndpoints() {
   } catch (error) {
     console.log(`   ❌ Error: ${error.message}`);
   }
-  
+
   console.log('\n📋 Troubleshooting Tips:');
   console.log('1. Make sure your server is running: npm run dev');
   console.log('2. Check browser console (F12 > Console) for JavaScript errors');

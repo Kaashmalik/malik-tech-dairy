@@ -12,11 +12,12 @@ import { toast } from 'sonner';
 import { useTenant } from '@/hooks/useTenant';
 
 export default function CustomDomainPage() {
-  const { data: tenantConfig } = useTenant();
+  const { tenant: tenantConfig } = useTenant();
   const [copied, setCopied] = useState<string | null>(null);
 
   const subdomain = tenantConfig?.subdomain || '';
-  const customDomain = tenantConfig?.customDomain || '';
+  // customDomain may be available on extended tenant data from database
+  const customDomain = (tenantConfig as { customDomain?: string } | null)?.customDomain || '';
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'maliktechdairy.com';
   const cnameValue = subdomain ? `${subdomain}.${baseUrl}` : '';
 

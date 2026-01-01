@@ -1,12 +1,17 @@
 import { cn } from '@/lib/utils';
 
-function Skeleton({ className, variant = "pulse", ...props }: React.HTMLAttributes<HTMLDivElement> & { variant?: "pulse" | "shimmer" }) {
+function Skeleton({
+  className,
+  variant = 'pulse',
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { variant?: 'pulse' | 'shimmer' }) {
   return (
     <div
       className={cn(
-        "rounded-md bg-muted/50",
-        variant === "pulse" && "animate-pulse",
-        variant === "shimmer" && "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent dark:before:via-white/5",
+        'bg-muted/50 rounded-md',
+        variant === 'pulse' && 'animate-pulse',
+        variant === 'shimmer' &&
+          'relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent dark:before:via-white/5',
         className
       )}
       {...props}
@@ -305,7 +310,7 @@ export function BreedingRecordsSkeleton() {
               <Skeleton className='h-5 w-48' />
               <Skeleton className='h-4 w-32' />
             </div>
-            <div className='text-right space-y-2'>
+            <div className='space-y-2 text-right'>
               <Skeleton className='h-6 w-24 rounded-full' />
               <Skeleton className='h-4 w-20' />
             </div>

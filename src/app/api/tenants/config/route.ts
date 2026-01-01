@@ -1,7 +1,7 @@
 // API Route: Get/Update Tenant Config (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { checkUserRole } from '@/lib/api/middleware';
 import { DEFAULT_TENANT_CONFIG } from '@/lib/constants';
 export const dynamic = 'force-dynamic';

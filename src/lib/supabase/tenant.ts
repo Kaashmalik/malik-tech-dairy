@@ -1,5 +1,5 @@
 // Supabase Tenant Helpers - Replaces Firestore tenant.ts for relational data
-import { getDrizzle } from '../supabase';
+import { getDrizzle } from './server';
 import { tenants, subscriptions, customFieldsConfig } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { TenantConfig, TenantSubscription, TenantLimits } from '@/types';
@@ -112,7 +112,7 @@ export async function getTenantLimits(tenantId: string): Promise<TenantLimits | 
     return {
       maxAnimals: planDetails.maxAnimals,
       maxUsers: planDetails.maxUsers,
-      features: planDetails.features,
+      features: [...planDetails.features],
     };
   } catch (error) {
     return null;

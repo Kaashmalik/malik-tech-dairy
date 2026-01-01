@@ -1,6 +1,6 @@
 // Farm Application Service
 // Handles farm ID applications, payment verification, and approval workflow
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import {
   farmApplications,
   platformUsers,
@@ -165,7 +165,7 @@ async function autoApproveFreeApplication(applicationId: string, applicantId: st
     tenantId,
     plan: 'free',
     status: 'active',
-    gateway: 'free',
+    gateway: 'bank_transfer', // Using bank_transfer as default for free tier
     renewDate,
     amount: 0,
     currency: 'PKR',
@@ -424,7 +424,7 @@ function getPlanPrice(plan: SubscriptionPlan): number {
  */
 export async function getAdminDashboardStats() {
   try {
-    const { getSupabaseClient } = await import('@/lib/supabase');
+    const { getSupabaseClient } = await import('@/lib/supabase/server');
     const supabase = getSupabaseClient();
     // Get application stats
     const { count: totalApplications } = await supabase

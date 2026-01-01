@@ -1,7 +1,6 @@
 // PDF Report Generation using pdfmake
 import { adminDb } from '@/lib/firebase/admin';
 import { getTenantSubcollection, getTenantConfig } from '@/lib/firebase/tenant';
-import PdfPrinter from 'pdfmake';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 
 // Initialize pdfmake fonts (using default fonts for now)
@@ -15,7 +14,16 @@ const fonts = {
   },
 };
 
-const printer = new PdfPrinter(fonts);
+// Lazy-load pdfmake to avoid build-time issues
+let printer: any = null;
+function getPrinter() {
+  if (!printer) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const PdfPrinter = require('pdfmake');
+    printer = new PdfPrinter(fonts);
+  }
+  return printer;
+}
 
 export async function generatePDFReport(
   tenantId: string,
@@ -208,7 +216,7 @@ export async function generatePDFReport(
   };
 
   return new Promise((resolve, reject) => {
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    const pdfDoc = getPrinter().createPdfKitDocument(docDefinition);
     const chunks: Buffer[] = [];
 
     pdfDoc.on('data', (chunk: Buffer) => chunks.push(chunk));

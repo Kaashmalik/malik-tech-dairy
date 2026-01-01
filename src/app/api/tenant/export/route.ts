@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
       // Generate ZIP file
       const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
       // Return ZIP file
-      return new NextResponse(zipBuffer, {
+      return new NextResponse(new Uint8Array(zipBuffer), {
         headers: {
           'Content-Type': 'application/zip',
           'Content-Disposition': `attachment; filename="tenant-${tenantId}-export-${Date.now()}.zip"`,

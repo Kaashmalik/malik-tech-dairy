@@ -10,9 +10,11 @@ const inputVariants = cva(
       variant: {
         default: 'shadow-sm',
         filled: 'bg-muted/50 border-transparent hover:bg-muted/80 focus-visible:bg-background',
-        ghost: 'border-none shadow-none bg-transparent hover:bg-muted/30 focus-visible:bg-transparent',
+        ghost:
+          'border-none shadow-none bg-transparent hover:bg-muted/30 focus-visible:bg-transparent',
         neo: 'shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] dark:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.3),inset_-2px_-2px_4px_rgba(255,255,255,0.05)] border-none bg-background',
-        'bottom-line': 'rounded-none border-x-0 border-t-0 border-b-2 px-0 shadow-none focus-visible:ring-0 focus-visible:border-primary',
+        'bottom-line':
+          'rounded-none border-x-0 border-t-0 border-b-2 px-0 shadow-none focus-visible:ring-0 focus-visible:border-primary',
       },
       inputSize: {
         default: 'h-10',
@@ -23,33 +25,47 @@ const inputVariants = cva(
         default: 'border-input',
         error: 'border-destructive focus-visible:ring-destructive',
         success: 'border-green-500 focus-visible:ring-green-500',
-      }
+      },
     },
     defaultVariants: {
       variant: 'default',
       inputSize: 'default',
-      state: 'default'
-    }
+      state: 'default',
+    },
   }
 );
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>, VariantProps<typeof inputVariants> {
+  extends
+    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
+    VariantProps<typeof inputVariants> {
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
   containerClassName?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, variant, inputSize, state, type, startIcon, endIcon, containerClassName, ...props }, ref) => {
-
+  (
+    {
+      className,
+      variant,
+      inputSize,
+      state,
+      type,
+      startIcon,
+      endIcon,
+      containerClassName,
+      ...props
+    },
+    ref
+  ) => {
     // Determine the effective state if not explicitly passed
     const effectiveState = state;
 
     return (
-      <div className={cn('relative flex items-center w-full', containerClassName)}>
+      <div className={cn('relative flex w-full items-center', containerClassName)}>
         {startIcon && (
-          <div className="absolute left-3 text-muted-foreground pointer-events-none flex items-center justify-center">
+          <div className='text-muted-foreground pointer-events-none absolute left-3 flex items-center justify-center'>
             {startIcon}
           </div>
         )}
@@ -66,14 +82,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         />
 
         {endIcon && (
-          <div className="absolute right-3 text-muted-foreground pointer-events-none flex items-center justify-center">
+          <div className='text-muted-foreground pointer-events-none absolute right-3 flex items-center justify-center'>
             {endIcon}
           </div>
         )}
 
         {/* Animated bottom border for 'bottom-line' variant or generic focus effect if desired */}
         {variant === 'default' && (
-          <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-primary transition-all duration-300 group-focus-within:w-full" />
+          <div className='bg-primary absolute bottom-0 left-0 h-[1px] w-0 transition-all duration-300 group-focus-within:w-full' />
         )}
       </div>
     );

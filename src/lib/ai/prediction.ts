@@ -1,6 +1,6 @@
 import { generateText } from 'ai';
 import { groq, GROQ_MODEL } from './groq';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 export interface MilkPredictionInput {
   animalId: string;
   daysOfData?: number; // Default to 30 days

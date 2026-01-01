@@ -1,6 +1,6 @@
 /**
  * Data Transformation Utilities
- * 
+ *
  * Handles snake_case (database) <-> camelCase (API) transformations
  */
 
@@ -15,7 +15,7 @@ export function snakeToCamel(str: string): string {
  * Convert camelCase string to snake_case
  */
 export function camelToSnake(str: string): string {
-  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
 /**
@@ -25,14 +25,14 @@ export function transformFromDb<T extends Record<string, unknown>>(
   data: Record<string, unknown>
 ): T {
   const result: Record<string, unknown> = {};
-  
+
   for (const [key, value] of Object.entries(data)) {
     const camelKey = snakeToCamel(key);
-    
+
     // Handle nested objects and arrays
     if (value !== null && typeof value === 'object') {
       if (Array.isArray(value)) {
-        result[camelKey] = value.map((item) =>
+        result[camelKey] = value.map(item =>
           typeof item === 'object' && item !== null
             ? transformFromDb(item as Record<string, unknown>)
             : item
@@ -44,25 +44,23 @@ export function transformFromDb<T extends Record<string, unknown>>(
       result[camelKey] = value;
     }
   }
-  
+
   return result as T;
 }
 
 /**
  * Transform object keys from camelCase to snake_case
  */
-export function transformToDb<T extends Record<string, unknown>>(
-  data: Record<string, unknown>
-): T {
+export function transformToDb<T extends Record<string, unknown>>(data: Record<string, unknown>): T {
   const result: Record<string, unknown> = {};
-  
+
   for (const [key, value] of Object.entries(data)) {
     const snakeKey = camelToSnake(key);
-    
+
     // Handle nested objects and arrays
     if (value !== null && typeof value === 'object') {
       if (Array.isArray(value)) {
-        result[snakeKey] = value.map((item) =>
+        result[snakeKey] = value.map(item =>
           typeof item === 'object' && item !== null
             ? transformToDb(item as Record<string, unknown>)
             : item
@@ -74,7 +72,7 @@ export function transformToDb<T extends Record<string, unknown>>(
       result[snakeKey] = value;
     }
   }
-  
+
   return result as T;
 }
 
@@ -84,7 +82,7 @@ export function transformToDb<T extends Record<string, unknown>>(
 export function transformArrayFromDb<T extends Record<string, unknown>>(
   data: Record<string, unknown>[]
 ): T[] {
-  return data.map((item) => transformFromDb<T>(item));
+  return data.map(item => transformFromDb<T>(item));
 }
 
 /**
@@ -93,7 +91,7 @@ export function transformArrayFromDb<T extends Record<string, unknown>>(
 export function transformArrayToDb<T extends Record<string, unknown>>(
   data: Record<string, unknown>[]
 ): T[] {
-  return data.map((item) => transformToDb<T>(item));
+  return data.map(item => transformToDb<T>(item));
 }
 
 /**

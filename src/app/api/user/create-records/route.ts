@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { platformUsers, tenantMembers } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { TenantRole } from '@/types/roles';
 export async function POST(request: NextRequest) {
   try {
     // Authenticate the user with Clerk
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -27,8 +27,7 @@ export async function POST(request: NextRequest) {
       await db.insert(platformUsers).values({
         id: userId,
         email: 'user@example.com', // Will be updated by Clerk webhook
-        firstName: 'User',
-        lastName: 'Name',
+        name: 'User',
         platformRole: 'user', // Default platform role
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -38,8 +37,7 @@ export async function POST(request: NextRequest) {
     const existingMember = await db
       .select()
       .from(tenantMembers)
-      .where(eq(tenantMembers.userId, userId))
-      .where(eq(tenantMembers.tenantId, tenantId))
+      .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.tenantId, tenantId)))
       .limit(1);
     if (existingMember.length === 0) {
       // Create tenant member record
@@ -66,8 +64,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
+    const err = error as Error;
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', details: err.message },
       { status: 500 }
     );
   }

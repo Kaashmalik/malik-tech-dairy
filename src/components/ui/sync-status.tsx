@@ -1,6 +1,6 @@
 'use client';
 
-import { Wifi, WifiOff, Sync, AlertCircle, CheckCircle } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSyncStatus } from '@/lib/offline/hooks';
@@ -58,7 +58,7 @@ export function SyncStatusIndicator({ tenantId, className }: SyncStatusIndicator
     return (
       <div className={`flex items-center gap-2 text-amber-600 ${className}`}>
         <Wifi className='h-4 w-4' />
-        <Sync className={`h-4 w-4 ${syncInProgress || isSyncing ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`h-4 w-4 ${syncInProgress || isSyncing ? 'animate-spin' : ''}`} />
         <span className='text-sm'>
           {pendingMutations} pending change{pendingMutations > 1 ? 's' : ''}
         </span>
@@ -111,7 +111,7 @@ export function CompactSyncStatus({ tenantId, className }: SyncStatusIndicatorPr
   if (isOnline && pendingMutations > 0) {
     return (
       <div className={`flex items-center gap-1 text-amber-600 ${className}`}>
-        <Sync className={`h-3 w-3 ${syncInProgress ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`h-3 w-3 ${syncInProgress ? 'animate-spin' : ''}`} />
         <Badge variant='outline' className='h-4 px-1 py-0 text-xs'>
           {pendingMutations}
         </Badge>
@@ -204,7 +204,7 @@ export function SyncStatusPanel({ tenantId }: { tenantId: string }) {
           <div className='flex items-center gap-2'>
             {syncInProgress || isSyncing ? (
               <>
-                <Sync className='h-4 w-4 animate-spin text-amber-600' />
+                <RefreshCw className='h-4 w-4 animate-spin text-amber-600' />
                 <span className='text-sm text-amber-600'>Syncing...</span>
               </>
             ) : pendingMutations > 0 ? (

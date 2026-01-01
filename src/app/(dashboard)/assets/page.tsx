@@ -157,13 +157,13 @@ export default function AssetsPage() {
   const stats = {
     total: assets.length,
     totalValue: assets.reduce((sum, a) => sum + a.currentValue, 0),
-    active: assets.filter((a) => a.status === 'active').length,
-    inMaintenance: assets.filter((a) => a.status === 'maintenance').length,
-    retired: assets.filter((a) => a.status === 'retired').length,
+    active: assets.filter(a => a.status === 'active').length,
+    inMaintenance: assets.filter(a => a.status === 'maintenance').length,
+    retired: assets.filter(a => a.status === 'retired').length,
   };
 
   // Filter assets
-  const filteredAssets = assets.filter((asset) => {
+  const filteredAssets = assets.filter(asset => {
     const matchesSearch =
       asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -174,21 +174,17 @@ export default function AssetsPage() {
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6 p-6"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='space-y-6 p-6'>
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
           <motion.h1
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white"
+            className='flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white'
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-lg">
-              <Package className="h-6 w-6" />
+            <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-lg'>
+              <Package className='h-6 w-6' />
             </div>
             Assets Management
           </motion.h1>
@@ -196,16 +192,16 @@ export default function AssetsPage() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="mt-1 text-gray-600 dark:text-slate-400"
+            className='mt-1 text-gray-600 dark:text-slate-400'
           >
             Track farm equipment, machinery, and infrastructure
           </motion.p>
         </div>
         <Button
           onClick={() => setShowAddDialog(true)}
-          className="bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-lg"
+          className='bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-lg'
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className='mr-2 h-4 w-4' />
           Add Asset
         </Button>
       </div>
@@ -213,9 +209,9 @@ export default function AssetsPage() {
       {/* Stats Cards */}
       <motion.div
         variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-2 gap-4 md:grid-cols-5"
+        initial='hidden'
+        animate='visible'
+        className='grid grid-cols-2 gap-4 md:grid-cols-5'
       >
         {[
           {
@@ -249,24 +245,28 @@ export default function AssetsPage() {
             icon: Clock,
             color: 'from-gray-500 to-slate-600',
           },
-        ].map((stat) => (
+        ].map(stat => (
           <motion.div
             key={stat.title}
             variants={itemVariants}
             whileHover={{ scale: 1.02, y: -4 }}
-            className="group relative overflow-hidden rounded-xl border border-gray-200/50 bg-white p-4 shadow-sm transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800"
+            className='group relative overflow-hidden rounded-xl border border-gray-200/50 bg-white p-4 shadow-sm transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800'
           >
-            <div className="flex items-start justify-between">
+            <div className='flex items-start justify-between'>
               <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-slate-400">{stat.title}</p>
+                <p className='text-xs font-medium text-gray-500 dark:text-slate-400'>
+                  {stat.title}
+                </p>
                 <p
                   className={`mt-1 text-2xl font-bold ${stat.alert ? 'text-amber-600' : 'text-gray-900 dark:text-white'}`}
                 >
                   {stat.value}
                 </p>
               </div>
-              <div className={`rounded-lg bg-gradient-to-br ${stat.color} p-2 text-white shadow-md`}>
-                <stat.icon className="h-4 w-4" />
+              <div
+                className={`rounded-lg bg-gradient-to-br ${stat.color} p-2 text-white shadow-md`}
+              >
+                <stat.icon className='h-4 w-4' />
               </div>
             </div>
             <div
@@ -277,30 +277,30 @@ export default function AssetsPage() {
       </motion.div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 md:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <div className='flex flex-col gap-4 md:flex-row'>
+        <div className='relative flex-1'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
           <Input
-            placeholder="Search assets, location, serial number..."
+            placeholder='Search assets, location, serial number...'
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-11 pl-10 pr-10"
+            onChange={e => setSearchTerm(e.target.value)}
+            className='h-11 pl-10 pr-10'
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
             >
-              <X className="h-4 w-4" />
+              <X className='h-4 w-4' />
             </button>
           )}
         </div>
         <select
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="h-11 rounded-lg border border-gray-200 bg-white px-4 text-gray-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+          onChange={e => setSelectedCategory(e.target.value)}
+          className='h-11 rounded-lg border border-gray-200 bg-white px-4 text-gray-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200'
         >
-          <option value="all">All Categories</option>
+          <option value='all'>All Categories</option>
           {Object.entries(categoryConfig).map(([key, config]) => (
             <option key={key} value={key}>
               {config.label}
@@ -309,27 +309,27 @@ export default function AssetsPage() {
         </select>
         <select
           value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="h-11 rounded-lg border border-gray-200 bg-white px-4 text-gray-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+          onChange={e => setSelectedStatus(e.target.value)}
+          className='h-11 rounded-lg border border-gray-200 bg-white px-4 text-gray-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200'
         >
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="maintenance">In Maintenance</option>
-          <option value="retired">Retired</option>
+          <option value='all'>All Status</option>
+          <option value='active'>Active</option>
+          <option value='maintenance'>In Maintenance</option>
+          <option value='retired'>Retired</option>
         </select>
       </div>
 
       {/* Assets Grid */}
       {filteredAssets.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Package className="mb-4 h-16 w-16 text-gray-300" />
-            <h3 className="text-lg font-semibold text-gray-600">No assets found</h3>
-            <p className="mt-1 text-sm text-gray-500">
+          <CardContent className='flex flex-col items-center justify-center py-12'>
+            <Package className='mb-4 h-16 w-16 text-gray-300' />
+            <h3 className='text-lg font-semibold text-gray-600'>No assets found</h3>
+            <p className='mt-1 text-sm text-gray-500'>
               {searchTerm ? 'Try a different search term' : 'Add your first asset to get started'}
             </p>
-            <Button className="mt-4" onClick={() => setShowAddDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className='mt-4' onClick={() => setShowAddDialog(true)}>
+              <Plus className='mr-2 h-4 w-4' />
               Add Asset
             </Button>
           </CardContent>
@@ -337,11 +337,11 @@ export default function AssetsPage() {
       ) : (
         <motion.div
           variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          initial='hidden'
+          animate='visible'
+          className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'
         >
-          {filteredAssets.map((asset) => {
+          {filteredAssets.map(asset => {
             const catConfig = categoryConfig[asset.category] || categoryConfig.equipment;
             const statConfig = statusConfig[asset.status];
             const StatusIcon = statConfig.icon;
@@ -351,77 +351,81 @@ export default function AssetsPage() {
                 key={asset.id}
                 variants={itemVariants}
                 whileHover={{ scale: 1.02 }}
-                className="group overflow-hidden rounded-xl border border-gray-200/50 bg-white shadow-sm transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                className='group overflow-hidden rounded-xl border border-gray-200/50 bg-white shadow-sm transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800'
               >
                 <div className={`h-1.5 bg-gradient-to-r ${catConfig.color}`} />
 
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
+                <div className='p-5'>
+                  <div className='flex items-start justify-between'>
+                    <div className='flex items-center gap-3'>
                       <div
                         className={`rounded-xl bg-gradient-to-br ${catConfig.color} p-3 text-white shadow-md`}
                       >
-                        <catConfig.icon className="h-5 w-5" />
+                        <catConfig.icon className='h-5 w-5' />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{asset.name}</h3>
-                        <p className="text-xs text-gray-500 dark:text-slate-400">{catConfig.label}</p>
+                        <h3 className='font-semibold text-gray-900 dark:text-white'>
+                          {asset.name}
+                        </h3>
+                        <p className='text-xs text-gray-500 dark:text-slate-400'>
+                          {catConfig.label}
+                        </p>
                       </div>
                     </div>
                     <Badge className={`${statConfig.color} border-0`}>
-                      <StatusIcon className="mr-1 h-3 w-3" />
+                      <StatusIcon className='mr-1 h-3 w-3' />
                       {statConfig.label}
                     </Badge>
                   </div>
 
-                  <div className="mt-4 space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-slate-400">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                  <div className='mt-4 space-y-2 text-sm'>
+                    <div className='flex items-center gap-2 text-gray-600 dark:text-slate-400'>
+                      <MapPin className='h-4 w-4 text-gray-400' />
                       {asset.location}
                     </div>
                     {asset.serialNumber && (
-                      <div className="flex items-center gap-2 text-gray-600 dark:text-slate-400">
-                        <Package className="h-4 w-4 text-gray-400" />
-                        <span className="font-mono text-xs">{asset.serialNumber}</span>
+                      <div className='flex items-center gap-2 text-gray-600 dark:text-slate-400'>
+                        <Package className='h-4 w-4 text-gray-400' />
+                        <span className='font-mono text-xs'>{asset.serialNumber}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-lg bg-gray-50 p-2 dark:bg-slate-700/50">
-                      <p className="text-xs text-gray-500 dark:text-slate-400">Purchase Value</p>
-                      <p className="font-semibold text-gray-900 dark:text-white">
+                  <div className='mt-4 grid grid-cols-2 gap-3'>
+                    <div className='rounded-lg bg-gray-50 p-2 dark:bg-slate-700/50'>
+                      <p className='text-xs text-gray-500 dark:text-slate-400'>Purchase Value</p>
+                      <p className='font-semibold text-gray-900 dark:text-white'>
                         PKR {(asset.purchasePrice / 1000).toFixed(0)}K
                       </p>
                     </div>
-                    <div className="rounded-lg bg-emerald-50 p-2 dark:bg-emerald-900/20">
-                      <p className="text-xs text-gray-500 dark:text-slate-400">Current Value</p>
-                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    <div className='rounded-lg bg-emerald-50 p-2 dark:bg-emerald-900/20'>
+                      <p className='text-xs text-gray-500 dark:text-slate-400'>Current Value</p>
+                      <p className='font-semibold text-emerald-600 dark:text-emerald-400'>
                         PKR {(asset.currentValue / 1000).toFixed(0)}K
                       </p>
                     </div>
                   </div>
 
                   {asset.notes && asset.status === 'maintenance' && (
-                    <div className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                    <div className='mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'>
                       ⚠️ {asset.notes}
                     </div>
                   )}
 
-                  <div className="mt-4 flex items-center justify-between border-t pt-3 dark:border-slate-700">
-                    <span className="text-xs text-gray-500 dark:text-slate-400">
+                  <div className='mt-4 flex items-center justify-between border-t pt-3 dark:border-slate-700'>
+                    <span className='text-xs text-gray-500 dark:text-slate-400'>
                       Purchased: {format(new Date(asset.purchaseDate), 'MMM yyyy')}
                     </span>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Edit className="h-4 w-4 text-gray-500" />
+                    <div className='flex gap-1'>
+                      <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                        <Edit className='h-4 w-4 text-gray-500' />
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                        variant='ghost'
+                        size='sm'
+                        className='h-8 w-8 p-0 text-red-500 hover:text-red-600'
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className='h-4 w-4' />
                       </Button>
                     </div>
                   </div>
@@ -434,25 +438,25 @@ export default function AssetsPage() {
 
       {/* Add Asset Dialog Placeholder */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className='sm:max-w-[500px]'>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="rounded-lg bg-purple-100 p-2">
-                <Package className="h-5 w-5 text-purple-600" />
+            <DialogTitle className='flex items-center gap-2'>
+              <div className='rounded-lg bg-purple-100 p-2'>
+                <Package className='h-5 w-5 text-purple-600' />
               </div>
               Add New Asset
             </DialogTitle>
             <DialogDescription>Add a new asset to your farm inventory</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className='space-y-4 py-4'>
             <div>
-              <label className="mb-1 block text-sm font-medium">Asset Name *</label>
-              <Input placeholder="e.g., Milking Machine" />
+              <label className='mb-1 block text-sm font-medium'>Asset Name *</label>
+              <Input placeholder='e.g., Milking Machine' />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className='grid grid-cols-2 gap-4'>
               <div>
-                <label className="mb-1 block text-sm font-medium">Category</label>
-                <select className="h-10 w-full rounded-lg border px-3">
+                <label className='mb-1 block text-sm font-medium'>Category</label>
+                <select className='h-10 w-full rounded-lg border px-3'>
                   {Object.entries(categoryConfig).map(([key, config]) => (
                     <option key={key} value={key}>
                       {config.label}
@@ -461,39 +465,39 @@ export default function AssetsPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Status</label>
-                <select className="h-10 w-full rounded-lg border px-3">
-                  <option value="active">Active</option>
-                  <option value="maintenance">In Maintenance</option>
-                  <option value="retired">Retired</option>
+                <label className='mb-1 block text-sm font-medium'>Status</label>
+                <select className='h-10 w-full rounded-lg border px-3'>
+                  <option value='active'>Active</option>
+                  <option value='maintenance'>In Maintenance</option>
+                  <option value='retired'>Retired</option>
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className='grid grid-cols-2 gap-4'>
               <div>
-                <label className="mb-1 block text-sm font-medium">Purchase Date</label>
-                <Input type="date" />
+                <label className='mb-1 block text-sm font-medium'>Purchase Date</label>
+                <Input type='date' />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Purchase Price (PKR)</label>
-                <Input type="number" placeholder="0" />
+                <label className='mb-1 block text-sm font-medium'>Purchase Price (PKR)</label>
+                <Input type='number' placeholder='0' />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Location</label>
-              <Input placeholder="e.g., Main Shed" />
+              <label className='mb-1 block text-sm font-medium'>Location</label>
+              <Input placeholder='e.g., Main Shed' />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Serial Number</label>
-              <Input placeholder="Optional" />
+              <label className='mb-1 block text-sm font-medium'>Serial Number</label>
+              <Input placeholder='Optional' />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button variant='outline' onClick={() => setShowAddDialog(false)}>
               Cancel
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className='bg-purple-600 hover:bg-purple-700'>
+              <Plus className='mr-2 h-4 w-4' />
               Add Asset
             </Button>
           </DialogFooter>
@@ -502,4 +506,3 @@ export default function AssetsPage() {
     </motion.div>
   );
 }
-

@@ -46,13 +46,13 @@ export function useApiMutation<TData, TVariables>(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       return await mutationFn(variables);
     },
-    onMutate: async (variables) => {
+    onMutate: async variables => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries();
-      
+
       // Call custom onMutate
       if (options?.onMutate) {
         await options.onMutate(variables);
@@ -65,7 +65,7 @@ export function useApiMutation<TData, TVariables>(
           queryClient.invalidateQueries({ queryKey });
         });
       }
-      
+
       // Call custom onSuccess
       if (options?.onSuccess) {
         options.onSuccess(data, variables);
@@ -106,19 +106,22 @@ export function useApiInfiniteQuery<T>(
 export function usePrefetch() {
   const queryClient = useQueryClient();
 
-  const prefetch = useCallback((
-    queryKey: readonly unknown[],
-    queryFn: () => Promise<unknown>,
-    options?: { staleTime?: number }
-  ) => {
-    queryClient.prefetchQuery({
-      queryKey,
-      queryFn: async () => {
-        return await queryFn();
-      },
-      staleTime: options?.staleTime ?? 1000 * 60 * 5,
-    });
-  }, [queryClient]);
+  const prefetch = useCallback(
+    (
+      queryKey: readonly unknown[],
+      queryFn: () => Promise<unknown>,
+      options?: { staleTime?: number }
+    ) => {
+      queryClient.prefetchQuery({
+        queryKey,
+        queryFn: async () => {
+          return await queryFn();
+        },
+        staleTime: options?.staleTime ?? 1000 * 60 * 5,
+      });
+    },
+    [queryClient]
+  );
 
   return { prefetch };
 }
@@ -130,11 +133,12 @@ export function useOptimisticUpdate<T>(
 ) {
   const queryClient = useQueryClient();
 
-  return useCallback((variables: unknown) => {
-    queryClient.setQueryData(queryKey, (oldData: T | undefined) => 
-      updateFn(oldData, variables)
-    );
-  }, [queryClient, queryKey, updateFn]);
+  return useCallback(
+    (variables: unknown) => {
+      queryClient.setQueryData(queryKey, (oldData: T | undefined) => updateFn(oldData, variables));
+    },
+    [queryClient, queryKey, updateFn]
+  );
 }
 
 // Background refetch hook
@@ -157,26 +161,32 @@ export function useBackgroundRefetch(
 export function useInvalidateQueries() {
   const queryClient = useQueryClient();
 
-  return useCallback((queryKeys: readonly unknown[][]) => {
-    queryKeys.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
-  }, [queryClient]);
+  return useCallback(
+    (queryKeys: readonly unknown[][]) => {
+      queryKeys.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: key });
+      });
+    },
+    [queryClient]
+  );
 }
 
 // Reset queries hook
 export function useResetQueries() {
   const queryClient = useQueryClient();
 
-  return useCallback((queryKeys?: readonly unknown[][]) => {
-    if (queryKeys) {
-      queryKeys.forEach(key => {
-        queryClient.resetQueries({ queryKey: key });
-      });
-    } else {
-      queryClient.resetQueries();
-    }
-  }, [queryClient]);
+  return useCallback(
+    (queryKeys?: readonly unknown[][]) => {
+      if (queryKeys) {
+        queryKeys.forEach(key => {
+          queryClient.resetQueries({ queryKey: key });
+        });
+      } else {
+        queryClient.resetQueries();
+      }
+    },
+    [queryClient]
+  );
 }
 
 // Specific hooks for common operations
@@ -198,7 +208,7 @@ export function useAnimal(id: string, options?: { enabled?: boolean }) {
 
 export function useCreateAnimal() {
   return useApiMutation(
-    (data: unknown) => 
+    (data: unknown) =>
       fetch('/api/animals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -212,7 +222,7 @@ export function useCreateAnimal() {
 
 export function useUpdateAnimal() {
   return useApiMutation(
-    ({ id, data }: { id: string; data: unknown }) => 
+    ({ id, data }: { id: string; data: unknown }) =>
       fetch(`/api/animals/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -226,7 +236,7 @@ export function useUpdateAnimal() {
 
 export function useDeleteAnimal() {
   return useApiMutation(
-    (id: string) => 
+    (id: string) =>
       fetch(`/api/animals/${id}`, {
         method: 'DELETE',
       }).then(res => res.json()),
@@ -237,18 +247,15 @@ export function useDeleteAnimal() {
 }
 
 export function useMilkLogs(params?: Record<string, string>) {
-  return useApiQuery(
-    queryKeys.milk.list(params),
-    () => {
-      const searchParams = new URLSearchParams(params);
-      return fetch(`/api/milk?${searchParams}`).then(res => res.json());
-    }
-  );
+  return useApiQuery(queryKeys.milk.list(params), () => {
+    const searchParams = new URLSearchParams(params);
+    return fetch(`/api/milk?${searchParams}`).then(res => res.json());
+  });
 }
 
 export function useCreateMilkLog() {
   return useApiMutation(
-    (data: unknown) => 
+    (data: unknown) =>
       fetch('/api/milk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,18 +268,15 @@ export function useCreateMilkLog() {
 }
 
 export function useHealthRecords(animalId?: string) {
-  return useApiQuery(
-    queryKeys.health.records(animalId),
-    () => {
-      const url = animalId ? `/api/health/records?animalId=${animalId}` : '/api/health/records';
-      return fetch(url).then(res => res.json());
-    }
-  );
+  return useApiQuery(queryKeys.health.records(animalId), () => {
+    const url = animalId ? `/api/health/records?animalId=${animalId}` : '/api/health/records';
+    return fetch(url).then(res => res.json());
+  });
 }
 
 export function useCreateHealthRecord() {
   return useApiMutation(
-    (data: unknown) => 
+    (data: unknown) =>
       fetch('/api/health/records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -285,15 +289,14 @@ export function useCreateHealthRecord() {
 }
 
 export function useBreedingRecords() {
-  return useApiQuery(
-    queryKeys.breeding.list(),
-    () => fetch('/api/breeding').then(res => res.json())
+  return useApiQuery(queryKeys.breeding.list(), () =>
+    fetch('/api/breeding').then(res => res.json())
   );
 }
 
 export function useCreateBreedingRecord() {
   return useApiMutation(
-    (data: unknown) => 
+    (data: unknown) =>
       fetch('/api/breeding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

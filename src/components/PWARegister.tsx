@@ -6,10 +6,8 @@ export function PWARegister() {
       // Register service worker
       navigator.serviceWorker
         .register('/sw.js')
-        .then(registration => {
-        })
-        .catch(error => {
-        });
+        .then(registration => {})
+        .catch(error => {});
     }
   }, []);
   return null;

@@ -1,6 +1,6 @@
 /**
  * Standardized API Error Classes for MTK Dairy
- * 
+ *
  * These classes provide consistent error handling across all API routes.
  * Each error class maps to a specific HTTP status code and error type.
  */
@@ -81,7 +81,7 @@ export class ValidationError extends ApiError {
   }
 
   static fromZodError(zodError: { errors: Array<{ path: (string | number)[]; message: string }> }) {
-    const formattedErrors = zodError.errors.map((err) => ({
+    const formattedErrors = zodError.errors.map(err => ({
       field: err.path.join('.'),
       message: err.message,
     }));
@@ -229,7 +229,7 @@ export function normalizeError(error: unknown): ApiError {
     if (error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT')) {
       return new ServiceUnavailableError('Database', error.message);
     }
-    
+
     return new InternalServerError(
       process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred',
       process.env.NODE_ENV === 'development' ? error.stack : undefined

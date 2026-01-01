@@ -12,18 +12,23 @@ import { successResponse, errorResponse, ValidationError } from '@/lib/api';
 import { z } from 'zod';
 
 const updatePreferencesSchema = z.object({
-  subscriptions: z.record(z.enum([
-    'marketing',
-    'product_updates',
-    'tips_and_tricks',
-    'milk_production_alerts',
-    'health_reminders',
-    'breeding_alerts',
-    'expense_alerts',
-    'subscription_renewals',
-    'system_notifications',
-    'security_alerts',
-  ]), z.boolean()).optional(),
+  subscriptions: z
+    .record(
+      z.enum([
+        'marketing',
+        'product_updates',
+        'tips_and_tricks',
+        'milk_production_alerts',
+        'health_reminders',
+        'breeding_alerts',
+        'expense_alerts',
+        'subscription_renewals',
+        'system_notifications',
+        'security_alerts',
+      ]),
+      z.boolean()
+    )
+    .optional(),
   enabled: z.boolean().optional(),
 });
 

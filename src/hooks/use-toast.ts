@@ -18,7 +18,11 @@ export interface ToastOptions {
 export function useToast() {
   const toast = useToastOriginal();
 
-  const success = (title: string, description?: string, options?: Omit<ToastOptions, 'title' | 'description'>) => {
+  const success = (
+    title: string,
+    description?: string,
+    options?: Omit<ToastOptions, 'title' | 'description'>
+  ) => {
     toast.toast({
       title,
       description,
@@ -27,7 +31,11 @@ export function useToast() {
     });
   };
 
-  const error = (title: string, description?: string, options?: Omit<ToastOptions, 'title' | 'description'>) => {
+  const error = (
+    title: string,
+    description?: string,
+    options?: Omit<ToastOptions, 'title' | 'description'>
+  ) => {
     toast.toast({
       title,
       description,
@@ -36,7 +44,11 @@ export function useToast() {
     });
   };
 
-  const warning = (title: string, description?: string, options?: Omit<ToastOptions, 'title' | 'description'>) => {
+  const warning = (
+    title: string,
+    description?: string,
+    options?: Omit<ToastOptions, 'title' | 'description'>
+  ) => {
     toast.toast({
       title,
       description,
@@ -45,7 +57,11 @@ export function useToast() {
     });
   };
 
-  const info = (title: string, description?: string, options?: Omit<ToastOptions, 'title' | 'description'>) => {
+  const info = (
+    title: string,
+    description?: string,
+    options?: Omit<ToastOptions, 'title' | 'description'>
+  ) => {
     toast.toast({
       title,
       description,
@@ -54,7 +70,9 @@ export function useToast() {
     });
   };
 
-  const custom = (options: ToastOptions & { variant?: 'default' | 'success' | 'destructive' | 'warning' | 'info' }) => {
+  const custom = (
+    options: ToastOptions & { variant?: 'default' | 'success' | 'destructive' | 'warning' | 'info' }
+  ) => {
     toast.toast({
       title: options.title,
       description: options.description,
@@ -79,32 +97,33 @@ export function useToast() {
     restored: (item: string) => success(`${item} restored successfully`),
     imported: (item: string) => success(`${item} imported successfully`),
     exported: (item: string) => success(`${item} exported successfully`),
-    
+
     // Error messages
-    createFailed: (item: string, errorMessage?: string) => 
+    createFailed: (item: string, errorMessage?: string) =>
       error(`Failed to create ${item}`, errorMessage),
-    updateFailed: (item: string, errorMessage?: string) => 
+    updateFailed: (item: string, errorMessage?: string) =>
       error(`Failed to update ${item}`, errorMessage),
-    deleteFailed: (item: string, errorMessage?: string) => 
+    deleteFailed: (item: string, errorMessage?: string) =>
       error(`Failed to delete ${item}`, errorMessage),
-    saveFailed: (item: string, errorMessage?: string) => 
+    saveFailed: (item: string, errorMessage?: string) =>
       error(`Failed to save ${item}`, errorMessage),
-    uploadFailed: (item: string, errorMessage?: string) => 
+    uploadFailed: (item: string, errorMessage?: string) =>
       error(`Failed to upload ${item}`, errorMessage),
-    downloadFailed: (item: string, errorMessage?: string) => 
+    downloadFailed: (item: string, errorMessage?: string) =>
       error(`Failed to download ${item}`, errorMessage),
-    sendFailed: (item: string, errorMessage?: string) => 
+    sendFailed: (item: string, errorMessage?: string) =>
       error(`Failed to send ${item}`, errorMessage),
     networkError: () => error('Network error', 'Please check your internet connection'),
     serverError: () => error('Server error', 'Please try again later'),
     unauthorized: () => error('Unauthorized', 'You do not have permission to perform this action'),
-    
+
     // Warning messages
     unsavedChanges: () => warning('Unsaved changes', 'You have unsaved changes that will be lost'),
-    quotaExceeded: (resource: string) => 
+    quotaExceeded: (resource: string) =>
       warning('Quota exceeded', `You have reached your ${resource} limit`),
-    offline: () => warning('Offline', 'You are currently offline. Some features may not be available.'),
-    
+    offline: () =>
+      warning('Offline', 'You are currently offline. Some features may not be available.'),
+
     // Info messages
     loading: () => info('Loading...', 'Please wait'),
     processing: () => info('Processing...', 'This may take a moment'),

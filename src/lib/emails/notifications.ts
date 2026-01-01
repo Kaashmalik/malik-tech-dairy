@@ -8,7 +8,7 @@ import type { EmailTemplate } from './templates';
 import { getWelcomeEmailTemplate, getOnboardingEmailTemplate } from './templates';
 
 // Notification types
-export type NotificationType = 
+export type NotificationType =
   | 'welcome'
   | 'onboarding'
   | 'invitation'
@@ -139,7 +139,7 @@ export interface FeatureUpdateData {
 // Email template generators
 export const emailTemplates = {
   // Welcome email (already implemented)
-  welcome: (data: WelcomeData): EmailTemplate => 
+  welcome: (data: WelcomeData): EmailTemplate =>
     getWelcomeEmailTemplate(data.userName, data.tenantName),
 
   // Onboarding emails
@@ -442,13 +442,19 @@ export class EmailNotificationService {
   static async sendNotification<T extends NotificationType>(
     type: T,
     to: string,
-    data: T extends 'welcome' ? WelcomeData :
-        T extends 'invitation' ? InvitationData :
-        T extends 'milk_alert' ? MilkAlertData :
-        T extends 'health_reminder' ? HealthReminderData :
-        T extends 'password_reset' ? PasswordResetData :
-        T extends 'email_verification' ? EmailVerificationData :
-        any
+    data: T extends 'welcome'
+      ? WelcomeData
+      : T extends 'invitation'
+        ? InvitationData
+        : T extends 'milk_alert'
+          ? MilkAlertData
+          : T extends 'health_reminder'
+            ? HealthReminderData
+            : T extends 'password_reset'
+              ? PasswordResetData
+              : T extends 'email_verification'
+                ? EmailVerificationData
+                : any
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       const templateFn = emailTemplates[type as keyof typeof emailTemplates];
@@ -474,12 +480,14 @@ export class EmailNotificationService {
       })
     );
 
-    return results.map(result => 
-      result.status === 'fulfilled' ? result.value : { 
-        email: result.reason.email || 'unknown', 
-        success: false, 
-        error: result.reason.message 
-      }
+    return results.map(result =>
+      result.status === 'fulfilled'
+        ? result.value
+        : {
+            email: result.reason.email || 'unknown',
+            success: false,
+            error: result.reason.message,
+          }
     );
   }
 
@@ -499,20 +507,20 @@ export class EmailNotificationService {
 }
 
 // Export convenience functions
-export const sendWelcomeEmail = (data: WelcomeData) => 
+export const sendWelcomeEmail = (data: WelcomeData) =>
   EmailNotificationService.sendNotification('welcome', data.userEmail, data);
 
-export const sendInvitationEmail = (to: string, data: InvitationData) => 
+export const sendInvitationEmail = (to: string, data: InvitationData) =>
   EmailNotificationService.sendNotification('invitation', to, data);
 
-export const sendMilkAlertEmail = (to: string, data: MilkAlertData) => 
+export const sendMilkAlertEmail = (to: string, data: MilkAlertData) =>
   EmailNotificationService.sendNotification('milk_alert', to, data);
 
-export const sendHealthReminderEmail = (to: string, data: HealthReminderData) => 
+export const sendHealthReminderEmail = (to: string, data: HealthReminderData) =>
   EmailNotificationService.sendNotification('health_reminder', to, data);
 
-export const sendPasswordResetEmail = (to: string, data: PasswordResetData) => 
+export const sendPasswordResetEmail = (to: string, data: PasswordResetData) =>
   EmailNotificationService.sendNotification('password_reset', to, data);
 
-export const sendEmailVerificationEmail = (to: string, data: EmailVerificationData) => 
-  EmailNotificationService.sendNotification('email_verification', to, data);
+export const sendEmailVerificationEmail = (to: string, data: EmailVerificationData) =>
+  EmailNotificationService.sendNotification('email_verification', to, data);

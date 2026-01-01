@@ -61,7 +61,7 @@ describe('AnimalForm', () => {
   });
 
   it('renders edit mode title when animalId is provided', async () => {
-    render(<AnimalForm animalId="test-id" />, { wrapper: createWrapper() });
+    render(<AnimalForm animalId='test-id' />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText('Edit Animal')).toBeInTheDocument();
@@ -157,25 +157,24 @@ describe('AnimalForm', () => {
     const user = userEvent.setup();
     const mockOnSuccess = jest.fn();
 
-    (global.fetch as jest.Mock)
-      .mockImplementation((url: string) => {
-        if (url === '/api/tenants/custom-fields') {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ fields: [] }),
-          });
-        }
-        if (url === '/api/animals') {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({
-              success: true,
-              animal: { id: 'new-animal', tag: 'COW-001' },
-            }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: async () => ({}) });
-      });
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === '/api/tenants/custom-fields') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ fields: [] }),
+        });
+      }
+      if (url === '/api/animals') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            success: true,
+            animal: { id: 'new-animal', tag: 'COW-001' },
+          }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
 
     render(<AnimalForm onSuccess={mockOnSuccess} />, { wrapper: createWrapper() });
 
@@ -190,7 +189,7 @@ describe('AnimalForm', () => {
     // Verify the submit button exists and is enabled
     const submitButton = screen.getByRole('button', { name: /Add Animal/i });
     expect(submitButton).toBeInTheDocument();
-    
+
     // For this test, we just verify the form renders with all required elements
     // Full submission testing would require more complex mocking
   }, 10000);

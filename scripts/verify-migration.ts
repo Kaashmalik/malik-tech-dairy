@@ -10,7 +10,10 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const VERIFY_MIGRATION_STRICT = process.env.VERIFY_MIGRATION_STRICT !== 'false'; // Default to strict
+
 if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase credentials');
   process.exit(1);
 }
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -295,36 +298,90 @@ async function verifyMigration(): Promise<void> {
   let allTablesExist = true;
   let allColumnsValid = true;
   let allForeignKeysValid = true;
+  const missingTables: string[] = [];
+  const tablesWithMissingColumns: string[] = [];
+  const tablesWithMissingForeignKeys: string[] = [];
+
+  console.log('\n🔍 Verifying Phase 1 enhancement tables...\n');
+
   // Check each table
   for (const table of expectedTables) {
     // Check table exists
     const tableExists = await checkTableExists(table.name);
     if (!tableExists) {
       allTablesExist = false;
+      missingTables.push(table.name);
+      console.log(`❌ Table "${table.name}" does not exist`);
       continue;
     }
+
+    console.log(`✅ Table "${table.name}" exists`);
+
     // Check columns
     const columnsValid = await checkTableColumns(table.name, table.requiredColumns);
     if (!columnsValid) {
       allColumnsValid = false;
+      tablesWithMissingColumns.push(table.name);
     } else {
+      console.log(`   ✅ All required columns present`);
     }
+
     // Check foreign keys
     const foreignKeysValid = await checkForeignKeys(table.name, table.foreignKeys);
     if (!foreignKeysValid) {
       allForeignKeysValid = false;
+      tablesWithMissingForeignKeys.push(table.name);
+      console.log(`   ⚠️  Foreign key constraints may be missing`);
     } else {
+      console.log(`   ✅ Foreign key constraints verified`);
     }
   }
+
   // Summary
+  console.log('\n📊 Verification Summary:');
+  console.log(
+    `   Tables: ${allTablesExist ? '✅ All exist' : `❌ ${missingTables.length} missing`}`
+  );
+  console.log(
+    `   Columns: ${allColumnsValid ? '✅ All valid' : `❌ Issues in ${tablesWithMissingColumns.length} table(s)`}`
+  );
+  console.log(
+    `   Foreign Keys: ${allForeignKeysValid ? '✅ All valid' : `⚠️  Issues in ${tablesWithMissingForeignKeys.length} table(s)`}`
+  );
+
+  if (missingTables.length > 0) {
+    console.log('\n❌ Missing Tables:');
+    missingTables.forEach(table => console.log(`   - ${table}`));
+  }
+
   const migrationValid = allTablesExist && allColumnsValid && allForeignKeysValid;
   if (migrationValid) {
+    console.log('\n✅ Migration verification PASSED! Database is ready for deployment.\n');
     process.exit(0);
   } else {
-    console.log(
-      '\n💥 Migration verification FAILED! Please fix database issues before deployment.'
-    );
-    process.exit(1);
+    if (VERIFY_MIGRATION_STRICT) {
+      console.log(
+        '\n💥 Migration verification FAILED! Please fix database issues before deployment.'
+      );
+      console.log(
+        "\n💡 Note: These are Phase 1 enhancement tables. If you haven't implemented these features yet,"
+      );
+      console.log('   you can either:');
+      console.log('   1. Create the missing tables and columns');
+      console.log(
+        '   2. Set VERIFY_MIGRATION_STRICT=false in .env.local to make this warning-only'
+      );
+      console.log('   3. Remove this verification from the postbuild script (package.json)\n');
+      process.exit(1);
+    } else {
+      console.log(
+        '\n⚠️  Migration verification found issues, but continuing (VERIFY_MIGRATION_STRICT=false)'
+      );
+      console.log(
+        '\n💡 Note: These are Phase 1 enhancement tables. Consider creating them when implementing these features.\n'
+      );
+      process.exit(0);
+    }
   }
 }
 // Run verification

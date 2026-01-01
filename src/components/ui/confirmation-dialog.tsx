@@ -32,19 +32,19 @@ interface ConfirmationDialogProps {
 
 const variantStyles: Record<ConfirmationVariant, { icon: React.ReactNode; buttonClass: string }> = {
   danger: {
-    icon: <Trash2 className="h-6 w-6 text-red-600" />,
+    icon: <Trash2 className='h-6 w-6 text-red-600' />,
     buttonClass: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
   },
   warning: {
-    icon: <AlertTriangle className="h-6 w-6 text-amber-600" />,
+    icon: <AlertTriangle className='h-6 w-6 text-amber-600' />,
     buttonClass: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
   },
   success: {
-    icon: <CheckCircle className="h-6 w-6 text-emerald-600" />,
+    icon: <CheckCircle className='h-6 w-6 text-emerald-600' />,
     buttonClass: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500',
   },
   default: {
-    icon: <CheckCircle className="h-6 w-6 text-blue-600" />,
+    icon: <CheckCircle className='h-6 w-6 text-blue-600' />,
     buttonClass: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
   },
 };
@@ -87,21 +87,19 @@ export function ConfirmationDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={isProcessing ? undefined : onOpenChange}>
-      <AlertDialogContent className="sm:max-w-[425px]">
+      <AlertDialogContent className='sm:max-w-[425px]'>
         <AlertDialogHeader>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-slate-800">
+          <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-slate-800'>
             {displayIcon}
           </div>
-          <AlertDialogTitle className="text-center">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-center">
-            {description}
-          </AlertDialogDescription>
+          <AlertDialogTitle className='text-center'>{title}</AlertDialogTitle>
+          <AlertDialogDescription className='text-center'>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="sm:justify-center">
+        <AlertDialogFooter className='sm:justify-center'>
           <AlertDialogCancel
             onClick={handleCancel}
             disabled={isProcessing}
-            className="sm:min-w-[100px]"
+            className='sm:min-w-[100px]'
           >
             {cancelText}
           </AlertDialogCancel>
@@ -112,7 +110,7 @@ export function ConfirmationDialog({
           >
             {isProcessing ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                 Processing...
               </>
             ) : (
@@ -145,14 +143,11 @@ export function useConfirmation() {
     resolve: null,
   });
 
-  const confirm = React.useCallback(
-    (options: UseConfirmationOptions): Promise<boolean> => {
-      return new Promise((resolve) => {
-        setState({ open: true, options, resolve });
-      });
-    },
-    []
-  );
+  const confirm = React.useCallback((options: UseConfirmationOptions): Promise<boolean> => {
+    return new Promise(resolve => {
+      setState({ open: true, options, resolve });
+    });
+  }, []);
 
   const handleConfirm = React.useCallback(() => {
     state.resolve?.(true);
@@ -216,10 +211,10 @@ export function DeleteConfirmationDialog({
       onOpenChange={onOpenChange}
       title={`Delete ${itemType}?`}
       description={`Are you sure you want to delete "${itemName}"? This action cannot be undone.`}
-      confirmText="Delete"
-      variant="danger"
+      confirmText='Delete'
+      variant='danger'
       onConfirm={onConfirm}
       isLoading={isLoading}
     />
   );
-}
+}

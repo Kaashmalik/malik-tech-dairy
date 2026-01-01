@@ -9,20 +9,22 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
+        default:
+          'border-transparent bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
         secondary:
           'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90',
         destructive:
           'border-transparent bg-destructive text-white hover:bg-destructive/90 shadow-sm',
         outline: 'text-foreground hover:bg-accent hover:text-accent-foreground',
-        glass: 'border-white/20 bg-white/20 backdrop-blur-md text-white hover:bg-white/30 shadow-sm',
+        glass:
+          'border-white/20 bg-white/20 backdrop-blur-md text-white hover:bg-white/30 shadow-sm',
         soft: 'border-transparent bg-primary/10 text-primary hover:bg-primary/20',
       },
       animation: {
         none: '',
         pulse: 'animate-pulse',
         scale: 'hover:scale-105',
-      }
+      },
     },
     defaultVariants: {
       variant: 'default',
@@ -32,8 +34,7 @@ const badgeVariants = cva(
 );
 
 interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-  VariantProps<typeof badgeVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
   asChild?: boolean;
   withDot?: boolean; // Shows a status dot
   pulse?: boolean; // Adds a pulsing glow effect to the dot or badge
@@ -51,11 +52,13 @@ function Badge({
   const Comp = asChild ? Slot : motion.div;
 
   // Entrance animation properties
-  const motionProps = !asChild ? {
-    initial: { opacity: 0, scale: 0.8 },
-    animate: { opacity: 1, scale: 1 },
-    transition: { type: 'spring', stiffness: 500, damping: 25 }
-  } : {};
+  const motionProps = !asChild
+    ? {
+        initial: { opacity: 0, scale: 0.8 },
+        animate: { opacity: 1, scale: 1 },
+        transition: { type: 'spring', stiffness: 500, damping: 25 },
+      }
+    : {};
 
   return (
     <Comp
@@ -65,11 +68,14 @@ function Badge({
       {...props}
     >
       {withDot && (
-        <span className={cn(
-          "relative flex h-2 w-2 mr-0.5",
-          pulse && "after:absolute after:inline-flex after:h-full after:w-full after:animate-ping after:rounded-full after:bg-current after:opacity-75"
-        )}>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-current opacity-90"></span>
+        <span
+          className={cn(
+            'relative mr-0.5 flex h-2 w-2',
+            pulse &&
+              'after:absolute after:inline-flex after:h-full after:w-full after:animate-ping after:rounded-full after:bg-current after:opacity-75'
+          )}
+        >
+          <span className='relative inline-flex h-2 w-2 rounded-full bg-current opacity-90'></span>
         </span>
       )}
       {props.children}

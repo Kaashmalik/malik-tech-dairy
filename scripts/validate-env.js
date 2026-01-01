@@ -57,6 +57,8 @@ console.log(chalk.blue('📊 Configuration Summary:\n'));
 console.log(`  Environment: ${chalk.cyan(process.env.NODE_ENV || 'development')}`);
 console.log(`  App URL: ${chalk.cyan(process.env.NEXT_PUBLIC_APP_URL || 'Not set')}`);
 console.log(`  Support Email: ${chalk.cyan(process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'Not set')}`);
-console.log(`  Require Admin Approval: ${chalk.cyan(process.env.REQUIRE_ADMIN_APPROVAL === 'true' ? 'Yes' : 'No')}`);
+console.log(
+  `  Require Admin Approval: ${chalk.cyan(process.env.REQUIRE_ADMIN_APPROVAL === 'true' ? 'Yes' : 'No')}`
+);
 
 console.log(chalk.green('\n✅ Ready to build!\n'));

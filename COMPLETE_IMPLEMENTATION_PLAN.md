@@ -3,13 +3,16 @@
 ## ✅ Phase 1 COMPLETED: Security Audit Results
 
 ### Good News! Critical Routes Are Secure ✅
+
 After checking the main API routes, I found they're already properly secured:
+
 - ✅ `/api/animals/[id]` - Uses `withTenantContext` and filters by `tenant_id`
 - ✅ `/api/milk` - Proper tenant isolation with context
 - ✅ `/api/expenses` - Secured with tenant filtering
 - ✅ `/api/health/records` - Proper isolation implemented
 
 ### What Still Needs Fixing:
+
 1. **Type Safety Issues** - 47 instances of `any` types
 2. **Console Logs** - Production code has console.log statements
 3. **Error Boundaries** - Missing from route groups
@@ -36,11 +39,11 @@ const { data: platformUser } = (await supabase
 import { Database, Tables } from '@/types/supabase';
 type PlatformUser = Tables<'platform_users'>;
 
-const { data: platformUser } = await supabase
+const { data: platformUser } = (await supabase
   .from('platform_users')
   .select('role')
   .eq('id', userId)
-  .single() as { data: Pick<PlatformUser, 'role'> | null };
+  .single()) as { data: Pick<PlatformUser, 'role'> | null };
 ```
 
 ### Step 2: Create Type Helpers
@@ -94,21 +97,16 @@ export async function POST(request: NextRequest) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    optimizePackageImports: [
-      '@supabase/supabase-js',
-      '@clerk/nextjs',
-      'lucide-react',
-      'recharts'
-    ]
+    optimizePackageImports: ['@supabase/supabase-js', '@clerk/nextjs', 'lucide-react', 'recharts'],
   },
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384]
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production'
-  }
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
 };
 
 module.exports = nextConfig;
@@ -146,16 +144,16 @@ export function Dashboard() {
 
 ```sql
 -- Add these indexes to Supabase
-CREATE INDEX CONCURRENTLY idx_animals_tenant_status 
+CREATE INDEX CONCURRENTLY idx_animals_tenant_status
 ON animals(tenant_id, status) WHERE status = 'active';
 
-CREATE INDEX CONCURRENTLY idx_milk_logs_tenant_animal_date 
+CREATE INDEX CONCURRENTLY idx_milk_logs_tenant_animal_date
 ON milk_logs(tenant_id, animal_id, date DESC);
 
-CREATE INDEX CONCURRENTLY idx_health_records_tenant_animal_date 
+CREATE INDEX CONCURRENTLY idx_health_records_tenant_animal_date
 ON health_records(tenant_id, animal_id, date DESC);
 
-CREATE INDEX CONCURRENTLY idx_expenses_tenant_date 
+CREATE INDEX CONCURRENTLY idx_expenses_tenant_date
 ON expenses(tenant_id, date DESC);
 ```
 
@@ -183,7 +181,7 @@ ON expenses(tenant_id, date DESC);
   /* Typography */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-  
+
   /* Fluid typography */
   --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
   --text-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
@@ -224,7 +222,7 @@ interface AnimalCardProps {
 
 export function AnimalCard({ animal, onClick }: AnimalCardProps) {
   return (
-    <Card 
+    <Card
       className={cn(
         "active:scale-[0.98] transition-all duration-150",
         "touch-manipulation", // Improves touch responsiveness
@@ -313,7 +311,7 @@ export function DataTable<T extends Record<string, any>>({
       filtered = [...filtered].sort((a, b) => {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
-        
+
         if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
@@ -402,7 +400,7 @@ export function DataTable<T extends Record<string, any>>({
       </TableBody>
     </Table>
   </div>
-  
+
   {/* Empty state */}
   {processedData.length === 0 && (
     <div className="text-center py-8">
@@ -437,12 +435,12 @@ export function useRealTimeSync(tenantId: string) {
     // Connect to WebSocket
     ws.current = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}/tenant/${tenantId}`);
 
-    ws.current.onmessage = (event) => {
+    ws.current.onmessage = event => {
       const { type, data, table } = JSON.parse(event.data);
-      
+
       // Invalidate related queries
       queryClient.invalidateQueries([table]);
-      
+
       // Show toast notification
       if (type === 'INSERT') {
         toast.success(`New ${table} added`);
@@ -499,14 +497,14 @@ export async function addToSyncQueue(action: {
 // Process sync queue when online
 export async function processSyncQueue() {
   const queue = await offlineDB.getAll('sync_queue');
-  
+
   for (const action of queue) {
     try {
       await fetch(`/api/${action.table}`, {
         method: action.type === 'CREATE' ? 'POST' : action.type === 'UPDATE' ? 'PUT' : 'DELETE',
         body: JSON.stringify(action.data),
       });
-      
+
       // Remove from queue on success
       await offlineDB.delete('sync_queue', action.id);
     } catch (error) {
@@ -525,10 +523,10 @@ export async function generateMilkPrediction(animalId: string, historicalData: M
   // Simple linear regression for demonstration
   const days = historicalData.map((_, index) => index);
   const quantities = historicalData.map(log => log.quantity);
-  
+
   // Calculate trend
   const trend = calculateLinearRegression(days, quantities);
-  
+
   // Predict next 7 days
   const predictions = [];
   for (let i = 1; i <= 7; i++) {
@@ -536,23 +534,22 @@ export async function generateMilkPrediction(animalId: string, historicalData: M
     predictions.push({
       date: addDays(new Date(), i),
       predicted: Math.max(0, Math.round(predictedQuantity * 100) / 100),
-      confidence: Math.max(0.5, 1 - (i * 0.1)), // Decreasing confidence
+      confidence: Math.max(0.5, 1 - i * 0.1), // Decreasing confidence
     });
   }
-  
+
   return predictions;
 }
 
 // Health risk prediction
 export async function predictHealthRisks(animal: Animal, healthRecords: HealthRecord[]) {
   const risks = [];
-  
+
   // Check for patterns in health records
-  const recentIllnesses = healthRecords.filter(record => 
-    record.type === 'sickness' && 
-    isWithinDays(record.date, 30)
+  const recentIllnesses = healthRecords.filter(
+    record => record.type === 'sickness' && isWithinDays(record.date, 30)
   );
-  
+
   if (recentIllnesses.length > 2) {
     risks.push({
       type: 'recurrent_illness',
@@ -561,12 +558,12 @@ export async function predictHealthRisks(animal: Animal, healthRecords: HealthRe
       confidence: 0.8,
     });
   }
-  
+
   // Check vaccination schedule
   const lastVaccination = healthRecords
     .filter(r => r.type === 'vaccination')
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-  
+
   if (lastVaccination && isOverdue(lastVaccination.next_due_date)) {
     risks.push({
       type: 'vaccination_overdue',
@@ -575,7 +572,7 @@ export async function predictHealthRisks(animal: Animal, healthRecords: HealthRe
       confidence: 0.95,
     });
   }
-  
+
   return risks;
 }
 ```
@@ -646,34 +643,29 @@ describe('Animal Management', () => {
 
   it('should add a new animal', () => {
     cy.get('[data-testid="add-animal-btn"]').click();
-    
+
     cy.get('[data-testid="animal-name"]').type('Test Cow');
     cy.get('[data-testid="tag-number"]').type('TC123456');
     cy.get('[data-testid="breed-select"]').select('holstein');
     cy.get('[data-testid="gender-female"]').check();
     cy.get('[data-testid="date-of-birth"]').type('2020-01-01');
-    
+
     cy.get('[data-testid="save-animal"]').click();
-    
-    cy.get('[data-testid="toast"]')
-      .should('contain', 'Animal created successfully');
-    
-    cy.get('[data-testid="animal-list"]')
-      .should('contain', 'Test Cow');
+
+    cy.get('[data-testid="toast"]').should('contain', 'Animal created successfully');
+
+    cy.get('[data-testid="animal-list"]').should('contain', 'Test Cow');
   });
 
   it('should edit an animal', () => {
     cy.get('[data-testid="animal-card"]').first().click();
     cy.get('[data-testid="edit-animal"]').click();
-    
-    cy.get('[data-testid="animal-name"]')
-      .clear()
-      .type('Updated Name');
-    
+
+    cy.get('[data-testid="animal-name"]').clear().type('Updated Name');
+
     cy.get('[data-testid="save-animal"]').click();
-    
-    cy.get('[data-testid="toast"]')
-      .should('contain', 'Animal updated');
+
+    cy.get('[data-testid="toast"]').should('contain', 'Animal updated');
   });
 });
 ```
@@ -706,15 +698,15 @@ getTTFB(sendToAnalytics);
 // Custom performance tracking
 export function trackPageLoad(pageName: string) {
   const startTime = performance.now();
-  
+
   return () => {
     const loadTime = performance.now() - startTime;
-    
+
     // Track if page takes longer than 3 seconds
     if (loadTime > 3000) {
       console.warn(`Slow page load: ${pageName} took ${loadTime}ms`);
     }
-    
+
     // Send to analytics
     sendToAnalytics({
       name: 'page_load_time',
@@ -769,6 +761,7 @@ export function trackAction(action: string, properties?: Record<string, any>) {
 ## 📋 Implementation Checklist
 
 ### Week 1: Foundation
+
 - [ ] Replace all `any` types with proper TypeScript
 - [ ] Add error boundaries to all route groups
 - [ ] Remove console.log statements
@@ -776,6 +769,7 @@ export function trackAction(action: string, properties?: Record<string, any>) {
 - [ ] Add comprehensive input validation
 
 ### Week 2: Performance
+
 - [ ] Implement code splitting
 - [ ] Add database indexes
 - [ ] Optimize images (WebP, lazy loading)
@@ -783,6 +777,7 @@ export function trackAction(action: string, properties?: Record<string, any>) {
 - [ ] Add caching strategies
 
 ### Week 3: UI/UX
+
 - [ ] Implement mobile-first design
 - [ ] Add glassmorphism effects
 - [ ] Create smart data tables
@@ -790,6 +785,7 @@ export function trackAction(action: string, properties?: Record<string, any>) {
 - [ ] Add micro-animations
 
 ### Week 4: Advanced Features
+
 - [ ] Real-time sync with WebSocket
 - [ ] Offline-first architecture
 - [ ] AI-powered insights
@@ -797,6 +793,7 @@ export function trackAction(action: string, properties?: Record<string, any>) {
 - [ ] Advanced search & filtering
 
 ### Week 5: Testing
+
 - [ ] Unit tests for utilities
 - [ ] Integration tests for APIs
 - [ ] E2E tests for user flows
@@ -804,6 +801,7 @@ export function trackAction(action: string, properties?: Record<string, any>) {
 - [ ] Security audits
 
 ### Week 6: Polish
+
 - [ ] Documentation
 - [ ] Onboarding tutorials
 - [ ] Help system
@@ -815,6 +813,7 @@ export function trackAction(action: string, properties?: Record<string, any>) {
 ## 🚀 Success Metrics
 
 After implementation:
+
 - **Security**: Zero data leaks, all endpoints secured
 - **Performance**: <3s load on 3G, 95+ Lighthouse score
 - **Quality**: 80% test coverage, zero TypeScript errors

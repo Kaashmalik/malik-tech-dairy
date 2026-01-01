@@ -1,6 +1,6 @@
 // Feature Flag System for Gradual API Migration
 // Allows safe rollout of v2 Supabase APIs with easy rollback
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { auth } from '@clerk/nextjs/server';
 import { useState, useEffect } from 'react';
 interface FeatureFlag {
@@ -24,7 +24,7 @@ export class FeatureFlagManager {
   private cache = new Map<string, FeatureFlag>();
   private cacheExpiry = new Map<string, number>();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-  private constructor() { }
+  private constructor() {}
   static getInstance(): FeatureFlagManager {
     if (!FeatureFlagManager.instance) {
       FeatureFlagManager.instance = new FeatureFlagManager();

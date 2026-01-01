@@ -9,8 +9,8 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const tenantId = request.nextUrl.searchParams.get('tenantId') ||
-      request.headers.get('x-tenant-id') || '';
+    const tenantId =
+      request.nextUrl.searchParams.get('tenantId') || request.headers.get('x-tenant-id') || '';
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
     }
@@ -26,8 +26,10 @@ export async function POST(request: NextRequest) {
       const userData = userDoc.exists ? userDoc.data() : null;
       const memberData = memberDoc.exists ? memberDoc.data() : null;
       const isSuperAdmin = userData?.platformRole === PlatformRole.SUPER_ADMIN;
-      const isOwner = memberData?.role === TenantRole.FARM_OWNER || userData?.role === TenantRole.FARM_OWNER;
-      const isManager = memberData?.role === TenantRole.FARM_MANAGER || userData?.role === TenantRole.FARM_MANAGER;
+      const isOwner =
+        memberData?.role === TenantRole.FARM_OWNER || userData?.role === TenantRole.FARM_OWNER;
+      const isManager =
+        memberData?.role === TenantRole.FARM_MANAGER || userData?.role === TenantRole.FARM_MANAGER;
       if (!isSuperAdmin && !isOwner && !isManager) {
         return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
       }
@@ -49,9 +51,6 @@ export async function POST(request: NextRequest) {
       inviteUrl, // Return URL for testing
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to send invitation' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to send invitation' }, { status: 500 });
   }
 }

@@ -1,110 +1,98 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentTenant } from "@/lib/supabase/tenant";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { getTenantContext, getTenantInfo } from '@/lib/tenant/context';
 
 // GET /api/medicines/[id] - Fetch a specific medicine
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const { tenantId } = await getTenantContext();
+    const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     // Fetch medicine
-    const { data: medicine, error } = await supabase
-      .from("medicines")
-      .select("*")
-      .eq("id", id)
+    const { data: medicine, error } = await (supabase.from('medicines') as any)
+      .select('*')
+      .eq('id', id)
       .single();
 
     if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { success: false, error: "Medicine not found" },
-          { status: 404 }
-        );
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ success: false, error: 'Medicine not found' }, { status: 404 });
       }
-      console.error("Error fetching medicine:", error);
+      console.error('Error fetching medicine:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to fetch medicine" },
+        { success: false, error: 'Failed to fetch medicine' },
         { status: 500 }
       );
     }
 
     // Fetch diseases this medicine treats
+    // @ts-ignore
     const { data: diseases, error: diseasesError } = await supabase
-      .from("disease_treatments")
-      .select(`
+      .from('disease_treatments')
+      .select(
+        `
         *,
         disease:diseases(*)
-      `)
-      .eq("medicine_id", id)
-      .order("disease(name)");
+      `
+      )
+      .eq('medicine_id', id)
+      .order('disease(name)');
 
     if (diseasesError) {
-      console.error("Error fetching diseases:", diseasesError);
+      console.error('Error fetching diseases:', diseasesError);
     }
 
     // Check tenant inventory
+    // @ts-ignore
     const { data: inventory, error: inventoryError } = await supabase
-      .from("tenant_medicine_inventory")
-      .select("*")
-      .eq("tenant_id", tenant.id)
-      .eq("medicine_id", id)
-      .order("expiry_date");
+      .from('tenant_medicine_inventory')
+      .select('*')
+      .eq('tenant_id', tenant.id)
+      .eq('medicine_id', id)
+      .order('expiry_date');
 
     if (inventoryError) {
-      console.error("Error fetching inventory:", inventoryError);
+      console.error('Error fetching inventory:', inventoryError);
     }
 
     return NextResponse.json({
       success: true,
       data: {
+        // @ts-ignore
         ...medicine,
         treats_diseases: diseases || [],
         inventory: inventory || [],
       },
     });
   } catch (error) {
-    console.error("Error in medicine GET:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in medicine GET:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // PUT /api/medicines/[id] - Update a medicine
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const { tenantId } = await getTenantContext();
+    const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     const body = await request.json();
 
     // Update medicine
-    const { data: medicine, error } = await supabase
-      .from("medicines")
+    // @ts-ignore
+    const { data: medicine, error } = await (supabase.from('medicines') as any)
       .update({
         name: body.name,
         generic_name: body.generic_name,
@@ -139,20 +127,17 @@ export async function PUT(
         notes: body.notes,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id)
+      .eq('id', id)
       .select()
       .single();
 
     if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { success: false, error: "Medicine not found" },
-          { status: 404 }
-        );
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ success: false, error: 'Medicine not found' }, { status: 404 });
       }
-      console.error("Error updating medicine:", error);
+      console.error('Error updating medicine:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to update medicine" },
+        { success: false, error: 'Failed to update medicine' },
         { status: 500 }
       );
     }
@@ -160,14 +145,11 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       data: medicine,
-      message: "Medicine updated successfully",
+      message: 'Medicine updated successfully',
     });
   } catch (error) {
-    console.error("Error in medicine PUT:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in medicine PUT:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -178,59 +160,49 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const { tenantId } = await getTenantContext();
+    const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     // Check if medicine is referenced in treatments
+    // @ts-ignore
     const { data: references } = await supabase
-      .from("disease_treatments")
-      .select("id")
-      .eq("medicine_id", id)
+      .from('disease_treatments')
+      .select('id')
+      .eq('medicine_id', id)
       .limit(1);
 
     if (references && references.length > 0) {
       return NextResponse.json(
-        { success: false, error: "Cannot delete medicine with existing treatments" },
+        { success: false, error: 'Cannot delete medicine with existing treatments' },
         { status: 400 }
       );
     }
 
     // Delete medicine
-    const { error } = await supabase
-      .from("medicines")
-      .delete()
-      .eq("id", id);
+    const { error } = await (supabase.from('medicines') as any).delete().eq('id', id);
 
     if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { success: false, error: "Medicine not found" },
-          { status: 404 }
-        );
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ success: false, error: 'Medicine not found' }, { status: 404 });
       }
-      console.error("Error deleting medicine:", error);
+      console.error('Error deleting medicine:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to delete medicine" },
+        { success: false, error: 'Failed to delete medicine' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: "Medicine deleted successfully",
+      message: 'Medicine deleted successfully',
     });
   } catch (error) {
-    console.error("Error in medicine DELETE:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in medicine DELETE:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

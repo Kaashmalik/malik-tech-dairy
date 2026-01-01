@@ -23,7 +23,7 @@ require('dotenv').config({ path: '.env.local' });
 const requiredEnvVars = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'NEXT_PUBLIC_OPENWEATHER_API_KEY'
+  'NEXT_PUBLIC_OPENWEATHER_API_KEY',
 ];
 
 let envOk = true;
@@ -52,7 +52,9 @@ console.log('   - Fixed hydration errors');
 console.log('   - Mobile-first responsive design');
 console.log('   - Professional 2025 UI');
 console.log('\n🌟 Features:');
-console.log('• 8 Module Cards (Animals, Health, Milk, Assets, Medicine, Diseases, Sales, Expenses)');
+console.log(
+  '• 8 Module Cards (Animals, Health, Milk, Assets, Medicine, Diseases, Sales, Expenses)'
+);
 console.log('• Quick Stats Dashboard');
 console.log('• Activity Feed');
 console.log('• Search & Filter');

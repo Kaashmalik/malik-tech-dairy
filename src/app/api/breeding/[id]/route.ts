@@ -1,7 +1,7 @@
 // API Route: Get/Update/Delete Breeding Record (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 // GET: Get breeding record by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

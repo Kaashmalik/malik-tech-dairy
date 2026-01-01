@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import {
   treatmentRecords,
   diseases,
@@ -7,7 +7,7 @@ import {
   tenants,
   treatmentRecordsRelations,
 } from '@/db/schema';
-import { eq, and, ilike, desc, gte, lte, sql } from 'drizzle-orm';
+import { eq, and, ilike, desc, gte, lte, sql, inArray } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/tenant/context';
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
         },
         animal: {
           id: animals.id,
-          tagNumber: animals.tagNumber,
+          tag: animals.tag,
           name: animals.name,
           breed: animals.breed,
           dateOfBirth: animals.dateOfBirth,
@@ -207,6 +207,9 @@ export async function POST(request: NextRequest) {
         id: treatmentId,
         tenantId: tenantContext.tenantId,
         ...validatedData,
+        startDate: new Date(validatedData.startDate),
+        endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined,
+        followUpDate: validatedData.followUpDate ? new Date(validatedData.followUpDate) : undefined,
         createdBy: tenantContext.userId,
         createdAt: new Date(),
         updatedAt: new Date(),

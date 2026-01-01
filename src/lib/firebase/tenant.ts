@@ -21,7 +21,7 @@ export async function getTenantConfig(tenantId: string): Promise<TenantConfig | 
     cacheKeys.tenantConfig(tenantId),
     async () => {
       try {
-        const configDoc = await adminDb
+        const configDoc = await adminDb!
           .collection('tenants')
           .doc(tenantId)
           .collection('config')
@@ -83,7 +83,7 @@ export async function getTenantSubscription(tenantId: string): Promise<TenantSub
     cacheKeys.tenantSubscription(tenantId),
     async () => {
       try {
-        const subDoc = await adminDb
+        const subDoc = await adminDb!
           .collection('tenants')
           .doc(tenantId)
           .collection('subscription')
@@ -116,7 +116,7 @@ export async function getTenantLimits(tenantId: string): Promise<TenantLimits | 
     cacheKeys.tenantLimits(tenantId),
     async () => {
       try {
-        const limitsDoc = await adminDb
+        const limitsDoc = await adminDb!
           .collection('tenants')
           .doc(tenantId)
           .collection('limits')

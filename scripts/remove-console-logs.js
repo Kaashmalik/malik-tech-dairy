@@ -22,22 +22,24 @@ function processFile(filePath) {
   let modified = false;
   let removedInFile = 0;
 
-  const newLines = lines.map(line => {
-    // Match console.log, console.error, console.warn, console.info
-    const consoleRegex = /^\s*console\.(log|error|warn|info)\([^)]*\);?\s*$/;
-    
-    if (consoleRegex.test(line)) {
-      // Check if it's a console.log we should remove
-      if (!line.includes('Sentry') && !line.includes('error reporting')) {
-        modified = true;
-        removedInFile++;
-        consoleLogsRemoved++;
-        return null; // Remove the line
+  const newLines = lines
+    .map(line => {
+      // Match console.log, console.error, console.warn, console.info
+      const consoleRegex = /^\s*console\.(log|error|warn|info)\([^)]*\);?\s*$/;
+
+      if (consoleRegex.test(line)) {
+        // Check if it's a console.log we should remove
+        if (!line.includes('Sentry') && !line.includes('error reporting')) {
+          modified = true;
+          removedInFile++;
+          consoleLogsRemoved++;
+          return null; // Remove the line
+        }
       }
-    }
-    
-    return line;
-  }).filter(Boolean); // Remove null lines
+
+      return line;
+    })
+    .filter(Boolean); // Remove null lines
 
   if (modified) {
     fs.writeFileSync(filePath, newLines.join('\n'));
@@ -48,11 +50,11 @@ function processFile(filePath) {
 
 function walkDirectory(dir) {
   const files = fs.readdirSync(dir);
-  
+
   for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
-    
+
     if (stat.isDirectory()) {
       // Skip node_modules and .next
       if (file !== 'node_modules' && file !== '.next' && file !== '.git') {
@@ -72,8 +74,7 @@ directories.forEach(dir => {
   }
 });
 
-
 if (consoleLogsRemoved > 0) {
   console.log('💡 Consider using a proper logging service like Sentry for production.');
 } else {
-}
+}

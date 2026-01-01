@@ -1,6 +1,6 @@
 // Supabase Realtime Subscriptions
 // Replaces Firebase Realtime Database for milk_logs and health_events
-import { getSupabaseClient } from '../supabase';
+import { getSupabaseClient } from './server';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 /**

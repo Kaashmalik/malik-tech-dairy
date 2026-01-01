@@ -58,8 +58,10 @@ export type FarmApplicationInsert = Database['public']['Tables']['farm_applicati
 export type FarmApplicationUpdate = Database['public']['Tables']['farm_applications']['Update'];
 
 export type CustomFieldConfig = Database['public']['Tables']['custom_fields_config']['Row'];
-export type CustomFieldConfigInsert = Database['public']['Tables']['custom_fields_config']['Insert'];
-export type CustomFieldConfigUpdate = Database['public']['Tables']['custom_fields_config']['Update'];
+export type CustomFieldConfigInsert =
+  Database['public']['Tables']['custom_fields_config']['Insert'];
+export type CustomFieldConfigUpdate =
+  Database['public']['Tables']['custom_fields_config']['Update'];
 
 export type EmailSubscription = Database['public']['Tables']['email_subscriptions']['Row'];
 export type EmailSubscriptionInsert = Database['public']['Tables']['email_subscriptions']['Insert'];
@@ -151,13 +153,38 @@ export const ANIMAL_BREEDS = ['holstein', 'jersey', 'buffalo', 'sahiwal', 'local
 export const ANIMAL_STATUSES = ['active', 'sold', 'deceased'] as const;
 export const ANIMAL_GENDERS = ['male', 'female'] as const;
 
-export const HEALTH_RECORD_TYPES = ['vaccination', 'medication', 'checkup', 'surgery', 'emergency'] as const;
+export const HEALTH_RECORD_TYPES = [
+  'vaccination',
+  'medication',
+  'checkup',
+  'surgery',
+  'emergency',
+] as const;
 
 export const BREEDING_TYPES = ['natural', 'artificial'] as const;
 export const BREEDING_STATUSES = ['planned', 'in_progress', 'successful', 'failed'] as const;
 
-export const USER_ROLES = ['super_admin', 'farm_owner', 'farm_manager', 'veterinarian', 'breeder', 'milking_staff', 'feed_manager', 'accountant', 'guest'] as const;
-export const TENANT_ROLES = ['farm_owner', 'farm_manager', 'veterinarian', 'breeder', 'milking_staff', 'feed_manager', 'accountant', 'guest'] as const;
+export const USER_ROLES = [
+  'super_admin',
+  'farm_owner',
+  'farm_manager',
+  'veterinarian',
+  'breeder',
+  'milking_staff',
+  'feed_manager',
+  'accountant',
+  'guest',
+] as const;
+export const TENANT_ROLES = [
+  'farm_owner',
+  'farm_manager',
+  'veterinarian',
+  'breeder',
+  'milking_staff',
+  'feed_manager',
+  'accountant',
+  'guest',
+] as const;
 
 export const SUBSCRIPTION_PLANS = ['free', 'professional', 'farm', 'enterprise'] as const;
 export const SUBSCRIPTION_STATUSES = ['active', 'cancelled', 'expired', 'trial'] as const;
@@ -165,7 +192,15 @@ export const SUBSCRIPTION_STATUSES = ['active', 'cancelled', 'expired', 'trial']
 export const PAYMENT_METHODS = ['jazzcash', 'easypaisa', 'bank_transfer', 'credit_card'] as const;
 export const PAYMENT_STATUSES = ['pending', 'completed', 'failed', 'refunded'] as const;
 
-export const EXPENSE_CATEGORIES = ['feed', 'medicine', 'equipment', 'labor', 'maintenance', 'transport', 'other'] as const;
+export const EXPENSE_CATEGORIES = [
+  'feed',
+  'medicine',
+  'equipment',
+  'labor',
+  'maintenance',
+  'transport',
+  'other',
+] as const;
 export const SALE_PRODUCT_TYPES = ['milk', 'animal', 'equipment', 'other'] as const;
 
 // Utility functions

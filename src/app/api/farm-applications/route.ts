@@ -4,7 +4,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 const createApplicationSchema = z.object({
   farmName: z.string().min(2).max(255),
   ownerName: z.string().min(2).max(255),

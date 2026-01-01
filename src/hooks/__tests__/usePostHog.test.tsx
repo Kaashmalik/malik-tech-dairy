@@ -58,14 +58,18 @@ describe('usePostHogAnalytics', () => {
     const { result } = renderHook(() => usePostHogAnalytics());
 
     // Wait for posthog to be loaded
-    await waitFor(() => {
-      expect(result.current.posthog).toBeDefined();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(result.current.posthog).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
 
     if (result.current.posthog) {
       result.current.trackEvent('test_event', { customProp: 'value' });
-      
-      expect(mockCapture).toHaveBeenCalledWith('test_event', 
+
+      expect(mockCapture).toHaveBeenCalledWith(
+        'test_event',
         expect.objectContaining({
           customProp: 'value',
         })
@@ -76,14 +80,18 @@ describe('usePostHogAnalytics', () => {
   it('should track page views', async () => {
     const { result } = renderHook(() => usePostHogAnalytics());
 
-    await waitFor(() => {
-      expect(result.current.posthog).toBeDefined();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(result.current.posthog).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
 
     if (result.current.posthog) {
       result.current.trackPageView('/dashboard', { section: 'main' });
-      
-      expect(mockCapture).toHaveBeenCalledWith('$pageview',
+
+      expect(mockCapture).toHaveBeenCalledWith(
+        '$pageview',
         expect.objectContaining({
           page_name: '/dashboard',
           section: 'main',
@@ -95,14 +103,18 @@ describe('usePostHogAnalytics', () => {
   it('should track button clicks', async () => {
     const { result } = renderHook(() => usePostHogAnalytics());
 
-    await waitFor(() => {
-      expect(result.current.posthog).toBeDefined();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(result.current.posthog).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
 
     if (result.current.posthog) {
       result.current.trackButtonClick('submit_button', 'form', { formType: 'animal' });
-      
-      expect(mockCapture).toHaveBeenCalledWith('button_clicked',
+
+      expect(mockCapture).toHaveBeenCalledWith(
+        'button_clicked',
         expect.objectContaining({
           button_name: 'submit_button',
           location: 'form',
@@ -115,9 +127,12 @@ describe('usePostHogAnalytics', () => {
   it('should track milk log events', async () => {
     const { result } = renderHook(() => usePostHogAnalytics());
 
-    await waitFor(() => {
-      expect(result.current.posthog).toBeDefined();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(result.current.posthog).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
 
     if (result.current.posthog) {
       result.current.trackMilkLog({
@@ -126,7 +141,8 @@ describe('usePostHogAnalytics', () => {
         session: 'morning',
       });
 
-      expect(mockCapture).toHaveBeenCalledWith('button_clicked',
+      expect(mockCapture).toHaveBeenCalledWith(
+        'button_clicked',
         expect.objectContaining({
           button_name: 'log_milk',
           location: 'milk_log_form',
@@ -142,9 +158,12 @@ describe('usePostHogAnalytics', () => {
   it('should track animal creation events', async () => {
     const { result } = renderHook(() => usePostHogAnalytics());
 
-    await waitFor(() => {
-      expect(result.current.posthog).toBeDefined();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(result.current.posthog).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
 
     if (result.current.posthog) {
       result.current.trackAnimalCreation({
@@ -152,7 +171,8 @@ describe('usePostHogAnalytics', () => {
         breed: 'Holstein',
       });
 
-      expect(mockCapture).toHaveBeenCalledWith('button_clicked',
+      expect(mockCapture).toHaveBeenCalledWith(
+        'button_clicked',
         expect.objectContaining({
           button_name: 'create_animal',
           location: 'animal_form',
@@ -167,9 +187,12 @@ describe('usePostHogAnalytics', () => {
   it('should track report download events', async () => {
     const { result } = renderHook(() => usePostHogAnalytics());
 
-    await waitFor(() => {
-      expect(result.current.posthog).toBeDefined();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(result.current.posthog).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
 
     if (result.current.posthog) {
       result.current.trackReportDownload({
@@ -177,7 +200,8 @@ describe('usePostHogAnalytics', () => {
         format: 'pdf',
       });
 
-      expect(mockCapture).toHaveBeenCalledWith('report_downloaded',
+      expect(mockCapture).toHaveBeenCalledWith(
+        'report_downloaded',
         expect.objectContaining({
           reportType: 'daily',
           format: 'pdf',
@@ -188,12 +212,12 @@ describe('usePostHogAnalytics', () => {
 
   it('should handle missing posthog key gracefully', () => {
     process.env.NEXT_PUBLIC_POSTHOG_KEY = '';
-    
+
     const { result } = renderHook(() => usePostHogAnalytics());
 
     // Should not throw
     result.current.trackEvent('test_event');
-    
+
     // When PostHog key is missing, capture should not be called
     // (unless already loaded from previous test)
   });

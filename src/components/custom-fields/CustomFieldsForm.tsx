@@ -1,12 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import type { CustomField } from '@/types';
 
@@ -21,10 +21,14 @@ export function CustomFieldsForm() {
       if (!res.ok) throw new Error('Failed to fetch custom fields');
       return res.json();
     },
-    onSuccess: data => {
-      setFields(data.fields || []);
-    },
   });
+
+  // Sync fetched data to local state
+  useEffect(() => {
+    if (data?.fields) {
+      setFields(data.fields);
+    }
+  }, [data]);
 
   const mutation = useMutation({
     mutationFn: async (fields: CustomField[]) => {

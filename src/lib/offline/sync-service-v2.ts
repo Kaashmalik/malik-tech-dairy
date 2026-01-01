@@ -46,12 +46,10 @@ interface MTKDairyDB extends DBSchema {
   };
   // App state
   app_state: {
-    app_state: {
+    key: string;
+    value: {
       key: string;
-      value: {
-        key: string;
-        value: any;
-      };
+      value: any;
     };
   };
 }
@@ -111,7 +109,10 @@ class OfflineSyncService {
   }
 
   // Get data from IndexedDB
-  async get(tableName: keyof MTKDairyDB, id: string) {
+  async get(
+    tableName: 'animals' | 'milk_logs' | 'health_records' | 'sync_queue' | 'app_state',
+    id: string
+  ) {
     if (!this.db) throw new Error('DB not initialized');
     return await this.db.get(tableName, id);
   }
@@ -119,13 +120,13 @@ class OfflineSyncService {
   // Query data with index
   async query(
     tableName: 'animals' | 'milk_logs' | 'health_records',
-    indexName: string,
+    indexName: 'by-tenant' | 'by-status' | 'updated-at' | 'by-animal' | 'by-date',
     value: string
   ) {
     if (!this.db) throw new Error('DB not initialized');
 
     const tx = this.db.transaction(tableName, 'readonly');
-    const index = tx.store.index(indexName);
+    const index = tx.store.index(indexName as any);
     return await index.getAll(value);
   }
 
@@ -231,7 +232,7 @@ class OfflineSyncService {
     const item = await this.db.get('sync_queue', id);
     if (item && item.retries < 3) {
       item.retries++;
-      item.timestamp = Date.now() + (item.retries * 60000); // Exponential backoff
+      item.timestamp = Date.now() + item.retries * 60000; // Exponential backoff
       const tx = this.db.transaction('sync_queue', 'readwrite');
       await tx.store.put(item);
       await tx.done;
@@ -330,7 +331,7 @@ export function useOfflineSync() {
     });
 
     // Subscribe to sync events
-    const unsubscribe = offlineSync.onSyncComplete((success) => {
+    const unsubscribe = offlineSync.onSyncComplete(success => {
       setSyncing(false);
       if (success) {
         setLastSync(new Date());

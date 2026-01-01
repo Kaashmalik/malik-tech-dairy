@@ -165,9 +165,7 @@ export function getQueryConfig(
 }
 
 // Get mutation configuration
-export function getMutationConfig(
-  type: keyof typeof mutationConfig = 'default'
-) {
+export function getMutationConfig(type: keyof typeof mutationConfig = 'default') {
   return mutationConfig[type];
 }
 
@@ -176,47 +174,44 @@ export const querySpecificConfig = {
   // Animals
   animals: getQueryConfig('userContent'),
   animalDetail: getQueryConfig('static'),
-  
+
   // Milk logs
   milkLogs: getQueryConfig('userContent'),
   milkStats: getQueryConfig('analytics'),
-  
+
   // Health records
   healthRecords: getQueryConfig('userContent'),
   healthRecordDetail: getQueryConfig('static'),
-  
+
   // Breeding records
   breedingRecords: getQueryConfig('userContent'),
-  
+
   // Financial data
   expenses: getQueryConfig('userContent'),
   sales: getQueryConfig('userContent'),
-  
+
   // User data
   userProfile: getQueryConfig('static'),
   userSettings: getQueryConfig('static'),
-  
+
   // Notifications
   notifications: getQueryConfig('realtime'),
-  
+
   // Analytics
   analytics: getQueryConfig('analytics'),
-  
+
   // Search
   search: getQueryConfig('search'),
-  
+
   // File operations
   upload: getQueryConfig('upload'),
-  
+
   // Background sync
   sync: getQueryConfig('backgroundSync'),
 };
 
 // Helper to merge configurations
-export function mergeConfig<T extends Record<string, unknown>>(
-  base: T,
-  overrides: Partial<T>
-): T {
+export function mergeConfig<T extends Record<string, unknown>>(base: T, overrides: Partial<T>): T {
   return { ...base, ...overrides };
 }
 
@@ -253,4 +248,4 @@ export const presets = {
     ...getQueryConfig('userContent'),
     // onMutate and onError should be implemented in the hook
   },
-};
+};

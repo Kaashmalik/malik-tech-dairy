@@ -1,6 +1,6 @@
 /**
  * Enterprise Redis Caching Layer for MTK Dairy
- * 
+ *
  * Provides high-performance caching for:
  * - User sessions and roles
  * - Tenant subscription data
@@ -17,7 +17,7 @@ let redisInitialized = false;
 
 function getRedis(): Redis | null {
   if (redisInitialized) return redis;
-  
+
   try {
     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
       redis = new Redis({
@@ -28,7 +28,7 @@ function getRedis(): Redis | null {
   } catch (error) {
     logger.warn('Redis initialization failed, caching disabled', { error });
   }
-  
+
   redisInitialized = true;
   return redis;
 }
@@ -46,11 +46,11 @@ export const CachePrefix = {
 
 // Default TTL values (in seconds)
 export const CacheTTL = {
-  SHORT: 60,           // 1 minute
-  MEDIUM: 300,         // 5 minutes
-  LONG: 3600,          // 1 hour
-  VERY_LONG: 86400,    // 24 hours
-  SESSION: 604800,     // 7 days
+  SHORT: 60, // 1 minute
+  MEDIUM: 300, // 5 minutes
+  LONG: 3600, // 1 hour
+  VERY_LONG: 86400, // 24 hours
+  SESSION: 604800, // 7 days
 } as const;
 
 /**
@@ -73,8 +73,8 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
  * Generic cache set with TTL
  */
 export async function cacheSet<T>(
-  key: string, 
-  value: T, 
+  key: string,
+  value: T,
   ttlSeconds: number = CacheTTL.MEDIUM
 ): Promise<boolean> {
   const client = getRedis();
@@ -140,10 +140,10 @@ export async function cacheGetOrFetch<T>(
 
   // Fetch fresh data
   const fresh = await fetchFn();
-  
+
   // Cache the result (don't await - fire and forget)
   cacheSet(key, fresh, ttlSeconds);
-  
+
   return fresh;
 }
 
@@ -155,7 +155,7 @@ export async function cacheGetOrFetch<T>(
  * Get user role from cache or database
  */
 export async function getCachedUserRole(
-  tenantId: string, 
+  tenantId: string,
   userId: string,
   fetchFn: () => Promise<string>
 ): Promise<string> {
@@ -236,7 +236,7 @@ export async function getCachedAnalytics<T>(
  * Increment counter (for rate limiting, analytics)
  */
 export async function incrementCounter(
-  key: string, 
+  key: string,
   ttlSeconds: number = CacheTTL.SHORT
 ): Promise<number> {
   const client = getRedis();
@@ -273,9 +273,9 @@ export async function checkCacheHealth(): Promise<{
     const latencyMs = Math.round(performance.now() - start);
     return { connected: true, latencyMs };
   } catch (error) {
-    return { 
-      connected: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      connected: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

@@ -6,7 +6,7 @@ import {
   validateImportFile,
   AnimalImportData,
 } from '@/lib/import/csv-parser';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 const bulkImportSchema = z.object({
   type: z.enum(['animals', 'milk', 'health']).default('animals'),

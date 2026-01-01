@@ -27,7 +27,7 @@ console.log('\n2️⃣ Checking critical files...');
 const criticalFiles = [
   'src/types/weather.ts',
   'src/lib/supabase/client.ts',
-  'src/components/dashboard/ModernDashboard.tsx'
+  'src/components/dashboard/ModernDashboard.tsx',
 ];
 
 criticalFiles.forEach(file => {
@@ -58,7 +58,9 @@ console.log('- Check browser console (F12)');
 console.log('- Ensure all environment variables are set');
 
 console.log('\n🎉 Features included:');
-console.log('• 8 Module Cards (Animals, Health, Milk, Assets, Medicine, Diseases, Sales, Expenses)');
+console.log(
+  '• 8 Module Cards (Animals, Health, Milk, Assets, Medicine, Diseases, Sales, Expenses)'
+);
 console.log('• Modern/Classic view toggle');
 console.log('• Mobile-first responsive design');
 console.log('• Fixed hydration errors');

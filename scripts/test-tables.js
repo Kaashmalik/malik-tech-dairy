@@ -9,9 +9,9 @@ const supabase = createClient(
 async function testTables() {
   try {
     console.log('Testing table existence...\n');
-    
+
     const tenantId = 'org_36Pn5ejZHWxT3ZdlWh4Fr2vS1Cc';
-    
+
     const tables = [
       { name: 'animals', module: 'Animals' },
       { name: 'milk_logs', module: 'Milk Production' },
@@ -30,17 +30,17 @@ async function testTables() {
       { name: 'tasks', module: 'Task Management' },
       { name: 'iot_devices', module: 'IoT Devices' },
     ];
-    
+
     for (const table of tables) {
       console.log(`\n=== ${table.module} (${table.name}) ===`);
-      
+
       try {
         // Try to select count
         const { count, error: countError } = await supabase
           .from(table.name)
           .select('*', { count: 'exact', head: true })
           .eq('tenant_id', tenantId);
-        
+
         if (countError) {
           if (countError.code === 'PGRST116') {
             console.log('  ❌ Table does not exist');
@@ -51,14 +51,14 @@ async function testTables() {
           }
         } else {
           console.log(`  ✓ Table exists - ${count || 0} records`);
-          
+
           // Get sample data
           const { data, error } = await supabase
             .from(table.name)
             .select('*')
             .eq('tenant_id', tenantId)
             .limit(1);
-          
+
           if (error) {
             console.log('  Error fetching sample:', error.message);
           } else if (data && data.length > 0) {
@@ -69,7 +69,6 @@ async function testTables() {
         console.log('  ❌ Exception:', err.message);
       }
     }
-    
   } catch (error) {
     console.error('Error:', error);
   }

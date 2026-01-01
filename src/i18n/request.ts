@@ -55,7 +55,9 @@ export default getRequestConfig(async ({ requestLocale }) => {
       // Fail silently if tenant config not available
     }
   }
-  const locale = detectLocale(requestLocale, acceptLanguage, tenantLanguage);
+  // requestLocale is a Promise in newer next-intl versions
+  const resolvedRequestLocale = await requestLocale;
+  const locale = detectLocale(resolvedRequestLocale, acceptLanguage, tenantLanguage);
   return {
     locale,
     messages: (await import(`../../messages/${locale}.json`)).default,

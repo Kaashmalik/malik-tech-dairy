@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { WeatherDataRow, TenantRow } from '@/types/weather';
 
@@ -37,21 +37,18 @@ export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const supabase = getSupabaseClient();
-      
+
       // Get tenant location
-      const { data: tenant, error: tenantError } = await supabase
+      const { data: tenant, error: tenantError } = (await supabase
         .from('tenants')
         .select('farm_location, weather_enabled')
         .eq('id', context.tenantId)
-        .single() as { data: TenantRow | null; error: any };
-      
+        .single()) as { data: TenantRow | null; error: any };
+
       if (tenantError || !tenant) {
-        return NextResponse.json(
-          { success: false, error: 'Tenant not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
       }
-      
+
       // Check if weather is enabled for this tenant
       if (!tenant.weather_enabled) {
         return NextResponse.json(
@@ -59,38 +56,35 @@ export async function GET(request: NextRequest) {
           { status: 200 }
         );
       }
-      
+
       // Get weather data
-      const { data, error } = await supabase
+      const { data, error } = (await supabase
         .from('weather_data')
         .select('*')
         .eq('tenant_id', context.tenantId)
         .order('data_timestamp', { ascending: false })
-        .limit(10) as { data: WeatherDataRow[] | null; error: any };
-      
+        .limit(10)) as { data: WeatherDataRow[] | null; error: any };
+
       if (error) {
-        return NextResponse.json(
-          { success: false, error: error.message },
-          { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
-      
+
       // If no weather data, try to fetch it
       if (!data || data.length === 0) {
-        const { data: freshData } = await supabase
+        const { data: freshData } = (await supabase
           .from('weather_data')
           .select('*')
           .eq('tenant_id', context.tenantId)
           .order('data_timestamp', { ascending: false })
-          .limit(1) as { data: WeatherDataRow[] | null; error: any };
-        
+          .limit(1)) as { data: WeatherDataRow[] | null; error: any };
+
         return NextResponse.json({
           success: true,
           data: freshData || [],
           location: tenant.farm_location,
         });
       }
-      
+
       return NextResponse.json({
         success: true,
         data: data || [],
@@ -98,10 +92,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       logger.error('Weather GET error', error, { tenantId: context.tenantId });
-      return NextResponse.json(
-        { success: false, error: 'Internal server error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
@@ -111,9 +102,16 @@ export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const weatherData = await request.json();
-      
+
       // Validate required fields
-      const requiredFields = ['city_name', 'temperature', 'humidity', 'pressure', 'weather_main', 'data_timestamp'];
+      const requiredFields = [
+        'city_name',
+        'temperature',
+        'humidity',
+        'pressure',
+        'weather_main',
+        'data_timestamp',
+      ];
       for (const field of requiredFields) {
         if (!weatherData[field as keyof WeatherData]) {
           return NextResponse.json(
@@ -122,16 +120,16 @@ export async function POST(request: NextRequest) {
           );
         }
       }
-      
+
       const supabase = getSupabaseClient();
-      
-      const { data: existing } = await supabase
+
+      const { data: existing } = (await supabase
         .from('weather_data')
         .select('id')
         .eq('tenant_id', context.tenantId)
         .eq('data_timestamp', weatherData.data_timestamp)
-        .single() as { data: WeatherDataRow | null; error: any };
-      
+        .single()) as { data: WeatherDataRow | null; error: any };
+
       let result;
       let updateError: any = null;
       let insertError: any = null;
@@ -140,21 +138,21 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
         ...weatherData,
       };
-      
+
       if (existing) {
         // Update existing record
-        const { data, error } = await supabase
+        const { data, error } = (await supabase
           .from('weather_data')
           .update(weatherRecord)
           .eq('id', existing.id)
           .select()
-          .single() as { data: WeatherDataRow | null; error: any };
-        
+          .single()) as { data: WeatherDataRow | null; error: any };
+
         updateError = error;
         result = data;
       } else {
         // Create new record
-        const { data, error } = await supabase
+        const { data, error } = (await supabase
           .from('weather_data')
           .insert({
             ...weatherRecord,
@@ -162,20 +160,17 @@ export async function POST(request: NextRequest) {
             created_at: new Date().toISOString(),
           })
           .select()
-          .single() as { data: WeatherDataRow | null; error: any };
-        
+          .single()) as { data: WeatherDataRow | null; error: any };
+
         insertError = error;
         result = data;
       }
-      
+
       if (updateError || insertError) {
         const error = updateError || insertError;
-        return NextResponse.json(
-          { success: false, error: error.message },
-          { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
-      
+
       return NextResponse.json({
         success: true,
         data: result,
@@ -183,10 +178,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       logger.error('Weather POST error', error, { tenantId: context.tenantId });
-      return NextResponse.json(
-        { success: false, error: 'Internal server error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
@@ -196,17 +188,17 @@ export async function PUT(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const { id, ...updateData } = await request.json();
-      
+
       if (!id) {
         return NextResponse.json(
           { success: false, error: 'Weather data ID is required' },
           { status: 400 }
         );
       }
-      
+
       const supabase = getSupabaseClient();
-      
-      const { data, error } = await supabase
+
+      const { data, error } = (await supabase
         .from('weather_data')
         .update({
           ...updateData,
@@ -215,15 +207,12 @@ export async function PUT(request: NextRequest) {
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
         .select()
-        .single() as { data: WeatherDataRow | null; error: any };
-      
+        .single()) as { data: WeatherDataRow | null; error: any };
+
       if (error) {
-        return NextResponse.json(
-          { success: false, error: error.message },
-          { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
-      
+
       return NextResponse.json({
         success: true,
         data,
@@ -231,10 +220,7 @@ export async function PUT(request: NextRequest) {
       });
     } catch (error) {
       logger.error('Weather PUT error', error, { tenantId: context.tenantId });
-      return NextResponse.json(
-        { success: false, error: 'Internal server error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
@@ -245,39 +231,33 @@ export async function DELETE(request: NextRequest) {
     try {
       const { searchParams } = new URL(request.url);
       const id = searchParams.get('id');
-      
+
       if (!id) {
         return NextResponse.json(
           { success: false, error: 'Weather data ID is required' },
           { status: 400 }
         );
       }
-      
+
       const supabase = getSupabaseClient();
-      
+
       const { error } = await supabase
         .from('weather_data')
         .delete()
         .eq('id', id)
         .eq('tenant_id', context.tenantId);
-      
+
       if (error) {
-        return NextResponse.json(
-          { success: false, error: error.message },
-          { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
-      
+
       return NextResponse.json({
         success: true,
         message: 'Weather data deleted successfully',
       });
     } catch (error) {
       logger.error('Weather DELETE error', error, { tenantId: context.tenantId });
-      return NextResponse.json(
-        { success: false, error: 'Internal server error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }

@@ -5,6 +5,7 @@
 MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations. The codebase demonstrates good architectural decisions with proper separation of concerns, TypeScript adoption, and modern React patterns. However, there are several critical areas requiring immediate attention to achieve production-ready excellence.
 
 ### Current State Assessment
+
 - **Architecture**: ⭐⭐⭐⭐ (4/5) - Solid multi-tenant design with Supabase + Firebase hybrid
 - **Code Quality**: ⭐⭐⭐ (3/5) - Good TypeScript usage but some `any` types and inconsistencies
 - **Performance**: ⭐⭐⭐ (3/5) - Needs optimization for bundle size and queries
@@ -19,6 +20,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 ### 1. Architecture Review
 
 #### ✅ Strengths
+
 - Clean separation between `/app` (Next.js App Router) and `/components`
 - Proper middleware implementation for authentication and rate limiting
 - Well-organized API structure with tenant isolation
@@ -28,6 +30,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 #### 🚨 Critical Issues (P0 - Fix Immediately)
 
 1. **Missing Tenant Isolation in Some API Routes**
+
    ```typescript
    // Found in /api/animals/[id]/route.ts - MISSING TENANT CHECK!
    export async function GET(request: NextRequest, { params }) {
@@ -51,6 +54,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 #### ⚠️ Important Issues (P1)
 
 1. **N+1 Query Problems in Animal Listings**
+
    ```typescript
    // Inefficient - makes separate query for each animal's milk logs
    animals.forEach(async animal => {
@@ -69,6 +73,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 ### 2. Code Quality Assessment
 
 #### ✅ Good Practices Found
+
 - Consistent use of TypeScript
 - Proper environment variable management
 - Clean component structure with shadcn/ui
@@ -77,10 +82,11 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 #### 🚨 Critical Code Quality Issues
 
 1. **Extensive Use of `any` Types**
+
    ```
    Found 47 instances of `any` type usage:
    - /lib/api/client.ts: 12 instances
-   - /hooks/use-query.ts: 8 instances  
+   - /hooks/use-query.ts: 8 instances
    - /app/api/animals/route.ts: 15 instances
    ```
 
@@ -112,11 +118,12 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 #### 🐌 Performance Bottlenecks
 
 1. **Bundle Size Issues**
+
    ```
    Current bundle: 2.3MB (should be <1MB)
    Large dependencies:
    - @supabase/supabase-js: 189KB
-   - firebase: 234KB  
+   - firebase: 234KB
    - @clerk/nextjs: 156KB
    ```
 
@@ -128,13 +135,14 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 3. **Database Query Performance**
    ```sql
    -- Missing indexes causing slow queries
-   CREATE INDEX CONCURRENTLY idx_milk_logs_tenant_date 
+   CREATE INDEX CONCURRENTLY idx_milk_logs_tenant_date
    ON milk_logs(tenant_id, date);
    ```
 
 #### 💡 Optimization Opportunities
 
 1. **Implement Code Splitting**
+
    ```typescript
    // Lazy load heavy components
    const Analytics = lazy(() => import('./Analytics'));
@@ -148,6 +156,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 ### 4. Security Deep Dive
 
 #### ✅ Security Strengths
+
 - Row Level Security (RLS) enabled on all tables
 - Clerk authentication properly implemented
 - Rate limiting middleware in place
@@ -156,6 +165,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 #### 🚨 Critical Security Issues
 
 1. **API Routes Missing Authorization**
+
    ```typescript
    // /api/public/data/route.ts - NO AUTH CHECK!
    export async function GET() {
@@ -164,6 +174,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
    ```
 
 2. **Input Validation Gaps**
+
    ```typescript
    // Direct DB insertion without validation
    await supabase.from('animals').insert(req.body); // DANGEROUS!
@@ -172,7 +183,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 3. **CORS Configuration Too Permissive**
    ```typescript
    // middleware.ts - Allows any origin
-   cors({ origin: '*' }) // Should restrict to specific domains
+   cors({ origin: '*' }); // Should restrict to specific domains
    ```
 
 #### ⚠️ Security Improvements
@@ -192,12 +203,13 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 ### Mobile-First Design System
 
 #### 1. Responsive Breakpoints (2025 Standards)
+
 ```css
 /* Design tokens for perfect scaling */
 :root {
-  --breakpoint-xs: 375px;  /* Small phones */
-  --breakpoint-sm: 425px;  /* Large phones */
-  --breakpoint-md: 768px;  /* Tablets */
+  --breakpoint-xs: 375px; /* Small phones */
+  --breakpoint-sm: 425px; /* Large phones */
+  --breakpoint-md: 768px; /* Tablets */
   --breakpoint-lg: 1024px; /* Small desktops */
   --breakpoint-xl: 1440px; /* Large desktops */
   --breakpoint-2xl: 1920px; /* 4K displays */
@@ -205,6 +217,7 @@ MTK Dairy is a well-structured multi-tenant SaaS platform with solid foundations
 ```
 
 #### 2. Touch-First Interactions
+
 ```typescript
 // Minimum 44px tap targets
 const buttonStyles = {
@@ -212,11 +225,12 @@ const buttonStyles = {
   minWidth: '44px',
   padding: '12px 24px',
   // Add haptic feedback on mobile
-  onTouchStart: () => navigator.vibrate?.(10)
+  onTouchStart: () => navigator.vibrate?.(10),
 };
 ```
 
 #### 3. Glassmorphism Design System
+
 ```css
 .glass-card {
   background: rgba(255, 255, 255, 0.1);
@@ -229,6 +243,7 @@ const buttonStyles = {
 ### Advanced UI Components Roadmap
 
 #### 1. Smart Data Tables (Week 1-2)
+
 - Virtual scrolling for 10k+ rows
 - Column customization
 - Bulk actions with keyboard shortcuts
@@ -236,6 +251,7 @@ const buttonStyles = {
 - Real-time collaboration cursors
 
 #### 2. Form System Redesign (Week 2-3)
+
 - Progressive disclosure
 - Inline validation with helpful errors
 - Auto-save drafts every 30s
@@ -243,6 +259,7 @@ const buttonStyles = {
 - Mobile-optimized input types
 
 #### 3. Dashboard Widgets (Week 3-4)
+
 - Drag-and-drop layout
 - Customizable widgets
 - Real-time updates
@@ -256,16 +273,18 @@ const buttonStyles = {
 ### Smart Automation Features
 
 #### 1. Intelligent Defaults
+
 ```typescript
 // Learn from user behavior
 const smartDefaults = {
   milkQuantity: user.lastQuantity || 25, // Liters
   feedingTime: usualFeedingTime || '06:00',
-  medicine: previousPrescription || null
+  medicine: previousPrescription || null,
 };
 ```
 
 #### 2. Bulk Operations
+
 ```typescript
 // Select multiple with Cmd/Ctrl+Click
 // Apply actions: vaccination, feeding schedule, group move
@@ -277,15 +296,16 @@ const bulkActions = {
 ```
 
 #### 3. Automated Reminders
+
 ```typescript
 // Smart scheduling based on:
 // - Last vaccination date
-// - Breeding cycles  
+// - Breeding cycles
 // - Milk production patterns
 const reminders = {
   vaccination: { frequency: '12 months', advance: '2 weeks' },
   breeding: { frequency: '21 days', advance: '3 days' },
-  milking: { frequency: 'daily', advance: '1 hour' }
+  milking: { frequency: 'daily', advance: '1 hour' },
 };
 ```
 
@@ -296,10 +316,11 @@ const reminders = {
 ### Immediate Fixes (Day 1-2)
 
 1. **Fix All TypeScript Errors**
+
    ```bash
    # Run to see all errors
    npm run typecheck
-   
+
    # Fix strategy:
    # 1. Generate Supabase types: npx supabase gen types typescript
    # 2. Replace all `any` with proper types
@@ -307,10 +328,11 @@ const reminders = {
    ```
 
 2. **Standardize API Responses**
+
    ```typescript
    // Use consistent response helper
    import { successResponse, errorResponse } from '@/lib/api/response';
-   
+
    // All routes must return:
    // { success: true, data: T, message?: string }
    // { success: false, error: string, code?: string }
@@ -331,12 +353,13 @@ const reminders = {
 ### Quality Assurance (Week 1)
 
 1. **Form Validation with Zod**
+
    ```typescript
    const animalSchema = z.object({
      name: z.string().min(1).max(50),
      tagNumber: z.string().regex(/^[A-Z]{2}\d{6}$/),
      dateOfBirth: z.date().max(new Date()),
-     breed: z.enum(['holstein', 'jersey', 'buffalo'])
+     breed: z.enum(['holstein', 'jersey', 'buffalo']),
    });
    ```
 
@@ -361,6 +384,7 @@ const reminders = {
 ### Super Admin Dashboard (/admin)
 
 #### Features to Implement:
+
 ```typescript
 // Admin dashboard components
 - TenantOverview: All farms, status, metrics
@@ -372,26 +396,31 @@ const reminders = {
 ```
 
 ### Permission Matrix
+
 ```typescript
 const permissions = {
   super_admin: ['*'], // Full access
   farm_owner: [
-    'animals:read', 'animals:write', 'animals:delete',
-    'milk:read', 'milk:write',
-    'staff:invite', 'staff:remove',
-    'billing:view', 'billing:upgrade'
+    'animals:read',
+    'animals:write',
+    'animals:delete',
+    'milk:read',
+    'milk:write',
+    'staff:invite',
+    'staff:remove',
+    'billing:view',
+    'billing:upgrade',
   ],
   farm_manager: [
-    'animals:read', 'animals:write',
-    'milk:read', 'milk:write',
-    'health:read', 'health:write'
+    'animals:read',
+    'animals:write',
+    'milk:read',
+    'milk:write',
+    'health:read',
+    'health:write',
   ],
-  veterinarian: [
-    'animals:read', 'health:read', 'health:write'
-  ],
-  milking_staff: [
-    'animals:read', 'milk:read', 'milk:write'
-  ]
+  veterinarian: ['animals:read', 'health:read', 'health:write'],
+  milking_staff: ['animals:read', 'milk:read', 'milk:write'],
 };
 ```
 
@@ -405,15 +434,15 @@ const permissions = {
 // WebSocket connection for live updates
 const useRealTimeSync = (tenantId: string) => {
   const [socket, setSocket] = useState(null);
-  
+
   useEffect(() => {
     const ws = new WebSocket(`${WS_URL}/tenant/${tenantId}`);
-    
-    ws.onmessage = (event) => {
+
+    ws.onmessage = event => {
       const { type, data } = JSON.parse(event.data);
       queryClient.invalidateQueries([type]);
     };
-    
+
     setSocket(ws);
     return () => ws.close();
   }, [tenantId]);
@@ -421,19 +450,20 @@ const useRealTimeSync = (tenantId: string) => {
 ```
 
 ### Optimistic Updates Pattern
+
 ```typescript
 const useOptimisticMutation = () => {
   return useMutation({
-    onMutate: async (newData) => {
+    onMutate: async newData => {
       // Cancel in-flight queries
       await queryClient.cancelQueries(['animals']);
-      
+
       // Snapshot previous value
       const previous = queryClient.getQueryData(['animals']);
-      
+
       // Optimistically update
       queryClient.setQueryData(['animals'], old => [...old, newData]);
-      
+
       return { previous };
     },
     onError: (err, newData, context) => {
@@ -443,7 +473,7 @@ const useOptimisticMutation = () => {
     onSettled: () => {
       // Refetch to ensure server state
       queryClient.invalidateQueries(['animals']);
-    }
+    },
   });
 };
 ```
@@ -478,13 +508,13 @@ const coverageTargets = {
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.1
+  tracesSampleRate: 0.1,
 });
 
 // Analytics
 PostHog.init({
   api_host: 'https://app.posthog.com',
-  api_key: process.env.POSTHOG_KEY
+  api_key: process.env.POSTHOG_KEY,
 });
 ```
 
@@ -493,6 +523,7 @@ PostHog.init({
 ## 📋 Implementation Roadmap
 
 ### Week 1: Critical Fixes (P0)
+
 - [ ] Fix all tenant isolation issues
 - [ ] Standardize API responses (Phase 2 completion)
 - [ ] Add comprehensive error boundaries
@@ -500,6 +531,7 @@ PostHog.init({
 - [ ] Secure all API endpoints
 
 ### Week 2: Performance & Security
+
 - [ ] Implement code splitting
 - [ ] Add database indexes
 - [ ] Optimize bundle size
@@ -507,6 +539,7 @@ PostHog.init({
 - [ ] Add rate limiting per tenant
 
 ### Week 3: UI Foundation
+
 - [ ] Create design system tokens
 - [ ] Implement mobile-first responsive design
 - [ ] Add glassmorphism effects
@@ -514,6 +547,7 @@ PostHog.init({
 - [ ] Implement dark mode
 
 ### Week 4: Advanced Features
+
 - [ ] Build smart data tables
 - [ ] Add bulk operations
 - [ ] Implement auto-save
@@ -521,6 +555,7 @@ PostHog.init({
 - [ ] Add keyboard shortcuts
 
 ### Week 5: Dashboard & Analytics
+
 - [ ] Redesign dashboard with widgets
 - [ ] Add interactive charts
 - [ ] Implement export functionality
@@ -528,6 +563,7 @@ PostHog.init({
 - [ ] Add drill-down views
 
 ### Week 6: Polish & Testing
+
 - [ ] Comprehensive testing suite
 - [ ] Performance optimization
 - [ ] Accessibility audit
@@ -539,26 +575,28 @@ PostHog.init({
 ## 💡 Additional Recommendations for Pakistani Market
 
 ### 1. Local Payment Gateway Enhancement
+
 ```typescript
 // Better error handling for Pakistani gateways
 const paymentHandlers = {
   jazzcash: {
     retryStrategy: 'exponential-backoff',
     fallbackToEasyPaisa: true,
-    localValidation: true
+    localValidation: true,
   },
   easypaisa: {
     otpTimeout: 300, // 5 minutes for slow networks
-    smsBackup: true
+    smsBackup: true,
   },
   banktransfer: {
     autoVerify: true,
-    reminderSchedule: [24, 48, 72] // hours
-  }
+    reminderSchedule: [24, 48, 72], // hours
+  },
 };
 ```
 
 ### 2. Urdu RTL Enhancement
+
 ```typescript
 // Perfect RTL implementation
 const urduConfig = {
@@ -566,29 +604,31 @@ const urduConfig = {
   font: 'Noto Nastaliq Urdu',
   numberFormat: 'eastern-arabic',
   dateLocale: 'ur-PK',
-  mirrorAnimations: true
+  mirrorAnimations: true,
 };
 ```
 
 ### 3. Offline-First for Rural Areas
+
 ```typescript
 // Service worker for offline functionality
 const offlineStrategy = {
   cacheCriticalData: ['animals', 'milk_logs'],
   syncQueue: true,
   conflictResolution: 'last-write-wins',
-  storageQuota: '100MB'
+  storageQuota: '100MB',
 };
 ```
 
 ### 4. IoT Integration Robustness
+
 ```typescript
 // Reliable webhook handling
 const webhookConfig = {
   retryAttempts: 5,
   backoffStrategy: 'exponential',
   deduplicationWindow: 60000, // 1 minute
-  fallbackPolling: true
+  fallbackPolling: true,
 };
 ```
 

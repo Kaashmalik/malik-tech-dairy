@@ -19,7 +19,8 @@ export function usePostHogAnalytics() {
   }, []);
 
   const userId: string | null = null;
-  const organization: { id?: string; slug?: string } | null = null;
+  // Type assertion to prevent narrowing - in production this might be populated from context
+  const organization = null as { id?: string; slug?: string } | null;
 
   const trackEvent = (eventName: string, properties?: Record<string, unknown>) => {
     if (!posthog || !process.env.NEXT_PUBLIC_POSTHOG_KEY) return;

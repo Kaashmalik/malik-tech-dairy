@@ -97,13 +97,13 @@ const nextConfig: NextConfig = {
   // Experimental features
   experimental: {
     optimizePackageImports: [
-      'lucide-react', 
-      '@radix-ui/react-icons', 
+      'lucide-react',
+      '@radix-ui/react-icons',
       'date-fns',
       '@supabase/supabase-js',
       '@clerk/nextjs',
       'recharts',
-      'zod'
+      'zod',
     ],
     // Enable turbopack for faster builds
     turbo: {

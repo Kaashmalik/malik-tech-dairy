@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { feedInventory } from '@/db/schema';
 import { eq, and, ilike, lte, desc, sql, isNotNull } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
@@ -73,20 +73,22 @@ export async function GET(request: NextRequest) {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       whereConditions.push(
-        and(lte(feedInventory.expiryDate, thirtyDaysFromNow), isNotNull(feedInventory.expiryDate))
+        sql`${feedInventory.expiryDate} <= ${thirtyDaysFromNow} AND ${feedInventory.expiryDate} IS NOT NULL`
       );
     }
+    // Create combined where clause
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
     // Get total count
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(feedInventory)
-      .where(and(...whereConditions));
+      .where(whereClause);
     const total = totalCountResult[0]?.count || 0;
     // Get feed inventory
     const inventoryList = await db
       .select()
       .from(feedInventory)
-      .where(and(...whereConditions))
+      .where(whereClause)
       .limit(query.limit)
       .offset(offset)
       .orderBy(desc(feedInventory.purchaseDate));
@@ -115,7 +117,9 @@ export async function GET(request: NextRequest) {
         },
         summary: {
           totalItems: inventoryList.length,
-          lowStockItems: inventoryList.filter(item => item.quantity <= item.minimumStock).length,
+          lowStockItems: inventoryList.filter(
+            item => item.minimumStock && item.quantity <= item.minimumStock
+          ).length,
           expiringSoonItems: inventoryList.filter(
             item =>
               item.expiryDate &&
@@ -147,6 +151,8 @@ export async function POST(request: NextRequest) {
         id: inventoryId,
         tenantId: tenantContext.tenantId,
         ...validatedData,
+        purchaseDate: new Date(validatedData.purchaseDate),
+        expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : undefined,
         createdBy: tenantContext.userId,
         createdAt: new Date(),
         updatedAt: new Date(),

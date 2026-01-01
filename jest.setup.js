@@ -131,23 +131,18 @@ jest.mock('@sentry/nextjs', () => ({
 // Mock framer-motion to avoid animation issues in tests
 jest.mock('framer-motion', () => {
   const React = require('react');
-  
-  const createMotionComponent = (tag) => {
-    const component = React.forwardRef(({ 
-      children, 
-      initial, 
-      animate, 
-      exit, 
-      variants, 
-      whileHover, 
-      whileTap,
-      transition,
-      ...props 
-    }, ref) => React.createElement(tag, { ...props, ref }, children));
+
+  const createMotionComponent = tag => {
+    const component = React.forwardRef(
+      (
+        { children, initial, animate, exit, variants, whileHover, whileTap, transition, ...props },
+        ref
+      ) => React.createElement(tag, { ...props, ref }, children)
+    );
     component.displayName = `motion.${tag}`;
     return component;
   };
-  
+
   return {
     motion: {
       div: createMotionComponent('div'),
@@ -188,10 +183,26 @@ jest.mock('sonner', () => ({
 jest.mock('@/components/ui/tabs', () => {
   const React = require('react');
   return {
-    Tabs: ({ children, ...props }) => React.createElement('div', { 'data-testid': 'tabs', ...props }, children),
-    TabsList: ({ children, ...props }) => React.createElement('div', { 'data-testid': 'tabs-list', role: 'tablist', ...props }, children),
-    TabsTrigger: ({ children, value, ...props }) => React.createElement('button', { 'data-testid': `tab-${value}`, role: 'tab', ...props }, children),
-    TabsContent: ({ children, value, ...props }) => React.createElement('div', { 'data-testid': `tabcontent-${value}`, role: 'tabpanel', ...props }, children),
+    Tabs: ({ children, ...props }) =>
+      React.createElement('div', { 'data-testid': 'tabs', ...props }, children),
+    TabsList: ({ children, ...props }) =>
+      React.createElement(
+        'div',
+        { 'data-testid': 'tabs-list', role: 'tablist', ...props },
+        children
+      ),
+    TabsTrigger: ({ children, value, ...props }) =>
+      React.createElement(
+        'button',
+        { 'data-testid': `tab-${value}`, role: 'tab', ...props },
+        children
+      ),
+    TabsContent: ({ children, value, ...props }) =>
+      React.createElement(
+        'div',
+        { 'data-testid': `tabcontent-${value}`, role: 'tabpanel', ...props },
+        children
+      ),
   };
 });
 
@@ -199,13 +210,16 @@ jest.mock('@/components/ui/tabs', () => {
 jest.mock('@/components/ui/dialog', () => {
   const React = require('react');
   return {
-    Dialog: ({ children, open }) => open ? React.createElement('div', { 'data-testid': 'dialog' }, children) : null,
-    DialogContent: ({ children, ...props }) => React.createElement('div', { 'data-testid': 'dialog-content', ...props }, children),
+    Dialog: ({ children, open }) =>
+      open ? React.createElement('div', { 'data-testid': 'dialog' }, children) : null,
+    DialogContent: ({ children, ...props }) =>
+      React.createElement('div', { 'data-testid': 'dialog-content', ...props }, children),
     DialogDescription: ({ children, ...props }) => React.createElement('p', { ...props }, children),
     DialogFooter: ({ children, ...props }) => React.createElement('div', { ...props }, children),
     DialogHeader: ({ children, ...props }) => React.createElement('div', { ...props }, children),
     DialogTitle: ({ children, ...props }) => React.createElement('h2', { ...props }, children),
-    DialogTrigger: ({ children, ...props }) => React.createElement('button', { ...props }, children),
+    DialogTrigger: ({ children, ...props }) =>
+      React.createElement('button', { ...props }, children),
   };
 });
 
@@ -217,19 +231,16 @@ beforeAll(() => {
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
-      (args[0].includes('Warning:') || 
-       args[0].includes('Error:') ||
-       args[0].includes('ReactDOM.render'))
+      (args[0].includes('Warning:') ||
+        args[0].includes('Error:') ||
+        args[0].includes('ReactDOM.render'))
     ) {
       return;
     }
     originalError.call(console, ...args);
   };
   console.warn = (...args) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('MSW')
-    ) {
+    if (typeof args[0] === 'string' && args[0].includes('MSW')) {
       return;
     }
     originalWarn.call(console, ...args);

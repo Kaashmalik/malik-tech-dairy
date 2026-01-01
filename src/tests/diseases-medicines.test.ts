@@ -80,7 +80,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch all diseases', async () => {
       const response = await fetch('/api/diseases');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(Array.isArray(data.data)).toBe(true);
@@ -93,9 +93,9 @@ describe('Diseases & Medicines API Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testDisease),
       });
-      
+
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.name).toBe(testDisease.name);
@@ -105,7 +105,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch a specific disease', async () => {
       const response = await fetch(`/api/diseases/${createdDiseaseId}`);
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.id).toBe(createdDiseaseId);
@@ -114,15 +114,15 @@ describe('Diseases & Medicines API Tests', () => {
 
     it('should update a disease', async () => {
       const updateData = { name: 'Updated Test Disease' };
-      
+
       const response = await fetch(`/api/diseases/${createdDiseaseId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData),
       });
-      
+
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.name).toBe(updateData.name);
@@ -131,7 +131,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should search diseases', async () => {
       const response = await fetch('/api/diseases?search=Test');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.some((d: any) => d.name.includes('Test'))).toBe(true);
@@ -140,7 +140,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should filter diseases by category', async () => {
       const response = await fetch('/api/diseases?category=infectious');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.every((d: any) => d.category === 'infectious')).toBe(true);
@@ -151,7 +151,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch all medicines', async () => {
       const response = await fetch('/api/medicines');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(Array.isArray(data.data)).toBe(true);
@@ -163,9 +163,9 @@ describe('Diseases & Medicines API Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testMedicine),
       });
-      
+
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.name).toBe(testMedicine.name);
@@ -175,7 +175,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch a specific medicine', async () => {
       const response = await fetch(`/api/medicines/${createdMedicineId}`);
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.id).toBe(createdMedicineId);
@@ -184,15 +184,15 @@ describe('Diseases & Medicines API Tests', () => {
 
     it('should update a medicine', async () => {
       const updateData = { name: 'Updated Test Medicine' };
-      
+
       const response = await fetch(`/api/medicines/${createdMedicineId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData),
       });
-      
+
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.name).toBe(updateData.name);
@@ -201,7 +201,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should search medicines', async () => {
       const response = await fetch('/api/medicines?search=Test');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.some((m: any) => m.name.includes('Test'))).toBe(true);
@@ -210,7 +210,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should filter medicines by category', async () => {
       const response = await fetch('/api/medicines?category=antibiotic');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.every((m: any) => m.category === 'antibiotic')).toBe(true);
@@ -236,7 +236,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch treatment protocols', async () => {
       const response = await fetch('/api/treatment-protocols');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(Array.isArray(data.data)).toBe(true);
@@ -248,9 +248,9 @@ describe('Diseases & Medicines API Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testProtocol),
       });
-      
+
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.name).toBe(testProtocol.name);
@@ -275,7 +275,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch vaccination schedules', async () => {
       const response = await fetch('/api/vaccination-schedules');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(Array.isArray(data.data)).toBe(true);
@@ -287,9 +287,9 @@ describe('Diseases & Medicines API Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testVaccination),
       });
-      
+
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.species).toBe(testVaccination.species);
@@ -317,7 +317,7 @@ describe('Diseases & Medicines API Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testDiseaseTreatment),
       });
-      
+
       // Note: This endpoint doesn't exist, it's handled through the disease/medicine APIs
       // This test demonstrates how the relationship would be created
       expect(true).toBe(true); // Placeholder
@@ -349,7 +349,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch animal treatments', async () => {
       const response = await fetch('/api/animal-treatments');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(Array.isArray(data.data)).toBe(true);
@@ -359,19 +359,19 @@ describe('Diseases & Medicines API Tests', () => {
       // Skip if no test animal exists
       const animalsResponse = await fetch('/api/animals');
       const animalsData = await animalsResponse.json();
-      
+
       if (animalsData.data.length > 0) {
         const animalId = animalsData.data[0].id;
         testAnimalTreatment.animal_id = animalId;
-        
+
         const response = await fetch('/api/animal-treatments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(testAnimalTreatment),
         });
-        
+
         const data = await response.json();
-        
+
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
         createdTreatmentId = data.data.id;
@@ -385,7 +385,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch animal vaccinations', async () => {
       const response = await fetch('/api/animal-vaccinations');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(Array.isArray(data.data)).toBe(true);
@@ -394,7 +394,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch due vaccinations', async () => {
       const response = await fetch('/api/animal-vaccinations/due');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data).toHaveProperty('upcoming');
@@ -419,7 +419,7 @@ describe('Diseases & Medicines API Tests', () => {
     it('should fetch medicine inventory', async () => {
       const response = await fetch('/api/medicine-inventory');
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(Array.isArray(data.data)).toBe(true);
@@ -431,9 +431,9 @@ describe('Diseases & Medicines API Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testInventory),
       });
-      
+
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data.quantity).toBe(testInventory.quantity);
@@ -443,9 +443,11 @@ describe('Diseases & Medicines API Tests', () => {
       // First get the inventory item
       const listResponse = await fetch('/api/medicine-inventory');
       const listData = await listResponse.json();
-      
-      const inventoryItem = listData.data.find((item: any) => item.medicine_id === createdMedicineId);
-      
+
+      const inventoryItem = listData.data.find(
+        (item: any) => item.medicine_id === createdMedicineId
+      );
+
       if (inventoryItem && inventoryItem.quantity > 10) {
         const response = await fetch('/api/medicine-inventory', {
           method: 'PUT',
@@ -455,9 +457,9 @@ describe('Diseases & Medicines API Tests', () => {
             quantity: 10,
           }),
         });
-        
+
         const data = await response.json();
-        
+
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
         expect(data.data.quantity).toBe(inventoryItem.quantity - 10);
@@ -470,7 +472,7 @@ describe('Diseases & Medicines API Tests', () => {
       // Fetch disease with treatments
       const response = await fetch(`/api/diseases/${createdDiseaseId}`);
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.data.treatments).toBeDefined();
       expect(Array.isArray(data.data.treatments)).toBe(true);
@@ -480,7 +482,7 @@ describe('Diseases & Medicines API Tests', () => {
       // Fetch medicine with diseases
       const response = await fetch(`/api/medicines/${createdMedicineId}`);
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.data.treats_diseases).toBeDefined();
       expect(Array.isArray(data.data.treats_diseases)).toBe(true);
@@ -490,13 +492,13 @@ describe('Diseases & Medicines API Tests', () => {
       // Verify all created data exists
       const diseaseResponse = await fetch(`/api/diseases/${createdDiseaseId}`);
       const medicineResponse = await fetch(`/api/medicines/${createdMedicineId}`);
-      
+
       expect(diseaseResponse.status).toBe(200);
       expect(medicineResponse.status).toBe(200);
-      
+
       const diseaseData = await diseaseResponse.json();
       const medicineData = await medicineResponse.json();
-      
+
       expect(diseaseData.data.id).toBe(createdDiseaseId);
       expect(medicineData.data.id).toBe(createdMedicineId);
     });
@@ -507,13 +509,13 @@ describe('Diseases & Medicines API Tests', () => {
 describe('Performance Tests', () => {
   it('should handle large disease list efficiently', async () => {
     const startTime = Date.now();
-    
+
     const response = await fetch('/api/diseases?limit=100');
     const data = await response.json();
-    
+
     const endTime = Date.now();
     const responseTime = endTime - startTime;
-    
+
     expect(response.status).toBe(200);
     expect(responseTime).toBeLessThan(2000); // Should respond in under 2 seconds
     expect(data.data.length).toBeLessThanOrEqual(100);
@@ -521,13 +523,13 @@ describe('Performance Tests', () => {
 
   it('should handle complex searches efficiently', async () => {
     const startTime = Date.now();
-    
+
     const response = await fetch('/api/diseases?search=fever&category=infectious&species=cow');
     const data = await response.json();
-    
+
     const endTime = Date.now();
     const responseTime = endTime - startTime;
-    
+
     expect(response.status).toBe(200);
     expect(responseTime).toBeLessThan(3000); // Should respond in under 3 seconds
   });
@@ -538,7 +540,7 @@ describe('Error Handling Tests', () => {
   it('should handle invalid disease ID', async () => {
     const response = await fetch('/api/diseases/invalid-id');
     const data = await response.json();
-    
+
     expect(response.status).toBe(404);
     expect(data.success).toBe(false);
     expect(data.error).toBeDefined();
@@ -547,7 +549,7 @@ describe('Error Handling Tests', () => {
   it('should handle invalid medicine ID', async () => {
     const response = await fetch('/api/medicines/invalid-id');
     const data = await response.json();
-    
+
     expect(response.status).toBe(404);
     expect(data.success).toBe(false);
     expect(data.error).toBeDefined();
@@ -559,9 +561,9 @@ describe('Error Handling Tests', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     });
-    
+
     const data = await response.json();
-    
+
     expect(response.status).toBe(400);
     expect(data.success).toBe(false);
     expect(data.error).toContain('Missing required fields');
@@ -570,7 +572,7 @@ describe('Error Handling Tests', () => {
   it('should handle invalid filter parameters', async () => {
     const response = await fetch('/api/diseases?category=invalid');
     const data = await response.json();
-    
+
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.data).toEqual([]); // Should return empty array for invalid category

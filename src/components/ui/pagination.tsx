@@ -1,7 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  MoreHorizontal,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
 
@@ -59,32 +65,32 @@ export function Pagination({
 
   return (
     <nav
-      role="navigation"
-      aria-label="Pagination"
+      role='navigation'
+      aria-label='Pagination'
       className={cn('flex items-center justify-center gap-1', className)}
     >
       {showFirstLast && (
         <Button
-          variant="outline"
-          size="icon"
+          variant='outline'
+          size='icon'
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
-          aria-label="First page"
-          className="h-9 w-9"
+          aria-label='First page'
+          className='h-9 w-9'
         >
-          <ChevronsLeft className="h-4 w-4" />
+          <ChevronsLeft className='h-4 w-4' />
         </Button>
       )}
-      
+
       <Button
-        variant="outline"
-        size="icon"
+        variant='outline'
+        size='icon'
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        aria-label="Previous page"
-        className="h-9 w-9"
+        aria-label='Previous page'
+        className='h-9 w-9'
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className='h-4 w-4' />
       </Button>
 
       {pages.map((page, index) => {
@@ -92,9 +98,9 @@ export function Pagination({
           return (
             <span
               key={`dots-${index}`}
-              className="flex h-9 w-9 items-center justify-center text-gray-400"
+              className='flex h-9 w-9 items-center justify-center text-gray-400'
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className='h-4 w-4' />
             </span>
           );
         }
@@ -106,14 +112,11 @@ export function Pagination({
           <Button
             key={pageNumber}
             variant={isCurrentPage ? 'default' : 'outline'}
-            size="icon"
+            size='icon'
             onClick={() => onPageChange(pageNumber)}
             aria-label={`Page ${pageNumber}`}
             aria-current={isCurrentPage ? 'page' : undefined}
-            className={cn(
-              'h-9 w-9',
-              isCurrentPage && 'pointer-events-none'
-            )}
+            className={cn('h-9 w-9', isCurrentPage && 'pointer-events-none')}
           >
             {pageNumber}
           </Button>
@@ -121,26 +124,26 @@ export function Pagination({
       })}
 
       <Button
-        variant="outline"
-        size="icon"
+        variant='outline'
+        size='icon'
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        aria-label="Next page"
-        className="h-9 w-9"
+        aria-label='Next page'
+        className='h-9 w-9'
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className='h-4 w-4' />
       </Button>
 
       {showFirstLast && (
         <Button
-          variant="outline"
-          size="icon"
+          variant='outline'
+          size='icon'
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
-          aria-label="Last page"
-          className="h-9 w-9"
+          aria-label='Last page'
+          className='h-9 w-9'
         >
-          <ChevronsRight className="h-4 w-4" />
+          <ChevronsRight className='h-4 w-4' />
         </Button>
       )}
     </nav>
@@ -165,18 +168,14 @@ export function PaginationInfo({
   const end = Math.min(currentPage * pageSize, totalItems);
 
   if (totalItems === 0) {
-    return (
-      <p className={cn('text-sm text-muted-foreground', className)}>
-        No results found
-      </p>
-    );
+    return <p className={cn('text-muted-foreground text-sm', className)}>No results found</p>;
   }
 
   return (
-    <p className={cn('text-sm text-muted-foreground', className)}>
-      Showing <span className="font-medium">{start}</span> to{' '}
-      <span className="font-medium">{end}</span> of{' '}
-      <span className="font-medium">{totalItems}</span> results
+    <p className={cn('text-muted-foreground text-sm', className)}>
+      Showing <span className='font-medium'>{start}</span> to{' '}
+      <span className='font-medium'>{end}</span> of{' '}
+      <span className='font-medium'>{totalItems}</span> results
     </p>
   );
 }
@@ -198,12 +197,10 @@ export function PaginationWithInfo({
   className,
 }: PaginationWithInfoProps) {
   return (
-    <div className={cn('flex flex-col items-center gap-4 sm:flex-row sm:justify-between', className)}>
-      <PaginationInfo
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalItems={totalItems}
-      />
+    <div
+      className={cn('flex flex-col items-center gap-4 sm:flex-row sm:justify-between', className)}
+    >
+      <PaginationInfo currentPage={currentPage} pageSize={pageSize} totalItems={totalItems} />
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
@@ -228,9 +225,12 @@ export function usePagination(totalItems: number, initialPage = 1, initialPageSi
     }
   }, [currentPage, totalPages]);
 
-  const goToPage = React.useCallback((page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  }, [totalPages]);
+  const goToPage = React.useCallback(
+    (page: number) => {
+      setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    },
+    [totalPages]
+  );
 
   const nextPage = React.useCallback(() => {
     goToPage(currentPage + 1);

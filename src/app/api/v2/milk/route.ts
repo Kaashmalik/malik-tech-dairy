@@ -2,7 +2,7 @@
 // Migrated from Firebase to Supabase with enterprise middleware
 import { NextRequest, NextResponse } from 'next/server';
 import { withApiMiddleware, createSuccessResponse, ErrorCode } from '@/lib/api/middleware-v2';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { logApiEvent } from '@/lib/api/middleware-v2';
 export const dynamic = 'force-dynamic';
@@ -90,17 +90,19 @@ export async function GET(request: NextRequest) {
         details: { filters: validatedParams, count: logs?.length },
         requestId: context.requestId,
       });
-      return createSuccessResponse(
-        {
-          logs: transformedLogs,
-          pagination: {
-            page: validatedParams.page,
-            limit: validatedParams.limit,
-            total: count || 0,
-            totalPages,
+      return NextResponse.json(
+        createSuccessResponse(
+          {
+            logs: transformedLogs,
+            pagination: {
+              page: validatedParams.page,
+              limit: validatedParams.limit,
+              total: count || 0,
+              totalPages,
+            },
           },
-        },
-        `Found ${logs?.length || 0} milk logs`
+          `Found ${logs?.length || 0} milk logs`
+        )
       );
     } catch (error) {
       throw error;
@@ -191,9 +193,8 @@ export async function POST(request: NextRequest) {
         },
         requestId: context.requestId,
       });
-      return createSuccessResponse(
-        transformedLog,
-        `Milk log created for ${animal.name || animal.tag}`
+      return NextResponse.json(
+        createSuccessResponse(transformedLog, `Milk log created for ${animal.name || animal.tag}`)
       );
     } catch (error) {
       throw error;

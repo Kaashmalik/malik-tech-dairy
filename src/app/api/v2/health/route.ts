@@ -1,8 +1,8 @@
 // API Route: List & Create Health Records (Supabase-based)
 // Migrated from Firebase to Supabase with enterprise middleware
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { withApiMiddleware, createSuccessResponse } from '@/lib/api/middleware-v2';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { logApiEvent } from '@/lib/api/middleware-v2';
 export const dynamic = 'force-dynamic';
@@ -98,17 +98,19 @@ export async function GET(request: NextRequest) {
         details: { filters: validatedParams, count: records?.length },
         requestId: context.requestId,
       });
-      return createSuccessResponse(
-        {
-          records: transformedRecords,
-          pagination: {
-            page: validatedParams.page,
-            limit: validatedParams.limit,
-            total: count || 0,
-            totalPages,
+      return NextResponse.json(
+        createSuccessResponse(
+          {
+            records: transformedRecords,
+            pagination: {
+              page: validatedParams.page,
+              limit: validatedParams.limit,
+              total: count || 0,
+              totalPages,
+            },
           },
-        },
-        `Found ${records?.length || 0} health records`
+          `Found ${records?.length || 0} health records`
+        )
       );
     } catch (error) {
       throw error;
@@ -198,9 +200,11 @@ export async function POST(request: NextRequest) {
         },
         requestId: context.requestId,
       });
-      return createSuccessResponse(
-        transformedRecord,
-        `Health record created for ${animal.name || animal.tag}`
+      return NextResponse.json(
+        createSuccessResponse(
+          transformedRecord,
+          `Health record created for ${animal.name || animal.tag}`
+        )
       );
     } catch (error) {
       throw error;

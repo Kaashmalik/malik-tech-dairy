@@ -5,14 +5,14 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, AlertCircle, Mail, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function UnsubscribePage() {
+function UnsubscribeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,7 @@ export default function UnsubscribePage() {
 
   useEffect(() => {
     const token = searchParams.get('token');
-    
+
     if (!token) {
       setError('Invalid unsubscribe link');
       setLoading(false);
@@ -57,12 +57,12 @@ export default function UnsubscribePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Processing your request...</p>
+      <div className='flex min-h-screen items-center justify-center bg-gray-50 p-4'>
+        <Card className='w-full max-w-md'>
+          <CardContent className='pt-6'>
+            <div className='flex flex-col items-center space-y-4'>
+              <Loader2 className='text-primary h-8 w-8 animate-spin' />
+              <p className='text-muted-foreground text-sm'>Processing your request...</p>
             </div>
           </CardContent>
         </Card>
@@ -72,15 +72,15 @@ export default function UnsubscribePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <CardTitle className="text-red-900">Error</CardTitle>
+      <div className='flex min-h-screen items-center justify-center bg-gray-50 p-4'>
+        <Card className='w-full max-w-md'>
+          <CardHeader className='text-center'>
+            <AlertCircle className='mx-auto mb-4 h-12 w-12 text-red-500' />
+            <CardTitle className='text-red-900'>Error</CardTitle>
             <CardDescription>{error}</CardDescription>
           </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <Button onClick={() => router.push('/')} variant="outline">
+          <CardContent className='space-y-4 text-center'>
+            <Button onClick={() => router.push('/')} variant='outline'>
               Go to Homepage
             </Button>
           </CardContent>
@@ -91,28 +91,28 @@ export default function UnsubscribePage() {
 
   if (success && !showPreferences) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <CardTitle className="text-green-900">Unsubscribed</CardTitle>
+      <div className='flex min-h-screen items-center justify-center bg-gray-50 p-4'>
+        <Card className='w-full max-w-md'>
+          <CardHeader className='text-center'>
+            <CheckCircle className='mx-auto mb-4 h-12 w-12 text-green-500' />
+            <CardTitle className='text-green-900'>Unsubscribed</CardTitle>
             <CardDescription>
               You have been successfully unsubscribed from all email notifications.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm text-muted-foreground space-y-2">
+          <CardContent className='space-y-4'>
+            <div className='text-muted-foreground space-y-2 text-sm'>
               <p>If you unsubscribed by mistake, you can:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
+              <ul className='ml-2 list-inside list-disc space-y-1'>
                 <li>Log in to your account to manage email preferences</li>
                 <li>Contact support for assistance</li>
               </ul>
             </div>
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => router.push('/sign-in')} className="w-full">
+            <div className='flex flex-col gap-2'>
+              <Button onClick={() => router.push('/sign-in')} className='w-full'>
                 Sign In to Manage Preferences
               </Button>
-              <Button onClick={() => router.push('/')} variant="outline" className="w-full">
+              <Button onClick={() => router.push('/')} variant='outline' className='w-full'>
                 Go to Homepage
               </Button>
             </div>
@@ -123,30 +123,28 @@ export default function UnsubscribePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className='min-h-screen bg-gray-50 px-4 py-12'>
+      <div className='mx-auto max-w-2xl'>
         <Card>
-          <CardHeader className="text-center">
-            <Mail className="h-12 w-12 text-primary mx-auto mb-4" />
+          <CardHeader className='text-center'>
+            <Mail className='text-primary mx-auto mb-4 h-12 w-12' />
             <CardTitle>Email Preferences</CardTitle>
-            <CardDescription>
-              Manage your email notification settings
-            </CardDescription>
+            <CardDescription>Manage your email notification settings</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                Sign in to your account to fully customize your email preferences or 
-                contact support at support@maliktechdairy.com for assistance.
+          <CardContent className='space-y-6'>
+            <div className='bg-muted rounded-lg p-4'>
+              <p className='text-muted-foreground text-sm'>
+                Sign in to your account to fully customize your email preferences or contact support
+                at support@maliktechdairy.com for assistance.
               </p>
             </div>
-            
-            <div className="flex flex-col gap-2">
+
+            <div className='flex flex-col gap-2'>
               <Button onClick={() => router.push('/sign-in')}>
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className='mr-2 h-4 w-4' />
                 Sign In to Manage Preferences
               </Button>
-              <Button onClick={() => router.push('/')} variant="outline">
+              <Button onClick={() => router.push('/')} variant='outline'>
                 Return to Homepage
               </Button>
             </div>
@@ -154,5 +152,26 @@ export default function UnsubscribePage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function UnsubscribePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex min-h-screen items-center justify-center bg-gray-50 p-4'>
+          <Card className='w-full max-w-md'>
+            <CardContent className='pt-6'>
+              <div className='flex flex-col items-center space-y-4'>
+                <Loader2 className='text-primary h-8 w-8 animate-spin' />
+                <p className='text-muted-foreground text-sm'>Loading...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <UnsubscribeContent />
+    </Suspense>
   );
 }

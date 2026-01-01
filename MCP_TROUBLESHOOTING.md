@@ -1,6 +1,7 @@
 # MCP Server Troubleshooting Guide
 
 ## Current Status
+
 ✅ Your Supabase token is **VALID** and working
 ✅ Token expires in 2035 (no expiry issues)
 ✅ Can access database tables directly
@@ -51,10 +52,7 @@ $env:SUPABASE_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
   "mcpServers": {
     "supabase": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest"
-      ],
+      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
       "env": {
         "SUPABASE_PROJECT_ID": "gdditqkvzlpnklcoxspj"
       }
@@ -111,11 +109,13 @@ npx -y @supabase/mcp-server-supabase@latest
 **Solution E: Try the Official Supabase CLI**
 
 1. Install Supabase CLI:
+
 ```bash
 npm install -g supabase
 ```
 
 2. Login:
+
 ```bash
 supabase login
 ```
@@ -131,6 +131,7 @@ supabase login
 ## Verification
 
 After each fix:
+
 1. Completely restart your IDE
 2. Wait 10 seconds
 3. Try an MCP command like: "List tables in my database"
@@ -138,6 +139,7 @@ After each fix:
 ## Contact Support
 
 If none of these work:
+
 - MCP Server GitHub: https://github.com/supabase/mcp-server-supabase
 - Supabase Discord: https://discord.supabase.com
 - Create an issue with your error details

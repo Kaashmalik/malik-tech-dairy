@@ -105,9 +105,14 @@ export async function validateApiKey(
       const apiKeyData = doc.data() as ApiKey;
       // Verify hash
       if (verifyApiKey(key, apiKeyData.keyHash)) {
-        // Check expiration
-        if (apiKeyData.expiresAt && apiKeyData.expiresAt.toDate() < new Date()) {
-          return { valid: false, error: 'API key has expired' };
+        // Check expiration - handle both Firestore Timestamp and Date
+        if (apiKeyData.expiresAt) {
+          const expiryDate = (apiKeyData.expiresAt as any).toDate
+            ? (apiKeyData.expiresAt as any).toDate()
+            : new Date(apiKeyData.expiresAt);
+          if (expiryDate < new Date()) {
+            return { valid: false, error: 'API key has expired' };
+          }
         }
         // Update last used
         await doc.ref.update({ lastUsedAt: new Date() });

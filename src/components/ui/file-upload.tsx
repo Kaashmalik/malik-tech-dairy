@@ -215,7 +215,7 @@ export function ValidationResults({
               <Button
                 onClick={onConfirm}
                 disabled={results.valid === 0 || loading}
-                loading={loading}
+                isLoading={loading}
               >
                 Import {results.valid} Records
               </Button>

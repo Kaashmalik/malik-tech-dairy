@@ -1,5 +1,5 @@
 // Subscription Management Utilities - Now using Supabase
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { subscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';

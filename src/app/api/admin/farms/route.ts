@@ -1,6 +1,8 @@
 // Admin API - List and Create farms
 import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
+import { getSupabaseClient } from '@/lib/supabase/server';
+
 export async function GET() {
   try {
     const { userId } = await auth();
@@ -8,7 +10,6 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     // Use Supabase REST API
-    const { getSupabaseClient } = await import('@/lib/supabase');
     const supabase = getSupabaseClient();
     const { data: farms, error } = await supabase
       .from('tenants')
@@ -20,7 +21,7 @@ export async function GET() {
     }
     // Get user counts per farm
     const farmsWithStats = await Promise.all(
-      (farms || []).map(async (farm: Record<string, unknown>) => {
+      (farms || []).map(async (farm: any) => {
         const { count: userCount } = await supabase
           .from('tenant_members')
           .select('*', { count: 'exact', head: true })
@@ -57,17 +58,15 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    // Generate slug from farm name
     const slug = farmName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
     const farmId = `MTD-${Date.now().toString(36).toUpperCase()}`;
-    const { getSupabaseClient } = await import('@/lib/supabase');
     const supabase = getSupabaseClient();
     // Create tenant in Supabase
-    const { data: tenant, error: tenantError } = await supabase
-      .from('tenants')
+    // @ts-ignore
+    const { data: tenant, error: tenantError } = await (supabase.from('tenants') as any)
       .insert({
         id: farmId,
         farm_name: farmName,

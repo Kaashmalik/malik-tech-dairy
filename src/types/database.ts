@@ -1,654 +1,783 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
   public: {
     Tables: {
       animals: {
         Row: {
-          breed: string | null
-          color: string | null
-          created_at: string
-          created_by: string | null
-          custom_fields: Json | null
-          date_of_birth: string | null
-          father_id: string | null
-          gender: string
-          id: string
-          mother_id: string | null
-          name: string | null
-          notes: string | null
-          photo_provider: Database["public"]["Enums"]["storage_provider"] | null
-          photo_url: string | null
-          purchase_date: string | null
-          purchase_price: number | null
-          species: string
-          status: string
-          tag: string
-          tenant_id: string
-          updated_at: string
-          weight: number | null
-        }
+          breed: string | null;
+          color: string | null;
+          created_at: string;
+          created_by: string | null;
+          custom_fields: Json | null;
+          date_of_birth: string | null;
+          father_id: string | null;
+          gender: string;
+          id: string;
+          mother_id: string | null;
+          name: string | null;
+          notes: string | null;
+          photo_provider: Database['public']['Enums']['storage_provider'] | null;
+          photo_url: string | null;
+          purchase_date: string | null;
+          purchase_price: number | null;
+          species: string;
+          status: string;
+          tag: string;
+          tenant_id: string;
+          updated_at: string;
+          weight: number | null;
+        };
         Insert: {
-          breed?: string | null
-          color?: string | null
-          created_at?: string
-          created_by?: string | null
-          custom_fields?: Json | null
-          date_of_birth?: string | null
-          father_id?: string | null
-          gender: string
-          id: string
-          mother_id?: string | null
-          name?: string | null
-          notes?: string | null
-          photo_provider?: Database["public"]["Enums"]["storage_provider"] | null
-          photo_url?: string | null
-          purchase_date?: string | null
-          purchase_price?: number | null
-          species: string
-          status?: string
-          tag: string
-          tenant_id: string
-          updated_at?: string
-          weight?: number | null
-        }
+          breed?: string | null;
+          color?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          custom_fields?: Json | null;
+          date_of_birth?: string | null;
+          father_id?: string | null;
+          gender: string;
+          id: string;
+          mother_id?: string | null;
+          name?: string | null;
+          notes?: string | null;
+          photo_provider?: Database['public']['Enums']['storage_provider'] | null;
+          photo_url?: string | null;
+          purchase_date?: string | null;
+          purchase_price?: number | null;
+          species: string;
+          status?: string;
+          tag: string;
+          tenant_id: string;
+          updated_at?: string;
+          weight?: number | null;
+        };
         Update: {
-          breed?: string | null
-          color?: string | null
-          created_at?: string
-          created_by?: string | null
-          custom_fields?: Json | null
-          date_of_birth?: string | null
-          father_id?: string | null
-          gender?: string
-          id?: string
-          mother_id?: string | null
-          name?: string | null
-          notes?: string | null
-          photo_provider?: Database["public"]["Enums"]["storage_provider"] | null
-          photo_url?: string | null
-          purchase_date?: string | null
-          purchase_price?: number | null
-          species?: string
-          status?: string
-          tag?: string
-          tenant_id?: string
-          updated_at?: string
-          weight?: number | null
-        }
+          breed?: string | null;
+          color?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          custom_fields?: Json | null;
+          date_of_birth?: string | null;
+          father_id?: string | null;
+          gender?: string;
+          id?: string;
+          mother_id?: string | null;
+          name?: string | null;
+          notes?: string | null;
+          photo_provider?: Database['public']['Enums']['storage_provider'] | null;
+          photo_url?: string | null;
+          purchase_date?: string | null;
+          purchase_price?: number | null;
+          species?: string;
+          status?: string;
+          tag?: string;
+          tenant_id?: string;
+          updated_at?: string;
+          weight?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "animals_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "platform_users"
-            referencedColumns: ["id"]
+            foreignKeyName: 'animals_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'platform_users';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "animals_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
+            foreignKeyName: 'animals_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
           },
-        ]
-      }
+        ];
+      };
       expenses: {
         Row: {
-          id: string
-          tenant_id: string
-          date: string
-          category: string
-          description: string
-          amount: number
-          vendor_name: string | null
-          receipt_url: string | null
-          recorded_by: string | null
-          created_at: string
-        }
+          id: string;
+          tenant_id: string;
+          date: string;
+          category: string;
+          description: string;
+          amount: number;
+          vendor_name: string | null;
+          receipt_url: string | null;
+          recorded_by: string | null;
+          created_at: string;
+        };
         Insert: {
-          id: string
-          tenant_id: string
-          date: string
-          category: string
-          description: string
-          amount: number
-          vendor_name?: string | null
-          receipt_url?: string | null
-          recorded_by?: string | null
-          created_at?: string
-        }
+          id: string;
+          tenant_id: string;
+          date: string;
+          category: string;
+          description: string;
+          amount: number;
+          vendor_name?: string | null;
+          receipt_url?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
         Update: {
-          id?: string
-          tenant_id?: string
-          date?: string
-          category?: string
-          description?: string
-          amount?: number
-          vendor_name?: string | null
-          receipt_url?: string | null
-          recorded_by?: string | null
-          created_at?: string
-        }
+          id?: string;
+          tenant_id?: string;
+          date?: string;
+          category?: string;
+          description?: string;
+          amount?: number;
+          vendor_name?: string | null;
+          receipt_url?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "expenses_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
+            foreignKeyName: 'expenses_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
           },
-        ]
-      }
+        ];
+      };
       sales: {
         Row: {
-          id: string
-          tenant_id: string
-          date: string
-          type: string
-          quantity: number
-          unit: string
-          price_per_unit: number
-          total: number
-          currency: string
-          buyer_name: string | null
-          buyer_phone: string | null
-          notes: string | null
-          recorded_by: string | null
-          created_at: string
-          category: string | null
-          customer_name: string | null
-          contact_info: string | null
-          payment_method: string | null
-          payment_status: string
-          amount: number | null
-          description: string | null
-        }
+          id: string;
+          tenant_id: string;
+          date: string;
+          type: string;
+          quantity: number;
+          unit: string;
+          price_per_unit: number;
+          total: number;
+          currency: string;
+          buyer_name: string | null;
+          buyer_phone: string | null;
+          notes: string | null;
+          recorded_by: string | null;
+          created_at: string;
+          category: string | null;
+          customer_name: string | null;
+          contact_info: string | null;
+          payment_method: string | null;
+          payment_status: string;
+          amount: number | null;
+          description: string | null;
+        };
         Insert: {
-          id: string
-          tenant_id: string
-          date: string
-          type: string
-          quantity: number
-          unit: string
-          price_per_unit: number
-          total: number
-          currency?: string
-          buyer_name?: string | null
-          buyer_phone?: string | null
-          notes?: string | null
-          recorded_by?: string | null
-          created_at?: string
-          category?: string | null
-          customer_name?: string | null
-          contact_info?: string | null
-          payment_method?: string | null
-          payment_status?: string
-          amount?: number | null
-          description?: string | null
-        }
+          id: string;
+          tenant_id: string;
+          date: string;
+          type: string;
+          quantity: number;
+          unit: string;
+          price_per_unit: number;
+          total: number;
+          currency?: string;
+          buyer_name?: string | null;
+          buyer_phone?: string | null;
+          notes?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+          category?: string | null;
+          customer_name?: string | null;
+          contact_info?: string | null;
+          payment_method?: string | null;
+          payment_status?: string;
+          amount?: number | null;
+          description?: string | null;
+        };
         Update: {
-          id?: string
-          tenant_id?: string
-          date?: string
-          type?: string
-          quantity?: number
-          unit?: string
-          price_per_unit?: number
-          total?: number
-          currency?: string
-          buyer_name?: string | null
-          buyer_phone?: string | null
-          notes?: string | null
-          recorded_by?: string | null
-          created_at?: string
-          category?: string | null
-          customer_name?: string | null
-          contact_info?: string | null
-          payment_method?: string | null
-          payment_status?: string
-          amount?: number | null
-          description?: string | null
-        }
+          id?: string;
+          tenant_id?: string;
+          date?: string;
+          type?: string;
+          quantity?: number;
+          unit?: string;
+          price_per_unit?: number;
+          total?: number;
+          currency?: string;
+          buyer_name?: string | null;
+          buyer_phone?: string | null;
+          notes?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+          category?: string | null;
+          customer_name?: string | null;
+          contact_info?: string | null;
+          payment_method?: string | null;
+          payment_status?: string;
+          amount?: number | null;
+          description?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "sales_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
+            foreignKeyName: 'sales_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
           },
-        ]
-      }
+        ];
+      };
       health_records: {
         Row: {
-          id: string
-          tenant_id: string
-          animal_id: string
-          date: string
-          type: string
-          description: string
-          severity: string | null
-          treated_by: string | null
-          treatment: string | null
-          notes: string | null
-          recorded_by: string | null
-          created_at: string
-        }
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          date: string;
+          type: string;
+          description: string;
+          severity: string | null;
+          treated_by: string | null;
+          treatment: string | null;
+          notes: string | null;
+          recorded_by: string | null;
+          created_at: string;
+        };
         Insert: {
-          id: string
-          tenant_id: string
-          animal_id: string
-          date: string
-          type: string
-          description: string
-          severity?: string | null
-          treated_by?: string | null
-          treatment?: string | null
-          notes?: string | null
-          recorded_by?: string | null
-          created_at?: string
-        }
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          date: string;
+          type: string;
+          description: string;
+          severity?: string | null;
+          treated_by?: string | null;
+          treatment?: string | null;
+          notes?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
         Update: {
-          id?: string
-          tenant_id?: string
-          animal_id?: string
-          date?: string
-          type?: string
-          description?: string
-          severity?: string | null
-          treated_by?: string | null
-          treatment?: string | null
-          notes?: string | null
-          recorded_by?: string | null
-          created_at?: string
-        }
+          id?: string;
+          tenant_id?: string;
+          animal_id?: string;
+          date?: string;
+          type?: string;
+          description?: string;
+          severity?: string | null;
+          treated_by?: string | null;
+          treatment?: string | null;
+          notes?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "health_records_animal_id_fkey"
-            columns: ["animal_id"]
-            isOneToOne: false
-            referencedRelation: "animals"
-            referencedColumns: ["id"]
+            foreignKeyName: 'health_records_animal_id_fkey';
+            columns: ['animal_id'];
+            isOneToOne: false;
+            referencedRelation: 'animals';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "health_records_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
+            foreignKeyName: 'health_records_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
           },
-        ]
-      }
+        ];
+      };
       tenants: {
         Row: {
-          id: string
-          slug: string
-          farm_name: string
-          logo_url: string | null
-          primary_color: string | null
-          accent_color: string | null
-          language: string | null
-          currency: string | null
-          timezone: string | null
-          animal_types: Json | null
-          created_at: string
-          updated_at: string
-          deleted_at: string | null
-          farm_location: Json | null
-          weather_enabled: boolean | null
-          weather_unit: string | null
-        }
+          id: string;
+          slug: string;
+          farm_name: string;
+          logo_url: string | null;
+          primary_color: string | null;
+          accent_color: string | null;
+          language: string | null;
+          currency: string | null;
+          timezone: string | null;
+          animal_types: Json | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+          farm_location: Json | null;
+          weather_enabled: boolean | null;
+          weather_unit: string | null;
+        };
         Insert: {
-          id: string
-          slug: string
-          farm_name: string
-          logo_url?: string | null
-          primary_color?: string | null
-          accent_color?: string | null
-          language?: string | null
-          currency?: string | null
-          timezone?: string | null
-          animal_types?: Json | null
-          created_at?: string
-          updated_at?: string
-          deleted_at?: string | null
-          farm_location?: Json | null
-          weather_enabled?: boolean | null
-          weather_unit?: string | null
-        }
+          id: string;
+          slug: string;
+          farm_name: string;
+          logo_url?: string | null;
+          primary_color?: string | null;
+          accent_color?: string | null;
+          language?: string | null;
+          currency?: string | null;
+          timezone?: string | null;
+          animal_types?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+          farm_location?: Json | null;
+          weather_enabled?: boolean | null;
+          weather_unit?: string | null;
+        };
         Update: {
-          id?: string
-          slug?: string
-          farm_name?: string
-          logo_url?: string | null
-          primary_color?: string | null
-          accent_color?: string | null
-          language?: string | null
-          currency?: string | null
-          timezone?: string | null
-          animal_types?: Json | null
-          created_at?: string
-          updated_at?: string
-          deleted_at?: string | null
-          farm_location?: Json | null
-          weather_enabled?: boolean | null
-          weather_unit?: string | null
-        }
-        Relationships: []
-      }
+          id?: string;
+          slug?: string;
+          farm_name?: string;
+          logo_url?: string | null;
+          primary_color?: string | null;
+          accent_color?: string | null;
+          language?: string | null;
+          currency?: string | null;
+          timezone?: string | null;
+          animal_types?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+          farm_location?: Json | null;
+          weather_enabled?: boolean | null;
+          weather_unit?: string | null;
+        };
+        Relationships: [];
+      };
       milk_logs: {
         Row: {
-          id: string
-          tenant_id: string
-          animal_id: string
-          date: string
-          session: string
-          quantity: number
-          unit: string
-          quality: number | null
-          fat_percent: number | null
-          notes: string | null
-          recorded_by: string | null
-          created_at: string
-        }
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          date: string;
+          session: string;
+          quantity: number;
+          unit: string;
+          quality: number | null;
+          fat_percent: number | null;
+          notes: string | null;
+          recorded_by: string | null;
+          created_at: string;
+        };
         Insert: {
-          id: string
-          tenant_id: string
-          animal_id: string
-          date: string
-          session: string
-          quantity: number
-          unit: string
-          quality?: number | null
-          fat_percent?: number | null
-          notes?: string | null
-          recorded_by?: string | null
-          created_at?: string
-        }
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          date: string;
+          session: string;
+          quantity: number;
+          unit: string;
+          quality?: number | null;
+          fat_percent?: number | null;
+          notes?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
         Update: {
-          id?: string
-          tenant_id?: string
-          animal_id?: string
-          date?: string
-          session?: string
-          quantity?: number
-          unit?: string
-          quality?: number | null
-          fat_percent?: number | null
-          notes?: string | null
-          recorded_by?: string | null
-          created_at?: string
-        }
+          id?: string;
+          tenant_id?: string;
+          animal_id?: string;
+          date?: string;
+          session?: string;
+          quantity?: number;
+          unit?: string;
+          quality?: number | null;
+          fat_percent?: number | null;
+          notes?: string | null;
+          recorded_by?: string | null;
+          created_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "milk_logs_animal_id_fkey"
-            columns: ["animal_id"]
-            isOneToOne: false
-            referencedRelation: "animals"
-            referencedColumns: ["id"]
+            foreignKeyName: 'milk_logs_animal_id_fkey';
+            columns: ['animal_id'];
+            isOneToOne: false;
+            referencedRelation: 'animals';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "milk_logs_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
+            foreignKeyName: 'milk_logs_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
           },
-        ]
-      }
+        ];
+      };
       platform_users: {
         Row: {
-          id: string
-          email: string
-          first_name: string | null
-          last_name: string | null
-          phone: string | null
-          avatar_url: string | null
-          role: string | null
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          email: string;
+          first_name: string | null;
+          last_name: string | null;
+          phone: string | null;
+          avatar_url: string | null;
+          role: string | null;
+          created_at: string;
+          updated_at: string;
+        };
         Insert: {
-          id: string
-          email: string
-          first_name?: string | null
-          last_name?: string | null
-          phone?: string | null
-          avatar_url?: string | null
-          role?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id: string;
+          email: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
+          avatar_url?: string | null;
+          role?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
         Update: {
-          id?: string
-          email?: string
-          first_name?: string | null
-          last_name?: string | null
-          phone?: string | null
-          avatar_url?: string | null
-          role?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      },
+          id?: string;
+          email?: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
+          avatar_url?: string | null;
+          role?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       farm_applications: {
         Row: {
-          id: string
-          applicant_id: string
-          farm_name: string
-          owner_name: string
-          email: string
-          phone: string
-          address: string | null
-          city: string | null
-          province: string | null
-          animal_types: Json | null
-          estimated_animals: number | null
-          requested_plan: Database["public"]["Enums"]["subscription_plan"]
-          status: Database["public"]["Enums"]["farm_application_status"]
-          payment_slip_url: string | null
-          payment_slip_provider: Database["public"]["Enums"]["storage_provider"] | null
-          payment_amount: number | null
-          payment_date: string | null
-          payment_reference: string | null
-          reviewed_by: string | null
-          reviewed_at: string | null
-          review_notes: string | null
-          rejection_reason: string | null
-          assigned_tenant_id: string | null
-          assigned_farm_id: string | null
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          applicant_id: string;
+          farm_name: string;
+          owner_name: string;
+          email: string;
+          phone: string;
+          address: string | null;
+          city: string | null;
+          province: string | null;
+          animal_types: Json | null;
+          estimated_animals: number | null;
+          requested_plan: Database['public']['Enums']['subscription_plan'];
+          status: Database['public']['Enums']['farm_application_status'];
+          payment_slip_url: string | null;
+          payment_slip_provider: Database['public']['Enums']['storage_provider'] | null;
+          payment_amount: number | null;
+          payment_date: string | null;
+          payment_reference: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          review_notes: string | null;
+          rejection_reason: string | null;
+          assigned_tenant_id: string | null;
+          assigned_farm_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
         Insert: {
-          id: string
-          applicant_id: string
-          farm_name: string
-          owner_name: string
-          email: string
-          phone: string
-          address?: string | null
-          city?: string | null
-          province?: string | null
-          animal_types?: Json | null
-          estimated_animals?: number | null
-          requested_plan?: Database["public"]["Enums"]["subscription_plan"]
-          status?: Database["public"]["Enums"]["farm_application_status"]
-          payment_slip_url?: string | null
-          payment_slip_provider?: Database["public"]["Enums"]["storage_provider"] | null
-          payment_amount?: number | null
-          payment_date?: string | null
-          payment_reference?: string | null
-          reviewed_by?: string | null
-          reviewed_at?: string | null
-          review_notes?: string | null
-          rejection_reason?: string | null
-          assigned_tenant_id?: string | null
-          assigned_farm_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id: string;
+          applicant_id: string;
+          farm_name: string;
+          owner_name: string;
+          email: string;
+          phone: string;
+          address?: string | null;
+          city?: string | null;
+          province?: string | null;
+          animal_types?: Json | null;
+          estimated_animals?: number | null;
+          requested_plan?: Database['public']['Enums']['subscription_plan'];
+          status?: Database['public']['Enums']['farm_application_status'];
+          payment_slip_url?: string | null;
+          payment_slip_provider?: Database['public']['Enums']['storage_provider'] | null;
+          payment_amount?: number | null;
+          payment_date?: string | null;
+          payment_reference?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          review_notes?: string | null;
+          rejection_reason?: string | null;
+          assigned_tenant_id?: string | null;
+          assigned_farm_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
         Update: {
-          id?: string
-          applicant_id?: string
-          farm_name?: string
-          owner_name?: string
-          email?: string
-          phone?: string
-          address?: string | null
-          city?: string | null
-          province?: string | null
-          animal_types?: Json | null
-          estimated_animals?: number | null
-          requested_plan?: Database["public"]["Enums"]["subscription_plan"]
-          status?: Database["public"]["Enums"]["farm_application_status"]
-          payment_slip_url?: string | null
-          payment_slip_provider?: Database["public"]["Enums"]["storage_provider"] | null
-          payment_amount?: number | null
-          payment_date?: string | null
-          payment_reference?: string | null
-          reviewed_by?: string | null
-          reviewed_at?: string | null
-          review_notes?: string | null
-          rejection_reason?: string | null
-          assigned_tenant_id?: string | null
-          assigned_farm_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          applicant_id?: string;
+          farm_name?: string;
+          owner_name?: string;
+          email?: string;
+          phone?: string;
+          address?: string | null;
+          city?: string | null;
+          province?: string | null;
+          animal_types?: Json | null;
+          estimated_animals?: number | null;
+          requested_plan?: Database['public']['Enums']['subscription_plan'];
+          status?: Database['public']['Enums']['farm_application_status'];
+          payment_slip_url?: string | null;
+          payment_slip_provider?: Database['public']['Enums']['storage_provider'] | null;
+          payment_amount?: number | null;
+          payment_date?: string | null;
+          payment_reference?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          review_notes?: string | null;
+          rejection_reason?: string | null;
+          assigned_tenant_id?: string | null;
+          assigned_farm_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "farm_applications_applicant_id_fkey"
-            columns: ["applicant_id"]
-            isOneToOne: false
-            referencedRelation: "platform_users"
-            referencedColumns: ["id"]
+            foreignKeyName: 'farm_applications_applicant_id_fkey';
+            columns: ['applicant_id'];
+            isOneToOne: false;
+            referencedRelation: 'platform_users';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "farm_applications_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "platform_users"
-            referencedColumns: ["id"]
+            foreignKeyName: 'farm_applications_reviewed_by_fkey';
+            columns: ['reviewed_by'];
+            isOneToOne: false;
+            referencedRelation: 'platform_users';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "farm_applications_assigned_tenant_id_fkey"
-            columns: ["assigned_tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-    }
+            foreignKeyName: 'farm_applications_assigned_tenant_id_fkey';
+            columns: ['assigned_tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      // Generic tables that accept any data - TODO: Generate proper types from Supabase
+      animal_vaccinations: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      breeding_records: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      diseases: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      medicines: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      predictions: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      migration_logs: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      audit_logs: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      email_subscriptions: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      subscription_history: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      tenant_members: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      custom_fields_config: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      weather_data: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      iot_devices: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      feed_inventory: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      staff_attendance: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      tasks: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      api_keys: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      payments: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      vaccination_schedules: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      treatment_protocols: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+      medicine_inventory: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: [];
+      };
+    };
     Functions: {
-      check_animal_limit: { Args: { p_tenant_id: string }; Returns: boolean }
-      get_next_farm_id: { Args: { p_year?: number }; Returns: string }
-      get_tenant_animal_count: { Args: { p_tenant_id: string }; Returns: number }
-      get_tenant_member_count: { Args: { p_tenant_id: string }; Returns: number }
-      user_is_member_of_tenant: { Args: { tenant_uuid: string }; Returns: boolean }
-    }
+      check_animal_limit: { Args: { p_tenant_id: string }; Returns: boolean };
+      get_next_farm_id: { Args: { p_year?: number }; Returns: string };
+      get_tenant_animal_count: { Args: { p_tenant_id: string }; Returns: number };
+      get_tenant_member_count: { Args: { p_tenant_id: string }; Returns: number };
+      user_is_member_of_tenant: { Args: { tenant_uuid: string }; Returns: boolean };
+    };
     Enums: {
-      audit_action: "create" | "update" | "delete" | "read" | "login" | "logout"
-      farm_application_status: "pending" | "payment_uploaded" | "under_review" | "approved" | "rejected"
-      payment_gateway: "jazzcash" | "easypaisa" | "xpay" | "bank_transfer"
-      payment_status: "pending" | "completed" | "failed" | "refunded" | "manual_verification"
-      storage_provider: "cloudinary" | "supabase"
-      subscription_plan: "free" | "professional" | "farm" | "enterprise"
-      subscription_status: "active" | "trial" | "expired" | "cancelled" | "past_due" | "pending_approval"
-      user_platform_role: "super_admin" | "admin" | "user"
-    }
+      audit_action: 'create' | 'update' | 'delete' | 'read' | 'login' | 'logout';
+      farm_application_status:
+        | 'pending'
+        | 'payment_uploaded'
+        | 'under_review'
+        | 'approved'
+        | 'rejected';
+      payment_gateway: 'jazzcash' | 'easypaisa' | 'xpay' | 'bank_transfer';
+      payment_status: 'pending' | 'completed' | 'failed' | 'refunded' | 'manual_verification';
+      storage_provider: 'cloudinary' | 'supabase';
+      subscription_plan: 'free' | 'professional' | 'farm' | 'enterprise';
+      subscription_status:
+        | 'active'
+        | 'trial'
+        | 'expired'
+        | 'cancelled'
+        | 'past_due'
+        | 'pending_approval';
+      user_platform_role: 'super_admin' | 'admin' | 'user';
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
 // Export helper types for convenience
-export type Tables<
-  TableName extends keyof Database["public"]["Tables"],
-> = Database["public"]["Tables"][TableName]["Row"]
+export type Tables<TableName extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][TableName]['Row'];
 
-export type TablesInsert<
-  TableName extends keyof Database["public"]["Tables"],
-> = Database["public"]["Tables"][TableName]["Insert"]
+export type TablesInsert<TableName extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][TableName]['Insert'];
 
-export type TablesUpdate<
-  TableName extends keyof Database["public"]["Tables"],
-> = Database["public"]["Tables"][TableName]["Update"]
+export type TablesUpdate<TableName extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][TableName]['Update'];
 
-export type Enums<
-  EnumName extends keyof Database["public"]["Enums"],
-> = Database["public"]["Enums"][EnumName]
+export type Enums<EnumName extends keyof Database['public']['Enums']> =
+  Database['public']['Enums'][EnumName];
 
 // Animal species type (commonly used across the application)
-export type AnimalSpecies = "cow" | "buffalo" | "chicken" | "goat" | "sheep" | "horse"
+export type AnimalSpecies = 'cow' | 'buffalo' | 'chicken' | 'goat' | 'sheep' | 'horse';
 
 // Animal status type
-export type AnimalStatus = "active" | "sold" | "deceased" | "sick" | "quarantine"
+export type AnimalStatus = 'active' | 'sold' | 'deceased' | 'sick' | 'quarantine';
 
 // Milk session type
-export type MilkSession = "morning" | "evening"
+export type MilkSession = 'morning' | 'evening';
 
 // Breeding method type
-export type BreedingMethod = "natural" | "artificial_insemination"
+export type BreedingMethod = 'natural' | 'artificial_insemination';
 
 // Breeding status type
 export type BreedingStatus =
-  | "inseminated"
-  | "check_pending"
-  | "confirmed"
-  | "not_pregnant"
-  | "pregnant"
-  | "delivered"
-  | "failed"
-  | "overdue"
+  | 'inseminated'
+  | 'check_pending'
+  | 'confirmed'
+  | 'not_pregnant'
+  | 'pregnant'
+  | 'delivered'
+  | 'failed'
+  | 'overdue';
 
 // Health record type
-export type HealthRecordType = "vaccination" | "treatment" | "checkup" | "disease" | "surgery"
+export type HealthRecordType = 'vaccination' | 'treatment' | 'checkup' | 'disease' | 'surgery';
 
 // Expense category type
 export type ExpenseCategory =
-  | "feed"
-  | "medicine"
-  | "labor"
-  | "equipment"
-  | "utilities"
-  | "veterinary"
-  | "maintenance"
-  | "other"
+  | 'feed'
+  | 'medicine'
+  | 'labor'
+  | 'equipment'
+  | 'utilities'
+  | 'veterinary'
+  | 'maintenance'
+  | 'other';
 
 // Sale type
-export type SaleType = "milk" | "animal" | "egg" | "manure" | "other"
+export type SaleType = 'milk' | 'animal' | 'egg' | 'manure' | 'other';
 
 // Re-export common types for convenience
-export type Animal = Tables<"animals">
-export type MilkLog = Tables<"milk_logs">
-export type HealthRecord = Tables<"health_records">
-export type Expense = Tables<"expenses">
-export type Sale = Tables<"sales">
-export type Tenant = Tables<"tenants">
-export type PlatformUser = Tables<"platform_users">;
+export type Animal = Tables<'animals'>;
+export type MilkLog = Tables<'milk_logs'>;
+export type HealthRecord = Tables<'health_records'>;
+export type Expense = Tables<'expenses'>;
+export type Sale = Tables<'sales'>;
+export type Tenant = Tables<'tenants'>;
+export type PlatformUser = Tables<'platform_users'>;
 
 // Subscription types
-export type SubscriptionPlan = Enums<"subscription_plan">
-export type SubscriptionStatus = Enums<"subscription_status">
-export type PaymentGateway = Enums<"payment_gateway">
-export type PaymentStatus = Enums<"payment_status">
-export type AuditAction = Enums<"audit_action">
-export type FarmApplicationStatus = Enums<"farm_application_status">
-export type StorageProvider = Enums<"storage_provider">
-export type UserPlatformRole = Enums<"user_platform_role">
+export type SubscriptionPlan = Enums<'subscription_plan'>;
+export type SubscriptionStatus = Enums<'subscription_status'>;
+export type PaymentGateway = Enums<'payment_gateway'>;
+export type PaymentStatus = Enums<'payment_status'>;
+export type AuditAction = Enums<'audit_action'>;
+export type FarmApplicationStatus = Enums<'farm_application_status'>;
+export type StorageProvider = Enums<'storage_provider'>;
+export type UserPlatformRole = Enums<'user_platform_role'>;

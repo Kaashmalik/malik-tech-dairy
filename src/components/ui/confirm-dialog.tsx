@@ -62,16 +62,12 @@ export function BaseConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
-            <Button variant="outline" disabled={loading}>
+            <Button variant='outline' disabled={loading}>
               {cancelText}
             </Button>
           </AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button
-              onClick={onConfirm}
-              disabled={loading}
-              variant={variant}
-            >
+            <Button onClick={onConfirm} disabled={loading} variant={variant}>
               {confirmText}
             </Button>
           </AlertDialogAction>
@@ -103,11 +99,11 @@ export function DeleteConfirmDialog({
       onOpenChange={onOpenChange}
       title={`Delete ${itemType}?`}
       description={`Are you sure you want to delete "${itemName}"? This action cannot be undone.`}
-      confirmText="Delete"
-      cancelText="Cancel"
+      confirmText='Delete'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
-      variant="destructive"
+      variant='destructive'
     />
   );
 }
@@ -135,10 +131,10 @@ export function BulkDeleteConfirmDialog({
       title={`Delete ${count} ${itemType}?`}
       description={`Are you sure you want to delete ${count} selected ${itemType}? This action cannot be undone.`}
       confirmText={`Delete ${count} ${itemType}`}
-      cancelText="Cancel"
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
-      variant="destructive"
+      variant='destructive'
     />
   );
 }
@@ -165,8 +161,8 @@ export function ArchiveConfirmDialog({
       onOpenChange={onOpenChange}
       title={`Archive ${itemType}?`}
       description={`Are you sure you want to archive "${itemName}"? You can restore it later if needed.`}
-      confirmText="Archive"
-      cancelText="Cancel"
+      confirmText='Archive'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
     />
@@ -195,11 +191,11 @@ export function DeactivateConfirmDialog({
       onOpenChange={onOpenChange}
       title={`Deactivate ${itemType}?`}
       description={`Are you sure you want to deactivate "${itemName}"? It will no longer be accessible but can be reactivated later.`}
-      confirmText="Deactivate"
-      cancelText="Cancel"
+      confirmText='Deactivate'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
-      variant="destructive"
+      variant='destructive'
     />
   );
 }
@@ -222,13 +218,13 @@ export function RemoveUserConfirmDialog({
     <BaseConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Remove team member?"
+      title='Remove team member?'
       description={`Are you sure you want to remove "${userName}" from your team? They will lose access to this farm.`}
-      confirmText="Remove"
-      cancelText="Cancel"
+      confirmText='Remove'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
-      variant="destructive"
+      variant='destructive'
     />
   );
 }
@@ -251,13 +247,13 @@ export function RevokeKeyConfirmDialog({
     <BaseConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Revoke API key?"
+      title='Revoke API key?'
       description={`Are you sure you want to revoke the API key "${keyName}"? All applications using this key will lose access.`}
-      confirmText="Revoke"
-      cancelText="Cancel"
+      confirmText='Revoke'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
-      variant="destructive"
+      variant='destructive'
     />
   );
 }
@@ -282,11 +278,11 @@ export function ResetDataConfirmDialog({
       onOpenChange={onOpenChange}
       title={`Reset ${dataType}?`}
       description={`This will permanently delete all ${dataType.toLowerCase()} and cannot be undone. Please backup your data before proceeding.`}
-      confirmText="Reset Data"
-      cancelText="Cancel"
+      confirmText='Reset Data'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
-      variant="destructive"
+      variant='destructive'
     />
   );
 }
@@ -313,8 +309,8 @@ export function ExportConfirmDialog({
       onOpenChange={onOpenChange}
       title={`Export ${dataType}?`}
       description={`Prepare to export your ${dataType.toLowerCase()} in ${format} format. You will receive a download link via email.`}
-      confirmText="Export"
-      cancelText="Cancel"
+      confirmText='Export'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
     />
@@ -341,10 +337,10 @@ export function ImportConfirmDialog({
     <BaseConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Import data?"
+      title='Import data?'
       description={`Ready to import ${recordCount} records from "${fileName}". Existing data may be updated.`}
-      confirmText="Import Data"
-      cancelText="Cancel"
+      confirmText='Import Data'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
     />
@@ -371,10 +367,10 @@ export function SendInviteConfirmDialog({
     <BaseConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Send invitation?"
+      title='Send invitation?'
       description={`Send an invitation to ${email} to join your farm as a ${role.toLowerCase()}.`}
-      confirmText="Send Invite"
-      cancelText="Cancel"
+      confirmText='Send Invite'
+      cancelText='Cancel'
       onConfirm={onConfirm}
       loading={loading}
     />
@@ -382,7 +378,7 @@ export function SendInviteConfirmDialog({
 }
 
 // Custom confirmation dialog with actions
-interface CustomConfirmDialogProps extends BaseConfirmDialogProps {
+interface CustomConfirmDialogProps extends Omit<BaseConfirmDialogProps, 'variant'> {
   icon?: React.ReactNode;
   variant?: 'default' | 'destructive' | 'warning';
   extraInfo?: string;
@@ -405,11 +401,11 @@ export function CustomConfirmDialog({
     if (icon) return icon;
     switch (variant) {
       case 'destructive':
-        return <Trash2 className="h-5 w-5 text-destructive" />;
+        return <Trash2 className='text-destructive h-5 w-5' />;
       case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
+        return <AlertTriangle className='h-5 w-5 text-yellow-600' />;
       default:
-        return <AlertTriangle className="h-5 w-5 text-primary" />;
+        return <AlertTriangle className='text-primary h-5 w-5' />;
     }
   };
 
@@ -428,22 +424,18 @@ export function CustomConfirmDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className={cn('max-w-md', getVariantClass())}>
         <AlertDialogHeader>
-          <div className="flex items-center gap-3">
+          <div className='flex items-center gap-3'>
             {getIcon()}
             <AlertDialogTitle>{title}</AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="text-left">
+          <AlertDialogDescription className='text-left'>
             {description}
-            {extraInfo && (
-              <div className="mt-2 p-2 bg-muted rounded text-xs">
-                {extraInfo}
-              </div>
-            )}
+            {extraInfo && <div className='bg-muted mt-2 rounded p-2 text-xs'>{extraInfo}</div>}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
-            <Button variant="outline" disabled={loading}>
+            <Button variant='outline' disabled={loading}>
               {cancelText}
             </Button>
           </AlertDialogCancel>
@@ -484,11 +476,7 @@ export function ConfirmButton({
 
   return (
     <>
-      <Button
-        variant={variant}
-        onClick={() => setOpen(true)}
-        disabled={loading}
-      >
+      <Button variant={variant} onClick={() => setOpen(true)} disabled={loading}>
         {children}
       </Button>
       <BaseConfirmDialog

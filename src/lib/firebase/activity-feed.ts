@@ -31,7 +31,8 @@ export type ActivityType =
   | 'subscription_updated'
   | 'farm_application_submitted'
   | 'farm_application_approved'
-  | 'farm_application_rejected';
+  | 'farm_application_rejected'
+  | 'farm_application_auto_approved';
 export interface ActivityFeedItem {
   id?: string;
   tenantId: string;
@@ -189,6 +190,10 @@ export const activityMessages: Record<
   farm_application_rejected: m => ({
     title: 'Farm Application Rejected',
     description: `${m?.farmName || 'A farm'} application was rejected`,
+  }),
+  farm_application_auto_approved: m => ({
+    title: 'Farm Auto-Approved',
+    description: `${m?.farmName || 'A farm'} was auto-approved with ID: ${m?.farmId || 'N/A'} (${m?.plan || 'free'} plan)`,
   }),
 };
 /**

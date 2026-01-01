@@ -36,7 +36,7 @@ export function withRole(
   requiredRoles: UserRole[],
   handler: (req: AuthenticatedRequest, context?: RouteContext) => Promise<Response>
 ) {
-  return withAuth(async (req: AuthenticatedRequest, context?: RouteContext) => {
+  const authHandler = withAuth(async (req: AuthenticatedRequest, context?: RouteContext) => {
     const { userId } = await auth();
     const tenantId =
       req.nextUrl.searchParams.get('tenantId') || req.headers.get('x-tenant-id') || '';
@@ -107,6 +107,7 @@ export function withRole(
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
+  return authHandler;
 }
 export function withPermission(
   resource: string,

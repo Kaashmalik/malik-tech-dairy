@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env.local' });
 
 async function testDisplay() {
   console.log('🔍 Testing Animals and Weather Display\n');
-  
+
   // Test 1: Check if server is running
   console.log('1️⃣ Checking if server is running...');
   try {
@@ -28,7 +28,7 @@ async function testDisplay() {
     console.log('   4. Refresh this test');
     return;
   }
-  
+
   // Test 2: Check animals API
   console.log('\n2️⃣ Testing Animals API...');
   try {
@@ -50,7 +50,7 @@ async function testDisplay() {
   } catch (error) {
     console.log(`   ❌ Animals API error: ${error.message}`);
   }
-  
+
   // Test 3: Check weather API
   console.log('\n3️⃣ Testing Weather API...');
   try {
@@ -60,7 +60,9 @@ async function testDisplay() {
       console.log(`   ✅ Weather API working: ${data.data?.length || 0} records`);
       if (data.data && data.data.length > 0) {
         const weather = data.data[0];
-        console.log(`   Weather: ${weather.city_name} - ${weather.temperature}°C, ${weather.weather_description}`);
+        console.log(
+          `   Weather: ${weather.city_name} - ${weather.temperature}°C, ${weather.weather_description}`
+        );
       }
       if (data.location) {
         console.log(`   Location: ${data.location.city}, ${data.location.country}`);
@@ -73,7 +75,7 @@ async function testDisplay() {
   } catch (error) {
     console.log(`   ❌ Weather API error: ${error.message}`);
   }
-  
+
   // Test 4: Check dashboard page
   console.log('\n4️⃣ Testing Dashboard Page...');
   try {
@@ -89,7 +91,7 @@ async function testDisplay() {
   } catch (error) {
     console.log(`   ❌ Dashboard error: ${error.message}`);
   }
-  
+
   console.log('\n✅ Test Complete!');
   console.log('\n📋 If APIs are working but data not showing:');
   console.log('1. Make sure you are logged in to the application');
@@ -99,7 +101,7 @@ async function testDisplay() {
   console.log('5. Try hard refresh: Ctrl+Shift+R');
   console.log('6. Clear browser cache');
   console.log('7. Try in incognito mode');
-  
+
   console.log('\n🔧 Debug Tools Available:');
   console.log('- Visit: http://localhost:3000/debug.html');
   console.log('- This page has tools to test APIs and fix issues');

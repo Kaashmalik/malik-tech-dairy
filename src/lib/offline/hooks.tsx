@@ -27,8 +27,7 @@ export function useOfflineQuery<T>(
           setHasUsedOfflineData(true);
           return offlineData;
         }
-      } catch (error) {
-      }
+      } catch (error) {}
       // Then try network if online
       if (navigator.onLine) {
         try {
@@ -66,8 +65,7 @@ export function useOfflineQuery<T>(
           await syncService.sync(tenantId);
           // Refetch data after sync
           queryClient.invalidateQueries({ queryKey });
-        } catch (error) {
-        }
+        } catch (error) {}
       }
     };
     window.addEventListener('online', handleOnline);
@@ -297,8 +295,7 @@ export function useSyncStatus(tenantId: string) {
           lastSync: status?.lastSync || 0,
           syncInProgress: status?.syncInProgress || false,
         });
-      } catch (error) {
-      }
+      } catch (error) {}
     };
     updateStatus();
     const interval = setInterval(updateStatus, 5000); // Update every 5 seconds
@@ -325,8 +322,7 @@ export function useSyncStatus(tenantId: string) {
           lastSync: status?.lastSync || Date.now(),
           syncInProgress: false,
         }));
-      } catch (error) {
-      }
+      } catch (error) {}
     }
   }, [tenantId]);
   return {

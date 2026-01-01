@@ -22,6 +22,17 @@ interface SaleFormProps {
   onSuccess: () => void;
 }
 
+// Form data type where dates and numeric values are strings (for HTML inputs)
+type SaleFormData = {
+  date: string;
+  type: Sale['type'];
+  quantity: string;
+  unit: string;
+  price: string;
+  buyer: string;
+  notes: string;
+};
+
 export function SaleForm({ onClose, onSuccess }: SaleFormProps) {
   const {
     register,
@@ -29,7 +40,7 @@ export function SaleForm({ onClose, onSuccess }: SaleFormProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<Partial<Sale>>({
+  } = useForm<SaleFormData>({
     defaultValues: {
       date: format(new Date(), 'yyyy-MM-dd'),
       type: 'milk',
@@ -42,11 +53,15 @@ export function SaleForm({ onClose, onSuccess }: SaleFormProps) {
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: Partial<Sale>) => {
+    mutationFn: async (data: SaleFormData) => {
       const res = await fetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          quantity: parseFloat(data.quantity) || 0,
+          price: parseFloat(data.price) || 0,
+        }),
       });
 
       if (!res.ok) {
@@ -61,7 +76,7 @@ export function SaleForm({ onClose, onSuccess }: SaleFormProps) {
     },
   });
 
-  const onSubmit = (data: Partial<Sale>) => {
+  const onSubmit = (data: SaleFormData) => {
     mutation.mutate(data);
   };
 

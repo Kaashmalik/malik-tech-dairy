@@ -6,7 +6,7 @@ import { validateApiKey } from '@/lib/api-keys';
  * Middleware to authenticate requests using API keys
  * Used for IoT device access
  */
-export async function withApiKeyAuth(
+export function withApiKeyAuth(
   handler: (
     req: NextRequest,
     context: {
@@ -15,7 +15,7 @@ export async function withApiKeyAuth(
     }
   ) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest): Promise<NextResponse> => {
     // Extract API key from header
     const apiKey =
       req.headers.get('x-api-key') || req.headers.get('authorization')?.replace('Bearer ', '');

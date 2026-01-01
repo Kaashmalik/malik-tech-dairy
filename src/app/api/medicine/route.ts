@@ -1,7 +1,7 @@
 // API Route: Medicine Inventory Management (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     try {
       const supabase = getSupabaseClient();
       const { searchParams } = new URL(req.url);
-      
+
       const category = searchParams.get('category');
       const status = searchParams.get('status'); // 'low', 'adequate', 'expired'
       const search = searchParams.get('search');
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: medicines, error } = await query as { data: any[] | null; error: any };
+      const { data: medicines, error } = (await query) as { data: any[] | null; error: any };
 
       if (error) {
         // Handle table not existing gracefully
@@ -74,7 +74,11 @@ export async function GET(request: NextRequest) {
         if (process.env.NODE_ENV === 'development') {
         }
         return NextResponse.json(
-          { success: true, medicines: [], stats: { total: 0, lowStock: 0, expiringSoon: 0, expired: 0, totalValue: 0 } },
+          {
+            success: true,
+            medicines: [],
+            stats: { total: 0, lowStock: 0, expiringSoon: 0, expired: 0, totalValue: 0 },
+          },
           { status: 200 }
         );
       }
@@ -84,9 +88,11 @@ export async function GET(request: NextRequest) {
       const transformedMedicines = (medicines || []).map((med: any) => {
         const expiryDate = med.expiry_date ? new Date(med.expiry_date) : null;
         const isExpired = expiryDate && expiryDate < now;
-        const isExpiringSoon = expiryDate && !isExpired && 
-          (expiryDate.getTime() - now.getTime()) < 30 * 24 * 60 * 60 * 1000; // 30 days
-        
+        const isExpiringSoon =
+          expiryDate &&
+          !isExpired &&
+          expiryDate.getTime() - now.getTime() < 30 * 24 * 60 * 60 * 1000; // 30 days
+
         let stockStatus = 'adequate';
         if (med.stock <= 0) {
           stockStatus = 'out_of_stock';
@@ -120,7 +126,9 @@ export async function GET(request: NextRequest) {
       // Filter by status if requested
       let filteredMedicines = transformedMedicines;
       if (status === 'low') {
-        filteredMedicines = transformedMedicines.filter((m: any) => m.status === 'low' || m.status === 'out_of_stock');
+        filteredMedicines = transformedMedicines.filter(
+          (m: any) => m.status === 'low' || m.status === 'out_of_stock'
+        );
       } else if (status === 'expired') {
         filteredMedicines = transformedMedicines.filter((m: any) => m.isExpired);
       } else if (status === 'expiring') {
@@ -130,11 +138,15 @@ export async function GET(request: NextRequest) {
       // Calculate stats
       const stats = {
         total: transformedMedicines.length,
-        lowStock: transformedMedicines.filter((m: any) => m.status === 'low' || m.status === 'out_of_stock').length,
+        lowStock: transformedMedicines.filter(
+          (m: any) => m.status === 'low' || m.status === 'out_of_stock'
+        ).length,
         expiringSoon: transformedMedicines.filter((m: any) => m.isExpiringSoon).length,
         expired: transformedMedicines.filter((m: any) => m.isExpired).length,
-        totalValue: transformedMedicines.reduce((sum: number, m: any) => 
-          sum + ((m.stock || 0) * (m.purchasePrice || 0)), 0),
+        totalValue: transformedMedicines.reduce(
+          (sum: number, m: any) => sum + (m.stock || 0) * (m.purchasePrice || 0),
+          0
+        ),
       };
 
       return NextResponse.json({
@@ -221,4 +233,3 @@ export async function POST(request: NextRequest) {
     }
   })(request);
 }
-

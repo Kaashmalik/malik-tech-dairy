@@ -1,6 +1,6 @@
 // Supabase-based Tenant Limits
 // Gets subscription plan from Supabase and returns plan limits from constants
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { SUBSCRIPTION_PLANS, SubscriptionPlanKey } from '@/lib/constants';
 import type { TenantLimits } from '@/types';
 export interface SubscriptionWithLimits {

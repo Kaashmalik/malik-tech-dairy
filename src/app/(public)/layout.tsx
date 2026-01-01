@@ -23,7 +23,7 @@ async function ensureUserExists(userId: string, email: string, name?: string): P
   const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
   try {
     // Use Supabase REST API instead of direct postgres (more reliable)
-    const { getSupabaseClient } = await import('@/lib/supabase');
+    const { getSupabaseClient } = await import('@/lib/supabase/server');
     const supabase = getSupabaseClient();
     // Check if user already exists
     const { data, error: fetchError } = await supabase

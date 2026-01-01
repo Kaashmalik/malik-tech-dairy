@@ -1,6 +1,6 @@
 // Supabase Server-Only Connection with Connection Pooling
 // This file should NEVER be imported on the client side
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
@@ -8,7 +8,7 @@ import { Database } from '@/types/database';
 
 // Connection pool for server-side operations
 let connectionPool: postgres.Sql | null = null;
-let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
+let supabaseClient: SupabaseClient<Database> | null = null;
 
 /**
  * Get Supabase connection pool (server-only)
@@ -48,8 +48,9 @@ export function getDrizzle() {
 /**
  * Get Supabase client for direct queries (server-only)
  * Use sparingly - prefer Drizzle ORM for type safety
+ * Note: Uses 'any' type for flexibility during migration
  */
-export function getSupabaseClient() {
+export function getSupabaseClient(): SupabaseClient<any> {
   if (typeof window !== 'undefined') {
     throw new Error('Supabase client can only be used server-side');
   }
@@ -70,7 +71,7 @@ export function getSupabaseClient() {
     });
   }
 
-  return supabaseClient;
+  return supabaseClient as SupabaseClient<any>;
 }
 
 /**

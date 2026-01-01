@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { vaccinationSchedules, animals, vaccinationSchedulesRelations } from '@/db/schema';
 import { eq, and, ilike, desc, gte, lte, isNull, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
@@ -171,6 +171,8 @@ export async function POST(request: NextRequest) {
             tenantId: tenantContext.tenantId,
             animalId,
             ...validatedData,
+            scheduledDate: new Date(validatedData.scheduledDate),
+            expiryDate: new Date(validatedData.expiryDate),
             createdBy: tenantContext.userId,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -186,6 +188,8 @@ export async function POST(request: NextRequest) {
           id: vaccinationId,
           tenantId: tenantContext.tenantId,
           ...validatedData,
+          scheduledDate: new Date(validatedData.scheduledDate),
+          expiryDate: new Date(validatedData.expiryDate),
           createdBy: tenantContext.userId,
           createdAt: new Date(),
           updatedAt: new Date(),

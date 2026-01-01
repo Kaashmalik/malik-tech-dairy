@@ -40,28 +40,22 @@ const requiredTables = [
   'farm_applications',
   'custom_fields_config',
   'email_subscriptions',
-  'predictions'
+  'predictions',
 ];
 
 async function checkTables() {
-
   try {
     // Get existing tables using a different approach
-    const { data: tables, error } = await supabase
-      .rpc('get_table_info', { schema_name: 'public' });
+    const { data: tables, error } = await supabase.rpc('get_table_info', { schema_name: 'public' });
 
     // If RPC doesn't exist, try checking each table individually
     if (error) {
-      
       const existingTables = [];
-      
+
       for (const table of requiredTables) {
         try {
-          const { error: tableError } = await supabase
-            .from(table)
-            .select('count')
-            .limit(1);
-          
+          const { error: tableError } = await supabase.from(table).select('count').limit(1);
+
           if (!tableError || tableError.code !== 'PGRST116') {
             existingTables.push(table);
           }
@@ -69,14 +63,13 @@ async function checkTables() {
           // Table doesn't exist
         }
       }
-      
-      
+
       const missingTables = [];
-      
+
       requiredTables.forEach(table => {
         const exists = existingTables.includes(table);
         const status = exists ? '✅' : '❌';
-        
+
         if (!exists) {
           missingTables.push(table);
         }
@@ -86,19 +79,18 @@ async function checkTables() {
       } else {
         console.log(`\n⚠️  Missing ${missingTables.length} tables: ${missingTables.join(', ')}`);
       }
-      
+
       return;
     }
-    
+
     const existingTables = tables?.map(t => t.table_name) || [];
-    
-    
+
     const missingTables = [];
-    
+
     requiredTables.forEach(table => {
       const exists = existingTables.includes(table);
       const status = exists ? '✅' : '❌';
-      
+
       if (!exists) {
         missingTables.push(table);
       }
@@ -122,13 +114,10 @@ async function checkTables() {
         const status = hasPolicy ? '✅' : '⚠️ ';
       });
     }
-
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 async function createMissingTables() {
-
   try {
     // Read the complete migration file
     const migrationPath = join(__dirname, '../scripts/supabase-complete-migration.sql');
@@ -141,8 +130,7 @@ async function createMissingTables() {
       // If exec_sql doesn't exist, try direct SQL execution
     } else {
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 // Command line interface
@@ -152,4 +140,4 @@ if (command === 'create') {
   createMissingTables();
 } else {
   checkTables();
-}
+}

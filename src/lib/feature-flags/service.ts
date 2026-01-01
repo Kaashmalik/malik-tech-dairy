@@ -205,7 +205,9 @@ export function isPhaseEnabled(
   const { PHASE_ROLLOUT_ORDER } = require('./config');
   const phaseFeatures = PHASE_ROLLOUT_ORDER[phase];
 
-  return phaseFeatures.some((featureKey: EnterpriseFeatureFlag) => isFeatureEnabled(featureKey, context));
+  return phaseFeatures.some((featureKey: EnterpriseFeatureFlag) =>
+    isFeatureEnabled(featureKey, context)
+  );
 }
 
 /**

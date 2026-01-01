@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import {
@@ -33,11 +33,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const phase = searchParams.get('phase') as 'phase_1' | 'phase_2' | 'phase_3' | null;
     const enabled = searchParams.get('enabled');
-    let features = Object.entries(DEFAULT_FEATURE_FLAGS).map(([key, config]) => ({
-      key,
+    let features = Object.entries(DEFAULT_FEATURE_FLAGS).map(([featureKey, config]) => ({
       ...config,
       // Check current environment overrides
-      currentEnabled: process.env[`FEATURE_${key.toUpperCase()}`] === 'true' || config.enabled,
+      currentEnabled:
+        process.env[`FEATURE_${featureKey.toUpperCase()}`] === 'true' || config.enabled,
     }));
     // Filter by phase if specified
     if (phase) {

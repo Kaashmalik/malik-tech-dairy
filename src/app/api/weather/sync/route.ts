@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import professionalWeatherService from '@/lib/weather/professional-weather-service';
 
 // This endpoint syncs weather data for tenants based on their farm locations
@@ -9,23 +9,20 @@ export async function POST(request: NextRequest) {
     // Verify this is an authorized request (you might want to add a secret key)
     const authHeader = request.headers.get('authorization');
     const secretKey = process.env.WEATHER_SYNC_SECRET;
-    
+
     if (!secretKey || authHeader !== `Bearer ${secretKey}`) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = getSupabaseClient();
-    
+
     // Get all active tenants with weather enabled
     const { data: tenants, error: tenantError } = await supabase
       .from('tenants')
       .select('id, farm_name, farm_location, weather_enabled')
       .is('deleted_at', null)
       .eq('weather_enabled', true);
-    
+
     if (tenantError) {
       throw new Error(`Failed to fetch tenants: ${tenantError.message}`);
     }
@@ -39,23 +36,23 @@ export async function POST(request: NextRequest) {
     }
 
     const results = [];
-    
+
     // Fetch weather for each tenant based on their location
     for (const tenant of tenants) {
       try {
         // Get weather for tenant's farm location
         const weather = await professionalWeatherService.getTenantWeather(
-          tenant.id, 
+          tenant.id,
           tenant.farm_location
         );
-        
+
         // Transform and save weather data
         const weatherData = professionalWeatherService.transformWeatherData(
-          weather, 
-          tenant.id, 
+          weather,
+          tenant.id,
           tenant.farm_location
         );
-        
+
         // Check if data already exists for this timestamp
         const { data: existing } = await supabase
           .from('weather_data')
@@ -63,7 +60,7 @@ export async function POST(request: NextRequest) {
           .eq('tenant_id', tenant.id)
           .eq('data_timestamp', weatherData.data_timestamp)
           .single();
-        
+
         if (existing) {
           // Update existing
           await supabase
@@ -75,16 +72,14 @@ export async function POST(request: NextRequest) {
             .eq('id', existing.id);
         } else {
           // Insert new
-          await supabase
-            .from('weather_data')
-            .insert({
-              id: `weather_${tenant.id}_${Date.now()}`,
-              ...weatherData,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
+          await supabase.from('weather_data').insert({
+            id: `weather_${tenant.id}_${Date.now()}`,
+            ...weatherData,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
         }
-        
+
         results.push({
           tenantId: tenant.id,
           tenantName: tenant.farm_name,
@@ -112,9 +107,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Weather sync error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error',
       },
       { status: 500 }
     );
@@ -127,30 +122,24 @@ export async function GET(request: NextRequest) {
     // For manual triggering, you might want to add authentication
     const { searchParams } = new URL(request.url);
     const tenantId = searchParams.get('tenantId');
-    
+
     if (!tenantId) {
-      return NextResponse.json(
-        { success: false, error: 'Tenant ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant ID is required' }, { status: 400 });
     }
 
     const supabase = getSupabaseClient();
-    
+
     // Verify tenant exists and has weather enabled
     const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
       .select('id, farm_name, farm_location, weather_enabled')
       .eq('id', tenantId)
       .single();
-    
+
     if (tenantError || !tenant) {
-      return NextResponse.json(
-        { success: false, error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
-    
+
     if (!tenant.weather_enabled) {
       return NextResponse.json(
         { success: false, error: 'Weather is disabled for this tenant' },
@@ -160,17 +149,17 @@ export async function GET(request: NextRequest) {
 
     // Get weather for tenant's farm location
     const weather = await professionalWeatherService.getTenantWeather(
-      tenantId, 
+      tenantId,
       tenant.farm_location
     );
-    
+
     // Save weather data
     const weatherData = professionalWeatherService.transformWeatherData(
-      weather, 
-      tenantId, 
+      weather,
+      tenantId,
       tenant.farm_location
     );
-    
+
     const { data, error } = await supabase
       .from('weather_data')
       .insert({
@@ -181,7 +170,7 @@ export async function GET(request: NextRequest) {
       })
       .select()
       .single();
-    
+
     if (error) {
       throw error;
     }
@@ -195,9 +184,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Manual weather sync error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error',
       },
       { status: 500 }
     );

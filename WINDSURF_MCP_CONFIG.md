@@ -13,6 +13,7 @@ Since you're using Windsurf/Cascade's built-in MCP server (not the desktop app),
 ## Step 2: Correct Configuration Location
 
 For Windsurf/Cascade, the MCP config should be at:
+
 ```
 c:\Users\DELL\.codeium\windsurf\mcp_config.json
 ```
@@ -20,15 +21,13 @@ c:\Users\DELL\.codeium\windsurf\mcp_config.json
 ## Step 3: Verify Your Current Config
 
 Your current config looks correct:
+
 ```json
 {
   "mcpServers": {
     "supabase": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest"
-      ],
+      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
       "env": {
         "SUPABASE_ACCESS_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkZGl0cWt2emxwbmtsY294c3BqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDgzMTMzMCwiZXhwIjoyMDgwNDA3MzMwfQ.QV1sqGTY1Qp094VfAsBlAz-BPq4WGIIaQGQyk7u8f5k",
         "SUPABASE_PROJECT_ID": "gdditqkvzlpnklcoxspj"
@@ -41,18 +40,21 @@ Your current config looks correct:
 ## Step 4: Windsurf-Specific Troubleshooting
 
 ### Option A: Reload MCP Servers
+
 1. In Windsurf, press `Ctrl+Shift+P`
 2. Type "MCP: Reload Servers"
 3. Press Enter
 4. Check the MCP server icon again
 
 ### Option B: Check Windsurf Settings
+
 1. Press `Ctrl+,` to open Settings
 2. Search for "MCP"
 3. Verify the MCP config path is correct
 4. It should point to: `c:\Users\DELL\.codeium\windsurf\mcp_config.json`
 
 ### Option C: Use Windsurf's MCP UI
+
 1. Click the MCP server icon in status bar
 2. Look for "Add Server" or "Configure"
 3. Add Supabase server with:
@@ -64,6 +66,7 @@ Your current config looks correct:
      - `SUPABASE_PROJECT_ID`: `gdditqkvzlpnklcoxspj`
 
 ### Option D: Check Logs
+
 1. In Windsurf, press `Ctrl+Shift+P`
 2. Type "Developer: Show Logs"
 3. Select "MCP Server" or "Extension Host"
@@ -95,6 +98,7 @@ Make sure there are no extra spaces or line breaks in your token. The token shou
 ## Step 7: Test Connection
 
 After configuring:
+
 1. Save the config file
 2. Click the MCP server icon
 3. Click "Reload" or "Restart"
@@ -110,6 +114,7 @@ After configuring:
 ## Need More Help?
 
 If it still doesn't work:
+
 1. Check Windsurf documentation for MCP setup
 2. Look in Help → About → Extension Host for errors
 3. Try resetting Windsurf settings

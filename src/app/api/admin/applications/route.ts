@@ -3,16 +3,25 @@
 // Requires super_admin role
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '../../../../lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { Database } from '@/types/database';
+import { SupabaseClient } from '@supabase/supabase-js';
+
 // Helper to check if user is super admin
 async function isSuperAdmin(userId: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
+  const supabase = getSupabaseClient() as SupabaseClient<Database>;
   const { data: user } = await supabase
     .from('platform_users')
-    .select('platform_role')
+    .select('role')
+    .eq('id', userId)
     .eq('id', userId)
     .single();
-  return user?.platform_role === 'super_admin';
+
+  // Safe check if user exists and has role
+  if (!user) return false;
+
+  // Explicitly check role property
+  return (user as { role: string | null }).role === 'super_admin';
 }
 // GET: List all farm applications (super admin only)
 export async function GET(request: NextRequest) {
@@ -29,20 +38,28 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
-    const supabase = getSupabaseClient();
+    const supabase = getSupabaseClient() as SupabaseClient<Database>;
     // Get query params
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const includeStats = searchParams.get('stats') === 'true';
     // Build query
+    // Build query with conditional filter
     let query = supabase
       .from('farm_applications')
       .select('*')
       .order('created_at', { ascending: false });
+
     if (status && status !== 'all') {
+      // @ts-ignore - Dynamic query building causes type inference issues
       query = query.eq('status', status);
     }
-    const { data: applications, error } = await query;
+
+    // Explicitly type the result to avoid 'never' inference
+    const { data: applications, error } = (await query) as {
+      data: Database['public']['Tables']['farm_applications']['Row'][] | null;
+      error: any;
+    };
     if (error) {
       return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
     }

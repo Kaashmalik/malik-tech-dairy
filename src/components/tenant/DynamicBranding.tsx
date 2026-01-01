@@ -47,7 +47,13 @@ export function TenantLogo({ className }: { className?: string }) {
   if (config?.logoUrl) {
     return (
       <div className={className} style={{ position: 'relative', width: '32px', height: '32px' }}>
-        <Image src={config.logoUrl} alt={config.farmName || 'Farm Logo'} fill className="object-contain" sizes="32px" />
+        <Image
+          src={config.logoUrl}
+          alt={config.farmName || 'Farm Logo'}
+          fill
+          className='object-contain'
+          sizes='32px'
+        />
       </div>
     );
   }

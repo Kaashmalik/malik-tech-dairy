@@ -94,8 +94,7 @@ export async function deleteCachePattern(pattern: string): Promise<void> {
     if (!client) return; // Redis not configured
     // Upstash Redis doesn't support KEYS command, so we'll use SCAN
     // For now, we'll just log - implement if needed
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 /**
  * Invalidate tenant-related caches

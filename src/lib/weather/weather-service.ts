@@ -107,12 +107,12 @@ class WeatherService {
    */
   async getCurrentWeather(city: string): Promise<OpenWeatherResponse> {
     const url = `${this.baseUrl}/weather?q=${city}&appid=${this.apiKey}&units=metric`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Weather API error: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
@@ -121,12 +121,12 @@ class WeatherService {
    */
   async getCurrentWeatherByCoords(lat: number, lon: number): Promise<OpenWeatherResponse> {
     const url = `${this.baseUrl}/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Weather API error: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
@@ -135,19 +135,23 @@ class WeatherService {
    */
   async getForecast(city: string): Promise<any> {
     const url = `${this.baseUrl}/forecast?q=${city}&appid=${this.apiKey}&units=metric`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Weather API error: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
   /**
    * Transform OpenWeather data to our database format
    */
-  transformWeatherData(data: OpenWeatherResponse, tenantId: string, cityDisplayName?: string): Omit<WeatherData, 'id' | 'created_at' | 'updated_at'> {
+  transformWeatherData(
+    data: OpenWeatherResponse,
+    tenantId: string,
+    cityDisplayName?: string
+  ): Omit<WeatherData, 'id' | 'created_at' | 'updated_at'> {
     return {
       tenant_id: tenantId,
       city_name: cityDisplayName || data.name,
@@ -172,16 +176,18 @@ class WeatherService {
       snow_3h: data.snow?.['3h'],
       sunrise: new Date(data.sys.sunrise * 1000).toISOString(),
       sunset: new Date(data.sys.sunset * 1000).toISOString(),
-      data_timestamp: new Date(data.dt * 1000).toISOString()
+      data_timestamp: new Date(data.dt * 1000).toISOString(),
     };
   }
 
   /**
    * Get weather for multiple default cities
    */
-  async getDefaultCitiesWeather(tenantId: string): Promise<Array<{ city: PakistanCity; weather: OpenWeatherResponse }>> {
+  async getDefaultCitiesWeather(
+    tenantId: string
+  ): Promise<Array<{ city: PakistanCity; weather: OpenWeatherResponse }>> {
     const results = [];
-    
+
     for (const city of DEFAULT_PAKISTAN_CITIES) {
       try {
         // Use searchName for OpenWeather API, but keep displayName for display
@@ -191,14 +197,16 @@ class WeatherService {
         console.error(`Failed to fetch weather for ${city.displayName}:`, error);
       }
     }
-    
+
     return results;
   }
 
   /**
    * Save weather data to database
    */
-  async saveWeatherData(data: Omit<WeatherData, 'id' | 'created_at' | 'updated_at'>): Promise<WeatherData> {
+  async saveWeatherData(
+    data: Omit<WeatherData, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<WeatherData> {
     const response = await fetch('/api/weather', {
       method: 'POST',
       headers: {
@@ -206,11 +214,11 @@ class WeatherService {
       },
       body: JSON.stringify(data),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to save weather data');
     }
-    
+
     return response.json();
   }
 
@@ -220,11 +228,11 @@ class WeatherService {
   async getWeatherData(tenantId: string, city?: string): Promise<WeatherData[]> {
     const url = city ? `/api/weather?city=${city}` : '/api/weather';
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch weather data');
     }
-    
+
     const result = await response.json();
     return result.data || [];
   }
@@ -234,33 +242,35 @@ class WeatherService {
    */
   getFarmingRecommendations(weather: WeatherData): string[] {
     const recommendations: string[] = [];
-    
+
     // Temperature-based recommendations
     if (weather.temperature > 35) {
-      recommendations.push('🌡️ High temperature! Ensure animals have access to shade and cool water');
+      recommendations.push(
+        '🌡️ High temperature! Ensure animals have access to shade and cool water'
+      );
       recommendations.push('💧 Increase water availability for livestock');
     } else if (weather.temperature < 10) {
       recommendations.push('🧥 Cold weather! Provide shelter and warm bedding for animals');
       recommendations.push('🌾 Consider increasing feed to maintain body temperature');
     }
-    
+
     // Rain-based recommendations
     if (weather.rain_1h && weather.rain_1h > 5) {
       recommendations.push('🌧️ Heavy rain! Keep animals indoors and ensure drainage');
       recommendations.push('📅 Postpone outdoor activities until weather improves');
     }
-    
+
     // Wind-based recommendations
     if (weather.wind_speed > 30) {
       recommendations.push('💨 Strong winds! Secure loose items and protect young animals');
     }
-    
+
     // Humidity-based recommendations
     if (weather.humidity > 80) {
       recommendations.push('💦 High humidity! Watch for heat stress and ensure proper ventilation');
       recommendations.push('🦠 Check for signs of fungal infections in feed storage');
     }
-    
+
     // General recommendations based on weather condition
     switch (weather.weather_main.toLowerCase()) {
       case 'rain':
@@ -281,7 +291,7 @@ class WeatherService {
         recommendations.push('⛈️ Thunderstorm! Keep all animals indoors and secure equipment');
         break;
     }
-    
+
     return recommendations;
   }
 }

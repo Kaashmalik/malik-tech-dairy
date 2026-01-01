@@ -59,7 +59,8 @@ export const ENTERPRISE_FEATURE_FLAGS = {
 } as const;
 
 // Type representing the lowercase string values of feature flags
-export type EnterpriseFeatureFlag = (typeof ENTERPRISE_FEATURE_FLAGS)[keyof typeof ENTERPRISE_FEATURE_FLAGS];
+export type EnterpriseFeatureFlag =
+  (typeof ENTERPRISE_FEATURE_FLAGS)[keyof typeof ENTERPRISE_FEATURE_FLAGS];
 
 // Default feature flag configurations (keyed by feature flag values)
 export const DEFAULT_FEATURE_FLAGS: Record<EnterpriseFeatureFlag, FeatureFlag> = {

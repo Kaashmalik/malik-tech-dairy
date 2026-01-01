@@ -1,6 +1,6 @@
 /**
  * Enterprise Structured Logging Utility for MTK Dairy
- * 
+ *
  * Features:
  * - Structured JSON logging for production
  * - Tenant and user context tracking
@@ -50,7 +50,8 @@ class Logger {
 
   constructor() {
     // In production, only log warn and above by default
-    this.minLevel = (process.env.LOG_LEVEL as LogLevel) || 
+    this.minLevel =
+      (process.env.LOG_LEVEL as LogLevel) ||
       (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
   }
 
@@ -79,8 +80,8 @@ class Logger {
    * Format log as structured JSON for production
    */
   private formatStructuredLog(
-    level: LogLevel, 
-    message: string, 
+    level: LogLevel,
+    message: string,
     extra?: LogContext,
     error?: Error | unknown
   ): StructuredLog {
@@ -130,7 +131,7 @@ class Logger {
       // In development, use colored console output
       const prefix = `[${log.timestamp}] [${level.toUpperCase()}]`;
       const contextStr = log.context ? ` ${JSON.stringify(log.context)}` : '';
-      
+
       switch (level) {
         case 'debug':
           console.debug(`\x1b[90m${prefix}\x1b[0m ${log.message}${contextStr}`);
@@ -251,12 +252,12 @@ class Logger {
   api(method: string, route: string, status: number, duration: number, extra?: LogContext) {
     const level: LogLevel = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
     const message = `${method} ${route} ${status} ${duration}ms`;
-    const log = this.formatStructuredLog(level, message, { 
-      ...extra, 
-      method, 
-      route, 
-      status, 
-      duration 
+    const log = this.formatStructuredLog(level, message, {
+      ...extra,
+      method,
+      route,
+      status,
+      duration,
     });
     this.output(level, log);
   }

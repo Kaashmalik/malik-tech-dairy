@@ -1,6 +1,6 @@
 // Enterprise Migration Monitoring & Observability System
 // Real-time dashboard, alerting, and automated recovery
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { dualWriteAPI } from '@/lib/migration/dual-write-api';
 interface MigrationMetrics {
   timestamp: string;

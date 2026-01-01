@@ -3,9 +3,9 @@
  * Manage user email preferences and subscription settings
  */
 
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 
-export type EmailSubscriptionType = 
+export type EmailSubscriptionType =
   | 'marketing'
   | 'product_updates'
   | 'tips_and_tricks'
@@ -40,7 +40,10 @@ export class EmailSubscriptionService {
   private static supabase = getSupabaseClient();
 
   // Get user's email preferences
-  static async getUserPreferences(userId: string, tenantId: string): Promise<UserEmailPreferences | null> {
+  static async getUserPreferences(
+    userId: string,
+    tenantId: string
+  ): Promise<UserEmailPreferences | null> {
     try {
       const { data: user, error: userError } = await this.supabase
         .from('platform_users')
@@ -52,11 +55,11 @@ export class EmailSubscriptionService {
         return null;
       }
 
-      const { data: subscriptions, error: subError } = await this.supabase
+      const { data: subscriptions, error: subError } = (await this.supabase
         .from('email_subscriptions')
         .select('*')
         .eq('user_id', userId)
-        .eq('tenant_id', tenantId) as { data: EmailSubscription[] | null; error: any };
+        .eq('tenant_id', tenantId)) as { data: EmailSubscription[] | null; error: any };
 
       if (subError) {
         return null;
@@ -128,9 +131,9 @@ export class EmailSubscriptionService {
       }));
 
       // Upsert all subscriptions
-      const { error } = await this.supabase
+      const { error } = (await this.supabase
         .from('email_subscriptions')
-        .upsert(updates, { onConflict: 'user_id,tenant_id,type' }) as { error: any };
+        .upsert(updates, { onConflict: 'user_id,tenant_id,type' })) as { error: any };
 
       if (error) {
         return { success: false, error: error.message };
@@ -150,11 +153,11 @@ export class EmailSubscriptionService {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       // Update all subscriptions to enabled/disabled
-      const { error } = await this.supabase
+      const { error } = (await this.supabase
         .from('email_subscriptions')
         .update({ enabled, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
-        .eq('tenant_id', tenantId) as { error: any };
+        .eq('tenant_id', tenantId)) as { error: any };
 
       if (error) {
         return { success: false, error: error.message };
@@ -173,13 +176,13 @@ export class EmailSubscriptionService {
     type: EmailSubscriptionType
   ): Promise<boolean> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = (await this.supabase
         .from('email_subscriptions')
         .select('enabled')
         .eq('user_id', userId)
         .eq('tenant_id', tenantId)
         .eq('type', type)
-        .single() as { data: { enabled: boolean } | null; error: any };
+        .single()) as { data: { enabled: boolean } | null; error: any };
 
       if (error) {
         // Return default for new users
@@ -210,24 +213,28 @@ export class EmailSubscriptionService {
     type: EmailSubscriptionType
   ): Promise<Array<{ userId: string; email: string }>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = (await this.supabase
         .from('email_subscriptions')
-        .select(`
+        .select(
+          `
           user_id,
           platform_users!inner(email)
-        `)
+        `
+        )
         .eq('tenant_id', tenantId)
         .eq('type', type)
-        .eq('enabled', true) as { data: any[]; error: any };
+        .eq('enabled', true)) as { data: any[]; error: any };
 
       if (error) {
         return [];
       }
 
-      return data?.map(sub => ({
-        userId: sub.user_id,
-        email: (sub as any).platform_users.email,
-      })) || [];
+      return (
+        data?.map(sub => ({
+          userId: sub.user_id,
+          email: (sub as any).platform_users.email,
+        })) || []
+      );
     } catch (error) {
       return [];
     }
@@ -238,17 +245,17 @@ export class EmailSubscriptionService {
     try {
       // Decode token (simple implementation)
       const [userId, tenantId] = this.decodeUnsubscribeToken(token);
-      
+
       if (!userId || !tenantId) {
         return { success: false, error: 'Invalid unsubscribe token' };
       }
 
       // Disable all subscriptions
-      const { error } = await this.supabase
+      const { error } = (await this.supabase
         .from('email_subscriptions')
         .update({ enabled: false, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
-        .eq('tenant_id', tenantId) as { error: any };
+        .eq('tenant_id', tenantId)) as { error: any };
 
       if (error) {
         return { success: false, error: error.message };
@@ -308,9 +315,9 @@ export class EmailSubscriptionService {
         updated_at: new Date().toISOString(),
       }));
 
-      const { error } = await this.supabase
-        .from('email_subscriptions')
-        .insert(inserts) as { error: any };
+      const { error } = (await this.supabase.from('email_subscriptions').insert(inserts)) as {
+        error: any;
+      };
 
       if (error) {
         return { success: false, error: error.message };
@@ -333,7 +340,7 @@ export async function handleUnsubscribeRequest(request: Request) {
   }
 
   const result = await EmailSubscriptionService.unsubscribeByToken(token);
-  
+
   if (!result.success) {
     return Response.json({ error: result.error }, { status: 400 });
   }
@@ -348,11 +355,7 @@ export async function handleUpdatePreferences(
   tenantId: string,
   preferences: Partial<Record<EmailSubscriptionType, boolean>>
 ) {
-  const result = await EmailSubscriptionService.updatePreferences(
-    userId,
-    tenantId,
-    preferences
-  );
+  const result = await EmailSubscriptionService.updatePreferences(userId, tenantId, preferences);
 
   return Response.json(result);
-}
+}

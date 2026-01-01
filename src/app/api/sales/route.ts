@@ -1,7 +1,7 @@
 // API Route: Sales - Migrated to Supabase
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse, ValidationError } from '@/lib/api/response';
 import { transformFromDb, transformToDb } from '@/lib/utils/transform';
 import { z } from 'zod';
@@ -28,8 +28,7 @@ export async function GET(request: NextRequest) {
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
       const supabase = getSupabaseClient();
-      let query = supabase
-        .from('sales')
+      let query = (supabase.from('sales') as any)
         .select('*', { count: 'exact' })
         .eq('tenant_id', context.tenantId)
         .order('date', { ascending: false })
@@ -72,22 +71,21 @@ export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const body = await req.json();
-      
+
       // Validate request body
       const validatedData = saleSchema.parse(body);
       const supabase = getSupabaseClient();
-      
+
       // Calculate total
       const total = validatedData.quantity * validatedData.pricePerUnit;
-      
+
       // Transform to snake_case for database
       const saleData = transformToDb({
         ...validatedData,
         total,
         recordedBy: context.userId,
       });
-      const { data, error } = await supabase
-        .from('sales')
+      const { data, error } = await (supabase.from('sales') as any)
         .insert({
           ...saleData,
           tenant_id: context.tenantId,
@@ -106,11 +104,10 @@ export async function POST(request: NextRequest) {
         status: 201,
       });
     } catch (error) {
-      
       if (error instanceof z.ZodError) {
         return errorResponse(ValidationError.fromZodError(error));
       }
-      
+
       return errorResponse(error);
     }
   })(request);

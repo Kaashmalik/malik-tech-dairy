@@ -22,6 +22,14 @@ interface ExpenseFormProps {
   onSuccess: () => void;
 }
 
+// Form data type where dates and amounts are strings (for HTML inputs)
+type ExpenseFormData = {
+  date: string;
+  category: Expense['category'];
+  description: string;
+  amount: string;
+};
+
 export function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   const {
     register,
@@ -29,7 +37,7 @@ export function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<Partial<Expense>>({
+  } = useForm<ExpenseFormData>({
     defaultValues: {
       date: format(new Date(), 'yyyy-MM-dd'),
       category: 'feed',
@@ -39,11 +47,14 @@ export function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: Partial<Expense>) => {
+    mutationFn: async (data: ExpenseFormData) => {
       const res = await fetch('/api/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          amount: parseFloat(data.amount) || 0,
+        }),
       });
 
       if (!res.ok) {
@@ -58,7 +69,7 @@ export function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
     },
   });
 
-  const onSubmit = (data: Partial<Expense>) => {
+  const onSubmit = (data: ExpenseFormData) => {
     mutation.mutate(data);
   };
 

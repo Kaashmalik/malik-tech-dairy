@@ -1,7 +1,7 @@
 // API Route: Get/Update/Delete Health Record (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { decrypt, encrypt } from '@/lib/encryption';
 import { updateHealthRecordSchema } from '@/lib/validations/health';
 export const dynamic = 'force-dynamic';
@@ -28,8 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       if (notes && typeof notes === 'string') {
         try {
           notes = decrypt(notes);
-        } catch {
-        }
+        } catch {}
       }
       return NextResponse.json({
         success: true,
@@ -121,8 +120,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (notes && typeof notes === 'string') {
         try {
           notes = decrypt(notes);
-        } catch {
-        }
+        } catch {}
       }
       return NextResponse.json({
         success: true,

@@ -1,7 +1,7 @@
 /**
  * Tests for Medicine API Route
- * 
- * Note: API routes in Next.js 15 require NextRequest which isn't 
+ *
+ * Note: API routes in Next.js 15 require NextRequest which isn't
  * available in jest-environment-jsdom. These tests focus on unit testing
  * the logic rather than the full API route.
  */

@@ -14,7 +14,7 @@ import {
   ArrowRight,
   Bell,
 } from 'lucide-react';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 
 // Stats Card Component
 function StatsCard({

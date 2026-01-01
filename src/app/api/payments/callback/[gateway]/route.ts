@@ -83,7 +83,7 @@ export async function GET(
     const paymentIntent = paymentIntents.docs[0].data();
     const { tenantId, plan, userId, couponCode, discountAmount } = paymentIntent;
     // Record payment in Supabase
-    const { getDrizzle } = await import('@/lib/supabase');
+    const { getDrizzle } = await import('@/lib/supabase/server');
     const { payments } = await import('@/db/schema');
     const { nanoid } = await import('nanoid');
     const db = getDrizzle();

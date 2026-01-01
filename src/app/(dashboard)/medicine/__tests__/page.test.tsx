@@ -79,7 +79,7 @@ describe('MedicinePage', () => {
   it('displays loading state initially', async () => {
     (global.fetch as jest.Mock).mockImplementation(
       () =>
-        new Promise((resolve) =>
+        new Promise(resolve =>
           setTimeout(
             () =>
               resolve({
@@ -221,4 +221,3 @@ describe('MedicinePage', () => {
     });
   });
 });
-

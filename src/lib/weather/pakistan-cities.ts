@@ -5,18 +5,18 @@ export const DEFAULT_PAKISTAN_CITIES = [
     displayName: 'Jatoi',
     province: 'Punjab',
     // Use nearby city that OpenWeather recognizes
-    searchName: 'Muzaffargarh',  // Jatoi is in Muzaffargarh district
+    searchName: 'Muzaffargarh', // Jatoi is in Muzaffargarh district
     latitude: 29.5654,
-    longitude: 70.9271
+    longitude: 70.9271,
   },
   {
     name: 'ali-pur',
     displayName: 'Ali Pur',
     province: 'Punjab',
     // Use nearby city that OpenWeather recognizes
-    searchName: 'Muzaffargarh',  // Ali Pur is in Muzaffargarh district
+    searchName: 'Muzaffargarh', // Ali Pur is in Muzaffargarh district
     latitude: 29.5974,
-    longitude: 71.0812
+    longitude: 71.0812,
   },
   {
     name: 'muzzafargarh',
@@ -25,7 +25,7 @@ export const DEFAULT_PAKISTAN_CITIES = [
     // Correct spelling for OpenWeather
     searchName: 'Muzaffargarh',
     latitude: 30.0735,
-    longitude: 71.1935
+    longitude: 71.1935,
   },
   {
     name: 'lahore',
@@ -33,7 +33,7 @@ export const DEFAULT_PAKISTAN_CITIES = [
     province: 'Punjab',
     searchName: 'Lahore',
     latitude: 31.5497,
-    longitude: 74.3436
+    longitude: 74.3436,
   },
   {
     name: 'karachi',
@@ -41,7 +41,7 @@ export const DEFAULT_PAKISTAN_CITIES = [
     province: 'Sindh',
     searchName: 'Karachi',
     latitude: 24.8607,
-    longitude: 67.0011
+    longitude: 67.0011,
   },
   {
     name: 'islamabad',
@@ -49,7 +49,7 @@ export const DEFAULT_PAKISTAN_CITIES = [
     province: 'Federal',
     searchName: 'Islamabad',
     latitude: 33.6844,
-    longitude: 73.0479
+    longitude: 73.0479,
   },
   {
     name: 'faisalabad',
@@ -57,7 +57,7 @@ export const DEFAULT_PAKISTAN_CITIES = [
     province: 'Punjab',
     searchName: 'Faisalabad',
     latitude: 31.4504,
-    longitude: 73.1350
+    longitude: 73.135,
   },
   {
     name: 'multan',
@@ -65,7 +65,7 @@ export const DEFAULT_PAKISTAN_CITIES = [
     province: 'Punjab',
     searchName: 'Multan',
     latitude: 30.1575,
-    longitude: 71.5249
+    longitude: 71.5249,
   },
   {
     name: 'peshawar',
@@ -73,7 +73,7 @@ export const DEFAULT_PAKISTAN_CITIES = [
     province: 'KPK',
     searchName: 'Peshawar',
     latitude: 34.0151,
-    longitude: 71.5249
+    longitude: 71.5249,
   },
   {
     name: 'quetta',
@@ -81,6 +81,6 @@ export const DEFAULT_PAKISTAN_CITIES = [
     province: 'Balochistan',
     searchName: 'Quetta',
     latitude: 30.1798,
-    longitude: 66.9750
-  }
+    longitude: 66.975,
+  },
 ];

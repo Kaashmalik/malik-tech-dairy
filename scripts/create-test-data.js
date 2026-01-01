@@ -9,10 +9,10 @@ const supabase = createClient(
 async function createTablesDirectly() {
   try {
     console.log('Creating missing tables directly...\n');
-    
+
     const tenantId = 'org_36Pn5ejZHWxT3ZdlWh4Fr2vS1Cc';
     const userId = 'user_36OD5mI59b8m6dHyG8S3q6x4tmD';
-    
+
     // 1. Create Assets table and insert test data
     console.log('1. Creating Assets table...');
     try {
@@ -30,14 +30,11 @@ async function createTablesDirectly() {
         location: 'Main Barn',
         description: 'Automatic milking machine for 2 cows',
         created_by: userId,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
-      const { data, error } = await supabase
-        .from('assets')
-        .insert(asset)
-        .select();
-      
+
+      const { data, error } = await supabase.from('assets').insert(asset).select();
+
       if (error) {
         if (error.code === 'PGRST116') {
           console.log('   Assets table does not exist - needs manual creation');
@@ -50,7 +47,7 @@ async function createTablesDirectly() {
     } catch (err) {
       console.log('   Error:', err.message);
     }
-    
+
     // 2. Add test health record with correct schema
     console.log('\n2. Adding Health Record...');
     try {
@@ -59,11 +56,11 @@ async function createTablesDirectly() {
         .from('health_records')
         .select('*')
         .limit(1);
-      
+
       if (sampleError && !sampleError.code === 'PGRST116') {
         console.log('   Current error:', sampleError.message);
       }
-      
+
       // Try to add with various possible schemas
       const healthRecord = {
         id: `health_${Date.now()}`,
@@ -78,25 +75,25 @@ async function createTablesDirectly() {
         symptoms: ['Normal'],
         notes: 'Regular health checkup - all parameters normal',
         veterinarian_id: userId,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
+
       const { data: healthData, error: healthError } = await supabase
         .from('health_records')
         .insert(healthRecord)
         .select();
-      
+
       if (healthError) {
         console.log('   Error:', healthError.message);
         console.log('   Trying alternative schema...');
-        
+
         // Try without checkup_date
         delete healthRecord.checkup_date;
         const { data: altData, error: altError } = await supabase
           .from('health_records')
           .insert(healthRecord)
           .select();
-        
+
         if (altError) {
           console.log('   Alternative schema also failed:', altError.message);
         } else {
@@ -108,7 +105,7 @@ async function createTablesDirectly() {
     } catch (err) {
       console.log('   Error:', err.message);
     }
-    
+
     // 3. Create Medicine Log
     console.log('\n3. Creating Medicine Log...');
     try {
@@ -123,14 +120,11 @@ async function createTablesDirectly() {
         duration: 7,
         notes: 'Vitamin supplement',
         administered_by: userId,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
-      const { data, error } = await supabase
-        .from('medicine_logs')
-        .insert(medicineLog)
-        .select();
-      
+
+      const { data, error } = await supabase.from('medicine_logs').insert(medicineLog).select();
+
       if (error) {
         if (error.code === 'PGRST116') {
           console.log('   Medicine logs table does not exist - needs manual creation');
@@ -143,7 +137,7 @@ async function createTablesDirectly() {
     } catch (err) {
       console.log('   Error:', err.message);
     }
-    
+
     // 4. Create Feed Log
     console.log('\n4. Creating Feed Log...');
     try {
@@ -159,14 +153,11 @@ async function createTablesDirectly() {
         supplier: 'Feed Supplier Inc',
         notes: 'High protein concentrate',
         recorded_by: userId,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
-      const { data, error } = await supabase
-        .from('feed_logs')
-        .insert(feedLog)
-        .select();
-      
+
+      const { data, error } = await supabase.from('feed_logs').insert(feedLog).select();
+
       if (error) {
         if (error.code === 'PGRST116') {
           console.log('   Feed logs table does not exist - needs manual creation');
@@ -179,7 +170,7 @@ async function createTablesDirectly() {
     } catch (err) {
       console.log('   Error:', err.message);
     }
-    
+
     // 5. Create Vaccination Record
     console.log('\n5. Creating Vaccination Record...');
     try {
@@ -196,14 +187,11 @@ async function createTablesDirectly() {
         administered_by: userId,
         notes: 'Annual FMD vaccination',
         status: 'administered',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
-      const { data, error } = await supabase
-        .from('vaccinations')
-        .insert(vaccination)
-        .select();
-      
+
+      const { data, error } = await supabase.from('vaccinations').insert(vaccination).select();
+
       if (error) {
         if (error.code === 'PGRST116') {
           console.log('   Vaccinations table does not exist - needs manual creation');
@@ -216,7 +204,7 @@ async function createTablesDirectly() {
     } catch (err) {
       console.log('   Error:', err.message);
     }
-    
+
     // 6. Add Sales Record
     console.log('\n6. Adding Sales Record...');
     try {
@@ -231,14 +219,11 @@ async function createTablesDirectly() {
         contact_info: 'Phone: 123-456-7890',
         payment_method: 'cash',
         payment_status: 'completed',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
-      const { data, error } = await supabase
-        .from('sales')
-        .insert(sale)
-        .select();
-      
+
+      const { data, error } = await supabase.from('sales').insert(sale).select();
+
       if (error) {
         console.log('   Error:', error.message);
       } else {
@@ -247,7 +232,7 @@ async function createTablesDirectly() {
     } catch (err) {
       console.log('   Error:', err.message);
     }
-    
+
     // 7. Add Expense Record
     console.log('\n7. Adding Expense Record...');
     try {
@@ -258,14 +243,11 @@ async function createTablesDirectly() {
         amount: 10000,
         date: new Date().toISOString().split('T')[0],
         description: 'Monthly feed purchase',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
-      const { data, error } = await supabase
-        .from('expenses')
-        .insert(expense)
-        .select();
-      
+
+      const { data, error } = await supabase.from('expenses').insert(expense).select();
+
       if (error) {
         console.log('   Error:', error.message);
       } else {
@@ -274,9 +256,8 @@ async function createTablesDirectly() {
     } catch (err) {
       console.log('   Error:', err.message);
     }
-    
+
     console.log('\n✅ Test data creation completed!');
-    
   } catch (error) {
     console.error('Error:', error);
   }

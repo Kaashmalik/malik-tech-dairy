@@ -19,15 +19,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = unsubscribeSchema.parse(body);
 
-    const result = await EmailSubscriptionService.unsubscribeByToken(
-      validatedData.token
-    );
+    const result = await EmailSubscriptionService.unsubscribeByToken(validatedData.token);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json({
@@ -42,10 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -70,12 +62,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Redirect to success page
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?success=true`
-    );
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?success=true`);
   } catch (error) {
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?error=server_error`
     );
   }
-}
+}

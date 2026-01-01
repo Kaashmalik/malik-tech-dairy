@@ -1,5 +1,5 @@
 import { OfflineDB, QueuedMutation, db } from './database';
-import { getSupabaseClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 export class SyncService {
   private static instance: SyncService;
   private syncInProgress = false;
@@ -60,7 +60,7 @@ export class SyncService {
   }
   // Process individual mutation
   private async processMutation(mutation: QueuedMutation): Promise<void> {
-    const supabase = getSupabaseClient();
+    const supabase = createClient();
     switch (mutation.table) {
       case 'animals':
         await this.processAnimalMutation(supabase, mutation);
@@ -167,7 +167,7 @@ export class SyncService {
   }
   // Pull latest data from server
   async pullLatestData(tenantId: string): Promise<void> {
-    const supabase = getSupabaseClient();
+    const supabase = createClient();
     try {
       // Pull animals
       const { data: animals, error: animalsError } = (await supabase
@@ -243,8 +243,7 @@ export class SyncService {
         if (isOnline) {
           await this.sync(tenantId);
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }, interval);
   }
 }

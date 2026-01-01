@@ -52,7 +52,11 @@ export async function POST(request: NextRequest) {
     };
     const folder = folderMap[type] || folderMap.general;
     // Check for Cloudinary config
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    if (
+      !process.env.CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
       logger.error('Missing Cloudinary configuration');
       return NextResponse.json(
         { success: false, error: 'Server configuration error: Missing Cloudinary keys' },
@@ -84,6 +88,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('Upload error', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error during upload';
-    return NextResponse.json({ success: false, error: `Failed to upload file: ${errorMessage}` }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: `Failed to upload file: ${errorMessage}` },
+      { status: 500 }
+    );
   }
 }

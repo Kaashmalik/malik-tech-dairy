@@ -7,6 +7,5 @@ try {
   const { setupServer } = require('msw/node');
   const { handlers } = require('./handlers');
   server = setupServer(...handlers);
-} catch (error) {
-}
+} catch (error) {}
 export { server };

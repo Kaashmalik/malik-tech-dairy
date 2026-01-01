@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { iotDevices, animals, iotDevicesRelations } from '@/db/schema';
 import { eq, and, ilike, desc, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
         // Related animal data
         animal: {
           id: animals.id,
-          tagNumber: animals.tagNumber,
+          tag: animals.tag,
           name: animals.name,
           breed: animals.breed,
         },
@@ -289,7 +289,7 @@ export async function PUT(request: NextRequest) {
     }
     const updatedDevice = await db
       .update(iotDevices)
-      .values({
+      .set({
         ...validatedData,
         updatedAt: new Date(),
       })

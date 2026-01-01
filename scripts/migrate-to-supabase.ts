@@ -12,7 +12,7 @@
  *   --tenant-id: Migrate specific tenant only
  */
 import { adminDb } from '../src/lib/firebase/admin';
-import { getDrizzle } from '../src/lib/supabase';
+import { getDrizzle } from '../src/lib/supabase/server';
 import {
   tenants,
   subscriptions,

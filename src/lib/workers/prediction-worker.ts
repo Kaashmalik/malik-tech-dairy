@@ -29,9 +29,7 @@ if (typeof window === 'undefined' && process.env.UPSTASH_REDIS_REST_URL) {
       },
     }
   );
-  predictionWorker.on('completed', job => {
-  });
-  predictionWorker.on('failed', (job, err) => {
-  });
+  predictionWorker.on('completed', job => {});
+  predictionWorker.on('failed', (job, err) => {});
 }
 export { predictionWorker };

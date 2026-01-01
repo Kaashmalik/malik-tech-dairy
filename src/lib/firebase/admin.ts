@@ -27,7 +27,6 @@ if (typeof window === 'undefined' && !getApps().length) {
       adminDb = getFirestore(adminApp);
       adminStorage = getStorage(adminApp);
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 export { adminApp, adminDb, adminStorage };

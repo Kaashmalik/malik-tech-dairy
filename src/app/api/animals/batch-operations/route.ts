@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { eq, and, inArray } from 'drizzle-orm';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { animals, taskAssignments } from '@/db/schema';
 import { getTenantContext } from '@/lib/tenant/context';
 import { z } from 'zod';
@@ -70,7 +70,10 @@ export async function POST(request: NextRequest) {
     try {
       tenantContext = await getTenantContext();
     } catch (error) {
-      return NextResponse.json({ success: false, error: 'Tenant context required' }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: 'Tenant context required' },
+        { status: 403 }
+      );
     }
     const body = await request.json();
     const validatedData = batchOperationSchema.parse(body);
@@ -89,12 +92,7 @@ export async function POST(request: NextRequest) {
     const animalsResult = await db
       .select({ id: animals.id, name: animals.name, tag: animals.tag })
       .from(animals)
-      .where(
-        and(
-          eq(animals.tenantId, tenantContext.tenantId),
-          inArray(animals.id, animalIds)
-        )
-      );
+      .where(and(eq(animals.tenantId, tenantContext.tenantId), inArray(animals.id, animalIds)));
     if (animalsResult.length !== animalIds.length) {
       const foundIds = animalsResult.map(a => a.id);
       const missingIds = animalIds.filter(id => !foundIds.includes(id));

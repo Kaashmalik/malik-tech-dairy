@@ -111,8 +111,7 @@ export function trackEvent(eventName: AnalyticsEvent | string, properties?: Even
         timestamp: properties?.timestamp || new Date().toISOString(),
       });
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 /**
  * Identify a user
@@ -131,8 +130,7 @@ export function identifyUser(
     if (typeof window !== 'undefined' && posthog) {
       posthog.identify(userId, traits);
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 /**
  * Set user group (tenant/organization)
@@ -151,8 +149,7 @@ export function setUserGroup(
     if (typeof window !== 'undefined' && posthog) {
       posthog.group(groupType, groupId, traits);
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 /**
  * Reset analytics (on logout)
@@ -162,8 +159,7 @@ export function resetAnalytics(): void {
     if (typeof window !== 'undefined' && posthog) {
       posthog.reset();
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 /**
  * Track page view
@@ -176,8 +172,7 @@ export function trackPageView(pageName?: string, properties?: Record<string, unk
         ...properties,
       });
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 /**
  * Track subscription funnel step

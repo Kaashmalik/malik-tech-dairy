@@ -4,7 +4,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 // Type definitions
 interface FarmApplication {
   id: string;
@@ -146,8 +146,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             }
           }
         }
-      } catch (clerkInitError) {
-      }
+      } catch (clerkInitError) {}
       // FALLBACK: Use UUID if Clerk fails
       if (!orgCreated) {
         clerkOrgId = `tenant_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -188,8 +187,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           ]);
           if (subError) {
           }
-        } catch (e) {
-        }
+        } catch (e) {}
       }
       if (tenantError) {
         // Rollback: Delete Clerk organization (only if we created one)
@@ -197,8 +195,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           try {
             const clerk = await clerkClient();
             await clerk.organizations.deleteOrganization(clerkOrgId);
-          } catch (e) {
-          }
+          } catch (e) {}
         }
         return NextResponse.json(
           { error: 'Failed to create tenant record', details: tenantError.message },
@@ -259,8 +256,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             created_at: new Date().toISOString(),
           },
         ]);
-      } catch (e) {
-      }
+      } catch (e) {}
       // 6. Create super admin notification (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,8 +270,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             created_at: new Date().toISOString(),
           },
         ]);
-      } catch (e) {
-      }
+      } catch (e) {}
       return NextResponse.json({
         success: true,
         data: {
@@ -332,8 +327,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             created_at: new Date().toISOString(),
           },
         ]);
-      } catch (e) {
-      }
+      } catch (e) {}
       return NextResponse.json({
         success: true,
         data: {

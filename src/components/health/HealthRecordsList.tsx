@@ -132,10 +132,7 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
                     <div className='mb-2 flex items-center gap-2'>
                       <CardTitle className='text-lg'>
                         {!animalId && (
-                          <Link
-                            href={`/animals/${record.animalId}`}
-                            className='hover:underline'
-                          >
+                          <Link href={`/animals/${record.animalId}`} className='hover:underline'>
                             {getAnimalName(record.animalId)}
                           </Link>
                         )}

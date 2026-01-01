@@ -79,30 +79,30 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
   } = useForm<BreedingFormData>({
     defaultValues: record
       ? {
-        animalId: record.animalId || '',
-        breedingDate: record.breedingDate
-          ? format(new Date(record.breedingDate), 'yyyy-MM-dd')
-          : format(new Date(), 'yyyy-MM-dd'),
-        breedingMethod: record.breedingMethod || 'natural',
-        sireId: record.sireId || '',
-        semenStrawId: record.semenStrawId || '',
-        semenSource: record.semenSource || '',
-        inseminationTechnician: record.inseminationTechnician || '',
-        expectedDueDate: record.expectedDueDate
-          ? format(new Date(record.expectedDueDate), 'yyyy-MM-dd')
-          : '',
-        notes: record.notes || '',
-      }
+          animalId: record.animalId || '',
+          breedingDate: record.breedingDate
+            ? format(new Date(record.breedingDate), 'yyyy-MM-dd')
+            : format(new Date(), 'yyyy-MM-dd'),
+          breedingMethod: record.breedingMethod || 'natural',
+          sireId: record.sireId || '',
+          semenStrawId: record.semenStrawId || '',
+          semenSource: record.semenSource || '',
+          inseminationTechnician: record.inseminationTechnician || '',
+          expectedDueDate: record.expectedDueDate
+            ? format(new Date(record.expectedDueDate), 'yyyy-MM-dd')
+            : '',
+          notes: record.notes || '',
+        }
       : {
-        animalId: animalId || '',
-        breedingDate: format(new Date(), 'yyyy-MM-dd'),
-        breedingMethod: 'natural',
-        sireId: '',
-        semenStrawId: '',
-        semenSource: '',
-        inseminationTechnician: '',
-        notes: '',
-      },
+          animalId: animalId || '',
+          breedingDate: format(new Date(), 'yyyy-MM-dd'),
+          breedingMethod: 'natural',
+          sireId: '',
+          semenStrawId: '',
+          semenSource: '',
+          inseminationTechnician: '',
+          notes: '',
+        },
   });
 
   const mutation = useMutation({
@@ -166,39 +166,41 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
   }
 
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-t-lg">
-        <CardTitle className="flex items-center gap-2">
+    <Card className='border-0 shadow-lg'>
+      <CardHeader className='rounded-t-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white'>
+        <CardTitle className='flex items-center gap-2'>
           {breedingMethod === 'artificial_insemination' ? (
-            <Syringe className="h-5 w-5" />
+            <Syringe className='h-5 w-5' />
           ) : (
-            <Heart className="h-5 w-5" />
+            <Heart className='h-5 w-5' />
           )}
           {record?.id ? 'Edit' : 'Record'} Insemination
         </CardTitle>
-        <CardDescription className="text-emerald-50">
+        <CardDescription className='text-emerald-50'>
           {breedingMethod === 'artificial_insemination'
             ? 'Record artificial insemination details'
             : 'Record natural breeding event'}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <CardContent className='pt-6'>
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
           {/* Breeding Method Toggle */}
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Breeding Method *</Label>
             <Tabs
               value={breedingMethod}
-              onValueChange={(v) => setValue('breedingMethod', v as 'natural' | 'artificial_insemination')}
-              className="w-full"
+              onValueChange={v =>
+                setValue('breedingMethod', v as 'natural' | 'artificial_insemination')
+              }
+              className='w-full'
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="natural" className="flex items-center gap-2">
-                  <Heart className="h-4 w-4" />
+              <TabsList className='grid w-full grid-cols-2'>
+                <TabsTrigger value='natural' className='flex items-center gap-2'>
+                  <Heart className='h-4 w-4' />
                   Natural Mating
                 </TabsTrigger>
-                <TabsTrigger value="artificial_insemination" className="flex items-center gap-2">
-                  <Syringe className="h-4 w-4" />
+                <TabsTrigger value='artificial_insemination' className='flex items-center gap-2'>
+                  <Syringe className='h-4 w-4' />
                   AI (Artificial)
                 </TabsTrigger>
               </TabsList>
@@ -207,21 +209,21 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
 
           {/* Female Animal Selection */}
           {!animalId && (
-            <div className="space-y-2">
-              <Label htmlFor="animalId">Female Animal *</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='animalId'>Female Animal *</Label>
               <Select
                 value={watch('animalId') || ''}
-                onValueChange={(value) => setValue('animalId', value)}
+                onValueChange={value => setValue('animalId', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select female animal" />
+                  <SelectValue placeholder='Select female animal' />
                 </SelectTrigger>
                 <SelectContent>
-                  {femaleAnimals.map((animal) => (
+                  {femaleAnimals.map(animal => (
                     <SelectItem key={animal.id} value={animal.id}>
-                      <div className="flex items-center gap-2">
+                      <div className='flex items-center gap-2'>
                         <span>{animal.name || animal.tag}</span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant='outline' className='text-xs'>
                           {animal.species}
                         </Badge>
                       </div>
@@ -230,8 +232,8 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
                 </SelectContent>
               </Select>
               {errors.animalId && (
-                <p className="text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
+                <p className='flex items-center gap-1 text-sm text-red-500'>
+                  <AlertCircle className='h-4 w-4' />
                   Animal is required
                 </p>
               )}
@@ -240,50 +242,52 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
 
           {/* Show selected animal species info */}
           {selectedAnimal && (
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-              <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                <strong>{selectedAnimal.name || selectedAnimal.tag}</strong> ({selectedAnimal.species})
+            <div className='rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20'>
+              <p className='text-sm text-emerald-700 dark:text-emerald-300'>
+                <strong>{selectedAnimal.name || selectedAnimal.tag}</strong> (
+                {selectedAnimal.species})
                 <br />
-                <span className="text-xs">
-                  {gestation.label} period: {gestation.average} days ({gestation.min}-{gestation.max} range)
+                <span className='text-xs'>
+                  {gestation.label} period: {gestation.average} days ({gestation.min}-
+                  {gestation.max} range)
                 </span>
               </p>
             </div>
           )}
 
           {/* Breeding Date */}
-          <div className="space-y-2">
-            <Label htmlFor="breedingDate" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+          <div className='space-y-2'>
+            <Label htmlFor='breedingDate' className='flex items-center gap-2'>
+              <Calendar className='h-4 w-4' />
               Breeding Date *
             </Label>
             <Input
-              id="breedingDate"
-              type="date"
+              id='breedingDate'
+              type='date'
               {...register('breedingDate', { required: true })}
-              className="dark:bg-slate-950"
+              className='dark:bg-slate-950'
             />
             {errors.breedingDate && (
-              <p className="text-sm text-red-500">Breeding date is required</p>
+              <p className='text-sm text-red-500'>Breeding date is required</p>
             )}
           </div>
 
           {/* Natural Mating: Sire Selection */}
           {breedingMethod === 'natural' && (
-            <div className="space-y-2">
-              <Label htmlFor="sireId">Sire (Bull/Male Animal)</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='sireId'>Sire (Bull/Male Animal)</Label>
               <Select
                 value={watch('sireId') || ''}
-                onValueChange={(value) => setValue('sireId', value || undefined)}
+                onValueChange={value => setValue('sireId', value || undefined)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select sire (optional)" />
+                  <SelectValue placeholder='Select sire (optional)' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None / Unknown</SelectItem>
+                  <SelectItem value=''>None / Unknown</SelectItem>
                   {maleAnimals
                     .filter(a => a.species === selectedAnimal?.species)
-                    .map((animal) => (
+                    .map(animal => (
                       <SelectItem key={animal.id} value={animal.id}>
                         {animal.name || animal.tag} ({animal.breed || animal.species})
                       </SelectItem>
@@ -296,11 +300,11 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
           {/* AI: Semen Straw & Source */}
           {breedingMethod === 'artificial_insemination' && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="semenStrawId">Semen Straw</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='semenStrawId'>Semen Straw</Label>
                 <Select
                   value={watch('semenStrawId') || ''}
-                  onValueChange={(value) => {
+                  onValueChange={value => {
                     setValue('semenStrawId', value || undefined);
                     const straw = availableSemen.find(s => s.strawCode === value);
                     if (straw) {
@@ -309,18 +313,18 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select from inventory (optional)" />
+                    <SelectValue placeholder='Select from inventory (optional)' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Manual Entry</SelectItem>
+                    <SelectItem value=''>Manual Entry</SelectItem>
                     {availableSemen
                       .filter(s => s.species === selectedAnimal?.species)
-                      .map((straw) => (
+                      .map(straw => (
                         <SelectItem key={straw.id} value={straw.strawCode}>
-                          <div className="flex items-center gap-2">
+                          <div className='flex items-center gap-2'>
                             <span>{straw.strawCode}</span>
-                            <span className="text-muted-foreground">- {straw.bullName}</span>
-                            <Badge variant="secondary" className="text-xs">
+                            <span className='text-muted-foreground'>- {straw.bullName}</span>
+                            <Badge variant='secondary' className='text-xs'>
                               {straw.quantity} left
                             </Badge>
                           </div>
@@ -330,66 +334,66 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="semenSource">Semen Source / Bull Name *</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='semenSource'>Semen Source / Bull Name *</Label>
                 <Input
-                  id="semenSource"
+                  id='semenSource'
                   {...register('semenSource')}
-                  placeholder="Bull name or semen ID"
-                  className="dark:bg-slate-950"
+                  placeholder='Bull name or semen ID'
+                  className='dark:bg-slate-950'
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="inseminationTechnician" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+              <div className='space-y-2'>
+                <Label htmlFor='inseminationTechnician' className='flex items-center gap-2'>
+                  <User className='h-4 w-4' />
                   AI Technician
                 </Label>
                 <Input
-                  id="inseminationTechnician"
+                  id='inseminationTechnician'
                   {...register('inseminationTechnician')}
-                  placeholder="Technician name"
-                  className="dark:bg-slate-950"
+                  placeholder='Technician name'
+                  className='dark:bg-slate-950'
                 />
               </div>
             </>
           )}
 
           {/* Expected Due Date */}
-          <div className="space-y-2">
-            <Label htmlFor="expectedDueDate">Expected Due Date</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='expectedDueDate'>Expected Due Date</Label>
             <Input
-              id="expectedDueDate"
-              type="date"
+              id='expectedDueDate'
+              type='date'
               {...register('expectedDueDate')}
-              className="dark:bg-slate-950"
+              className='dark:bg-slate-950'
             />
-            <p className="text-xs text-muted-foreground">
+            <p className='text-muted-foreground text-xs'>
               Auto-calculated: {gestation.average} days from breeding date for {species}
             </p>
           </div>
 
           {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='notes'>Notes</Label>
             <Textarea
-              id="notes"
+              id='notes'
               {...register('notes')}
-              placeholder="Additional observations, heat signs, timing details..."
+              placeholder='Additional observations, heat signs, timing details...'
               rows={3}
-              className="dark:bg-slate-950"
+              className='dark:bg-slate-950'
             />
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className='flex justify-end gap-3 border-t pt-4'>
+            <Button type='button' variant='outline' onClick={onClose}>
               Cancel
             </Button>
             <Button
-              type="submit"
+              type='submit'
               disabled={mutation.isPending}
-              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+              className='bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
             >
               {mutation.isPending ? 'Saving...' : record?.id ? 'Update' : 'Record Insemination'}
             </Button>
@@ -397,9 +401,9 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
 
           {/* Error Display */}
           {mutation.isError && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
+            <div className='rounded-lg bg-red-50 p-3 dark:bg-red-900/20'>
+              <p className='flex items-center gap-2 text-sm text-red-600 dark:text-red-400'>
+                <AlertCircle className='h-4 w-4' />
                 {mutation.error?.message || 'Failed to save breeding record'}
               </p>
             </div>

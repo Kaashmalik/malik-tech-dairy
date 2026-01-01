@@ -100,7 +100,7 @@ describe('Performance', () => {
     const items = Array.from({ length: 1000 }, (_, i) => i);
     const processed = items.map(x => x * 2);
     const end = performance.now();
-    
+
     expect(processed).toHaveLength(1000);
     expect(end - start).toBeLessThan(100);
   });

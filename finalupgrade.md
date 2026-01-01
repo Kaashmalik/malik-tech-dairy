@@ -1,9 +1,9 @@
 # MTK Dairy - Final Upgrade & Refactoring Plan
 
 > **Comprehensive Professional Upgrade Roadmap**
-> 
+>
 > Version: 2.0.0 | Created: December 2024
-> 
+>
 > This document outlines all identified issues and a structured plan to refactor the MTK Dairy platform to production-ready, professional standards.
 
 ---
@@ -27,19 +27,20 @@
 
 ### Current State Assessment
 
-| Area | Status | Grade |
-|------|--------|-------|
-| **Authentication Flow** | ✅ Working | B+ |
-| **API Routes** | ⚠️ Partial Migration | B |
-| **Error Handling** | ⚠️ Inconsistent | C+ |
-| **404/Not Found Pages** | ❌ Missing | D |
-| **UI/UX Consistency** | ⚠️ Needs Polish | B- |
-| **Frontend-Backend Sync** | ⚠️ Partial | B |
-| **TypeScript Types** | ⚠️ Some `any` usage | B- |
-| **Loading States** | ⚠️ Inconsistent | B- |
-| **Mobile Responsiveness** | ✅ Good | B+ |
+| Area                      | Status               | Grade |
+| ------------------------- | -------------------- | ----- |
+| **Authentication Flow**   | ✅ Working           | B+    |
+| **API Routes**            | ⚠️ Partial Migration | B     |
+| **Error Handling**        | ⚠️ Inconsistent      | C+    |
+| **404/Not Found Pages**   | ❌ Missing           | D     |
+| **UI/UX Consistency**     | ⚠️ Needs Polish      | B-    |
+| **Frontend-Backend Sync** | ⚠️ Partial           | B     |
+| **TypeScript Types**      | ⚠️ Some `any` usage  | B-    |
+| **Loading States**        | ⚠️ Inconsistent      | B-    |
+| **Mobile Responsiveness** | ✅ Good              | B+    |
 
 ### Key Strengths
+
 - Modern tech stack (Next.js 15, Supabase, Clerk)
 - Well-structured multi-tenant architecture
 - Role-based access control implemented
@@ -47,6 +48,7 @@
 - TanStack Query for data fetching
 
 ### Critical Gaps
+
 - No global 404/not-found pages
 - Inconsistent error handling across API routes
 - Some API routes still need Supabase migration
@@ -91,12 +93,14 @@ src/app/
 **Issue:** `.env.local` contains placeholder values that will break production.
 
 **Critical Placeholders Found:**
+
 ```
 SUPABASE_DATABASE_URL=...password=[YOUR-PASSWORD]...
 CLERK_WEBHOOK_SECRET=[placeholder]
 ```
 
 **Solution:**
+
 1. Create `.env.production.example` with all required vars
 2. Add validation script to check env vars at build time
 3. Document all required env vars in `SETUP_GUIDE.md`
@@ -123,6 +127,7 @@ CLERK_WEBHOOK_SECRET=[placeholder]
 **Issue:** API routes have varying error response formats.
 
 **Current State:**
+
 ```typescript
 // Some routes return:
 { success: false, error: 'message' }
@@ -134,13 +139,14 @@ CLERK_WEBHOOK_SECRET=[placeholder]
 ```
 
 **Standard Error Response Format:**
+
 ```typescript
 interface ApiErrorResponse {
   success: false;
-  error: string;           // User-friendly message
-  code?: string;           // Error code for debugging
-  details?: unknown;       // Additional context (dev only)
-  timestamp?: string;      // When error occurred
+  error: string; // User-friendly message
+  code?: string; // Error code for debugging
+  details?: unknown; // Additional context (dev only)
+  timestamp?: string; // When error occurred
 }
 
 interface ApiSuccessResponse<T> {
@@ -156,6 +162,7 @@ interface ApiSuccessResponse<T> {
 ```
 
 **Files to Create/Update:**
+
 1. `src/lib/api/response.ts` - Standardized response helpers
 2. `src/lib/api/errors.ts` - Custom error classes
 3. Update all 87+ API route files
@@ -182,6 +189,7 @@ interface ApiSuccessResponse<T> {
 **Issue:** Some routes may be accessible without proper authorization.
 
 **Routes to Audit:**
+
 - `/api/admin/*` - Ensure super_admin check
 - `/api/tenants/*` - Ensure tenant isolation
 - `/api/user/*` - Ensure user ownership
@@ -195,13 +203,13 @@ interface ApiSuccessResponse<T> {
 **Issue:** Excessive `as any` type assertions reduce type safety.
 
 **Pattern Found:**
+
 ```typescript
-const { data } = (await supabase
-  .from('table')
-  .select('*')) as { data: any };
+const { data } = (await supabase.from('table').select('*')) as { data: any };
 ```
 
 **Solution:**
+
 1. Generate Supabase types using `supabase gen types`
 2. Create proper interfaces in `src/types/database.ts`
 3. Replace `any` with proper types progressively
@@ -213,6 +221,7 @@ const { data } = (await supabase
 **Issue:** snake_case to camelCase transformation is manual in each route.
 
 **Current Pattern (Repeated in 20+ files):**
+
 ```typescript
 const transformedAnimals = (animals || []).map((animal: any) => ({
   id: animal.id,
@@ -223,6 +232,7 @@ const transformedAnimals = (animals || []).map((animal: any) => ({
 
 **Solution:**
 Create shared transformation utilities:
+
 ```typescript
 // src/lib/utils/transform.ts
 export function transformFromDb<T>(data: Record<string, any>): T;
@@ -236,11 +246,13 @@ export function transformToDb<T>(data: T): Record<string, any>;
 **Issue:** Many `console.log` statements in production code.
 
 **Files with console.log:**
+
 - `src/hooks/usePermissions.ts` - Debug logs
 - `src/app/(onboarding)/select-farm/page.tsx` - Error logs
 - Multiple API routes - Error logging
 
 **Solution:**
+
 1. Create centralized logger (`src/lib/logger.ts` exists but not fully used)
 2. Replace all `console.log` with logger
 3. Configure log levels per environment
@@ -319,12 +331,12 @@ export function transformToDb<T>(data: T): Record<string, any>;
 
 ### 6.2 Flow Issues Identified
 
-| Step | Issue | Priority | Solution |
-|------|-------|----------|----------|
-| 4 | No email notifications for status changes | P1 | Implement Resend emails |
-| 5 | No automatic org invitation | P2 | Auto-send Clerk invitation |
-| 6 | "Join Farm" can fail silently | P1 | Better error handling |
-| 7 | First-time users see empty dashboard | P2 | Onboarding wizard |
+| Step | Issue                                     | Priority | Solution                   |
+| ---- | ----------------------------------------- | -------- | -------------------------- |
+| 4    | No email notifications for status changes | P1       | Implement Resend emails    |
+| 5    | No automatic org invitation               | P2       | Auto-send Clerk invitation |
+| 6    | "Join Farm" can fail silently             | P1       | Better error handling      |
+| 7    | First-time users see empty dashboard      | P2       | Onboarding wizard          |
 
 ### 6.3 Edge Cases Not Handled
 
@@ -430,13 +442,13 @@ export class ForbiddenError extends ApiError {
 
 ### 8.1 Design System Consistency
 
-| Component | Issue | Solution |
-|-----------|-------|----------|
-| Cards | Mixed border-radius (lg, xl, 2xl) | Standardize to `rounded-xl` |
-| Buttons | Some use custom gradients | Use shadcn/ui variants |
-| Colors | Hardcoded colors in some places | Use CSS variables |
-| Spacing | Inconsistent (p-4, p-5, p-6) | Define spacing scale |
-| Icons | Mix of Lucide and custom | Standardize on Lucide |
+| Component | Issue                             | Solution                    |
+| --------- | --------------------------------- | --------------------------- |
+| Cards     | Mixed border-radius (lg, xl, 2xl) | Standardize to `rounded-xl` |
+| Buttons   | Some use custom gradients         | Use shadcn/ui variants      |
+| Colors    | Hardcoded colors in some places   | Use CSS variables           |
+| Spacing   | Inconsistent (p-4, p-5, p-6)      | Define spacing scale        |
+| Icons     | Mix of Lucide and custom          | Standardize on Lucide       |
 
 ### 8.2 Missing UI Components
 
@@ -448,12 +460,12 @@ export class ForbiddenError extends ApiError {
 
 ### 8.3 Mobile UX Issues
 
-| Page | Issue | Priority |
-|------|-------|----------|
-| Dashboard | Stats cards too cramped on mobile | P2 |
-| Animal Form | Image upload overlay too small | P2 |
-| Data Tables | No horizontal scroll indicator | P3 |
-| Navigation | Mobile menu closes on route change ✅ | Fixed |
+| Page        | Issue                                 | Priority |
+| ----------- | ------------------------------------- | -------- |
+| Dashboard   | Stats cards too cramped on mobile     | P2       |
+| Animal Form | Image upload overlay too small        | P2       |
+| Data Tables | No horizontal scroll indicator        | P3       |
+| Navigation  | Mobile menu closes on route change ✅ | Fixed    |
 
 ### 8.4 Proposed Component Upgrades
 
@@ -492,12 +504,12 @@ const { data, isLoading, error } = useQuery({
 
 ### 9.2 Issues Identified
 
-| Issue | Impact | Solution |
-|-------|--------|----------|
-| No optimistic updates | Slow perceived performance | Add mutation optimistic updates |
-| Stale time not configured | Unnecessary refetches | Configure staleTime per query |
-| No prefetching | Slow navigation | Add prefetch on hover |
-| Error retry not configured | May spam API on errors | Configure retry logic |
+| Issue                      | Impact                     | Solution                        |
+| -------------------------- | -------------------------- | ------------------------------- |
+| No optimistic updates      | Slow perceived performance | Add mutation optimistic updates |
+| Stale time not configured  | Unnecessary refetches      | Configure staleTime per query   |
+| No prefetching             | Slow navigation            | Add prefetch on hover           |
+| Error retry not configured | May spam API on errors     | Configure retry logic           |
 
 ### 9.3 Recommended Query Configuration
 
@@ -507,7 +519,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30,   // 30 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
       retry: 2,
       refetchOnWindowFocus: false,
     },
@@ -532,11 +544,7 @@ class ApiClient {
   async put<T>(path: string, body: unknown, options?: RequestOptions): Promise<T>;
   async delete<T>(path: string, options?: RequestOptions): Promise<T>;
 
-  private async request<T>(
-    method: string,
-    path: string,
-    body?: unknown
-  ): Promise<T> {
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.baseUrl}${path}`, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -561,6 +569,7 @@ export const api = new ApiClient();
 ## 10. Implementation Phases
 
 ### Phase 1: Critical Fixes (Week 1)
+
 **Priority: P0**
 
 - [ ] Create global `not-found.tsx` page
@@ -570,6 +579,7 @@ export const api = new ApiClient();
 - [ ] Add env validation at build time
 
 ### Phase 2: Error Handling (Week 2)
+
 **Priority: P1**
 
 - [ ] Create standardized API error classes
@@ -578,6 +588,7 @@ export const api = new ApiClient();
 - [ ] Add proper error logging with centralized logger
 
 ### Phase 3: Database Migration Completion (Week 2-3)
+
 **Priority: P1**
 
 - [ ] Migrate `/api/expenses/*` to Supabase
@@ -586,6 +597,7 @@ export const api = new ApiClient();
 - [ ] Remove Firebase dependencies for migrated routes
 
 ### Phase 4: TypeScript Improvements (Week 3)
+
 **Priority: P2**
 
 - [ ] Generate Supabase TypeScript types
@@ -594,6 +606,7 @@ export const api = new ApiClient();
 - [ ] Add strict mode enforcement
 
 ### Phase 5: UI/UX Polish (Week 4)
+
 **Priority: P2**
 
 - [ ] Add loading skeletons to all data-fetching components
@@ -603,6 +616,7 @@ export const api = new ApiClient();
 - [ ] Implement proper pagination
 
 ### Phase 6: Performance & Notifications (Week 5)
+
 **Priority: P2-P3**
 
 - [ ] Implement email notifications (Resend)
@@ -611,6 +625,7 @@ export const api = new ApiClient();
 - [ ] Implement offline support improvements
 
 ### Phase 7: Testing & Documentation (Week 6)
+
 **Priority: P3**
 
 - [ ] Add unit tests for new utilities
@@ -687,9 +702,9 @@ Configuration:
 ```json
 {
   "recommended_additions": {
-    "@tanstack/react-table": "^8.x",     // For data tables
-    "react-error-boundary": "^4.x",      // Enhanced error boundaries
-    "zod-fetch": "^0.x"                  // Typed fetch with Zod
+    "@tanstack/react-table": "^8.x", // For data tables
+    "react-error-boundary": "^4.x", // Enhanced error boundaries
+    "zod-fetch": "^0.x" // Typed fetch with Zod
   },
   "cleanup_candidates": {
     "firebase": "Consider removing after full migration",
@@ -704,12 +719,12 @@ Configuration:
 
 This upgrade plan addresses **47 distinct issues** across 6 priority levels:
 
-| Priority | Count | Estimated Effort |
-|----------|-------|------------------|
-| P0 (Critical) | 5 | 1 week |
-| P1 (High) | 12 | 2 weeks |
-| P2 (Medium) | 18 | 2 weeks |
-| P3 (Low) | 12 | 1 week |
+| Priority      | Count | Estimated Effort |
+| ------------- | ----- | ---------------- |
+| P0 (Critical) | 5     | 1 week           |
+| P1 (High)     | 12    | 2 weeks          |
+| P2 (Medium)   | 18    | 2 weeks          |
+| P3 (Low)      | 12    | 1 week           |
 
 **Total Estimated Timeline: 6 weeks**
 
@@ -720,6 +735,7 @@ This upgrade plan addresses **47 distinct issues** across 6 priority levels:
 ### Files Created
 
 #### Error & 404 Pages
+
 - `src/app/not-found.tsx` - Global 404 page with animations
 - `src/app/error.tsx` - Global error page with Sentry integration
 - `src/app/(dashboard)/not-found.tsx` - Dashboard-specific 404
@@ -728,33 +744,40 @@ This upgrade plan addresses **47 distinct issues** across 6 priority levels:
 - `src/app/(super-admin)/error.tsx` - Admin-specific error page
 
 #### API Error Handling
+
 - `src/lib/api/errors.ts` - Standardized error classes (ApiError, ValidationError, NotFoundError, etc.)
 - `src/lib/api/response.ts` - Response helpers (successResponse, errorResponse, paginatedResponse)
 - `src/lib/api/client.ts` - Centralized API client with type-safe methods
 - `src/lib/api/index.ts` - Central exports for all API utilities
 
 #### Data Transformation
+
 - `src/lib/utils/transform.ts` - snake_case ↔ camelCase transformations
 
 #### UI Components
+
 - `src/components/ui/alert-dialog.tsx` - Alert dialog component (Radix UI)
 - `src/components/ui/confirmation-dialog.tsx` - Reusable confirmation dialogs with variants
 - `src/components/ui/pagination.tsx` - Pagination component with hooks
 - `src/components/ui/loading-overlay.tsx` - Loading states and overlays
 
 #### TypeScript Types
+
 - `src/types/database.ts` - Complete database schema types
 
 ### Files Updated
 
 #### API Routes
+
 - `src/app/api/animals/route.ts` - Updated to use standardized error handling
 
 #### Hooks & Providers
+
 - `src/hooks/usePermissions.ts` - Removed debug console.log statements
 - `src/components/providers/QueryProvider.tsx` - Enhanced with query keys, error handling, retry logic
 
 #### Skeleton Components
+
 - `src/components/ui/skeleton.tsx` - Added ChartSkeleton, DashboardSkeleton, AnimalDetailSkeleton, HealthRecordsSkeleton, FormSkeleton, ProfileSkeleton, BreedingRecordsSkeleton
 
 ### Key Features Implemented
@@ -787,5 +810,5 @@ This upgrade plan addresses **47 distinct issues** across 6 priority levels:
 
 ---
 
-*Document prepared by Cascade AI Assistant*
-*Implementation Completed: December 24, 2024*
+_Document prepared by Cascade AI Assistant_
+_Implementation Completed: December 24, 2024_

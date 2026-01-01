@@ -1,7 +1,7 @@
 // Database Migration Execution Script
 // Complete Firebase to Supabase migration with zero downtime
 import { DatabaseMigrator } from '@/lib/migration/database-migration';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { adminDb } from '@/lib/firebase/admin';
 interface MigrationResult {
   success: boolean;

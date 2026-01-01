@@ -1,7 +1,7 @@
 /**
  * Tests for Subscription API Route
- * 
- * Note: API routes in Next.js 15 require NextRequest which isn't 
+ *
+ * Note: API routes in Next.js 15 require NextRequest which isn't
  * available in jest-environment-jsdom. These tests focus on unit testing
  * the logic and validation rather than the full API route.
  */
@@ -33,7 +33,7 @@ const SUBSCRIPTION_PLANS = {
     name: 'Enterprise',
     price: 10000,
     maxAnimals: -1, // Unlimited
-    maxUsers: -1,   // Unlimited
+    maxUsers: -1, // Unlimited
     features: ['all'],
   },
 };
@@ -66,7 +66,8 @@ describe('Subscription API Logic', () => {
         plan: dbSubscription.subscription_plan,
         status: dbSubscription.subscription_status,
         expiresAt: dbSubscription.subscription_expires_at,
-        limits: SUBSCRIPTION_PLANS[dbSubscription.subscription_plan as keyof typeof SUBSCRIPTION_PLANS],
+        limits:
+          SUBSCRIPTION_PLANS[dbSubscription.subscription_plan as keyof typeof SUBSCRIPTION_PLANS],
       };
 
       expect(apiResponse.plan).toBe('starter');
@@ -99,7 +100,7 @@ describe('Subscription API Logic', () => {
     it('should identify grace period subscriptions', () => {
       const now = new Date();
       const gracePeriodDays = 7;
-      
+
       // Expired 3 days ago - still in grace period
       const inGracePeriod = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
       // Expired 10 days ago - outside grace period
@@ -118,7 +119,7 @@ describe('Subscription API Logic', () => {
   describe('Plan Upgrade/Downgrade Logic', () => {
     it('should identify plan upgrade correctly', () => {
       const planOrder = ['free', 'starter', 'professional', 'enterprise'];
-      
+
       const isUpgrade = (from: string, to: string) => {
         return planOrder.indexOf(to) > planOrder.indexOf(from);
       };

@@ -581,7 +581,9 @@ export const pregnancyChecks = pgTable(
   },
   table => ({
     tenantIdIdx: index('pregnancy_checks_tenant_id_idx').on(table.tenantId),
-    breedingRecordIdIdx: index('pregnancy_checks_breeding_record_id_idx').on(table.breedingRecordId),
+    breedingRecordIdIdx: index('pregnancy_checks_breeding_record_id_idx').on(
+      table.breedingRecordId
+    ),
     animalIdIdx: index('pregnancy_checks_animal_id_idx').on(table.animalId),
     resultIdx: index('pregnancy_checks_result_idx').on(table.result),
   })

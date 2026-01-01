@@ -22,7 +22,7 @@ export function LoadingSpinner({ size = 'md', className, text }: LoadingSpinnerP
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <Loader2 className={cn('animate-spin', sizeClasses[size])} />
-      {text && <span className="text-sm text-muted-foreground">{text}</span>}
+      {text && <span className='text-muted-foreground text-sm'>{text}</span>}
     </div>
   );
 }
@@ -36,12 +36,12 @@ export function FullPageLoading({
   description?: string;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center">
-      <div className="flex flex-col items-center space-y-4 text-center">
-        <LoadingSpinner size="lg" />
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
+    <div className='flex min-h-screen flex-col items-center justify-center'>
+      <div className='flex flex-col items-center space-y-4 text-center'>
+        <LoadingSpinner size='lg' />
+        <div className='space-y-2'>
+          <h2 className='text-lg font-semibold'>{title}</h2>
+          <p className='text-muted-foreground text-sm'>{description}</p>
         </div>
       </div>
     </div>
@@ -57,14 +57,14 @@ export function PageLoading({
   height?: string;
 }) {
   return (
-    <div 
-      className="flex flex-col items-center justify-center w-full bg-white rounded-lg border border-gray-200"
+    <div
+      className='flex w-full flex-col items-center justify-center rounded-lg border border-gray-200 bg-white'
       style={{ height }}
     >
-      <div className="flex flex-col items-center space-y-3 text-center">
-        <LoadingSpinner size="lg" />
-        <p className="text-sm font-medium text-gray-900">{title}</p>
-        <p className="text-xs text-gray-500">This might take a moment</p>
+      <div className='flex flex-col items-center space-y-3 text-center'>
+        <LoadingSpinner size='lg' />
+        <p className='text-sm font-medium text-gray-900'>{title}</p>
+        <p className='text-xs text-gray-500'>This might take a moment</p>
       </div>
     </div>
   );
@@ -73,8 +73,8 @@ export function PageLoading({
 // Button loading state
 export function ButtonLoading({ text = 'Loading...' }: { text?: string }) {
   return (
-    <div className="flex items-center justify-center gap-2">
-      <Loader2 className="h-4 w-4 animate-spin" />
+    <div className='flex items-center justify-center gap-2'>
+      <Loader2 className='h-4 w-4 animate-spin' />
       <span>{text}</span>
     </div>
   );
@@ -83,9 +83,9 @@ export function ButtonLoading({ text = 'Loading...' }: { text?: string }) {
 // Table loading overlay
 export function TableLoading() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
-      <div className="flex flex-col items-center space-y-2">
-        <LoadingSpinner size="lg" text="Loading data..." />
+    <div className='absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm'>
+      <div className='flex flex-col items-center space-y-2'>
+        <LoadingSpinner size='lg' text='Loading data...' />
       </div>
     </div>
   );
@@ -100,11 +100,11 @@ export function FormLoading({
   description?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12">
-      <LoadingSpinner size="lg" />
-      <div className="mt-4 text-center">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+    <div className='flex flex-col items-center justify-center py-12'>
+      <LoadingSpinner size='lg' />
+      <div className='mt-4 text-center'>
+        <p className='text-sm font-medium'>{title}</p>
+        <p className='text-muted-foreground mt-1 text-xs'>{description}</p>
       </div>
     </div>
   );
@@ -119,14 +119,14 @@ export function EmptyStateLoading({
   icon?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12">
+    <div className='flex flex-col items-center justify-center py-12'>
       {icon && (
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-          <LoadingSpinner size="sm" />
+        <div className='flex h-12 w-12 items-center justify-center rounded-full bg-gray-100'>
+          <LoadingSpinner size='sm' />
         </div>
       )}
-      <p className="mt-2 text-sm font-medium text-gray-900">{title}</p>
-      <p className="mt-1 text-xs text-gray-500">Fetching latest information</p>
+      <p className='mt-2 text-sm font-medium text-gray-900'>{title}</p>
+      <p className='mt-1 text-xs text-gray-500'>Fetching latest information</p>
     </div>
   );
 }
@@ -142,16 +142,16 @@ export function ProgressLoading({
   showPercentage?: boolean;
 }) {
   return (
-    <div className="w-full space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">{title}</span>
+    <div className='w-full space-y-2'>
+      <div className='flex items-center justify-between'>
+        <span className='text-sm font-medium'>{title}</span>
         {showPercentage && (
-          <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+          <span className='text-muted-foreground text-sm'>{Math.round(progress)}%</span>
         )}
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className='h-2 w-full rounded-full bg-gray-200'>
         <div
-          className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+          className='h-2 rounded-full bg-blue-600 transition-all duration-300 ease-out'
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -162,8 +162,8 @@ export function ProgressLoading({
 // Card loading overlay
 export function CardLoading() {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 rounded-lg">
-      <LoadingSpinner size="md" />
+    <div className='absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/90'>
+      <LoadingSpinner size='md' />
     </div>
   );
 }
@@ -171,13 +171,13 @@ export function CardLoading() {
 // List loading state
 export function ListLoading({ itemCount = 5 }: { itemCount?: number }) {
   return (
-    <div className="space-y-3">
+    <div className='space-y-3'>
       {Array.from({ length: itemCount }).map((_, i) => (
-        <div key={i} className="flex items-center space-x-3 p-3">
-          <LoadingSpinner size="sm" />
-          <div className="flex-1">
-            <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
-            <div className="h-3 bg-gray-200 rounded w-1/2 mt-2 animate-pulse" />
+        <div key={i} className='flex items-center space-x-3 p-3'>
+          <LoadingSpinner size='sm' />
+          <div className='flex-1'>
+            <div className='h-4 w-3/4 animate-pulse rounded bg-gray-200' />
+            <div className='mt-2 h-3 w-1/2 animate-pulse rounded bg-gray-200' />
           </div>
         </div>
       ))}
@@ -194,11 +194,11 @@ export function ModalLoading({
   message?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-8">
-      <LoadingSpinner size="lg" />
-      <div className="mt-4 text-center">
-        <h3 className="text-lg font-medium">{title}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{message}</p>
+    <div className='flex flex-col items-center justify-center py-8'>
+      <LoadingSpinner size='lg' />
+      <div className='mt-4 text-center'>
+        <h3 className='text-lg font-medium'>{title}</h3>
+        <p className='text-muted-foreground mt-1 text-sm'>{message}</p>
       </div>
     </div>
   );
@@ -213,15 +213,15 @@ export function FileUploadLoading({
   fileName?: string;
 }) {
   return (
-    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-      <LoadingSpinner size="sm" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{fileName}</p>
-        <div className="mt-1">
+    <div className='flex items-center space-x-3 rounded-lg bg-gray-50 p-3'>
+      <LoadingSpinner size='sm' />
+      <div className='min-w-0 flex-1'>
+        <p className='truncate text-sm font-medium'>{fileName}</p>
+        <div className='mt-1'>
           <ProgressLoading progress={progress} showPercentage={false} />
         </div>
       </div>
-      <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
+      <span className='text-muted-foreground text-xs'>{Math.round(progress)}%</span>
     </div>
   );
 }
@@ -229,13 +229,13 @@ export function FileUploadLoading({
 // Chart loading state
 export function ChartLoading({ height = 300 }: { height?: number }) {
   return (
-    <div 
-      className="flex items-center justify-center bg-white rounded-lg border border-gray-200"
+    <div
+      className='flex items-center justify-center rounded-lg border border-gray-200 bg-white'
       style={{ height }}
     >
-      <div className="flex flex-col items-center space-y-2">
-        <LoadingSpinner size="md" />
-        <p className="text-sm text-muted-foreground">Loading chart...</p>
+      <div className='flex flex-col items-center space-y-2'>
+        <LoadingSpinner size='md' />
+        <p className='text-muted-foreground text-sm'>Loading chart...</p>
       </div>
     </div>
   );
@@ -244,8 +244,8 @@ export function ChartLoading({ height = 300 }: { height?: number }) {
 // Search loading state
 export function SearchLoading() {
   return (
-    <div className="flex items-center justify-center py-8">
-      <LoadingSpinner size="md" text="Searching..." />
+    <div className='flex items-center justify-center py-8'>
+      <LoadingSpinner size='md' text='Searching...' />
     </div>
   );
 }
@@ -253,8 +253,8 @@ export function SearchLoading() {
 // Infinite scroll loading
 export function InfiniteScrollLoading() {
   return (
-    <div className="flex justify-center py-4">
-      <LoadingSpinner size="md" text="Loading more..." />
+    <div className='flex justify-center py-4'>
+      <LoadingSpinner size='md' text='Loading more...' />
     </div>
   );
 }

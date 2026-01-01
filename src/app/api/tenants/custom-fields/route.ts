@@ -1,7 +1,7 @@
 // API Route: Custom Fields Configuration
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 export const dynamic = 'force-dynamic';
 const customFieldSchema = z.object({
@@ -82,8 +82,9 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       }));
       if (fieldsToInsert.length > 0) {
-        const { error: insertError } = await (supabase.from('custom_fields_config') as any)
-          .insert(fieldsToInsert);
+        const { error: insertError } = await (supabase.from('custom_fields_config') as any).insert(
+          fieldsToInsert
+        );
         if (insertError) {
           if (process.env.NODE_ENV === 'development') {
           }

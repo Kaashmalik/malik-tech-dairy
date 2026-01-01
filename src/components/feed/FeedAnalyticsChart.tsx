@@ -88,7 +88,9 @@ export function FeedAnalyticsChart({ analytics, className }: FeedAnalyticsChartP
                     cx='50%'
                     cy='50%'
                     outerRadius={80}
-                    label={({ category, percentage }) => `${category}: ${percentage.toFixed(1)}%`}
+                    label={({ payload }: { payload?: { category: string; percentage: number } }) =>
+                      payload ? `${payload.category}: ${payload.percentage.toFixed(1)}%` : ''
+                    }
                   >
                     {analytics.categoryBreakdown.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

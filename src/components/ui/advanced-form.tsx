@@ -56,7 +56,7 @@ export function AdvancedForm({
 
   const handleFieldChange = (name: string, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -67,17 +67,17 @@ export function AdvancedForm({
     if (field.required && (!value || value === '')) {
       return `${field.label} is required`;
     }
-    
+
     if (field.validation) {
       return field.validation(value);
     }
-    
+
     return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate all fields
     const newErrors: Record<string, string> = {};
     fields.forEach(field => {
@@ -86,12 +86,12 @@ export function AdvancedForm({
         newErrors[field.name] = error;
       }
     });
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       await onSubmit({ ...formData, ...uploadedFiles });
@@ -110,42 +110,42 @@ export function AdvancedForm({
   };
 
   return (
-    <Card className={cn('backdrop-blur-xl bg-white/5 border-white/10', className)}>
+    <Card className={cn('border-white/10 bg-white/5 backdrop-blur-xl', className)}>
       <CardHeader>
-        <CardTitle className="text-white">{title}</CardTitle>
+        <CardTitle className='text-white'>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {fields.map((field) => (
-            <div key={field.name} className="space-y-2">
-              <Label htmlFor={field.name} className="text-white/80 text-sm">
+        <form onSubmit={handleSubmit} className='space-y-6'>
+          {fields.map(field => (
+            <div key={field.name} className='space-y-2'>
+              <Label htmlFor={field.name} className='text-sm text-white/80'>
                 {field.label}
-                {field.required && <span className="text-red-400 ml-1">*</span>}
+                {field.required && <span className='ml-1 text-red-400'>*</span>}
               </Label>
-              
+
               {field.type === 'text' || field.type === 'number' || field.type === 'date' ? (
                 <Input
                   id={field.name}
                   type={field.type}
                   value={formData[field.name] || ''}
-                  onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                  onChange={e => handleFieldChange(field.name, e.target.value)}
                   placeholder={field.placeholder}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10"
+                  className='border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:bg-white/10'
                 />
               ) : field.type === 'select' ? (
                 <Select
                   value={formData[field.name] || ''}
-                  onValueChange={(value) => handleFieldChange(field.name, value)}
+                  onValueChange={value => handleFieldChange(field.name, value)}
                 >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className='border-white/10 bg-white/5 text-white'>
                     <SelectValue placeholder={field.placeholder} />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-white/10">
-                    {field.options?.map((option) => (
+                  <SelectContent className='border-white/10 bg-slate-900'>
+                    {field.options?.map(option => (
                       <SelectItem
                         key={option.value}
                         value={option.value}
-                        className="text-white hover:bg-white/10"
+                        className='text-white hover:bg-white/10'
                       >
                         {option.label}
                       </SelectItem>
@@ -156,128 +156,124 @@ export function AdvancedForm({
                 <Textarea
                   id={field.name}
                   value={formData[field.name] || ''}
-                  onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                  onChange={e => handleFieldChange(field.name, e.target.value)}
                   placeholder={field.placeholder}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 min-h-[100px]"
+                  className='min-h-[100px] border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:bg-white/10'
                 />
               ) : field.type === 'file' ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
+                <div className='space-y-2'>
+                  <div className='flex items-center gap-2'>
                     <Input
                       id={field.name}
-                      type="file"
+                      type='file'
                       multiple
-                      onChange={(e) => handleFileUpload(field.name, e.target.files)}
-                      className="bg-white/5 border-white/10 text-white file:text-white/60"
+                      onChange={e => handleFileUpload(field.name, e.target.files)}
+                      className='border-white/10 bg-white/5 text-white file:text-white/60'
                     />
                     <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="border-white/20 text-white hover:bg-white/10"
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='border-white/20 text-white hover:bg-white/10'
                     >
-                      <Upload className="h-4 w-4" />
+                      <Upload className='h-4 w-4' />
                     </Button>
                   </div>
                   {uploadedFiles[field.name]?.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-2 bg-white/5 rounded border border-white/10"
+                      className='flex items-center justify-between rounded border border-white/10 bg-white/5 p-2'
                     >
-                      <span className="text-white/60 text-sm truncate flex-1">
-                        {file.name}
-                      </span>
+                      <span className='flex-1 truncate text-sm text-white/60'>{file.name}</span>
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
+                        type='button'
+                        variant='ghost'
+                        size='sm'
                         onClick={() => {
                           setUploadedFiles(prev => ({
                             ...prev,
                             [field.name]: prev[field.name]?.filter((_, i) => i !== index),
                           }));
                         }}
-                        className="text-red-400 hover:text-red-300"
+                        className='text-red-400 hover:text-red-300'
                       >
-                        <X className="h-4 w-4" />
+                        <X className='h-4 w-4' />
                       </Button>
                     </div>
                   ))}
                 </div>
               ) : field.type === 'image' ? (
-                <div className="space-y-2">
-                  <div className="border-2 border-dashed border-white/20 rounded-lg p-6 text-center">
-                    <Camera className="h-12 w-12 text-white/40 mx-auto mb-2" />
-                    <p className="text-white/60 text-sm mb-2">
+                <div className='space-y-2'>
+                  <div className='rounded-lg border-2 border-dashed border-white/20 p-6 text-center'>
+                    <Camera className='mx-auto mb-2 h-12 w-12 text-white/40' />
+                    <p className='mb-2 text-sm text-white/60'>
                       Drag and drop image or click to upload
                     </p>
                     <Input
                       id={field.name}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(field.name, e.target.files)}
-                      className="max-w-xs mx-auto bg-white/5 border-white/10 text-white"
+                      type='file'
+                      accept='image/*'
+                      onChange={e => handleFileUpload(field.name, e.target.files)}
+                      className='mx-auto max-w-xs border-white/10 bg-white/5 text-white'
                     />
                   </div>
                   {uploadedFiles[field.name]?.map((file, index) => (
-                    <div key={index} className="relative">
+                    <div key={index} className='relative'>
                       <img
                         src={URL.createObjectURL(file)}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg"
+                        alt='Preview'
+                        className='h-48 w-full rounded-lg object-cover'
                       />
                       <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
+                        type='button'
+                        variant='destructive'
+                        size='sm'
                         onClick={() => {
                           setUploadedFiles(prev => ({
                             ...prev,
                             [field.name]: prev[field.name]?.filter((_, i) => i !== index),
                           }));
                         }}
-                        className="absolute top-2 right-2"
+                        className='absolute right-2 top-2'
                       >
-                        <X className="h-4 w-4" />
+                        <X className='h-4 w-4' />
                       </Button>
                     </div>
                   ))}
                 </div>
               ) : null}
-              
-              {errors[field.name] && (
-                <p className="text-red-400 text-sm">{errors[field.name]}</p>
-              )}
+
+              {errors[field.name] && <p className='text-sm text-red-400'>{errors[field.name]}</p>}
             </div>
           ))}
-          
-          <div className="flex gap-3 pt-4">
+
+          <div className='flex gap-3 pt-4'>
             <Button
-              type="submit"
+              type='submit'
               disabled={isSubmitting}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className='flex-1 bg-blue-600 hover:bg-blue-700'
             >
               {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className='flex items-center gap-2'>
+                  <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
                   Saving...
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
+                <div className='flex items-center gap-2'>
+                  <Save className='h-4 w-4' />
                   Save
                 </div>
               )}
             </Button>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={() => {
                 setFormData(initialData);
                 setErrors({});
                 setUploadedFiles({});
               }}
-              className="border-white/20 text-white hover:bg-white/10"
+              className='border-white/20 text-white hover:bg-white/10'
             >
               Reset
             </Button>
@@ -311,16 +307,13 @@ export function QuickAction({
   return (
     <button
       onClick={onClick}
-      className={cn(
-        'p-4 rounded-lg transition-all duration-200 text-left',
-        variantStyles[variant]
-      )}
+      className={cn('rounded-lg p-4 text-left transition-all duration-200', variantStyles[variant])}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0">{icon}</div>
+      <div className='flex items-start gap-3'>
+        <div className='flex-shrink-0'>{icon}</div>
         <div>
-          <h4 className="font-semibold">{label}</h4>
-          <p className="text-sm opacity-80">{description}</p>
+          <h4 className='font-semibold'>{label}</h4>
+          <p className='text-sm opacity-80'>{description}</p>
         </div>
       </div>
     </button>
@@ -342,17 +335,14 @@ export function EmptyState({
   actionLabel?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
+    <div className='flex flex-col items-center justify-center py-12 text-center'>
+      <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10'>
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <p className="text-white/60 mb-6 max-w-sm">{description}</p>
+      <h3 className='mb-2 text-lg font-semibold text-white'>{title}</h3>
+      <p className='mb-6 max-w-sm text-white/60'>{description}</p>
       {action && actionLabel && (
-        <Button
-          onClick={action}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
+        <Button onClick={action} className='bg-blue-600 hover:bg-blue-700'>
           {actionLabel}
         </Button>
       )}
@@ -397,25 +387,25 @@ export function PullToRefresh({
 
   return (
     <div
-      className="relative"
+      className='relative'
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/5 backdrop-blur-xl transition-transform duration-200"
+        className='absolute left-0 right-0 top-0 flex items-center justify-center bg-white/5 backdrop-blur-xl transition-transform duration-200'
         style={{
           transform: `translateY(${Math.min(pullDistance - 120, 0)}px)`,
           height: `${Math.max(pullDistance, 0)}px`,
         }}
       >
         {isRefreshing ? (
-          <div className="flex items-center gap-2 text-white/60">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className='flex items-center gap-2 text-white/60'>
+            <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
             Refreshing...
           </div>
         ) : (
-          <div className="text-white/60">
+          <div className='text-white/60'>
             {pullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
           </div>
         )}

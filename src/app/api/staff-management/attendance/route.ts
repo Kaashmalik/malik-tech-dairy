@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { staffAttendance, platformUsers, staffAttendanceRelations } from '@/db/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
@@ -63,19 +63,16 @@ export async function GET(request: NextRequest) {
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0);
       whereConditions.push(
-        and(gte(staffAttendance.date, startDate), lte(staffAttendance.date, endDate))
+        sql`${staffAttendance.date} >= ${startDate} AND ${staffAttendance.date} <= ${endDate}`
       );
     }
-    if (query.overdue === true) {
-      whereConditions.push(
-        and(lte(staffAttendance.checkOut, new Date()), eq(staffAttendance.status, 'present'))
-      );
-    }
+    // Create combined where clause
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
     // Get total count
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(staffAttendance)
-      .where(and(...whereConditions));
+      .where(whereClause);
     const total = totalCountResult[0]?.count || 0;
     // Get attendance records with user relations
     const attendanceList = await db

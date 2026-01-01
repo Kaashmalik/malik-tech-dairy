@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { diseases, diseasesRelations } from '@/db/schema';
 import { eq, and, ilike, inArray, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
@@ -158,8 +158,6 @@ export async function POST(request: NextRequest) {
       .values({
         id: diseaseId,
         ...validatedData,
-        tenantId: tenantContext.tenantId,
-        createdBy: tenantContext.userId,
         createdAt: new Date(),
         updatedAt: new Date(),
       })

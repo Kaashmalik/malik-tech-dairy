@@ -21,7 +21,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // All required tables for MTK Dairy
 const requiredTables = [
   'tenants',
-  'platform_users', 
+  'platform_users',
   'tenant_members',
   'subscriptions',
   'animals',
@@ -36,26 +36,21 @@ const requiredTables = [
   'farm_applications',
   'custom_fields_config',
   'email_subscriptions',
-  'predictions'
+  'predictions',
 ];
 
 async function checkAllTables() {
-  
-
   const results = {
     exist: [],
     missing: [],
-    errors: []
+    errors: [],
   };
 
   // Check each table
   for (const tableName of requiredTables) {
     try {
       // Try to select 1 row from the table
-      const { error } = await supabase
-        .from(tableName)
-        .select('*')
-        .limit(1);
+      const { error } = await supabase.from(tableName).select('*').limit(1);
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -84,8 +79,7 @@ async function checkAllTables() {
   }
 
   if (results.errors.length > 0) {
-    results.errors.forEach(({ table, error }) => {
-    });
+    results.errors.forEach(({ table, error }) => {});
   }
 
   if (results.exist.length === requiredTables.length) {
@@ -93,22 +87,22 @@ async function checkAllTables() {
 
   // Check if we can get table counts
   console.log('\n📊 Table Row Counts (for existing tables):');
-  
-  for (const tableName of results.exist.slice(0, 5)) { // Check first 5 tables
+
+  for (const tableName of results.exist.slice(0, 5)) {
+    // Check first 5 tables
     try {
       const { count, error } = await supabase
         .from(tableName)
         .select('*', { count: 'exact', head: true });
-      
+
       if (!error) {
       }
-    } catch (err) {
-    }
+    } catch (err) {}
   }
-  
+
   if (results.exist.length > 5) {
   }
 }
 
 // Run the check
-checkAllTables().catch(console.error);
+checkAllTables().catch(console.error);

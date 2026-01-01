@@ -82,41 +82,39 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Settings className="h-8 w-8 text-primary" />
+    <div className='container mx-auto space-y-6 py-6'>
+      <div className='flex items-center gap-3'>
+        <Settings className='text-primary h-8 w-8' />
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your farm settings and preferences
-          </p>
+          <h1 className='text-3xl font-bold'>Settings</h1>
+          <p className='text-muted-foreground'>Manage your farm settings and preferences</p>
         </div>
       </div>
 
-      <Tabs defaultValue="location" className="space-y-6">
+      <Tabs defaultValue='location' className='space-y-6'>
         <TabsList>
-          <TabsTrigger value="location">Location</TabsTrigger>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value='location'>Location</TabsTrigger>
+          <TabsTrigger value='general'>General</TabsTrigger>
+          <TabsTrigger value='notifications'>Notifications</TabsTrigger>
+          <TabsTrigger value='appearance'>Appearance</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="location" className="space-y-6">
+        <TabsContent value='location' className='space-y-6'>
           <LocationSettings />
         </TabsContent>
 
-        <TabsContent value="general" className="space-y-6">
+        <TabsContent value='general' className='space-y-6'>
           {/* Quick Links */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {settingsCategories.map((category) => (
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            {settingsCategories.map(category => (
               <Link key={category.href} href={category.href}>
-                <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <category.icon className="h-5 w-5 text-muted-foreground" />
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <Card className='hover:bg-muted/50 h-full cursor-pointer transition-colors'>
+                  <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                    <category.icon className='text-muted-foreground h-5 w-5' />
+                    <ChevronRight className='text-muted-foreground h-4 w-4' />
                   </CardHeader>
                   <CardContent>
-                    <CardTitle className="text-lg">{category.title}</CardTitle>
+                    <CardTitle className='text-lg'>{category.title}</CardTitle>
                     <CardDescription>{category.description}</CardDescription>
                   </CardContent>
                 </Card>
@@ -128,46 +126,39 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Farm Information</CardTitle>
-              <CardDescription>
-                Basic information about your farm
-              </CardDescription>
+              <CardDescription>Basic information about your farm</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="farmName">Farm Name</Label>
+            <CardContent className='space-y-4'>
+              <div className='grid gap-4 md:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label htmlFor='farmName'>Farm Name</Label>
                   <Input
-                    id="farmName"
+                    id='farmName'
                     defaultValue={organization?.name || ''}
-                    placeholder="Enter farm name"
+                    placeholder='Enter farm name'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="farmId">Farm ID</Label>
-                  <Input
-                    id="farmId"
-                    value={organization?.id || ''}
-                    disabled
-                    className="bg-muted"
-                  />
+                <div className='space-y-2'>
+                  <Label htmlFor='farmId'>Farm ID</Label>
+                  <Input id='farmId' value={organization?.id || ''} disabled className='bg-muted' />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="Enter farm address" />
+              <div className='space-y-2'>
+                <Label htmlFor='address'>Address</Label>
+                <Input id='address' placeholder='Enter farm address' />
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input id="city" placeholder="City" />
+              <div className='grid gap-4 md:grid-cols-3'>
+                <div className='space-y-2'>
+                  <Label htmlFor='city'>City</Label>
+                  <Input id='city' placeholder='City' />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="province">Province</Label>
-                  <Input id="province" placeholder="Province" />
+                <div className='space-y-2'>
+                  <Label htmlFor='province'>Province</Label>
+                  <Input id='province' placeholder='Province' />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" placeholder="+92 XXX XXXXXXX" />
+                <div className='space-y-2'>
+                  <Label htmlFor='phone'>Phone</Label>
+                  <Input id='phone' placeholder='+92 XXX XXXXXXX' />
                 </div>
               </div>
               <Button>Save Changes</Button>
@@ -175,58 +166,56 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value='notifications' className='space-y-6'>
           <Card>
             <CardHeader>
               <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>
-                Choose how you want to receive notifications
-              </CardDescription>
+              <CardDescription>Choose how you want to receive notifications</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium">Channels</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+            <CardContent className='space-y-6'>
+              <div className='space-y-4'>
+                <h4 className='text-sm font-medium'>Channels</h4>
+                <div className='space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-0.5'>
                       <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className='text-muted-foreground text-sm'>
                         Receive notifications via email
                       </p>
                     </div>
                     <Switch
                       checked={notifications.email}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         setNotifications({ ...notifications, email: checked })
                       }
                     />
                   </div>
                   <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-0.5'>
                       <Label>Push Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className='text-muted-foreground text-sm'>
                         Receive push notifications in browser
                       </p>
                     </div>
                     <Switch
                       checked={notifications.push}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         setNotifications({ ...notifications, push: checked })
                       }
                     />
                   </div>
                   <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-0.5'>
                       <Label>SMS Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className='text-muted-foreground text-sm'>
                         Receive important alerts via SMS
                       </p>
                     </div>
                     <Switch
                       checked={notifications.sms}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         setNotifications({ ...notifications, sms: checked })
                       }
                     />
@@ -236,49 +225,49 @@ export default function SettingsPage() {
 
               <Separator />
 
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium">Alert Types</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+              <div className='space-y-4'>
+                <h4 className='text-sm font-medium'>Alert Types</h4>
+                <div className='space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-0.5'>
                       <Label>Low Stock Alerts</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className='text-muted-foreground text-sm'>
                         Alert when medicine or feed stock is low
                       </p>
                     </div>
                     <Switch
                       checked={notifications.lowStock}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         setNotifications({ ...notifications, lowStock: checked })
                       }
                     />
                   </div>
                   <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-0.5'>
                       <Label>Health Alerts</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className='text-muted-foreground text-sm'>
                         Notifications for animal health issues
                       </p>
                     </div>
                     <Switch
                       checked={notifications.healthAlerts}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         setNotifications({ ...notifications, healthAlerts: checked })
                       }
                     />
                   </div>
                   <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-0.5'>
                       <Label>Milking Reminders</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className='text-muted-foreground text-sm'>
                         Daily milking schedule reminders
                       </p>
                     </div>
                     <Switch
                       checked={notifications.milkReminders}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         setNotifications({ ...notifications, milkReminders: checked })
                       }
                     />
@@ -291,30 +280,24 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="appearance" className="space-y-6">
+        <TabsContent value='appearance' className='space-y-6'>
           <Card>
             <CardHeader>
               <CardTitle>Appearance</CardTitle>
-              <CardDescription>
-                Customize the look and feel of your dashboard
-              </CardDescription>
+              <CardDescription>Customize the look and feel of your dashboard</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
+            <CardContent className='space-y-4'>
+              <div className='flex items-center justify-between'>
+                <div className='space-y-0.5'>
                   <Label>Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Use dark theme for the dashboard
-                  </p>
+                  <p className='text-muted-foreground text-sm'>Use dark theme for the dashboard</p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Use the theme toggle in the header
-                </p>
+                <p className='text-muted-foreground text-sm'>Use the theme toggle in the header</p>
               </div>
               <Separator />
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Language</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className='text-muted-foreground text-sm'>
                   Currently: English (Urdu support coming soon)
                 </p>
               </div>

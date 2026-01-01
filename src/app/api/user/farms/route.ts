@@ -2,7 +2,7 @@
 // GET: Returns all farms/tenants where the user is a member
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 interface TenantMember {
   id: string;
   tenant_id: string;
@@ -68,7 +68,7 @@ export async function GET() {
       .eq('applicant_id', userId)
       .order('created_at', { ascending: false })) as { data: any[] | null };
     // Transform memberships to farm format
-    const farms = ((memberships as TenantMember[]) || []).map(m => ({
+    const farms = ((memberships as unknown as TenantMember[]) || []).map(m => ({
       id: m.tenant_id,
       slug: m.tenants?.slug,
       name: m.tenants?.farm_name,

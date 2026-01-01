@@ -1,7 +1,7 @@
 // API Middleware for Tenant Context Validation (Supabase-based)
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { Database, Tables } from '@/types/supabase';
 import { UserRole, PlatformRole, TenantRole } from '@/types/roles';
 type PlatformUser = Tables<'platform_users'>;
@@ -36,22 +36,22 @@ async function getUserRoleFromSupabase(tenantId: string, userId: string): Promis
   try {
     const supabase = getSupabaseClient();
     // Check if user is super admin
-    const { data: platformUser } = await supabase
+    const { data: platformUser } = (await supabase
       .from('platform_users')
       .select('role')
       .eq('id', userId)
-      .single() as { data: { role: string } | null };
+      .single()) as { data: { role: string } | null };
     if (platformUser?.role === 'super_admin') {
       return PlatformRole.SUPER_ADMIN;
     }
     // Check tenant member role
-    const { data: member } = await supabase
+    const { data: member } = (await supabase
       .from('tenant_members')
       .select('role')
       .eq('tenant_id', tenantId)
       .eq('user_id', userId)
       .eq('status', 'active')
-      .single() as { data: { role: string } | null };
+      .single()) as { data: { role: string } | null };
     if (member?.role) {
       return member.role as TenantRole;
     }
@@ -100,27 +100,27 @@ export function withTenantContext(
 export async function checkUserRole(
   tenantId: string,
   userId: string,
-  requiredRoles: UserRole[]
+  requiredRoles: (UserRole | string)[]
 ): Promise<boolean> {
   try {
     const supabase = getSupabaseClient();
     // Check for super admin
-    const { data: platformUser } = await supabase
+    const { data: platformUser } = (await supabase
       .from('platform_users')
       .select('role')
       .eq('id', userId)
-      .single() as { data: { role: string } | null };
+      .single()) as { data: { role: string } | null };
     if (platformUser?.role === 'super_admin') {
       return true; // Super admin has all permissions
     }
     // Check tenant member role
-    const { data: member } = await supabase
+    const { data: member } = (await supabase
       .from('tenant_members')
       .select('role')
       .eq('tenant_id', tenantId)
       .eq('user_id', userId)
       .eq('status', 'active')
-      .single() as { data: { role: string } | null };
+      .single()) as { data: { role: string } | null };
     if (member?.role) {
       // Map common role aliases
       const userRole = member.role as TenantRole;

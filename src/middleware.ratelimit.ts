@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ipRateLimit, tenantRateLimit, authRateLimit } from '@/lib/ratelimit';
 import { auth } from '@clerk/nextjs/server';
 export async function rateLimitMiddleware(request: NextRequest) {
-  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
   const pathname = request.nextUrl.pathname;
   // Apply different rate limits based on path
   if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/sign')) {

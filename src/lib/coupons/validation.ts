@@ -1,6 +1,6 @@
 // Coupon Validation & Calculation
 import { adminDb } from '@/lib/firebase/admin';
-import type { Coupon, DiscountCalculation } from './types';
+import type { Coupon, DiscountCalculation, DiscountTarget } from './types';
 import type { SubscriptionPlan } from '@/types';
 /**
  * Validate and calculate discount for a coupon
@@ -45,7 +45,7 @@ export async function validateCoupon(
     if (
       coupon.targetPlans.length > 0 &&
       !coupon.targetPlans.includes('all') &&
-      !coupon.targetPlans.includes(plan)
+      !coupon.targetPlans.includes(plan as DiscountTarget)
     ) {
       return { valid: false, error: 'Coupon not valid for this plan' };
     }

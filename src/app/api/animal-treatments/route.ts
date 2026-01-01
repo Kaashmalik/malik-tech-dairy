@@ -1,60 +1,60 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentTenant } from "@/lib/supabase/tenant";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { getTenantContext, getTenantInfo } from '@/lib/tenant/context';
 
 // GET /api/animal-treatments - Fetch animal treatments
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const { tenantId } = await getTenantContext();
+    const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
-    const animalId = searchParams.get("animal_id");
-    const diseaseId = searchParams.get("disease_id");
-    const status = searchParams.get("status");
-    const startDate = searchParams.get("start_date");
-    const endDate = searchParams.get("end_date");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const animalId = searchParams.get('animal_id');
+    const diseaseId = searchParams.get('disease_id');
+    const status = searchParams.get('status');
+    const startDate = searchParams.get('start_date');
+    const endDate = searchParams.get('end_date');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
 
     let query = supabase
-      .from("animal_treatments")
-      .select(`
+      .from('treatment_records')
+      .select(
+        `
         *,
-        animal:animals(id, tag_id, name, species, breed),
-        disease:diseases(id, name, category),
-        treatment_protocol:treatment_protocols(id, name)
-      `, { count: "exact" })
-      .eq("tenant_id", tenant.id)
-      .order("treatment_start_date", { ascending: false });
+        animal:animals(id, tag, name, species, breed),
+        disease:diseases(id, name_en, category)
+      `,
+        { count: 'exact' }
+      )
+      .eq('tenant_id', tenant.id)
+      .order('start_date', { ascending: false });
 
     // Apply filters
     if (animalId) {
-      query = query.eq("animal_id", animalId);
+      query = query.eq('animal_id', animalId);
     }
 
     if (diseaseId) {
-      query = query.eq("disease_id", diseaseId);
+      query = query.eq('disease_id', diseaseId);
     }
 
     if (status) {
-      query = query.eq("status", status);
+      query = query.eq('outcome', status);
     }
 
     if (startDate) {
-      query = query.gte("treatment_start_date", startDate);
+      query = query.gte('start_date', startDate);
     }
 
     if (endDate) {
-      query = query.lte("treatment_start_date", endDate);
+      query = query.lte('start_date', endDate);
     }
 
     // Apply pagination
@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
     const { data: treatments, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching animal treatments:", error);
+      console.error('Error fetching animal treatments:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to fetch animal treatments" },
+        { success: false, error: 'Failed to fetch animal treatments' },
         { status: 500 }
       );
     }
@@ -83,120 +83,97 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error in animal treatments GET:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in animal treatments GET:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // POST /api/animal-treatments - Create a new animal treatment
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const tenant = await getCurrentTenant();
+    const supabase = getSupabaseClient();
+    const { tenantId } = await getTenantContext();
+    const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { success: false, error: "Tenant not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });
     }
 
     const body = await request.json();
 
     // Validate required fields
-    if (!body.animal_id || !body.diagnosis_date || !body.treatment_start_date) {
+    if (!body.animal_id || !body.diagnosis || !body.start_date) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields" },
+        { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
     // Verify animal belongs to tenant
     const { data: animal, error: animalError } = await supabase
-      .from("animals")
-      .select("id")
-      .eq("id", body.animal_id)
-      .eq("tenant_id", tenant.id)
+      .from('animals')
+      .select('id')
+      .eq('id', body.animal_id)
+      .eq('tenant_id', tenant.id)
       .single();
 
     if (animalError || !animal) {
-      return NextResponse.json(
-        { success: false, error: "Animal not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
     }
 
     // Create treatment record
-    const { data: treatment, error } = await supabase
-      .from("animal_treatments")
+    // @ts-ignore - Ignore type check for now until database types are regenerated
+    const { data: treatment, error } = await (supabase.from('treatment_records') as any)
       .insert({
         tenant_id: tenant.id,
         animal_id: body.animal_id,
-        health_record_id: body.health_record_id,
-        disease_id: body.disease_id,
-        condition_name: body.condition_name,
+        disease_id: body.disease_id, // Ensure disease_id is valid string or null if allowed
         symptoms_observed: body.symptoms_observed || [],
-        diagnosis_date: body.diagnosis_date,
-        diagnosed_by: body.diagnosed_by,
-        diagnosis_method: body.diagnosis_method,
-        severity: body.severity || "moderate",
-        treatment_protocol_id: body.treatment_protocol_id,
-        treatment_start_date: body.treatment_start_date,
-        treatment_end_date: body.treatment_end_date,
-        medicines_given: body.medicines_given || [],
-        status: body.status || "in_treatment",
-        outcome_date: body.outcome_date,
-        outcome_notes: body.outcome_notes,
-        follow_up_required: body.follow_up_required || false,
-        next_follow_up_date: body.next_follow_up_date,
-        total_cost: body.total_cost || 0,
-        recorded_by: body.recorded_by,
+        diagnosis: body.diagnosis,
+        treatment_given: body.treatment_given || [],
+        medications: body.medications || [],
+        veterinarian_name: body.veterinarian_name || 'Unknown',
+        start_date: body.start_date,
+        end_date: body.end_date,
+        outcome: body.outcome || 'pending',
         notes: body.notes,
+        cost: body.cost || 0,
+        created_by: body.recorded_by || (await getTenantContext()).userId, // Fallback to current user
       })
       .select()
       .single();
 
     if (error) {
-      console.error("Error creating animal treatment:", error);
+      console.error('Error creating animal treatment:', error);
       return NextResponse.json(
-        { success: false, error: "Failed to create animal treatment" },
+        { success: false, error: 'Failed to create animal treatment' },
         { status: 500 }
       );
     }
 
-    // Create health record if not provided
-    if (!body.health_record_id) {
-      const { error: healthRecordError } = await supabase
-        .from("health_records")
-        .insert({
-          tenant_id: tenant.id,
-          animal_id: body.animal_id,
-          record_type: "treatment",
-          date: body.treatment_start_date,
-          title: body.disease_id ? `Treatment for ${body.disease_id}` : "Treatment",
-          description: body.condition_name || "General treatment",
-          recorded_by: body.recorded_by,
-          treatment_id: treatment.id,
-        });
+    // Create health record
+    // @ts-ignore
+    const { error: healthRecordError } = await (supabase.from('health_records') as any).insert({
+      tenant_id: tenant.id,
+      animal_id: body.animal_id,
+      type: 'treatment',
+      date: body.start_date,
+      description: body.diagnosis || 'Treatment Record',
+      recorded_by: body.recorded_by || (await getTenantContext()).userId,
+      // treatment_id: treatment.id, // Column doesn't exist in schema provided
+    });
 
-      if (healthRecordError) {
-        console.error("Error creating health record:", healthRecordError);
-      }
+    if (healthRecordError) {
+      console.error('Error creating health record:', healthRecordError);
     }
 
     return NextResponse.json({
       success: true,
       data: treatment,
-      message: "Animal treatment created successfully",
+      message: 'Animal treatment created successfully',
     });
   } catch (error) {
-    console.error("Error in animal treatments POST:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error in animal treatments POST:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

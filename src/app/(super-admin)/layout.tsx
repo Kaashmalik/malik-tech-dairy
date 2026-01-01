@@ -21,10 +21,10 @@ async function checkAndSetupSuperAdmin(userId: string): Promise<boolean> {
   // Get user from Clerk to check email
   const { clerkClient } = await import('@clerk/nextjs/server');
   const client = await clerkClient();
-  
+
   let email = '';
   let isSuperAdminEmail = false;
-  
+
   try {
     const clerkUser = await client.users.getUser(userId);
     email = clerkUser.emailAddresses[0]?.emailAddress || '';
@@ -42,7 +42,7 @@ async function checkAndSetupSuperAdmin(userId: string): Promise<boolean> {
   }
   try {
     // Use Supabase REST API instead of direct postgres
-    const { getSupabaseClient } = await import('@/lib/supabase');
+    const { getSupabaseClient } = await import('@/lib/supabase/server');
     const supabase = getSupabaseClient();
     // Check if user exists in DB
     const { data, error: fetchError } = await supabase

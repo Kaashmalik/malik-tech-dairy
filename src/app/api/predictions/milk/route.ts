@@ -1,15 +1,15 @@
 // API Route: Get Milk Production Predictions - Migrated to Supabase
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { createClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { transformFromDb } from '@/lib/utils/transform';
 export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      const supabase = createClient();
-      
+      const supabase = getSupabaseClient();
+
       // Get the most recent milk prediction for this tenant
       const { data, error } = await supabase
         .from('predictions')
@@ -54,23 +54,17 @@ export async function POST(request: NextRequest) {
       const body = await req.json();
       const { predictions, confidenceBand, modelVersion = '1.0', accuracyScore, parameters } = body;
       if (!predictions || !Array.isArray(predictions)) {
-        return errorResponse({
-          success: false,
-          error: 'Predictions array is required',
-          code: 'VALIDATION_ERROR',
-        }, { status: 400 });
+        return errorResponse(new Error('Predictions array is required'));
       }
-      const supabase = createClient();
-      
-      // Deactivate old predictions
-      await supabase
-        .from('predictions')
+      const supabase = getSupabaseClient();
+
+      // Deactivate old predictions (using type assertion since predictions table types are generic)
+      await (supabase.from('predictions') as any)
         .update({ is_active: false })
         .eq('tenant_id', context.tenantId)
         .eq('type', 'milk_7d');
       // Create new prediction record
-      const { data, error } = await supabase
-        .from('predictions')
+      const { data, error } = await (supabase.from('predictions') as any)
         .insert({
           id: crypto.randomUUID(),
           tenant_id: context.tenantId,

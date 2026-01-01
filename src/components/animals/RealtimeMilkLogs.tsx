@@ -11,14 +11,14 @@ interface RealtimeMilkLogsProps {
 }
 
 export function RealtimeMilkLogs({ animalId }: RealtimeMilkLogsProps) {
-  const { config } = useTenantContext();
+  const { tenantId } = useTenantContext();
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!config?.tenantId) return;
+    if (!tenantId) return;
 
     // Subscribe to real-time milk logs
-    const unsubscribe = subscribeToMilkLogs(config.tenantId, logs => {
+    const unsubscribe = subscribeToMilkLogs(tenantId, logs => {
       // Filter logs for this animal and get recent ones
       const animalLogs = logs
         .filter(log => log.animalId === animalId)
@@ -35,7 +35,7 @@ export function RealtimeMilkLogs({ animalId }: RealtimeMilkLogsProps) {
     return () => {
       unsubscribe();
     };
-  }, [config?.tenantId, animalId]);
+  }, [tenantId, animalId]);
 
   if (recentLogs.length === 0) {
     return null;

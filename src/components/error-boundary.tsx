@@ -19,7 +19,7 @@ interface State {
 
 /**
  * Enterprise Error Boundary Component
- * 
+ *
  * Catches JavaScript errors anywhere in the child component tree,
  * logs them to Sentry, and displays a fallback UI.
  */
@@ -30,8 +30,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { 
-      hasError: true, 
+    return {
+      hasError: true,
       error,
       errorId: crypto.randomUUID().slice(0, 8),
     };
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log to Sentry
-    Sentry.withScope((scope) => {
+    Sentry.withScope(scope => {
       scope.setExtra('componentStack', errorInfo.componentStack);
       scope.setTag('errorBoundary', 'true');
       Sentry.captureException(error);
@@ -72,45 +72,43 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default fallback UI
       return (
-        <div className="flex min-h-[400px] flex-col items-center justify-center p-8">
-          <div className="mx-auto max-w-md text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="rounded-full bg-destructive/10 p-4">
-                <AlertTriangle className="h-12 w-12 text-destructive" />
+        <div className='flex min-h-[400px] flex-col items-center justify-center p-8'>
+          <div className='mx-auto max-w-md text-center'>
+            <div className='mb-6 flex justify-center'>
+              <div className='bg-destructive/10 rounded-full p-4'>
+                <AlertTriangle className='text-destructive h-12 w-12' />
               </div>
             </div>
-            
-            <h2 className="mb-2 text-2xl font-semibold">Something went wrong</h2>
-            <p className="mb-6 text-muted-foreground">
+
+            <h2 className='mb-2 text-2xl font-semibold'>Something went wrong</h2>
+            <p className='text-muted-foreground mb-6'>
               We apologize for the inconvenience. An error occurred while rendering this page.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 rounded-lg bg-muted p-4 text-left">
-                <p className="mb-2 text-sm font-medium text-destructive">
+              <div className='bg-muted mb-6 rounded-lg p-4 text-left'>
+                <p className='text-destructive mb-2 text-sm font-medium'>
                   {this.state.error.name}: {this.state.error.message}
                 </p>
-                <pre className="overflow-auto text-xs text-muted-foreground">
+                <pre className='text-muted-foreground overflow-auto text-xs'>
                   {this.state.error.stack}
                 </pre>
               </div>
             )}
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Button onClick={this.handleRetry} variant="default">
-                <RefreshCw className="mr-2 h-4 w-4" />
+            <div className='flex flex-col gap-3 sm:flex-row sm:justify-center'>
+              <Button onClick={this.handleRetry} variant='default'>
+                <RefreshCw className='mr-2 h-4 w-4' />
                 Try Again
               </Button>
-              <Button onClick={this.handleGoHome} variant="outline">
-                <Home className="mr-2 h-4 w-4" />
+              <Button onClick={this.handleGoHome} variant='outline'>
+                <Home className='mr-2 h-4 w-4' />
                 Go to Dashboard
               </Button>
             </div>
 
             {this.state.errorId && (
-              <p className="mt-6 text-xs text-muted-foreground">
-                Error ID: {this.state.errorId}
-              </p>
+              <p className='text-muted-foreground mt-6 text-xs'>Error ID: {this.state.errorId}</p>
             )}
           </div>
         </div>
@@ -142,22 +140,22 @@ export function withErrorBoundary<P extends object>(
 /**
  * Async Error Boundary for Suspense boundaries
  */
-export function AsyncErrorFallback({ 
-  error, 
-  resetErrorBoundary 
-}: { 
-  error: Error; 
+export function AsyncErrorFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: Error;
   resetErrorBoundary: () => void;
 }) {
   return (
-    <div className="flex min-h-[200px] flex-col items-center justify-center p-6">
-      <AlertTriangle className="mb-4 h-8 w-8 text-destructive" />
-      <h3 className="mb-2 font-semibold">Failed to load</h3>
-      <p className="mb-4 text-sm text-muted-foreground">
+    <div className='flex min-h-[200px] flex-col items-center justify-center p-6'>
+      <AlertTriangle className='text-destructive mb-4 h-8 w-8' />
+      <h3 className='mb-2 font-semibold'>Failed to load</h3>
+      <p className='text-muted-foreground mb-4 text-sm'>
         {error.message || 'An error occurred while loading this content.'}
       </p>
-      <Button onClick={resetErrorBoundary} size="sm">
-        <RefreshCw className="mr-2 h-3 w-3" />
+      <Button onClick={resetErrorBoundary} size='sm'>
+        <RefreshCw className='mr-2 h-3 w-3' />
         Retry
       </Button>
     </div>

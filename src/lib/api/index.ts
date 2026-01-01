@@ -1,6 +1,6 @@
 /**
  * API Utilities - Central Export
- * 
+ *
  * Import all API utilities from this file:
  * import { successResponse, ApiError, ValidationError } from '@/lib/api';
  */
@@ -43,10 +43,10 @@ export {
 } from './response';
 
 // Existing middleware exports
-export { 
-  getTenantContext, 
-  withTenantContext, 
-  checkUserRole, 
+export {
+  getTenantContext,
+  withTenantContext,
+  checkUserRole,
   getTenantLimits,
   type TenantContext,
 } from './middleware';

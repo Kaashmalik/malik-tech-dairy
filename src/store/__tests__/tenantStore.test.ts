@@ -1,4 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
+import { expect } from '@jest/globals';
 import { useTenantStore } from '@/store/tenantStore';
 import type { TenantConfig } from '@/types';
 
@@ -20,12 +21,16 @@ describe('TenantStore', () => {
     const { result } = renderHook(() => useTenantStore());
     const mockConfig: TenantConfig = {
       farmName: 'Test Farm',
-      farmAddress: '123 Test St',
+      subdomain: 'test-farm',
       primaryColor: '#1F7A3D',
-      secondaryColor: '#2E8B57',
+      accentColor: '#2E8B57',
       logoUrl: 'https://example.com/logo.png',
       language: 'en',
+      currency: 'PKR',
+      timezone: 'Asia/Karachi',
       animalTypes: ['cow', 'buffalo'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     act(() => {
@@ -39,12 +44,16 @@ describe('TenantStore', () => {
     const { result } = renderHook(() => useTenantStore());
     const initialConfig: TenantConfig = {
       farmName: 'Initial Farm',
-      farmAddress: '123 Test St',
+      subdomain: 'initial-farm',
       primaryColor: '#1F7A3D',
-      secondaryColor: '#2E8B57',
+      accentColor: '#2E8B57',
       logoUrl: 'https://example.com/logo.png',
       language: 'en',
+      currency: 'PKR',
+      timezone: 'Asia/Karachi',
       animalTypes: ['cow'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const updatedConfig: TenantConfig = {
@@ -68,12 +77,16 @@ describe('TenantStore', () => {
     const { result } = renderHook(() => useTenantStore());
     const mockConfig: TenantConfig = {
       farmName: 'Test Farm',
-      farmAddress: '123 Test St',
+      subdomain: 'test-farm',
       primaryColor: '#1F7A3D',
-      secondaryColor: '#2E8B57',
+      accentColor: '#2E8B57',
       logoUrl: 'https://example.com/logo.png',
       language: 'en',
+      currency: 'PKR',
+      timezone: 'Asia/Karachi',
       animalTypes: ['cow'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     act(() => {
@@ -93,12 +106,16 @@ describe('TenantStore', () => {
     const { result } = renderHook(() => useTenantStore());
     const mockConfig: TenantConfig = {
       farmName: 'Test Farm',
-      farmAddress: '123 Test St',
+      subdomain: 'test-farm',
       primaryColor: '#1F7A3D',
-      secondaryColor: '#2E8B57',
+      accentColor: '#2E8B57',
       logoUrl: 'https://example.com/logo.png',
       language: 'en',
+      currency: 'PKR',
+      timezone: 'Asia/Karachi',
       animalTypes: ['cow'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     act(() => {

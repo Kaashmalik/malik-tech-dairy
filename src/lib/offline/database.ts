@@ -290,12 +290,12 @@ export class OfflineDB {
   }
 
   static async updateSyncStatus(tenantId: string, updates: Partial<SyncStatus>): Promise<void> {
-    const current = await this.getSyncStatus(tenantId) || {
+    const current = (await this.getSyncStatus(tenantId)) || {
       tenantId,
       lastSync: 0,
       isOnline: true,
       pendingMutations: 0,
-      syncInProgress: false
+      syncInProgress: false,
     };
     await db.syncStatus.put({
       ...current,

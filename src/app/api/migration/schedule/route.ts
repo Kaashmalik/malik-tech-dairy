@@ -99,6 +99,5 @@ async function triggerAutomatedRollback(details: any) {
     await dualWriteAPI.setMigrationPhase('PHASE_1_DUAL_WRITE');
     // Send alert notification
     await migrationMonitor.triggerAlert('AUTOMATED_ROLLBACK', details);
-  } catch (error) {
-  }
+  } catch (error) {}
 }

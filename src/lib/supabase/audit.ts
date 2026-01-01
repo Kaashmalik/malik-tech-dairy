@@ -1,5 +1,5 @@
 // Audit Logging to Supabase
-import { getDrizzle } from '../supabase';
+import { getDrizzle } from './server';
 import { auditLogs } from '@/db/schema';
 import { nanoid } from 'nanoid';
 export interface AuditLogData {
@@ -47,21 +47,25 @@ export async function getAuditLogs(
   }
 ) {
   const db = getDrizzle();
-  const { and, eq } = await import('drizzle-orm');
-  let query = db.select().from(auditLogs).where(eq(auditLogs.tenantId, tenantId));
+  const { and, eq, desc } = await import('drizzle-orm');
+
+  // Build conditions array
+  const conditions = [eq(auditLogs.tenantId, tenantId)];
+
   if (options?.resource) {
-    query = query.where(
-      and(eq(auditLogs.tenantId, tenantId), eq(auditLogs.resource, options.resource))
-    ) as any;
+    conditions.push(eq(auditLogs.resource, options.resource));
   }
+
   if (options?.userId) {
-    query = query.where(
-      and(eq(auditLogs.tenantId, tenantId), eq(auditLogs.userId, options.userId))
-    ) as any;
+    conditions.push(eq(auditLogs.userId, options.userId));
   }
-  query = query
-    .orderBy(auditLogs.createdAt)
+
+  const query = db
+    .select()
+    .from(auditLogs)
+    .where(and(...conditions))
+    .orderBy(desc(auditLogs.createdAt))
     .limit(options?.limit || 100)
-    .offset(options?.offset || 0) as any;
+    .offset(options?.offset || 0);
   return query;
 }

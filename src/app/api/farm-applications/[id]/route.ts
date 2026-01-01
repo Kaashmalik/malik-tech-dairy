@@ -4,7 +4,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 const uploadPaymentSchema = z.object({
   paymentSlipUrl: z.string().url(),
   paymentSlipProvider: z.enum(['cloudinary', 'supabase']).optional(),

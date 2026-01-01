@@ -1,8 +1,15 @@
 // API Route: Get, Update, Delete Animal by ID (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
-import { Animal, AnimalUpdate, ApiResponse, ApiError, createApiError, createApiResponse } from '@/lib/supabase/types';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import {
+  Animal,
+  AnimalUpdate,
+  ApiResponse,
+  ApiError,
+  createApiError,
+  createApiResponse,
+} from '@/lib/supabase/types';
 export const dynamic = 'force-dynamic';
 // GET: Get animal by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,11 +18,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       const { id } = await params;
       const supabase = getSupabaseClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: animal, error } = await (supabase.from('animals') as any)
+      const { data: animal, error } = (await (supabase.from('animals') as any)
         .select('*')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
-        .single() as { data: Animal | null; error: any };
+        .single()) as { data: Animal | null; error: any };
       if (error || !animal) {
         return NextResponse.json(createApiError('Animal not found', 'NOT_FOUND'), { status: 404 });
       }

@@ -1,7 +1,7 @@
 // API Route: Individual Sale Operations - Migrated to Supabase
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { createClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse, ValidationError, NotFoundError } from '@/lib/api/response';
 import { transformFromDb, transformToDb } from '@/lib/utils/transform';
 import { z } from 'zod';
@@ -21,17 +21,13 @@ const updateSaleSchema = z.object({
 });
 
 // GET: Get single sale
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
 
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('sales')
+      const supabase = getSupabaseClient();
+      const { data, error } = await (supabase.from('sales') as any)
         .select('*')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
@@ -55,10 +51,7 @@ export async function GET(
 }
 
 // PUT: Update sale
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
       const { id } = await params;
@@ -67,11 +60,10 @@ export async function PUT(
       // Validate request body
       const validatedData = updateSaleSchema.parse(body);
 
-      const supabase = createClient();
+      const supabase = getSupabaseClient();
 
       // First check if sale exists and belongs to tenant
-      const { data: existing, error: fetchError } = await supabase
-        .from('sales')
+      const { data: existing, error: fetchError } = await (supabase.from('sales') as any)
         .select('id')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
@@ -91,19 +83,17 @@ export async function PUT(
       let total;
       if (updateData.quantity !== undefined || updateData.price_per_unit !== undefined) {
         // Get existing data to calculate new total
-        const { data: current } = await supabase
-          .from('sales')
+        const { data: current } = await (supabase.from('sales') as any)
           .select('quantity, price_per_unit')
           .eq('id', id)
           .single();
-        
+
         const quantity = updateData.quantity ?? current?.quantity;
         const pricePerUnit = updateData.price_per_unit ?? current?.price_per_unit;
         total = quantity && pricePerUnit ? quantity * pricePerUnit : undefined;
       }
 
-      const { data, error } = await supabase
-        .from('sales')
+      const { data, error } = await (supabase.from('sales') as any)
         .update({
           ...updateData,
           ...(total && { total }),
@@ -125,11 +115,10 @@ export async function PUT(
         message: 'Sale updated successfully',
       });
     } catch (error) {
-      
       if (error instanceof z.ZodError) {
         return errorResponse(ValidationError.fromZodError(error));
       }
-      
+
       return errorResponse(error);
     }
   })(request);
@@ -144,11 +133,10 @@ export async function DELETE(
     try {
       const { id } = await params;
 
-      const supabase = createClient();
+      const supabase = getSupabaseClient();
 
       // First check if sale exists and belongs to tenant
-      const { data: existing, error: fetchError } = await supabase
-        .from('sales')
+      const { data: existing, error: fetchError } = await (supabase.from('sales') as any)
         .select('id, type, quantity, unit')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
@@ -162,8 +150,7 @@ export async function DELETE(
       }
 
       // Delete the sale
-      const { error } = await supabase
-        .from('sales')
+      const { error } = await (supabase.from('sales') as any)
         .delete()
         .eq('id', id)
         .eq('tenant_id', context.tenantId);
@@ -182,4 +169,4 @@ export async function DELETE(
       return errorResponse(error);
     }
   })(request);
-}
+}

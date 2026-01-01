@@ -9,22 +9,22 @@ const supabase = createClient(
 async function checkTables() {
   try {
     console.log('Checking existing tables in database...\n');
-    
+
     // List all tables
     const { data: tables, error: tablesError } = await supabase
       .from('information_schema.tables')
       .select('table_name')
       .eq('table_schema', 'public')
       .eq('table_type', 'BASE TABLE');
-    
+
     if (tablesError) {
       console.error('Error fetching tables:', tablesError);
       return;
     }
-    
+
     console.log('Available tables:');
     tables?.forEach(t => console.log(`  - ${t.table_name}`));
-    
+
     // Check specific tables that should exist
     const criticalTables = [
       'animals',
@@ -35,21 +35,18 @@ async function checkTables() {
       'assets',
       'expenses',
       'sales',
-      'feed_logs'
+      'feed_logs',
     ];
-    
+
     console.log('\n\nChecking critical tables:');
-    
+
     for (const tableName of criticalTables) {
       console.log(`\n=== ${tableName} ===`);
-      
+
       try {
         // Try to get a sample record to see the structure
-        const { data, error } = await supabase
-          .from(tableName)
-          .select('*')
-          .limit(1);
-        
+        const { data, error } = await supabase.from(tableName).select('*').limit(1);
+
         if (error) {
           if (error.code === 'PGRST116') {
             console.log(`  ❌ Table does not exist`);
@@ -68,7 +65,6 @@ async function checkTables() {
         console.log(`  ❌ Error: ${err.message}`);
       }
     }
-    
   } catch (error) {
     console.error('Error:', error);
   }

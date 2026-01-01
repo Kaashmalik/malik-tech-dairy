@@ -36,13 +36,13 @@ export default function LocationSettings() {
     city: 'Muzzafargarh',
     country: 'PK',
     address: '',
-    timezone: 'Asia/Karachi'
+    timezone: 'Asia/Karachi',
   });
   const [weatherEnabled, setWeatherEnabled] = useState(true);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const supabase = createClient();
 
   // Fetch current tenant settings
@@ -53,39 +53,41 @@ export default function LocationSettings() {
         .from('tenants')
         .select('farm_location, weather_enabled, weather_unit')
         .single();
-      
+
       if (error) throw error;
       return data as TenantSettings;
     },
   });
 
   // Update settings mutation
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (newSettings: Partial<TenantSettings>) => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .update(newSettings)
-        .select('farm_location, weather_enabled, weather_unit')
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenant-settings'] });
-      toast({
-        title: 'Settings Updated',
-        description: 'Your farm location has been updated successfully.',
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: 'Failed to update settings. Please try again.',
-        variant: 'destructive',
-      });
-    },
-  });
+  const updateSettingsMutation = useMutation<TenantSettings | null, Error, Partial<TenantSettings>>(
+    {
+      mutationFn: async newSettings => {
+        const { data, error } = await supabase
+          .from('tenants')
+          .update(newSettings as Record<string, unknown>)
+          .select('farm_location, weather_enabled, weather_unit')
+          .single();
+
+        if (error) throw error;
+        return data as TenantSettings | null;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['tenant-settings'] });
+        toast({
+          title: 'Settings Updated',
+          description: 'Your farm location has been updated successfully.',
+        });
+      },
+      onError: () => {
+        toast({
+          title: 'Error',
+          description: 'Failed to update settings. Please try again.',
+          variant: 'destructive',
+        });
+      },
+    }
+  );
 
   // Load settings on mount
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function LocationSettings() {
   // Get user's current location
   const getCurrentLocation = () => {
     setIsGettingLocation(true);
-    
+
     if (!navigator.geolocation) {
       toast({
         title: 'Error',
@@ -110,25 +112,25 @@ export default function LocationSettings() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      async position => {
         const { latitude, longitude } = position.coords;
-        
+
         // Reverse geocode to get city name
         try {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`
           );
           const data = await response.json();
-          
+
           const newLocation: FarmLocation = {
             latitude,
             longitude,
             city: data.address?.city || data.address?.town || data.address?.village || 'Unknown',
             country: data.address?.country_code?.toUpperCase() || 'PK',
             address: data.display_name || '',
-            timezone: 'Asia/Karachi'
+            timezone: 'Asia/Karachi',
           };
-          
+
           setLocation(newLocation);
           toast({
             title: 'Location Detected',
@@ -141,10 +143,10 @@ export default function LocationSettings() {
             variant: 'destructive',
           });
         }
-        
+
         setIsGettingLocation(false);
       },
-      (error) => {
+      error => {
         toast({
           title: 'Error',
           description: 'Failed to get your location. Please enable location access.',
@@ -168,16 +170,16 @@ export default function LocationSettings() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
+          <CardTitle className='flex items-center gap-2'>
+            <MapPin className='h-5 w-5' />
             Farm Location Settings
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="h-4 w-32 animate-pulse bg-gray-200 rounded"></div>
-            <div className="h-10 w-full animate-pulse bg-gray-200 rounded"></div>
-            <div className="h-10 w-full animate-pulse bg-gray-200 rounded"></div>
+          <div className='space-y-4'>
+            <div className='h-4 w-32 animate-pulse rounded bg-gray-200'></div>
+            <div className='h-10 w-full animate-pulse rounded bg-gray-200'></div>
+            <div className='h-10 w-full animate-pulse rounded bg-gray-200'></div>
           </div>
         </CardContent>
       </Card>
@@ -187,23 +189,23 @@ export default function LocationSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
+        <CardTitle className='flex items-center gap-2'>
+          <MapPin className='h-5 w-5' />
           Farm Location Settings
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className='text-muted-foreground text-sm'>
           Set your farm location to get accurate weather data and farming recommendations.
         </p>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className='space-y-6'>
         {/* Current Location Display */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <div className='flex items-center justify-between rounded-lg bg-gray-50 p-4'>
           <div>
-            <p className="font-medium">Current Location</p>
-            <p className="text-sm text-muted-foreground">
+            <p className='font-medium'>Current Location</p>
+            <p className='text-muted-foreground text-sm'>
               {location.city}, {location.country}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className='text-muted-foreground text-xs'>
               {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E
             </p>
           </div>
@@ -213,77 +215,78 @@ export default function LocationSettings() {
         </div>
 
         {/* Location Form */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="latitude">Latitude</Label>
+        <div className='grid gap-4 md:grid-cols-2'>
+          <div className='space-y-2'>
+            <Label htmlFor='latitude'>Latitude</Label>
             <Input
-              id="latitude"
-              type="number"
-              step="0.0001"
+              id='latitude'
+              type='number'
+              step='0.0001'
               value={location.latitude}
-              onChange={(e) => setLocation({ ...location, latitude: parseFloat(e.target.value) || 0 })}
+              onChange={e =>
+                setLocation({ ...location, latitude: parseFloat(e.target.value) || 0 })
+              }
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="longitude">Longitude</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='longitude'>Longitude</Label>
             <Input
-              id="longitude"
-              type="number"
-              step="0.0001"
+              id='longitude'
+              type='number'
+              step='0.0001'
               value={location.longitude}
-              onChange={(e) => setLocation({ ...location, longitude: parseFloat(e.target.value) || 0 })}
+              onChange={e =>
+                setLocation({ ...location, longitude: parseFloat(e.target.value) || 0 })
+              }
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='city'>City</Label>
             <Input
-              id="city"
+              id='city'
               value={location.city}
-              onChange={(e) => setLocation({ ...location, city: e.target.value })}
+              onChange={e => setLocation({ ...location, city: e.target.value })}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="country">Country Code</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='country'>Country Code</Label>
             <Input
-              id="country"
+              id='country'
               maxLength={2}
               value={location.country}
-              onChange={(e) => setLocation({ ...location, country: e.target.value.toUpperCase() })}
+              onChange={e => setLocation({ ...location, country: e.target.value.toUpperCase() })}
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="address">Full Address (Optional)</Label>
+        <div className='space-y-2'>
+          <Label htmlFor='address'>Full Address (Optional)</Label>
           <Textarea
-            id="address"
+            id='address'
             value={location.address}
-            onChange={(e) => setLocation({ ...location, address: e.target.value })}
+            onChange={e => setLocation({ ...location, address: e.target.value })}
             rows={2}
           />
         </div>
 
         {/* Weather Toggle */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
+        <div className='flex items-center justify-between'>
+          <div className='space-y-0.5'>
             <Label>Enable Weather Service</Label>
-            <p className="text-sm text-muted-foreground">
+            <p className='text-muted-foreground text-sm'>
               Get weather updates and farming recommendations
             </p>
           </div>
-          <Switch
-            checked={weatherEnabled}
-            onCheckedChange={setWeatherEnabled}
-          />
+          <Switch checked={weatherEnabled} onCheckedChange={setWeatherEnabled} />
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-4">
+        <div className='flex gap-2 pt-4'>
           <Button
             onClick={getCurrentLocation}
-            variant="outline"
+            variant='outline'
             disabled={isGettingLocation}
-            className="flex items-center gap-2"
+            className='flex items-center gap-2'
           >
             <RefreshCw className={`h-4 w-4 ${isGettingLocation ? 'animate-spin' : ''}`} />
             {isGettingLocation ? 'Detecting...' : 'Use My Location'}
@@ -291,19 +294,20 @@ export default function LocationSettings() {
           <Button
             onClick={handleSave}
             disabled={updateSettingsMutation.isPending}
-            className="flex items-center gap-2"
+            className='flex items-center gap-2'
           >
-            <Save className="h-4 w-4" />
+            <Save className='h-4 w-4' />
             {updateSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
 
         {/* Info Alert */}
         <Alert>
-          <Globe className="h-4 w-4" />
+          <Globe className='h-4 w-4' />
           <AlertDescription>
-            Weather data is fetched from OpenWeatherMap. The system uses your exact coordinates
-            to provide accurate weather information and farming recommendations for your specific location.
+            Weather data is fetched from OpenWeatherMap. The system uses your exact coordinates to
+            provide accurate weather information and farming recommendations for your specific
+            location.
           </AlertDescription>
         </Alert>
       </CardContent>

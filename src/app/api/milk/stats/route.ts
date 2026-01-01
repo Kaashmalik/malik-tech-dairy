@@ -1,7 +1,7 @@
 // API Route: Get Milk Statistics (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { format, subDays } from 'date-fns';
 export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {

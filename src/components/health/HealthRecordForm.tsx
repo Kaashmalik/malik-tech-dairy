@@ -25,10 +25,15 @@ interface HealthRecordFormProps {
 }
 
 // Define form data type where dates are strings (for HTML input)
-type HealthRecordFormData = Omit<Partial<HealthRecord>, 'date' | 'nextDueDate'> & {
+interface HealthRecordFormData {
+  animalId: string;
+  type: HealthRecord['type'];
   date: string;
-  nextDueDate?: string;
-};
+  description: string;
+  veterinarian: string;
+  cost: string;
+  nextDueDate: string;
+}
 
 export function HealthRecordForm({ animalId, record, onClose, onSuccess }: HealthRecordFormProps) {
   const { data: animals } = useQuery<{ animals: Animal[] }>({
@@ -51,23 +56,23 @@ export function HealthRecordForm({ animalId, record, onClose, onSuccess }: Healt
   } = useForm<HealthRecordFormData>({
     defaultValues: record
       ? {
-        animalId: record.animalId,
-        type: record.type,
-        date: format(new Date(record.date), 'yyyy-MM-dd'),
-        description: record.description,
-        veterinarian: record.veterinarian || '',
-        cost: record.cost?.toString() || '',
-        nextDueDate: record.nextDueDate ? format(new Date(record.nextDueDate), 'yyyy-MM-dd') : '',
-      }
+          animalId: record.animalId,
+          type: record.type,
+          date: format(new Date(record.date), 'yyyy-MM-dd'),
+          description: record.description,
+          veterinarian: record.veterinarian || '',
+          cost: record.cost?.toString() || '',
+          nextDueDate: record.nextDueDate ? format(new Date(record.nextDueDate), 'yyyy-MM-dd') : '',
+        }
       : {
-        animalId: animalId || '',
-        type: 'checkup',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        description: '',
-        veterinarian: '',
-        cost: '',
-        nextDueDate: '',
-      },
+          animalId: animalId || '',
+          type: 'checkup',
+          date: format(new Date(), 'yyyy-MM-dd'),
+          description: '',
+          veterinarian: '',
+          cost: '',
+          nextDueDate: '',
+        },
   });
 
   const mutation = useMutation({
@@ -97,7 +102,14 @@ export function HealthRecordForm({ animalId, record, onClose, onSuccess }: Healt
   });
 
   const onSubmit = (data: HealthRecordFormData) => {
-    mutation.mutate(data as unknown as Partial<HealthRecord>);
+    // Transform form data to API format
+    const apiData: Partial<HealthRecord> = {
+      ...data,
+      date: new Date(data.date),
+      nextDueDate: data.nextDueDate ? new Date(data.nextDueDate) : undefined,
+      cost: data.cost ? parseFloat(data.cost.toString()) : undefined,
+    };
+    mutation.mutate(apiData);
   };
 
   const selectedType = watch('type');

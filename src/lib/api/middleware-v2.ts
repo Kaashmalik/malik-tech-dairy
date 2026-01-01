@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 // Rate limiting using Upstash Redis
 interface RateLimitConfig {
@@ -29,8 +29,7 @@ async function getRedisClient() {
         token: process.env.UPSTASH_REDIS_REST_TOKEN,
       });
     }
-  } catch (error) {
-  }
+  } catch (error) {}
   redisInitialized = true;
   return redis;
 }
@@ -50,6 +49,7 @@ export interface ApiResponse<T = any> {
       total: number;
       totalPages: number;
     };
+    details?: any;
   };
 }
 // Error types for better error handling
@@ -136,7 +136,7 @@ async function validateSubscription(tenantId: string, action: string): Promise<v
       .from(tableName)
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId);
-    if (count >= maxAllowed) {
+    if ((count ?? 0) >= maxAllowed) {
       throw new ApiError(
         ErrorCode.SUBSCRIPTION_ERROR,
         `You've reached your limit of ${maxAllowed} ${tableName}. Please upgrade your subscription.`,
@@ -180,7 +180,7 @@ export function withApiMiddleware<T = any>(options: {
     const startTime = Date.now();
     try {
       // Extract context
-      const headersList = headers();
+      const headersList = await headers();
       let userId: string | undefined;
       let tenantId: string | undefined;
       // Authentication
@@ -201,7 +201,11 @@ export function withApiMiddleware<T = any>(options: {
       }
       // Rate limiting
       if (options.rateLimitEndpoint) {
-        const identifier = userId || request.ip || 'anonymous';
+        const identifier =
+          userId ||
+          request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+          request.headers.get('x-real-ip') ||
+          'anonymous';
         await checkRateLimit(identifier, options.rateLimitEndpoint);
       }
       // Request validation
@@ -254,11 +258,9 @@ export function withApiMiddleware<T = any>(options: {
             timestamp: new Date().toISOString(),
             requestId,
             version: options.version || 'v1',
+            details: error.details,
           },
         };
-        if (error.details) {
-          errorResponse.meta = { ...errorResponse.meta, details: error.details };
-        }
         return NextResponse.json(errorResponse, { status: error.statusCode });
       }
       // Handle unexpected errors
@@ -284,7 +286,6 @@ export const createSuccessResponse = <T>(data: T, message?: string): ApiResponse
 export const createErrorResponse = (error: string, details?: any): ApiResponse => ({
   success: false,
   error,
-  meta: details ? { details } : undefined,
 });
 // Audit logging helper
 export async function logApiEvent(event: {

@@ -1,7 +1,7 @@
 // API Route: Get & Update Subscription (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { checkUserRole } from '@/lib/api/middleware';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
 export const dynamic = 'force-dynamic';
@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
         });
       }
       const plan = tenant.subscription_plan || 'free';
-      const planDetails = SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS] || SUBSCRIPTION_PLANS.free;
+      const planDetails =
+        SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS] || SUBSCRIPTION_PLANS.free;
       return NextResponse.json({
         plan,
         status: tenant.subscription_status || 'trial',
@@ -75,18 +76,16 @@ export async function PUT(request: NextRequest) {
       }
       // Log the payment/subscription change
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase
-        .from('subscription_history')
-        .insert({
-          tenant_id: context.tenantId,
-          user_id: context.userId,
-          plan,
-          gateway: gateway || 'manual',
-          transaction_id: transactionId || null,
-          amount: SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS].price,
-          status: 'completed',
-          created_at: new Date().toISOString(),
-        }) as any);
+      await (supabase.from('subscription_history').insert({
+        tenant_id: context.tenantId,
+        user_id: context.userId,
+        plan,
+        gateway: gateway || 'manual',
+        transaction_id: transactionId || null,
+        amount: SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS].price,
+        status: 'completed',
+        created_at: new Date().toISOString(),
+      }) as any);
       return NextResponse.json({
         success: true,
         message: 'Subscription updated successfully',

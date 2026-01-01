@@ -167,7 +167,9 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
     background-image:
       radial-gradient(circle at 15% 50%, oklch(0.96 0.02 155 / 0.1) 0%, transparent 25%),
       radial-gradient(circle at 85% 30%, oklch(0.95 0.03 200 / 0.1) 0%, transparent 25%);
@@ -182,7 +184,6 @@
 }
 
 @layer utilities {
-
   /* Fluid Typography */
   .text-fluid-h1 {
     font-size: clamp(2rem, 5vw, 3.5rem);
@@ -229,7 +230,7 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+    @apply bg-muted-foreground/30 hover:bg-muted-foreground/50 rounded-full transition-colors;
   }
 }
 
@@ -245,7 +246,6 @@
 }
 
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0);

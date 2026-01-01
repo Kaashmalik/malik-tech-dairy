@@ -48,7 +48,7 @@ export function OnboardingWizard() {
     subdomain: '',
     primaryColor: DEFAULT_TENANT_CONFIG.primaryColor,
     accentColor: DEFAULT_TENANT_CONFIG.accentColor,
-    animalTypes: DEFAULT_TENANT_CONFIG.animalTypes as AnimalSpecies[],
+    animalTypes: [...DEFAULT_TENANT_CONFIG.animalTypes] as AnimalSpecies[],
     selectedPlan: 'free',
   });
   // Check subdomain availability

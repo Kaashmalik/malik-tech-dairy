@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { createApiResponse, createApiError } from '@/lib/supabase/types';
 import { v4 as uuidv4 } from 'uuid';
 import { GESTATION_PERIODS, calculateExpectedDueDate } from '@/lib/breeding-constants';
@@ -40,22 +40,29 @@ export async function GET(request: NextRequest) {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: records, error } = await query as { data: any[] | null; error: any };
+      const { data: records, error } = (await query) as { data: any[] | null; error: any };
 
       if (error) {
-        return NextResponse.json(createApiError('Failed to fetch breeding records', 'FETCH_ERROR'), { status: 500 });
+        return NextResponse.json(
+          createApiError('Failed to fetch breeding records', 'FETCH_ERROR'),
+          { status: 500 }
+        );
       }
 
       // Transform to camelCase for frontend with days remaining calculation
       const now = new Date();
-      const transformedRecords = (records || []).map((record) => {
-        const expectedDueDate = record.expected_due_date ? new Date(record.expected_due_date) : null;
+      const transformedRecords = (records || []).map(record => {
+        const expectedDueDate = record.expected_due_date
+          ? new Date(record.expected_due_date)
+          : null;
         const daysRemaining = expectedDueDate
           ? Math.ceil((expectedDueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
           : null;
         const breedingDate = new Date(record.breeding_date);
         const gestationDays = record.gestation_days || 283;
-        const daysPassed = Math.floor((now.getTime() - breedingDate.getTime()) / (1000 * 60 * 60 * 24));
+        const daysPassed = Math.floor(
+          (now.getTime() - breedingDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
         const progressPercent = Math.min(100, Math.max(0, (daysPassed / gestationDays) * 100));
 
         return {
@@ -116,7 +123,7 @@ export async function POST(request: NextRequest) {
         semenSource,
         inseminationTechnician,
         expectedDueDate,
-        notes
+        notes,
       } = body;
 
       // Validation
@@ -148,10 +155,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (animalError || !animal) {
-        return NextResponse.json(
-          { success: false, error: 'Animal not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
       }
 
       const species = animal.species as AnimalSpecies;
@@ -171,12 +175,13 @@ export async function POST(request: NextRequest) {
         id: recordId,
         tenant_id: context.tenantId,
         animal_id: animalId,
-        sire_id: breedingMethod === 'natural' ? (sireId || null) : null,
+        sire_id: breedingMethod === 'natural' ? sireId || null : null,
         breeding_date: breedingDateObj.toISOString(),
         breeding_method: breedingMethod,
-        semen_straw_id: breedingMethod === 'artificial_insemination' ? (semenStrawId || null) : null,
-        semen_source: breedingMethod === 'artificial_insemination' ? (semenSource || null) : null,
-        insemination_technician: breedingMethod === 'artificial_insemination' ? (inseminationTechnician || null) : null,
+        semen_straw_id: breedingMethod === 'artificial_insemination' ? semenStrawId || null : null,
+        semen_source: breedingMethod === 'artificial_insemination' ? semenSource || null : null,
+        insemination_technician:
+          breedingMethod === 'artificial_insemination' ? inseminationTechnician || null : null,
         species: species,
         gestation_days: gestationDays,
         expected_due_date: calculatedDueDate.toISOString(),
@@ -198,7 +203,9 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error) {
-        logger.error('Database error creating breeding record', error, { tenantId: context.tenantId });
+        logger.error('Database error creating breeding record', error, {
+          tenantId: context.tenantId,
+        });
         return NextResponse.json(
           { success: false, error: 'Failed to create breeding record', details: error.message },
           { status: 500 }

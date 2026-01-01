@@ -1,6 +1,6 @@
 // Dual-Write API Wrapper for Zero-Downtime Migration
 // Writes to both Firebase and Supabase during transition period
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { FeatureFlagManager, getFeatureFlagsForRequest } from '@/lib/feature-flags/manager';
 import { MIGRATION_PHASES } from '@/lib/feature-flags/manager';
@@ -76,8 +76,7 @@ export class DualWriteAPI {
         },
         created_at: new Date().toISOString(),
       });
-    } catch (logError) {
-    }
+    } catch (logError) {}
   }
   // Milk Records Dual Write with Proper Failure Handling
   async createMilkRecord(request: Request, data: any): Promise<DualWriteResult> {
@@ -109,7 +108,7 @@ export class DualWriteAPI {
       if (flags.writeToFirebase || flags.enableDualWrite) {
         try {
           const firebaseData = this.transformMilkRecordForFirebase(data);
-          const docRef = await adminDb
+          const docRef = await adminDb!
             .collection('tenants')
             .doc('global')
             .collection('milkLogs')
@@ -178,7 +177,7 @@ export class DualWriteAPI {
       if (flags.writeToFirebase || flags.enableDualWrite) {
         try {
           const firebaseData = this.transformHealthRecordForFirebase(data);
-          const docRef = await adminDb
+          const docRef = await adminDb!
             .collection('tenants')
             .doc('global')
             .collection('healthRecords')
@@ -313,7 +312,7 @@ export class DualWriteAPI {
       .range(query.offset || 0, (query.offset || 0) + (query.limit || 30) - 1);
   }
   private async getMilkRecordsFromFirebase(query: any): Promise<any> {
-    const collectionRef = adminDb.collection('tenants').doc('global').collection('milkLogs');
+    const collectionRef = adminDb!.collection('tenants').doc('global').collection('milkLogs');
     let firebaseQuery = collectionRef.where('tenantId', '==', query.tenantId);
     if (query.animalId) {
       firebaseQuery = firebaseQuery.where('animalId', '==', query.animalId);
@@ -350,7 +349,7 @@ export class DualWriteAPI {
       .range(query.offset || 0, (query.offset || 0) + (query.limit || 30) - 1);
   }
   private async getHealthRecordsFromFirebase(query: any): Promise<any> {
-    const collectionRef = adminDb.collection('tenants').doc('global').collection('healthRecords');
+    const collectionRef = adminDb!.collection('tenants').doc('global').collection('healthRecords');
     let firebaseQuery = collectionRef.where('tenantId', '==', query.tenantId);
     if (query.animalId) {
       firebaseQuery = firebaseQuery.where('animalId', '==', query.animalId);
@@ -389,7 +388,7 @@ export class DualWriteAPI {
     // Get data counts for integrity check
     const [supabaseCount, firebaseCount] = await Promise.all([
       this.supabase.from('milk_logs').select('*', { count: 'exact', head: true }),
-      adminDb.collection('tenants').doc('global').collection('milkLogs').count().get(),
+      adminDb!.collection('tenants').doc('global').collection('milkLogs').count().get(),
     ]);
     const discrepancy = Math.abs((supabaseCount.count || 0) - firebaseCount.data().count);
     // Determine current phase
@@ -417,20 +416,18 @@ export class DualWriteAPI {
       if (result.supabaseResult && result.supabaseResult.id) {
         await this.supabase.from('milk_logs').delete().eq('id', result.supabaseResult.id);
       }
-    } catch (rollbackError) {
-    }
+    } catch (rollbackError) {}
     try {
       // Rollback Firebase if it succeeded
       if (result.firebaseResult && result.firebaseResult.id) {
-        await adminDb
+        await adminDb!
           .collection('tenants')
           .doc('global')
           .collection('milkLogs')
           .doc(result.firebaseResult.id)
           .delete();
       }
-    } catch (rollbackError) {
-    }
+    } catch (rollbackError) {}
   }
   private async rollbackHealthRecord(result: DualWriteResult, data: any): Promise<void> {
     try {
@@ -438,20 +435,18 @@ export class DualWriteAPI {
       if (result.supabaseResult && result.supabaseResult.id) {
         await this.supabase.from('health_records').delete().eq('id', result.supabaseResult.id);
       }
-    } catch (rollbackError) {
-    }
+    } catch (rollbackError) {}
     try {
       // Rollback Firebase if it succeeded
       if (result.firebaseResult && result.firebaseResult.id) {
-        await adminDb
+        await adminDb!
           .collection('tenants')
           .doc('global')
           .collection('healthRecords')
           .doc(result.firebaseResult.id)
           .delete();
       }
-    } catch (rollbackError) {
-    }
+    } catch (rollbackError) {}
   }
   // Data Reconciliation System
   async performDataReconciliation(): Promise<{
@@ -486,7 +481,7 @@ export class DualWriteAPI {
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId);
           // Count records in Firebase
-          const firebaseSnapshot = await adminDb
+          const firebaseSnapshot = await adminDb!
             .collection('tenants')
             .doc('global')
             .collection(table.firebaseCollection)
@@ -505,8 +500,7 @@ export class DualWriteAPI {
             });
           }
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }
     const totalDiscrepancies = discrepancies.length;
     let reconciliationStatus: 'PASSED' | 'FAILED' | 'WARNING' = 'PASSED';
@@ -553,10 +547,10 @@ export class DualWriteAPI {
       .eq('tenant_id', tenantId);
     if (!supabaseRecords) return;
     const firebaseCollection = this.getFirebaseCollection(table);
-    const batch = adminDb.batch();
+    const batch = adminDb!.batch();
     for (const record of supabaseRecords) {
       const firebaseData = this.transformToFirebase(record, table);
-      const docRef = adminDb
+      const docRef = adminDb!
         .collection('tenants')
         .doc('global')
         .collection(firebaseCollection)
@@ -567,7 +561,7 @@ export class DualWriteAPI {
   }
   private async syncFirebaseToSupabase(table: string, tenantId: string): Promise<void> {
     const firebaseCollection = this.getFirebaseCollection(table);
-    const firebaseSnapshot = await adminDb
+    const firebaseSnapshot = await adminDb!
       .collection('tenants')
       .doc('global')
       .collection(firebaseCollection)

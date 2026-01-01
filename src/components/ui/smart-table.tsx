@@ -112,20 +112,20 @@ export function SmartTable<T extends Record<string, any>>({
     <div className={cn('w-full space-y-4', className)}>
       {/* Search and Filters */}
       {(search || actions) && (
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className='flex flex-col items-center justify-between gap-4 sm:flex-row'>
           {search && (
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <div className='relative max-w-sm flex-1'>
+              <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
               <Input
                 placeholder={search.placeholder}
-                onChange={(e) => search.onSearch(e.target.value)}
-                className="pl-10"
+                onChange={e => search.onSearch(e.target.value)}
+                className='pl-10'
               />
             </div>
           )}
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4 mr-2" />
+          <div className='flex gap-2'>
+            <Button variant='outline' size='sm'>
+              <Filter className='mr-2 h-4 w-4' />
               Filters
             </Button>
           </div>
@@ -133,104 +133,96 @@ export function SmartTable<T extends Record<string, any>>({
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-white/5 backdrop-blur-xl border-white/10 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className='overflow-hidden rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl'>
+        <div className='overflow-x-auto'>
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-white/5">
-                {columns.map((column) => (
+              <TableRow className='border-white/10 hover:bg-white/5'>
+                {columns.map(column => (
                   <TableHead
                     key={String(column.key)}
                     className={cn(
-                      'text-white/80 font-semibold',
+                      'font-semibold text-white/80',
                       column.sortable && 'cursor-pointer hover:text-white',
                       column.width
                     )}
                     onClick={() => column.sortable && handleSort(column.key)}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className='flex items-center gap-2'>
                       {column.title}
-                      {column.sortable && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
+                      {column.sortable && <ArrowUpDown className='h-4 w-4' />}
                     </div>
                   </TableHead>
                 ))}
                 {actions && (
-                  <TableHead className="text-white/80 font-semibold w-20">
-                    Actions
-                  </TableHead>
+                  <TableHead className='w-20 font-semibold text-white/80'>Actions</TableHead>
                 )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                Array.from({ length: 10 }).map((_, index) => (
-                  <TableRow key={index} className="border-white/5">
-                    {columns.map((_, colIndex) => (
-                      <TableCell key={colIndex}>
-                        <div className="h-4 bg-white/10 rounded animate-pulse" />
-                      </TableCell>
-                    ))}
-                    {actions && (
-                      <TableCell>
-                        <div className="h-8 bg-white/10 rounded animate-pulse" />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              ) : (
-                visibleData.map((row, index) => (
-                  <TableRow
-                    key={row.id || index}
-                    className="border-white/5 hover:bg-white/5 transition-colors"
-                  >
-                    {columns.map((column) => (
-                      <TableCell key={String(column.key)} className="text-white/90">
-                        {column.render
-                          ? column.render(row[column.key], row)
-                          : row[column.key]}
-                      </TableCell>
-                    ))}
-                    {actions && (
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {actions.view && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => actions.view!(row)}
-                              className="text-white/60 hover:text-white hover:bg-white/10"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {actions.edit && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => actions.edit!(row)}
-                              className="text-white/60 hover:text-white hover:bg-white/10"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {actions.delete && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => actions.delete!(row)}
-                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
+              {loading
+                ? Array.from({ length: 10 }).map((_, index) => (
+                    <TableRow key={index} className='border-white/5'>
+                      {columns.map((_, colIndex) => (
+                        <TableCell key={colIndex}>
+                          <div className='h-4 animate-pulse rounded bg-white/10' />
+                        </TableCell>
+                      ))}
+                      {actions && (
+                        <TableCell>
+                          <div className='h-8 animate-pulse rounded bg-white/10' />
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                : visibleData.map((row, index) => (
+                    <TableRow
+                      key={row.id || index}
+                      className='border-white/5 transition-colors hover:bg-white/5'
+                    >
+                      {columns.map(column => (
+                        <TableCell key={String(column.key)} className='text-white/90'>
+                          {column.render ? column.render(row[column.key], row) : row[column.key]}
+                        </TableCell>
+                      ))}
+                      {actions && (
+                        <TableCell>
+                          <div className='flex gap-1'>
+                            {actions.view && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => actions.view!(row)}
+                                className='text-white/60 hover:bg-white/10 hover:text-white'
+                              >
+                                <Eye className='h-4 w-4' />
+                              </Button>
+                            )}
+                            {actions.edit && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => actions.edit!(row)}
+                                className='text-white/60 hover:bg-white/10 hover:text-white'
+                              >
+                                <Edit className='h-4 w-4' />
+                              </Button>
+                            )}
+                            {actions.delete && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => actions.delete!(row)}
+                                className='text-red-400 hover:bg-red-500/10 hover:text-red-300'
+                              >
+                                <Trash2 className='h-4 w-4' />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         </div>
@@ -238,32 +230,32 @@ export function SmartTable<T extends Record<string, any>>({
 
       {/* Pagination */}
       {pagination && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-white/60">
-            Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-            {pagination.total} results
+        <div className='flex items-center justify-between'>
+          <p className='text-sm text-white/60'>
+            Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}{' '}
+            results
           </p>
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               disabled={pagination.page === 1}
-              className="border-white/20 text-white hover:bg-white/10"
+              className='border-white/20 text-white hover:bg-white/10'
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className='h-4 w-4' />
               Previous
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={pagination.page * pagination.limit >= pagination.total}
-              className="border-white/20 text-white hover:bg-white/10"
+              className='border-white/20 text-white hover:bg-white/10'
             >
               Next
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className='h-4 w-4' />
             </Button>
           </div>
         </div>
@@ -275,15 +267,15 @@ export function SmartTable<T extends Record<string, any>>({
 // Skeleton loader for table
 export function TableSkeleton({ rows = 10, columns = 5 }: { rows?: number; columns?: number }) {
   return (
-    <div className="space-y-4">
-      <div className="h-8 bg-white/10 rounded w-1/4 animate-pulse" />
-      <div className="rounded-lg border border-white/10 overflow-hidden">
-        <div className="space-y-2 p-4">
+    <div className='space-y-4'>
+      <div className='h-8 w-1/4 animate-pulse rounded bg-white/10' />
+      <div className='overflow-hidden rounded-lg border border-white/10'>
+        <div className='space-y-2 p-4'>
           {Array.from({ length: rows }).map((_, index) => (
-            <div key={index} className="flex gap-4">
+            <div key={index} className='flex gap-4'>
               {Array.from({ length: columns }).map((_, colIndex) => (
-                <div key={colIndex} className="flex-1">
-                  <div className="h-4 bg-white/10 rounded animate-pulse" />
+                <div key={colIndex} className='flex-1'>
+                  <div className='h-4 animate-pulse rounded bg-white/10' />
                 </div>
               ))}
             </div>

@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       // For now, we'll initialize without email and update later
       await initializeTenant(orgId, orgSlug, ownerId, 'owner@example.com');
       // Create user records for the organization owner
-      const { getDrizzle } = await import('@/lib/supabase');
+      const { getDrizzle } = await import('@/lib/supabase/server');
       const { platformUsers, tenantMembers } = await import('@/db/schema');
       const { eq } = await import('drizzle-orm');
       const db = getDrizzle();
@@ -61,19 +61,18 @@ export async function POST(request: Request) {
         await db.insert(platformUsers).values({
           id: ownerId,
           email: 'owner@example.com', // Will be updated by user.created webhook
-          firstName: 'Farm',
-          lastName: 'Owner',
+          name: 'Farm Owner',
           platformRole: 'user',
           createdAt: new Date(),
           updatedAt: new Date(),
         });
       }
       // Create tenant member record for the owner
+      const { and } = await import('drizzle-orm');
       const existingMember = await db
         .select()
         .from(tenantMembers)
-        .where(eq(tenantMembers.userId, ownerId))
-        .where(eq(tenantMembers.tenantId, orgId))
+        .where(and(eq(tenantMembers.userId, ownerId), eq(tenantMembers.tenantId, orgId)))
         .limit(1);
       if (existingMember.length === 0) {
         await db.insert(tenantMembers).values({
@@ -99,13 +98,12 @@ export async function POST(request: Request) {
       // Optionally: Archive tenant data instead of deleting
       // For now, we'll just log it
       // Archive tenant in Supabase
-      const { getDrizzle } = await import('@/lib/supabase');
+      const { getDrizzle } = await import('@/lib/supabase/server');
       const { tenants } = await import('@/db/schema');
       const { eq } = await import('drizzle-orm');
       const db = getDrizzle();
       await db.update(tenants).set({ deletedAt: new Date() }).where(eq(tenants.id, orgId));
-    } catch (error) {
-    }
+    } catch (error) {}
   }
   return NextResponse.json({ received: true });
 }

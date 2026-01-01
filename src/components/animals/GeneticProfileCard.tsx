@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
-  DNA,
+  Dna,
   TrendingUp,
   Award,
   AlertCircle,
@@ -68,7 +68,7 @@ export function GeneticProfileCard({ geneticProfile, className }: GeneticProfile
         <CardHeader>
           <div className='flex items-center justify-between'>
             <CardTitle className='flex items-center text-lg'>
-              <DNA className='mr-2 h-5 w-5' />
+              <Dna className='mr-2 h-5 w-5' />
               Genetic Profile
             </CardTitle>
             <Badge className={getScoreBadgeColor(geneticProfile.geneticValueIndex)}>

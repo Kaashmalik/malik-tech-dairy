@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase';
+import { getDrizzle } from '@/lib/supabase/server';
 import { feedingSchedules, animals, feedingSchedulesRelations } from '@/db/schema';
 import { eq, and, or, isNull, ilike, desc, gte, lte, sql, SQL } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
