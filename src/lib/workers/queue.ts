@@ -39,7 +39,7 @@ export const QUEUE_NAMES = {
 // Mock queue type for when Redis is not configured
 interface MockQueue {
   name: string;
-  add: (name: string, data: unknown) => Promise<{ id: string }>;
+  add: (name: string, data: unknown, options?: unknown) => Promise<{ id: string }>;
   getJob: (id: string) => Promise<null>;
   getJobs: () => Promise<never[]>;
   close: () => Promise<void>;
@@ -53,7 +53,7 @@ interface MockQueueEvents {
 // Mock queue for when Redis is not configured or during build
 const createMockQueue = (name: string): MockQueue => ({
   name,
-  add: async () => ({ id: 'mock-job-id' }),
+  add: async (_jobName: string, _data: unknown, _options?: unknown) => ({ id: 'mock-job-id' }),
   getJob: async () => null,
   getJobs: async () => [],
   close: async () => {},
