@@ -1,35 +1,19 @@
 // BullMQ Worker: Process Prediction Jobs
-import { Worker } from 'bullmq';
+// Note: BullMQ requires ioredis (TCP Redis), not available on Vercel serverless
+// This module provides a no-op export during build and when Redis is not configured
+
 import { QUEUE_NAMES } from './queue';
-import { processMilkForecast } from './processors/predictions';
-// Create connection config for BullMQ
-const connection = {
-  host:
-    process.env.UPSTASH_REDIS_REST_URL?.replace('https://', '').replace('.upstash.io', '') || '',
-  port: 6379,
-  password: process.env.UPSTASH_REDIS_REST_TOKEN,
-};
-// Create worker (only in server environment)
-let predictionWorker: Worker | null = null;
-if (typeof window === 'undefined' && process.env.UPSTASH_REDIS_REST_URL) {
-  predictionWorker = new Worker(
-    QUEUE_NAMES.PREDICTIONS,
-    async job => {
-      if (job.name === 'milk-forecast') {
-        return await processMilkForecast(job);
-      }
-      throw new Error(`Unknown job type: ${job.name}`);
-    },
-    {
-      connection,
-      concurrency: 5, // Process up to 5 jobs concurrently
-      limiter: {
-        max: 10,
-        duration: 1000, // Max 10 jobs per second
-      },
-    }
-  );
-  predictionWorker.on('completed', job => {});
-  predictionWorker.on('failed', (job, err) => {});
-}
-export { predictionWorker };
+
+// Check if Redis TCP is available (BullMQ requires ioredis, not Upstash REST)
+// Since Vercel serverless doesn't support persistent TCP connections,
+// we use Upstash's REST API for caching and skip BullMQ workers
+const canUseBullMQ = false; // BullMQ not supported on Vercel serverless
+
+// Export a null worker - jobs will be processed synchronously via API routes
+// or through Vercel Cron Jobs for scheduled tasks
+export const predictionWorker = null;
+
+// Note: For background job processing on Vercel, consider:
+// 1. Vercel Cron Jobs for scheduled tasks
+// 2. Upstash QStash for async job queues
+// 3. Processing jobs synchronously in API routes

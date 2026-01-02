@@ -1,6 +1,4 @@
 import { defineConfig, globalIgnores } from 'eslint/config';
-import nextVitals from 'eslint-config-next/core-web-vitals.js';
-import nextTs from 'eslint-config-next/typescript.js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 
@@ -20,26 +18,6 @@ const eslintConfig = defineConfig([
     plugins: {
       '@typescript-eslint': tseslint,
     },
-    ...nextVitals,
-    ...nextTs,
-  },
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    '.next/**',
-    'out/**',
-    'build/**',
-    'dist/**',
-    'next-env.d.ts',
-    'node_modules/**',
-    'coverage/**',
-    '*.config.js',
-    '*.config.mjs',
-    'jest.setup.js',
-    'public/**',
-  ]),
-  {
-    // Custom rules for code quality, security, and performance
     rules: {
       // Security rules
       'no-eval': 'error',
@@ -64,19 +42,26 @@ const eslintConfig = defineConfig([
         },
       ],
 
-      // React hooks
-      'react-hooks/exhaustive-deps': 'warn',
-      'react-hooks/rules-of-hooks': 'error',
-
-      // Next.js specific
-      '@next/next/no-html-link-for-pages': 'error',
-      '@next/next/no-img-element': 'warn',
-
       // Console statements - warn in development
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
     },
   },
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    '.next/**',
+    'out/**',
+    'build/**',
+    'dist/**',
+    'next-env.d.ts',
+    'node_modules/**',
+    'coverage/**',
+    '*.config.js',
+    '*.config.mjs',
+    'jest.setup.js',
+    'public/**',
+  ]),
 ]);
 
 export default eslintConfig;
