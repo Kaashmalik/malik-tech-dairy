@@ -20,7 +20,7 @@ const updateAssetSchema = z.object({
 // GET /api/assets/[id] - Get a single asset
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { userId } = await auth();
@@ -33,11 +33,12 @@ export async function GET(
             return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
         }
 
+        const { id } = await params;
         const supabase = getSupabaseClient();
         const { data: asset, error } = await supabase
             .from('assets')
             .select('*')
-            .eq('id', params.id)
+            .eq('id', id)
             .eq('tenant_id', tenantContext.tenantId)
             .single();
 
@@ -76,7 +77,7 @@ export async function GET(
 // PUT /api/assets/[id] - Update an asset
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { userId } = await auth();
@@ -92,6 +93,7 @@ export async function PUT(
         const body = await request.json();
         const validatedData = updateAssetSchema.parse(body);
 
+        const { id } = await params;
         const supabase = getSupabaseClient();
 
         // Prepare update data (convert camelCase to snake_case if necessary, but here we manually map)
@@ -109,7 +111,7 @@ export async function PUT(
         const { data: updatedAsset, error } = await supabase
             .from('assets')
             .update(updateData)
-            .eq('id', params.id)
+            .eq('id', id)
             .eq('tenant_id', tenantContext.tenantId)
             .select()
             .single();
@@ -157,7 +159,7 @@ export async function PUT(
 // DELETE /api/assets/[id] - Delete an asset
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { userId } = await auth();
@@ -170,11 +172,12 @@ export async function DELETE(
             return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
         }
 
+        const { id } = await params;
         const supabase = getSupabaseClient();
         const { error } = await supabase
             .from('assets')
             .delete()
-            .eq('id', params.id)
+            .eq('id', id)
             .eq('tenant_id', tenantContext.tenantId);
 
         if (error) {
