@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { useSearchParams } from 'next/navigation';
 import { usePostHogAnalytics } from '@/hooks/usePostHog';
+import { toast } from 'sonner';
 import type { SubscriptionPlan } from '@/types';
 
 export default function SubscriptionPage() {
@@ -28,6 +29,15 @@ export default function SubscriptionPage() {
   // Track subscription upgrade on success
   useEffect(() => {
     const success = searchParams?.get('success');
+    const paymentPending = searchParams?.get('payment_pending');
+
+    if (paymentPending === 'true') {
+      toast.success('Order placed successfully!', {
+        description:
+          'Please transfer the amount to the bank details provided. Your subscription will be active once approved.',
+      });
+    }
+
     if (success === 'true' && subscription) {
       // Get previous plan from localStorage or default to free
       const previousPlan = localStorage.getItem('previous_plan') || 'free';
@@ -94,7 +104,7 @@ export default function SubscriptionPage() {
             </div>
             {currentPlan !== 'free' && (
               <div className='mt-4 flex gap-2'>
-                <Link href='/dashboard/subscription/checkout?plan=professional'>
+                <Link href='/subscription/checkout?plan=professional'>
                   <Button variant='outline'>Upgrade</Button>
                 </Link>
                 <Button

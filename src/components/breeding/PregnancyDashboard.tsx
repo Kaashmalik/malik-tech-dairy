@@ -104,14 +104,61 @@ export function PregnancyDashboard() {
       return res.json();
     },
     refetchInterval: 60000, // Auto-refresh every minute
+    staleTime: 60000,
   });
 
   const dashboardData = data?.data;
 
   if (isLoading) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-emerald-500'></div>
+      <div className='space-y-6'>
+        {/* Skeleton Summary Stats */}
+        <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+          {[1, 2, 3, 4].map(i => (
+            <Card key={i}>
+              <CardContent className='pt-4'>
+                <div className='flex items-center justify-between'>
+                  <div className='space-y-2'>
+                    <div className='h-8 w-12 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                    <div className='h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  </div>
+                  <div className='h-10 w-10 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Skeleton Tabs */}
+        <div className='h-10 w-full max-w-md animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+
+        {/* Skeleton Cards Grid */}
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <Card key={i} className='h-48'>
+              <CardContent className='space-y-4 p-4'>
+                <div className='flex justify-between'>
+                  <div className='space-y-2'>
+                    <div className='h-5 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                    <div className='h-3 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  </div>
+                  <div className='h-6 w-16 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800' />
+                </div>
+                <div className='space-y-2'>
+                  <div className='h-2 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div className='flex justify-between'>
+                    <div className='h-3 w-8 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                    <div className='h-3 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  </div>
+                </div>
+                <div className='grid grid-cols-2 gap-2'>
+                  <div className='h-3 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div className='h-3 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }

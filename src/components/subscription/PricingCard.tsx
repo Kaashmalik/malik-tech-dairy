@@ -61,7 +61,7 @@ export function PricingCard({ plan, currentPlan, onSelect }: PricingCardProps) {
             Already on Free Plan
           </Button>
         ) : (
-          <Link href={`/dashboard/subscription/checkout?plan=${plan}`}>
+          <Link href={`/subscription/checkout?plan=${plan}`}>
             <Button className='w-full' onClick={() => onSelect?.(plan)}>
               {currentPlan ? 'Upgrade' : 'Subscribe'}
             </Button>

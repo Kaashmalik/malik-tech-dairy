@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       const endDate = searchParams.get('endDate');
       let query = supabase
         .from('milk_logs')
-        .select('*')
+        .select('*, animals(tag, name)')
         .eq('tenant_id', context.tenantId)
         .order('date', { ascending: false })
         .order('session', { ascending: false })

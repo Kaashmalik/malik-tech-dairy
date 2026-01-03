@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { getTenantContext } from '@/lib/tenant/context';
 import { z } from 'zod';
+import { AnimalSpecies } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,18 +42,12 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
-      return NextResponse.json(
-        { success: false, error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -124,10 +119,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching animals:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -136,22 +128,46 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
-      return NextResponse.json(
-        { success: false, error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
 
     const body = await request.json();
     const validatedData = createAnimalSchema.parse(body);
+
+    // Enforce Subscription Limits
+    const { SubscriptionService } = await import('@/lib/subscriptions/management');
+    const subscriptionService = new SubscriptionService(tenantContext.tenantId);
+
+    // Check main animal limit
+    const allowed = await subscriptionService.checkLimit('animals');
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Plan limit reached. Please upgrade to add more animals.',
+        },
+        { status: 403 }
+      );
+    }
+
+    // Check species restriction
+    const speciesAllowed = await subscriptionService.isSpeciesAllowed(
+      validatedData.species as AnimalSpecies
+    );
+    if (!speciesAllowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `The species '${validatedData.species}' is not available on your current plan.`,
+        },
+        { status: 403 }
+      );
+    }
 
     const supabase = getSupabaseClient();
 
@@ -234,9 +250,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Error creating animal:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

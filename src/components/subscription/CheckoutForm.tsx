@@ -34,7 +34,8 @@ export function CheckoutForm() {
   } | null>(null);
 
   const planDetails = SUBSCRIPTION_PLANS[plan];
-  const [selectedGateway, setSelectedGateway] = useState<PaymentGateway>('xpay');
+  const [selectedGateway, setSelectedGateway] = useState<PaymentGateway>('bank_transfer');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   const {
     register,
@@ -42,7 +43,7 @@ export function CheckoutForm() {
     formState: { errors },
   } = useForm<CheckoutFormData>({
     defaultValues: {
-      gateway: 'xpay',
+      gateway: 'bank_transfer',
     },
   });
 
@@ -97,6 +98,26 @@ export function CheckoutForm() {
 
     try {
       const finalAmount = couponResult?.finalAmount || planDetails.price;
+      let proofUrl = undefined;
+
+      // Upload receipt if manual payment
+      if (['bank_transfer', 'jazzcash', 'easypaisa'].includes(selectedGateway) && receiptFile) {
+        const formData = new FormData();
+        formData.append('file', receiptFile);
+        formData.append('type', 'payment-slip');
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload receipt');
+        }
+
+        const uploadData = await uploadRes.json();
+        proofUrl = uploadData.url;
+      }
 
       const res = await fetch('/api/payments/checkout', {
         method: 'POST',
@@ -105,6 +126,7 @@ export function CheckoutForm() {
           plan,
           gateway: selectedGateway,
           couponCode: couponCode || undefined,
+          proofUrl, // Send proof URL
         }),
       });
 
@@ -206,16 +228,18 @@ export function CheckoutForm() {
           {/* Payment Gateway Selection */}
           <div>
             <Label>Payment Method *</Label>
-            <div className='mt-2 grid gap-4 md:grid-cols-3'>
+            <div className='mt-2 grid gap-4 md:grid-cols-2'>
               <button
                 type='button'
-                onClick={() => setSelectedGateway('xpay')}
+                onClick={() => setSelectedGateway('bank_transfer')}
                 className={`rounded-lg border p-4 text-left transition-colors ${
-                  selectedGateway === 'xpay' ? 'border-primary bg-primary/5' : 'hover:bg-accent'
+                  selectedGateway === 'bank_transfer'
+                    ? 'border-primary bg-primary/5'
+                    : 'hover:bg-accent'
                 }`}
               >
-                <div className='font-medium'>XPay (Bank Alfalah)</div>
-                <div className='text-muted-foreground text-sm'>Recommended</div>
+                <div className='font-medium'>Bank Transfer (Meezan)</div>
+                <div className='text-muted-foreground text-sm'>Manual Transfer</div>
               </button>
               <button
                 type='button'
@@ -224,27 +248,79 @@ export function CheckoutForm() {
                   selectedGateway === 'jazzcash' ? 'border-primary bg-primary/5' : 'hover:bg-accent'
                 }`}
               >
-                <div className='font-medium'>JazzCash</div>
-                <div className='text-muted-foreground text-sm'>Mobile Wallet</div>
+                <div className='font-medium'>JazzCash / EasyPaisa / Raast</div>
+                <div className='text-muted-foreground text-sm'>Mobile Wallets</div>
               </button>
-              <button
-                type='button'
-                onClick={() => setSelectedGateway('easypaisa')}
-                className={`rounded-lg border p-4 text-left transition-colors ${
-                  selectedGateway === 'easypaisa'
-                    ? 'border-primary bg-primary/5'
-                    : 'hover:bg-accent'
-                }`}
-              >
-                <div className='font-medium'>EasyPaisa</div>
-                <div className='text-muted-foreground text-sm'>Mobile Wallet</div>
-              </button>
+            </div>
+
+            {/* Bank Details Display */}
+            <div className='bg-muted/50 mt-4 rounded-lg p-4 text-sm'>
+              {selectedGateway === 'bank_transfer' && (
+                <div className='space-y-2'>
+                  <p className='text-primary font-semibold'>Meezan Bank Details:</p>
+                  <div className='grid grid-cols-[100px_1fr] gap-1'>
+                    <span className='text-muted-foreground'>Title:</span>
+                    <span className='font-medium'>MUHAMMAD KASHIF</span>
+                    <span className='text-muted-foreground'>Account:</span>
+                    <span className='font-medium'>11330109676650</span>
+                    <span className='text-muted-foreground'>IBAN:</span>
+                    <span className='font-mono font-medium'>PK26MEZN0011330109676650</span>
+                    <span className='text-muted-foreground'>Branch:</span>
+                    <span>BHUBTIAN BRANCH LHR</span>
+                  </div>
+                  <p className='text-muted-foreground mt-2 text-xs'>
+                    Please send the screenshot of your payment to support or upload here (Coming
+                    Soon).
+                  </p>
+                </div>
+              )}
+
+              {selectedGateway === 'jazzcash' && (
+                <div className='space-y-4'>
+                  <div>
+                    <p className='text-primary mb-1 font-semibold'>JazzCash / EasyPaisa:</p>
+                    <div className='grid grid-cols-[100px_1fr] gap-1'>
+                      <span className='text-muted-foreground'>Title:</span>
+                      <span className='font-medium'>Muhammad Kashif</span>
+                      <span className='text-muted-foreground'>Number:</span>
+                      <span className='font-mono font-medium'>0302 0718182</span>
+                    </div>
+                  </div>
+
+                  <div className='border-t pt-2'>
+                    <p className='text-primary mb-1 font-semibold'>Raast ID:</p>
+                    <p className='font-mono font-medium'>03020718182</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Receipt Upload for Manual Payments */}
+          {['bank_transfer', 'jazzcash', 'easypaisa'].includes(selectedGateway) && (
+            <div className='space-y-2'>
+              <Label>Payment Receipt (Screenshot)</Label>
+              <Input
+                type='file'
+                accept='image/*,application/pdf'
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) setReceiptFile(file);
+                }}
+              />
+              <p className='text-muted-foreground text-xs'>
+                Please upload a screenshot of your payment transaction.
+              </p>
+            </div>
+          )}
+
           <div className='flex gap-4'>
             <Button type='submit' disabled={isSubmitting} className='flex-1'>
-              {isSubmitting ? 'Processing...' : `Pay PKR ${finalAmount.toLocaleString()}`}
+              {isSubmitting
+                ? 'Processing...'
+                : ['bank_transfer', 'jazzcash', 'easypaisa'].includes(selectedGateway)
+                  ? 'Confirm Payment'
+                  : `Pay PKR ${finalAmount.toLocaleString()}`}
             </Button>
             <Button
               type='button'

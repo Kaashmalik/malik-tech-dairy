@@ -3,6 +3,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import * as schema from '@/db/schema';
 
 import { Database } from '@/types/database';
 
@@ -42,7 +43,7 @@ export function getSupabasePool() {
  */
 export function getDrizzle() {
   const pool = getSupabasePool();
-  return drizzle(pool);
+  return drizzle(pool, { schema });
 }
 
 /**

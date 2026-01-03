@@ -127,6 +127,12 @@ const nextConfig: NextConfig = {
         poll: 1000,
         aggregateTimeout: 300,
       };
+
+      // Fix for Array buffer allocation failed
+      config.cache = {
+        type: 'filesystem',
+        compression: false,
+      };
     }
     return config;
   },
@@ -147,6 +153,11 @@ if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
     hideSourceMaps: true,
     disableLogger: true,
   });
+}
+
+// Disable Sentry in development to save memory
+if (process.env.NODE_ENV === 'development') {
+  exportedConfig = withNextIntl(nextConfig);
 }
 
 export default exportedConfig;

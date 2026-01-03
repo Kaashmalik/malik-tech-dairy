@@ -79,6 +79,7 @@ export function BreedingList() {
       if (!res.ok) throw new Error('Failed to fetch breeding records');
       return res.json();
     },
+    staleTime: 60000,
   });
 
   const { data: animalsData } = useQuery<{ animals: Animal[] }>({
@@ -89,6 +90,7 @@ export function BreedingList() {
       const response = await res.json();
       return response.data;
     },
+    staleTime: 60000,
   });
 
   const deleteMutation = useMutation({
@@ -154,8 +156,53 @@ export function BreedingList() {
 
   if (breedingLoading) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-emerald-500'></div>
+      <div className='space-y-6'>
+        {/* Skeleton Header */}
+        <div className='flex items-center justify-between'>
+          <div className='space-y-2'>
+            <div className='h-8 w-64 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+            <div className='h-4 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+          </div>
+          <div className='h-10 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+        </div>
+
+        {/* Skeleton Stats */}
+        <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
+          {[1, 2, 3, 4, 5].map(i => (
+            <Card key={i}>
+              <CardContent className='pt-4'>
+                <div className='flex items-center gap-3'>
+                  <div className='h-10 w-10 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800' />
+                  <div className='space-y-1'>
+                    <div className='h-6 w-8 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                    <div className='h-3 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Skeleton Table */}
+        <Card>
+          <CardHeader>
+            <div className='mb-2 h-6 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+            <div className='h-4 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-4'>
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className='flex items-center justify-between border-b py-2'>
+                  <div className='h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div className='h-4 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div className='h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div className='h-4 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div className='h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -4,7 +4,7 @@ import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { ValidationError } from '@/lib/api/errors';
-import { transformFromDb, transformToDb } from '@/lib/utils/transform';
+import { transformFromDb, transformToDb, transformArrayFromDb } from '@/lib/utils/transform';
 import { z } from 'zod';
 export const dynamic = 'force-dynamic';
 // Validation schema
@@ -51,9 +51,7 @@ export async function GET(request: NextRequest) {
         return errorResponse(error);
       }
       // Transform data from snake_case to camelCase
-      const expenses = data
-        ? (Array.isArray(data) ? data : [data]).map((item: any) => transformFromDb(item))
-        : [];
+      const expenses = data ? transformArrayFromDb(data) : [];
       return successResponse(expenses, {
         meta: {
           total: count || 0,

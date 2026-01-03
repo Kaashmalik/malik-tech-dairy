@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse, ValidationError } from '@/lib/api/response';
-import { transformFromDb, transformToDb } from '@/lib/utils/transform';
+import { transformFromDb, transformToDb, transformArrayFromDb } from '@/lib/utils/transform';
 import { z } from 'zod';
 export const dynamic = 'force-dynamic';
 // Validation schema
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         return errorResponse(error);
       }
       // Transform data from snake_case to camelCase
-      const sales = data ? transformFromDb(data) : [];
+      const sales = data ? transformArrayFromDb(data) : [];
       return successResponse(sales, {
         meta: {
           total: count || 0,

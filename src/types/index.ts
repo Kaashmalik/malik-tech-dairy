@@ -34,7 +34,7 @@ export type UserRole = 'owner' | 'manager' | 'vet' | 'worker' | 'viewer';
 
 // Note: Role types are now exported via './roles' at the top of this file
 
-export type PaymentGateway = 'jazzcash' | 'easypaisa' | 'xpay' | 'bank_transfer';
+export type PaymentGateway = 'jazzcash' | 'easypaisa' | 'stripe' | 'xpay' | 'bank_transfer';
 
 export type Language = 'en' | 'ur';
 

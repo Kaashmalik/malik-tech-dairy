@@ -1,52 +1,146 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Cloud, CloudRain, Sun, Wind, Droplets, Thermometer, MapPin } from 'lucide-react';
+import {
+  Cloud,
+  CloudRain,
+  Sun,
+  Wind,
+  Droplets,
+  Thermometer,
+  MapPin,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+
+// WMO Weather interpretation codes (WW)
+const getWeatherIcon = (code: number, className = 'w-6 h-6') => {
+  // Clear sky
+  if (code === 0) return <Sun className={`${className} text-yellow-300`} />;
+  // Mainly clear, partly cloudy, and overcast
+  if (code >= 1 && code <= 3) return <Cloud className={`${className} text-blue-100`} />;
+  // Fog
+  if (code >= 45 && code <= 48) return <Cloud className={`${className} text-gray-300`} />;
+  // Drizzle, Rain, Showers
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82))
+    return <CloudRain className={`${className} text-blue-200`} />;
+  // Snow
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86))
+    return <Cloud className={`${className} text-white`} />;
+  // Thunderstorm
+  if (code >= 95 && code <= 99) return <CloudRain className={`${className} text-purple-200`} />;
+
+  return <Sun className={`${className} text-yellow-300`} />;
+};
+
+const getWeatherCondition = (code: number) => {
+  if (code === 0) return 'Sunny';
+  if (code === 1) return 'Mainly Sunny';
+  if (code === 2) return 'Partly Cloudy';
+  if (code === 3) return 'Overcast';
+  if (code >= 45 && code <= 48) return 'Foggy';
+  if (code >= 51 && code <= 55) return 'Drizzle';
+  if (code >= 56 && code <= 57) return 'Freezing Drizzle';
+  if (code >= 61 && code <= 65) return 'Rain';
+  if (code >= 66 && code <= 67) return 'Freezing Rain';
+  if (code >= 71 && code <= 77) return 'Snow';
+  if (code >= 80 && code <= 82) return 'Rain Showers';
+  if (code >= 85 && code <= 86) return 'Snow Showers';
+  if (code >= 95 && code <= 99) return 'Thunderstorm';
+  return 'Clear';
+};
+
+const getForecastIconName = (code: number) => {
+  if (code === 0) return 'sun';
+  if (code >= 1 && code <= 3) return 'cloud';
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+  return 'partly-cloudy';
+};
 
 export default function ModernWeatherWidget() {
   const [isClient, setIsClient] = useState(false);
-  const [weather] = useState({
-    temp: 28,
-    condition: 'Partly Cloudy',
-    humidity: 65,
-    windSpeed: 12,
-    feelsLike: 30,
-    location: 'Lahore, Pakistan',
-    icon: 'partly-cloudy',
-    forecast: [
-      { day: 'Mon', high: 32, low: 22, icon: 'sun' },
-      { day: 'Tue', high: 30, low: 21, icon: 'cloud' },
-      { day: 'Wed', high: 28, low: 20, icon: 'rain' },
-      { day: 'Thu', high: 31, low: 23, icon: 'partly-cloudy' },
-      { day: 'Fri', high: 33, low: 24, icon: 'sun' },
-    ],
-  });
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  const {
+    data: weather,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['weather-lahore'],
+    queryFn: async () => {
+      // Lahore Coordinates
+      const lat = 31.5497;
+      const long = 74.3436;
+
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch weather data');
+      }
+
+      const data = await response.json();
+
+      // Transform API data to our format
+      const current = data.current;
+      const daily = data.daily;
+
+      // Generate forecast array
+      const forecast = daily.time.slice(1, 6).map((date: string, index: number) => {
+        const d = new Date(date);
+        return {
+          day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+          high: Math.round(daily.temperature_2m_max[index + 1]),
+          low: Math.round(daily.temperature_2m_min[index + 1]),
+          icon: getForecastIconName(daily.weather_code[index + 1]),
+          code: daily.weather_code[index + 1],
+        };
+      });
+
+      return {
+        temp: Math.round(current.temperature_2m),
+        condition: getWeatherCondition(current.weather_code),
+        humidity: current.relative_humidity_2m,
+        windSpeed: Math.round(current.wind_speed_10m),
+        feelsLike: Math.round(current.apparent_temperature),
+        location: 'Lahore, Pakistan',
+        currentCode: current.weather_code, // Store raw code for main icon
+        forecast,
+      };
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    retry: 2,
+  });
+
   if (!isClient) {
     return (
-      <div className='h-[420px] w-full animate-pulse rounded-3xl bg-white/10 backdrop-blur-lg' />
+      <div className='h-full min-h-[420px] w-full animate-pulse rounded-3xl bg-white/10 backdrop-blur-lg' />
     );
   }
 
-  const getWeatherIcon = (icon: string, className = 'w-6 h-6') => {
-    switch (icon) {
-      case 'sun':
-        return <Sun className={`${className} text-yellow-300`} />;
-      case 'cloud':
-        return <Cloud className={`${className} text-blue-100`} />;
-      case 'rain':
-        return <CloudRain className={`${className} text-blue-200`} />;
-      case 'partly-cloudy':
-        return <Cloud className={`${className} text-blue-100`} />;
-      default:
-        return <Sun className={`${className} text-yellow-300`} />;
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className='flex h-full min-h-[420px] w-full items-center justify-center rounded-3xl bg-white/5 backdrop-blur-lg'>
+        <Loader2 className='h-8 w-8 animate-spin text-white/50' />
+      </div>
+    );
+  }
+
+  if (error || !weather) {
+    return (
+      <div className='flex h-full min-h-[420px] w-full flex-col items-center justify-center gap-2 rounded-3xl bg-white/5 p-6 text-center backdrop-blur-lg'>
+        <AlertCircle className='h-8 w-8 text-rose-400' />
+        <p className='text-sm text-white/70'>Weather data unavailable</p>
+        <p className='text-xs text-white/40'>Please check your connection</p>
+      </div>
+    );
+  }
 
   const containerVariants = {
     hidden: { opacity: 0, scale: 0.95 },
@@ -116,17 +210,11 @@ export default function ModernWeatherWidget() {
 
           <motion.div variants={iconFloat} animate='animate' className='relative'>
             {/* Main Icon */}
-            {weather.icon === 'sun' ? (
-              <Sun className='h-24 w-24 text-yellow-300 drop-shadow-[0_0_15px_rgba(253,224,71,0.5)]' />
-            ) : weather.icon === 'rain' ? (
-              <CloudRain className='h-24 w-24 text-blue-200 drop-shadow-lg' />
-            ) : (
-              <Cloud className='h-24 w-24 text-blue-100 drop-shadow-lg' />
-            )}
+            {getWeatherIcon(weather.currentCode, 'h-24 w-24 drop-shadow-lg')}
           </motion.div>
         </motion.div>
 
-        {/* Stats Grid - "No White Box", just nice text/icons */}
+        {/* Stats Grid */}
         <motion.div variants={itemVariants} className='mb-8 grid grid-cols-3 gap-4'>
           <div className='group/stat flex flex-col items-center gap-1'>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-2.5 transition-colors group-hover/stat:bg-white/10'>
@@ -163,11 +251,11 @@ export default function ModernWeatherWidget() {
           className='rounded-2xl border border-white/5 bg-black/10 p-4 backdrop-blur-sm'
         >
           <div className='flex items-center justify-between text-center'>
-            {weather.forecast.map((day, i) => (
+            {weather.forecast.map((day: any, i: number) => (
               <div key={i} className='flex flex-col items-center gap-2'>
                 <span className='text-xs font-medium text-white/60'>{day.day}</span>
                 <div className='my-1 transform transition-transform duration-200 hover:scale-110'>
-                  {getWeatherIcon(day.icon, 'w-5 h-5')}
+                  {getWeatherIcon(day.code, 'w-5 h-5')}
                 </div>
                 <span className='text-sm font-bold'>{day.high}°</span>
               </div>

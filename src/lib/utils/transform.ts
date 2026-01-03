@@ -176,6 +176,10 @@ export interface MilkLogFromDb {
   id: string;
   tenant_id: string;
   animal_id: string;
+  animals?: {
+    tag: string;
+    name: string | null;
+  } | null;
   date: string;
   session: string;
   quantity: number;
@@ -190,6 +194,8 @@ export interface MilkLog {
   id: string;
   tenantId: string;
   animalId: string;
+  animalTag?: string;
+  animalName?: string | null;
   date: string;
   session: string;
   quantity: number;
@@ -205,6 +211,8 @@ export function transformMilkLog(log: MilkLogFromDb): MilkLog {
     id: log.id,
     tenantId: log.tenant_id,
     animalId: log.animal_id,
+    animalTag: log.animals?.tag,
+    animalName: log.animals?.name,
     date: log.date,
     session: log.session,
     quantity: log.quantity,

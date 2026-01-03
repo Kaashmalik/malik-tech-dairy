@@ -182,6 +182,16 @@ export const tenants = pgTable(
     currency: varchar('currency', { length: 3 }).default('PKR'),
     timezone: varchar('timezone', { length: 50 }).default('Asia/Karachi'),
     animalTypes: jsonb('animal_types').$type<string[]>().default(['cow', 'buffalo', 'chicken']),
+    farmLocation: jsonb('farm_location').$type<{
+      latitude: number;
+      longitude: number;
+      city: string;
+      country: string;
+      address: string;
+      timezone: string;
+    }>(),
+    weatherEnabled: boolean('weather_enabled').default(true),
+    weatherUnit: varchar('weather_unit', { length: 10 }).default('metric'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     deletedAt: timestamp('deleted_at'),

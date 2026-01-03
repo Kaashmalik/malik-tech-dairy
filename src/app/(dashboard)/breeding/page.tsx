@@ -14,13 +14,14 @@ export default function BreedingPage() {
   const [activeTab, setActiveTab] = useState('records');
 
   // Fetch pregnancy checks for the checks tab
-  const { data: checksData } = useQuery<{ data: any[] }>({
-    queryKey: ['pregnancy-checks'],
+  const { data: checksData, isLoading: checksLoading } = useQuery<{ data: any[] }>({
+    queryKey: ['breeding', 'pregnancy-checks'],
     queryFn: async () => {
       const res = await fetch('/api/breeding/pregnancy-checks');
       if (!res.ok) throw new Error('Failed to fetch pregnancy checks');
       return res.json();
     },
+    staleTime: 60000, // cache for 1 minute
   });
 
   const checks = checksData?.data || [];
@@ -88,7 +89,19 @@ export default function BreedingPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {checks.length === 0 ? (
+              {checksLoading ? (
+                <div className='space-y-4'>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className='space-y-2 rounded-lg border p-4'>
+                      <div className='flex justify-between'>
+                        <div className='h-5 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                        <div className='h-5 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                      </div>
+                      <div className='h-4 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                    </div>
+                  ))}
+                </div>
+              ) : checks.length === 0 ? (
                 <div className='text-muted-foreground py-12 text-center'>
                   <Stethoscope className='mx-auto mb-4 h-12 w-12 opacity-50' />
                   <p>No pregnancy checks recorded yet</p>

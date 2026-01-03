@@ -20,6 +20,13 @@ export function AnimalList() {
         const res = await fetch('/api/animals');
         if (!res.ok) throw new Error('Failed to fetch animals');
         const response = await res.json();
+
+        // Validate response structure
+        if (!response?.data?.animals || !Array.isArray(response.data.animals)) {
+          console.warn('Unexpected API response structure:', response);
+          return [];
+        }
+
         return response.data.animals as Animal[];
       } catch (error) {
         console.error('Failed to fetch animals:', error);
@@ -28,7 +35,7 @@ export function AnimalList() {
     },
   });
 
-  const animals = data || [];
+  const animals = Array.isArray(data) ? data : [];
   const filteredAnimals = animals.filter(
     animal =>
       animal.tag.toLowerCase().includes(searchQuery.toLowerCase()) ||

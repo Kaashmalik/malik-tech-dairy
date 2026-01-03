@@ -6,7 +6,7 @@ import { createEasyPaisaCheckout } from '@/lib/payments/easypaisa-server';
 import { createXPayCheckout } from '@/lib/payments/xpay-server';
 import { validateCoupon } from '@/lib/coupons/validation';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
-import { adminDb } from '@/lib/firebase/admin';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import type { PaymentGateway, SubscriptionPlan } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 export const dynamic = 'force-dynamic';
@@ -14,13 +14,13 @@ export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       const body = await req.json();
-      const { plan, gateway, couponCode } = body;
+      const { plan, gateway, couponCode, proofUrl } = body;
       // Validate plan
       if (!plan || !SUBSCRIPTION_PLANS[plan as SubscriptionPlan]) {
         return NextResponse.json({ error: 'Invalid subscription plan' }, { status: 400 });
       }
       // Validate gateway
-      const validGateways: PaymentGateway[] = ['jazzcash', 'easypaisa', 'xpay'];
+      const validGateways: PaymentGateway[] = ['jazzcash', 'easypaisa', 'xpay', 'bank_transfer'];
       if (!gateway || !validGateways.includes(gateway)) {
         return NextResponse.json({ error: 'Invalid payment gateway' }, { status: 400 });
       }
@@ -87,24 +87,43 @@ export async function POST(request: NextRequest) {
         };
         const result = createXPayCheckout(config, paymentRequest);
         checkoutUrl = result.checkoutUrl;
+      } else if (gateway === 'bank_transfer') {
+        // For bank transfer, we just create the pending order and redirect to a success/instructions page
+        // Or we could return a URL to a "Upload Receipt" page.
+        // For now, redirect to a "payment pending" page with instructions.
+        checkoutUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscription?payment_pending=true&order_id=${orderId}`;
       } else {
         return NextResponse.json({ error: 'Unsupported payment gateway' }, { status: 400 });
       }
       // Store payment intent in database (for tracking)
-      if (adminDb) {
-        await adminDb.collection('payment_intents').add({
-          tenantId: context.tenantId,
-          userId: context.userId,
-          orderId,
-          plan,
-          amount,
-          originalAmount: couponCalculation?.originalAmount || amount,
-          discountAmount: couponCalculation?.discountAmount || 0,
-          couponCode: couponCode || null,
-          couponId: couponCalculation?.coupon?.id || null,
-          status: 'pending',
-          createdAt: new Date(),
-        });
+      // Store payment intent in Supabase
+      const supabase = getSupabaseClient();
+
+      const { error: dbError } = await supabase.from('payments').insert({
+        id: orderId,
+        tenant_id: context.tenantId,
+        amount,
+        currency: 'PKR',
+        gateway,
+        status: ['bank_transfer', 'jazzcash', 'easypaisa', 'xpay'].includes(gateway)
+          ? 'manual_verification'
+          : 'pending',
+        transaction_id: null,
+        plan: plan as SubscriptionPlan,
+        metadata: {
+          original_amount: couponCalculation?.originalAmount || amount,
+          discount_amount: couponCalculation?.discountAmount || 0,
+          coupon_code: couponCode || null,
+          coupon_id: couponCalculation?.coupon?.id || null,
+          proof_url: proofUrl || null, // Store proof URL
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      if (dbError) {
+        console.error('Database error storing payment:', dbError);
+        // Continue anyway as we returned the checkout URL, but log critical error
       }
       return NextResponse.json({
         success: true,
@@ -116,6 +135,7 @@ export async function POST(request: NextRequest) {
         couponCode: couponCode || null,
       });
     } catch (error) {
+      console.error('Checkout error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   })(request);
