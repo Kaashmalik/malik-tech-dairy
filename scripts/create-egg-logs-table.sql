@@ -1,12 +1,12 @@
 -- Create egg_logs table for poultry egg production tracking
 CREATE TABLE IF NOT EXISTS egg_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity >= 0),
     quality VARCHAR(50) CHECK (quality IN ('premium', 'standard', 'substandard')),
     notes TEXT,
-    recorded_by UUID NOT NULL REFERENCES platform_users(id),
+    recorded_by TEXT NOT NULL REFERENCES platform_users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(tenant_id, date)

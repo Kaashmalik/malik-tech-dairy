@@ -12,16 +12,14 @@ async function isSuperAdmin(userId: string): Promise<boolean> {
   const supabase = getSupabaseClient() as SupabaseClient<Database>;
   const { data: user } = await supabase
     .from('platform_users')
-    .select('role')
-    .eq('id', userId)
+    .select('platform_role')
     .eq('id', userId)
     .single();
 
-  // Safe check if user exists and has role
+  // Safe check if user exists and has platform_role
   if (!user) return false;
 
-  // Explicitly check role property
-  return (user as { role: string | null }).role === 'super_admin';
+  return (user as any).platform_role === 'super_admin';
 }
 // GET: List all farm applications (super admin only)
 export async function GET(request: NextRequest) {

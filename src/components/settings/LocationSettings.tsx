@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Save, RefreshCw, Globe } from 'lucide-react';
+import { useOrganization } from '@clerk/nextjs';
+import { MapPin, Save, RefreshCw, Globe, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
 
@@ -24,20 +26,24 @@ interface FarmLocation {
 }
 
 interface TenantSettings {
+  id: string;
   farm_location: FarmLocation;
   weather_enabled: boolean;
   weather_unit: 'metric' | 'imperial';
 }
 
+const DEFAULT_LOCATION: FarmLocation = {
+  latitude: 30.0735,
+  longitude: 71.1935,
+  city: 'Muzzafargarh',
+  country: 'PK',
+  address: '',
+  timezone: 'Asia/Karachi',
+};
+
 export default function LocationSettings() {
-  const [location, setLocation] = useState<FarmLocation>({
-    latitude: 30.0735,
-    longitude: 71.1935,
-    city: 'Muzzafargarh',
-    country: 'PK',
-    address: '',
-    timezone: 'Asia/Karachi',
-  });
+  const { organization, isLoaded: orgLoaded } = useOrganization();
+  const [location, setLocation] = useState<FarmLocation>(DEFAULT_LOCATION);
   const [weatherEnabled, setWeatherEnabled] = useState(true);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const { toast } = useToast();
@@ -45,55 +51,94 @@ export default function LocationSettings() {
 
   const supabase = createClient();
 
-  // Fetch current tenant settings
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['tenant-settings'],
+  // Fetch current tenant settings with proper tenant filtering
+  const {
+    data: settings,
+    isLoading,
+    error: fetchError,
+  } = useQuery({
+    queryKey: ['tenant-settings', organization?.id],
     queryFn: async () => {
+      if (!organization?.id) {
+        throw new Error('No organization found');
+      }
+
       const { data, error } = await supabase
         .from('tenants')
-        .select('farm_location, weather_enabled, weather_unit')
+        .select('id, farm_location, weather_enabled, weather_unit')
+        .eq('clerk_org_id', organization.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tenant settings:', error);
+        throw error;
+      }
+
       return data as TenantSettings;
+    },
+    enabled: !!organization?.id && orgLoaded,
+    staleTime: 60000, // Cache for 1 minute
+    retry: 2,
+  });
+
+  // Update settings mutation with proper tenant filtering
+  const updateSettingsMutation = useMutation<TenantSettings | null, Error, Partial<TenantSettings>>({
+    mutationFn: async newSettings => {
+      if (!organization?.id) {
+        throw new Error('No organization found');
+      }
+
+      // Get tenant ID first
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('clerk_org_id', organization.id)
+        .single();
+
+      if (tenantError || !tenant) {
+        throw new Error('Tenant not found');
+      }
+
+      // Update with proper WHERE clause
+      const { data, error } = await supabase
+        .from('tenants')
+        .update({
+          farm_location: newSettings.farm_location,
+          weather_enabled: newSettings.weather_enabled,
+          weather_unit: newSettings.weather_unit,
+        })
+        .eq('id', tenant.id)
+        .select('id, farm_location, weather_enabled, weather_unit')
+        .single();
+
+      if (error) {
+        console.error('Error updating tenant settings:', error);
+        throw error;
+      }
+
+      return data as TenantSettings | null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant-settings', organization?.id] });
+      toast({
+        title: 'Settings Updated',
+        description: 'Your farm location has been updated successfully.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update settings. Please try again.',
+        variant: 'destructive',
+      });
     },
   });
 
-  // Update settings mutation
-  const updateSettingsMutation = useMutation<TenantSettings | null, Error, Partial<TenantSettings>>(
-    {
-      mutationFn: async newSettings => {
-        const { data, error } = await supabase
-          .from('tenants')
-          .update(newSettings as Record<string, unknown>)
-          .select('farm_location, weather_enabled, weather_unit')
-          .single();
-
-        if (error) throw error;
-        return data as TenantSettings | null;
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['tenant-settings'] });
-        toast({
-          title: 'Settings Updated',
-          description: 'Your farm location has been updated successfully.',
-        });
-      },
-      onError: () => {
-        toast({
-          title: 'Error',
-          description: 'Failed to update settings. Please try again.',
-          variant: 'destructive',
-        });
-      },
-    }
-  );
-
   // Load settings on mount
   useEffect(() => {
-    if (settings) {
+    if (settings?.farm_location) {
       setLocation(settings.farm_location);
-      setWeatherEnabled(settings.weather_enabled);
+      setWeatherEnabled(settings.weather_enabled ?? true);
     }
   }, [settings]);
 
@@ -128,7 +173,7 @@ export default function LocationSettings() {
             city: data.address?.city || data.address?.town || data.address?.village || 'Unknown',
             country: data.address?.country_code?.toUpperCase() || 'PK',
             address: data.display_name || '',
-            timezone: 'Asia/Karachi',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Karachi',
           };
 
           setLocation(newLocation);
@@ -137,28 +182,59 @@ export default function LocationSettings() {
             description: `Location set to ${newLocation.city}, ${newLocation.country}`,
           });
         } catch (error) {
+          // Still update coordinates even if reverse geocoding fails
+          setLocation(prev => ({
+            ...prev,
+            latitude,
+            longitude,
+          }));
           toast({
-            title: 'Warning',
-            description: 'Location detected but city name could not be fetched.',
-            variant: 'destructive',
+            title: 'Partial Success',
+            description: 'Location coordinates detected. City name could not be fetched.',
           });
         }
 
         setIsGettingLocation(false);
       },
       error => {
+        let errorMessage = 'Failed to get your location.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied. Please enable location in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out.';
+            break;
+        }
         toast({
           title: 'Error',
-          description: 'Failed to get your location. Please enable location access.',
+          description: errorMessage,
           variant: 'destructive',
         });
         setIsGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
   };
 
   // Save settings
   const handleSave = () => {
+    if (!organization?.id) {
+      toast({
+        title: 'Error',
+        description: 'No organization found. Please refresh the page.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     updateSettingsMutation.mutate({
       farm_location: location,
       weather_enabled: weatherEnabled,
@@ -166,7 +242,8 @@ export default function LocationSettings() {
     });
   };
 
-  if (isLoading) {
+  // Show loading skeleton
+  if (!orgLoaded || (isLoading && organization?.id)) {
     return (
       <Card>
         <CardHeader>
@@ -177,10 +254,64 @@ export default function LocationSettings() {
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            <div className='h-4 w-32 animate-pulse rounded bg-gray-200'></div>
-            <div className='h-10 w-full animate-pulse rounded bg-gray-200'></div>
-            <div className='h-10 w-full animate-pulse rounded bg-gray-200'></div>
+            <Skeleton className='h-4 w-32' />
+            <Skeleton className='h-10 w-full' />
+            <Skeleton className='h-10 w-full' />
+            <Skeleton className='h-10 w-full' />
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state
+  if (fetchError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <MapPin className='h-5 w-5' />
+            Farm Location Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant='destructive'>
+            <AlertTriangle className='h-4 w-4' />
+            <AlertDescription>
+              Failed to load settings. This might be because the tenant is not yet configured.
+              Please try refreshing the page.
+            </AlertDescription>
+          </Alert>
+          <Button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['tenant-settings'] })}
+            variant='outline'
+            className='mt-4'
+          >
+            <RefreshCw className='mr-2 h-4 w-4' />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show message if no organization
+  if (!organization?.id) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <MapPin className='h-5 w-5' />
+            Farm Location Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertTriangle className='h-4 w-4' />
+            <AlertDescription>
+              No organization found. Please select or create a farm first.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -199,7 +330,7 @@ export default function LocationSettings() {
       </CardHeader>
       <CardContent className='space-y-6'>
         {/* Current Location Display */}
-        <div className='flex items-center justify-between rounded-lg bg-gray-50 p-4'>
+        <div className='flex items-center justify-between rounded-lg bg-gray-50 p-4 dark:bg-gray-800'>
           <div>
             <p className='font-medium'>Current Location</p>
             <p className='text-muted-foreground text-sm'>
@@ -305,7 +436,7 @@ export default function LocationSettings() {
         <Alert>
           <Globe className='h-4 w-4' />
           <AlertDescription>
-            Weather data is fetched from OpenWeatherMap. The system uses your exact coordinates to
+            Weather data is fetched from Open-Meteo. The system uses your exact coordinates to
             provide accurate weather information and farming recommendations for your specific
             location.
           </AlertDescription>

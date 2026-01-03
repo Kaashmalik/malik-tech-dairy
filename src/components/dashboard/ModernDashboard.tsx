@@ -231,11 +231,10 @@ const QuickStatsSection = ({ stats, isLoading }: { stats: QuickStat[]; isLoading
                 <stat.icon className='h-5 w-5' />
               </div>
               <span
-                className={`rounded-full px-2 py-1 text-xs font-medium ${
-                  stat.positive
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                }`}
+                className={`rounded-full px-2 py-1 text-xs font-medium ${stat.positive
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  }`}
               >
                 {stat.change}
               </span>
@@ -450,8 +449,19 @@ export default function ModernDashboard() {
     retry: 2,
   });
 
+  const { data: assetsData, isLoading: assetsLoading } = useQuery({
+    queryKey: ['dashboard', 'assets'],
+    queryFn: async () => {
+      const res = await fetch('/api/assets');
+      if (!res.ok) throw new Error('Failed to fetch assets');
+      return res.json();
+    },
+    staleTime: 30000,
+    retry: 2,
+  });
+
   const isLoading =
-    animalsLoading || healthLoading || milkLoading || salesLoading || expensesLoading;
+    animalsLoading || healthLoading || milkLoading || salesLoading || expensesLoading || assetsLoading;
 
   // Calculate total revenue from sales
   const totalRevenue = useMemo(() => {
@@ -467,7 +477,7 @@ export default function ModernDashboard() {
         title: 'Animals',
         description: 'Livestock management',
         icon: '🐄',
-        count: animalsData?.data?.length || 0,
+        count: animalsData?.data?.animals?.length || 0,
         change: 12,
         changeType: 'increase',
         color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
@@ -510,7 +520,7 @@ export default function ModernDashboard() {
         title: 'Assets',
         description: 'Equipment & tools',
         icon: '🔧',
-        count: 8,
+        count: assetsData?.data?.assets?.length || 0,
         change: 0,
         changeType: 'neutral',
         color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
@@ -573,7 +583,7 @@ export default function ModernDashboard() {
         lastUpdate: '2 days ago',
       },
     ],
-    [animalsData, healthData, milkData, salesData, expensesData]
+    [animalsData, healthData, milkData, salesData, expensesData, assetsData]
   );
 
   // Quick stats with real data
@@ -590,7 +600,7 @@ export default function ModernDashboard() {
       },
       {
         label: 'Active Animals',
-        value: animalsData?.data?.length || 24,
+        value: animalsData?.data?.animals?.length || 24,
         change: '+2',
         positive: true,
         icon: Activity,

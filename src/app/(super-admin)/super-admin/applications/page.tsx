@@ -12,7 +12,10 @@ import {
   Upload,
   ExternalLink,
   Loader2,
+  Activity,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -150,83 +153,89 @@ export default function ApplicationsPage() {
     );
   });
   return (
-    <div className='space-y-6'>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className='mx-auto max-w-7xl space-y-8'
+    >
       {/* Page Header */}
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className='text-2xl font-bold dark:text-white'>Farm Applications</h1>
+          <h1 className='bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-3xl font-bold text-transparent dark:from-emerald-400 dark:to-teal-400'>
+            Farm Applications
+          </h1>
           <p className='text-gray-500 dark:text-slate-400'>
-            Review and manage farm registration applications
+            Review and manage platform registration requests
           </p>
         </div>
       </div>
-      {/* Filters */}
-      <div className='flex flex-col gap-3 sm:flex-row'>
-        <div className='relative flex-1'>
-          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
-          <Input
-            placeholder='Search farm, owner, email, phone...'
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className='h-10 pl-10'
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
-            >
-              <XCircle className='h-4 w-4' />
-            </button>
-          )}
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className='h-10 w-full sm:w-44'>
-            <Filter className='mr-2 h-4 w-4' />
-            <SelectValue placeholder='Filter status' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Applications</SelectItem>
-            <SelectItem value='pending'>Pending</SelectItem>
-            <SelectItem value='payment_uploaded'>Payment Uploaded</SelectItem>
-            <SelectItem value='under_review'>Under Review</SelectItem>
-            <SelectItem value='approved'>Approved</SelectItem>
-            <SelectItem value='rejected'>Rejected</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      {/* Results Count */}
-      {!loading && (
-        <div className='flex items-center justify-between text-sm text-gray-500 dark:text-slate-400'>
-          <span>
-            {searchQuery ? (
-              <>
-                Showing{' '}
-                <strong className='text-gray-700 dark:text-white'>
-                  {filteredApplications.length}
-                </strong>{' '}
-                of {applications.length} applications
-              </>
-            ) : (
-              <>
-                <strong className='text-gray-700 dark:text-white'>
-                  {filteredApplications.length}
-                </strong>{' '}
-                applications
-              </>
+
+      {/* Filters & Search - Glassmorphism */}
+      <GlassCard intensity='low' className='p-4'>
+        <div className='flex flex-col gap-4 sm:flex-row'>
+          <div className='relative flex-1'>
+            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+            <Input
+              placeholder='Search farm, owner, email, phone...'
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className='h-11 border-white/10 bg-white/5 pl-10'
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+              >
+                <XCircle className='h-4 w-4' />
+              </button>
             )}
-          </span>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className='text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
-            >
-              Clear search
-            </button>
-          )}
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className='h-11 w-full border-white/10 bg-white/5 sm:w-44'>
+              <Filter className='mr-2 h-4 w-4' />
+              <SelectValue placeholder='Filter status' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All Applications</SelectItem>
+              <SelectItem value='pending'>Pending</SelectItem>
+              <SelectItem value='payment_uploaded'>Payment Uploaded</SelectItem>
+              <SelectItem value='under_review'>Under Review</SelectItem>
+              <SelectItem value='approved'>Approved</SelectItem>
+              <SelectItem value='rejected'>Rejected</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      )}
-      {/* Applications Table */}
-      <div className='overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
+      </GlassCard>
+
+      {/* Results Count */}
+      <div className='px-1'>
+        {!loading && (
+          <div className='flex items-center justify-between text-sm text-gray-500 dark:text-slate-400'>
+            <span className='flex items-center gap-2'>
+              <Activity className='h-4 w-4 text-emerald-500' />
+              {searchQuery ? (
+                <>
+                  Found{' '}
+                  <strong className='text-gray-900 dark:text-white'>
+                    {filteredApplications.length}
+                  </strong>{' '}
+                  matching results
+                </>
+              ) : (
+                <>
+                  <strong className='text-gray-900 dark:text-white'>
+                    {filteredApplications.length}
+                  </strong>{' '}
+                  total applications
+                </>
+              )}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Applications Table - Integrated into Glassmorphism */}
+      <GlassCard className='overflow-hidden'>
         {loading ? (
           <div className='p-12 text-center'>
             <Loader2 className='mx-auto h-8 w-8 animate-spin text-gray-400' />
@@ -479,7 +488,8 @@ export default function ApplicationsPage() {
             </div>
           </>
         )}
-      </div>
+      </GlassCard>
+
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
         <DialogContent className='sm:max-w-[500px]'>
@@ -562,6 +572,6 @@ export default function ApplicationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

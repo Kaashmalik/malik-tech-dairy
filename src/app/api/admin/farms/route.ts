@@ -9,8 +9,21 @@ export async function GET() {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    // Use Supabase REST API
     const supabase = getSupabaseClient();
+
+    // Check super admin role
+    const { data: user } = await supabase
+      .from('platform_users')
+      .select('platform_role')
+      .eq('id', userId)
+      .single();
+
+    if (user?.platform_role !== 'super_admin') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden - Super Admin access required' },
+        { status: 403 }
+      );
+    }
     const { data: farms, error } = await supabase
       .from('tenants')
       .select('*')

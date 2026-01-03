@@ -45,8 +45,9 @@ import { format } from 'date-fns';
 interface Asset {
   id: string;
   name: string;
+  type: string;
   category: string;
-  status: 'active' | 'maintenance' | 'retired';
+  status: 'active' | 'maintenance' | 'retired' | 'operational';
   purchaseDate: string;
   purchasePrice: number;
   currentValue: number;
@@ -60,81 +61,25 @@ interface Asset {
 const categoryConfig: Record<string, { icon: typeof Tractor; color: string; label: string }> = {
   machinery: { icon: Tractor, color: 'from-amber-500 to-orange-600', label: 'Machinery' },
   buildings: { icon: Home, color: 'from-blue-500 to-cyan-600', label: 'Buildings' },
+  infrastructure: { icon: Home, color: 'from-blue-500 to-cyan-600', label: 'Infrastructure' },
   irrigation: { icon: Droplets, color: 'from-cyan-500 to-blue-600', label: 'Irrigation' },
   equipment: { icon: Wrench, color: 'from-purple-500 to-violet-600', label: 'Equipment' },
+  milking: { icon: Droplets, color: 'from-purple-500 to-purple-600', label: 'Milking' },
   vehicles: { icon: Truck, color: 'from-emerald-500 to-teal-600', label: 'Vehicles' },
+  vehicle: { icon: Truck, color: 'from-emerald-500 to-teal-600', label: 'Vehicles' },
   cooling: { icon: Thermometer, color: 'from-sky-500 to-blue-600', label: 'Cooling Systems' },
   electronics: { icon: CircuitBoard, color: 'from-pink-500 to-rose-600', label: 'Electronics' },
 };
 
 const statusConfig = {
-  active: { color: 'bg-green-100 text-green-700', label: 'Active', icon: CheckCircle2 },
+  operational: { color: 'bg-green-100 text-green-700', label: 'Operational', icon: CheckCircle2 },
+  active: { color: 'bg-green-100 text-green-700', label: 'Operational', icon: CheckCircle2 },
   maintenance: { color: 'bg-amber-100 text-amber-700', label: 'In Maintenance', icon: Wrench },
   retired: { color: 'bg-gray-100 text-gray-700', label: 'Retired', icon: Clock },
 };
 
 // Mock data for demonstration
-const mockAssets: Asset[] = [
-  {
-    id: '1',
-    name: 'Milking Machine - Deluxe',
-    category: 'equipment',
-    status: 'active',
-    purchaseDate: '2023-06-15',
-    purchasePrice: 250000,
-    currentValue: 200000,
-    location: 'Milking Shed A',
-    serialNumber: 'MM-2023-001',
-    warrantyExpiry: '2026-06-15',
-    lastMaintenance: '2024-09-01',
-  },
-  {
-    id: '2',
-    name: 'Tractor - John Deere 5050D',
-    category: 'machinery',
-    status: 'active',
-    purchaseDate: '2022-03-20',
-    purchasePrice: 1500000,
-    currentValue: 1200000,
-    location: 'Main Shed',
-    serialNumber: 'JD-5050-2022-PK',
-    lastMaintenance: '2024-08-15',
-  },
-  {
-    id: '3',
-    name: 'Bulk Milk Cooler - 1000L',
-    category: 'cooling',
-    status: 'active',
-    purchaseDate: '2023-01-10',
-    purchasePrice: 180000,
-    currentValue: 150000,
-    location: 'Cold Storage',
-    serialNumber: 'BMC-1000-001',
-    warrantyExpiry: '2025-01-10',
-  },
-  {
-    id: '4',
-    name: 'Generator - 15KVA',
-    category: 'electronics',
-    status: 'maintenance',
-    purchaseDate: '2021-08-05',
-    purchasePrice: 350000,
-    currentValue: 200000,
-    location: 'Power House',
-    lastMaintenance: '2024-10-01',
-    notes: 'Scheduled for repair - starter motor issue',
-  },
-  {
-    id: '5',
-    name: 'Cattle Shed - Section B',
-    category: 'buildings',
-    status: 'active',
-    purchaseDate: '2020-01-01',
-    purchasePrice: 2000000,
-    currentValue: 1800000,
-    location: 'Farm Area B',
-  },
-];
+// Removed mock data
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -147,17 +92,88 @@ const itemVariants = {
 };
 
 export default function AssetsPage() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [assets] = useState<Asset[]>(mockAssets);
+  const [newAsset, setNewAsset] = useState<Partial<Asset>>({
+    name: '',
+    type: 'equipment',
+    category: 'equipment',
+    status: 'operational',
+    location: '',
+    purchasePrice: 0,
+    purchaseDate: format(new Date(), 'yyyy-MM-dd'),
+  });
+
+  // Fetch assets
+  const { data, isLoading, error: fetchError } = useQuery({
+    queryKey: ['assets'],
+    queryFn: async () => {
+      const response = await fetch('/api/assets');
+      if (!response.ok) throw new Error('Failed to fetch assets');
+      const result = await response.json();
+      return result.data.assets as Asset[];
+    },
+  });
+
+  const assets = data || [];
+
+  // Create asset mutation
+  const createMutation = useMutation({
+    mutationFn: async (assetData: Partial<Asset>) => {
+      const response = await fetch('/api/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...assetData,
+          value: assetData.purchasePrice, // Map purchasePrice to value for the backend
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to create asset');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      setShowAddDialog(false);
+      toast.success('Asset added successfully');
+      setNewAsset({
+        name: '',
+        type: 'equipment',
+        category: 'equipment',
+        status: 'active',
+        location: '',
+        purchasePrice: 0,
+        purchaseDate: format(new Date(), 'yyyy-MM-dd'),
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // Delete asset mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/assets/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete asset');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      toast.success('Asset deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   // Calculate stats
   const stats = {
     total: assets.length,
-    totalValue: assets.reduce((sum, a) => sum + a.currentValue, 0),
-    active: assets.filter(a => a.status === 'active').length,
+    totalValue: assets.reduce((sum, a) => sum + (Number(a.currentValue) || Number(a.purchasePrice) || 0), 0),
+    active: assets.filter(a => a.status === 'operational' || a.status === 'active').length,
     inMaintenance: assets.filter(a => a.status === 'maintenance').length,
     retired: assets.filter(a => a.status === 'retired').length,
   };
@@ -165,10 +181,10 @@ export default function AssetsPage() {
   // Filter assets
   const filteredAssets = assets.filter(asset => {
     const matchesSearch =
-      asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.serialNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || asset.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || asset.category === selectedCategory || asset.type === selectedCategory;
     const matchesStatus = selectedStatus === 'all' || asset.status === selectedStatus;
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -313,14 +329,29 @@ export default function AssetsPage() {
           className='h-11 rounded-lg border border-gray-200 bg-white px-4 text-gray-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200'
         >
           <option value='all'>All Status</option>
-          <option value='active'>Active</option>
+          <option value='operational'>Operational</option>
           <option value='maintenance'>In Maintenance</option>
           <option value='retired'>Retired</option>
         </select>
       </div>
 
-      {/* Assets Grid */}
-      {filteredAssets.length === 0 ? (
+      {/* Loading & Error States */}
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+        </div>
+      ) : fetchError ? (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-red-600">
+            <AlertTriangle className="mb-4 h-12 w-12" />
+            <h3 className="text-lg font-semibold">Error loading assets</h3>
+            <p className="mt-1 text-sm">{(fetchError as Error).message}</p>
+            <Button className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['assets'] })}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      ) : filteredAssets.length === 0 ? (
         <Card>
           <CardContent className='flex flex-col items-center justify-center py-12'>
             <Package className='mb-4 h-16 w-16 text-gray-300' />
@@ -423,9 +454,15 @@ export default function AssetsPage() {
                       <Button
                         variant='ghost'
                         size='sm'
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this asset?')) {
+                            deleteMutation.mutate(asset.id);
+                          }
+                        }}
                         className='h-8 w-8 p-0 text-red-500 hover:text-red-600'
+                        disabled={deleteMutation.isPending}
                       >
-                        <Trash2 className='h-4 w-4' />
+                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className='h-4 w-4' />}
                       </Button>
                     </div>
                   </div>
@@ -451,12 +488,20 @@ export default function AssetsPage() {
           <div className='space-y-4 py-4'>
             <div>
               <label className='mb-1 block text-sm font-medium'>Asset Name *</label>
-              <Input placeholder='e.g., Milking Machine' />
+              <Input
+                placeholder='e.g., Milking Machine'
+                value={newAsset.name}
+                onChange={e => setNewAsset({ ...newAsset, name: e.target.value })}
+              />
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div>
                 <label className='mb-1 block text-sm font-medium'>Category</label>
-                <select className='h-10 w-full rounded-lg border px-3'>
+                <select
+                  className='h-10 w-full rounded-lg border px-3'
+                  value={newAsset.category}
+                  onChange={e => setNewAsset({ ...newAsset, category: e.target.value, type: e.target.value })}
+                >
                   {Object.entries(categoryConfig).map(([key, config]) => (
                     <option key={key} value={key}>
                       {config.label}
@@ -466,8 +511,12 @@ export default function AssetsPage() {
               </div>
               <div>
                 <label className='mb-1 block text-sm font-medium'>Status</label>
-                <select className='h-10 w-full rounded-lg border px-3'>
-                  <option value='active'>Active</option>
+                <select
+                  className='h-10 w-full rounded-lg border px-3'
+                  value={newAsset.status}
+                  onChange={e => setNewAsset({ ...newAsset, status: e.target.value as any })}
+                >
+                  <option value='operational'>Operational</option>
                   <option value='maintenance'>In Maintenance</option>
                   <option value='retired'>Retired</option>
                 </select>
@@ -476,29 +525,51 @@ export default function AssetsPage() {
             <div className='grid grid-cols-2 gap-4'>
               <div>
                 <label className='mb-1 block text-sm font-medium'>Purchase Date</label>
-                <Input type='date' />
+                <Input
+                  type='date'
+                  value={newAsset.purchaseDate}
+                  onChange={e => setNewAsset({ ...newAsset, purchaseDate: e.target.value })}
+                />
               </div>
               <div>
                 <label className='mb-1 block text-sm font-medium'>Purchase Price (PKR)</label>
-                <Input type='number' placeholder='0' />
+                <Input
+                  type='number'
+                  placeholder='0'
+                  value={newAsset.purchasePrice}
+                  onChange={e => setNewAsset({ ...newAsset, purchasePrice: Number(e.target.value) })}
+                />
               </div>
             </div>
             <div>
               <label className='mb-1 block text-sm font-medium'>Location</label>
-              <Input placeholder='e.g., Main Shed' />
-            </div>
-            <div>
-              <label className='mb-1 block text-sm font-medium'>Serial Number</label>
-              <Input placeholder='Optional' />
+              <Input
+                placeholder='e.g., Main Shed'
+                value={newAsset.location}
+                onChange={e => setNewAsset({ ...newAsset, location: e.target.value })}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setShowAddDialog(false)}>
+            <Button variant='outline' onClick={() => setShowAddDialog(false)} disabled={createMutation.isPending}>
               Cancel
             </Button>
-            <Button className='bg-purple-600 hover:bg-purple-700'>
-              <Plus className='mr-2 h-4 w-4' />
-              Add Asset
+            <Button
+              className='bg-purple-600 hover:bg-purple-700'
+              onClick={() => createMutation.mutate(newAsset)}
+              disabled={createMutation.isPending || !newAsset.name}
+            >
+              {createMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className='mr-2 h-4 w-4' />
+                  Add Asset
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

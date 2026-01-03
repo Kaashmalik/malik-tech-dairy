@@ -1,7 +1,29 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import withPWAInit from 'next-pwa';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.+\/api\/(animals|milk|health)/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'mtk-api-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24, // 1 day
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+  ],
+});
 
 // Content Security Policy - Secure headers for production
 const ContentSecurityPolicy = `
@@ -138,8 +160,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Conditionally wrap with Sentry only if configured
+// Chain the wrappers
 let exportedConfig = withNextIntl(nextConfig);
+exportedConfig = withPWA(exportedConfig as any);
 
 if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
   // Only import and use Sentry if DSN is configured
