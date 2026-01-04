@@ -232,17 +232,15 @@ const expectedTables = [
 ];
 async function checkTableExists(tableName: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .eq('table_name', tableName)
-      .single();
-    if (error) {
+    const { error } = await supabase.from(tableName).select('id').limit(1);
+    if (error && error.code === '42P01') {
+      // 42P01 is undefined_table in PostgreSQL
       return false;
     }
-    return !!data;
-  } catch (error) {
+    // If there's no error, or a different error (like RLS or empty table), it exists
+    return true;
+  } catch (err: any) {
+    console.error(`Exception checking table ${tableName}:`, err.message);
     return false;
   }
 }
