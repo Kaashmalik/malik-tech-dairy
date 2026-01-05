@@ -22,21 +22,45 @@ const createApplicationSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
+
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized - Please sign in to submit an application',
+        },
+        { status: 401 }
+      );
     }
+
+    // Parse and validate request body
     const body = await request.json();
     const validatedData = createApplicationSchema.parse(body);
+
     const supabase = getSupabaseClient();
+
     // Ensure user exists in platform_users
-    const { data: existingUser } = await supabase
+    const { data: existingUser, error: userFetchError } = await supabase
       .from('platform_users')
       .select('id')
       .eq('id', userId)
       .single();
+
+    if (userFetchError && userFetchError.code !== 'PGRST116') {
+      // PGRST116 is "not found" error, which is expected for new users
+      console.error('Error fetching user:', userFetchError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to verify user account',
+        },
+        { status: 500 }
+      );
+    }
+
     if (!existingUser) {
       // Create platform user
-      await supabase.from('platform_users').insert([
+      const { error: userCreateError } = await supabase.from('platform_users').insert([
         {
           id: userId,
           email: validatedData.email,
@@ -48,19 +72,32 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         },
       ]);
+
+      if (userCreateError) {
+        console.error('Error creating platform user:', userCreateError);
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Failed to create user account',
+          },
+          { status: 500 }
+        );
+      }
     }
+
     // Generate application ID
     const applicationId = `APP-${Date.now().toString(36).toUpperCase()}`;
-    // Determine initial status based on plan
+
+    // Determine initial status based on plan and payment
+    // Valid statuses: 'pending', 'payment_uploaded', 'under_review', 'approved', 'rejected'
     const isPaidPlan = validatedData.requestedPlan !== 'free';
     const status =
       isPaidPlan && validatedData.paymentSlipUrl
-        ? 'payment_uploaded'
-        : isPaidPlan
-          ? 'pending_payment'
-          : 'pending';
+        ? 'payment_uploaded' // Paid plan with payment slip uploaded
+        : 'pending'; // Free plan or paid plan awaiting payment
+
     // Create application
-    const { data: application, error } = await supabase
+    const { data: application, error: createError } = await supabase
       .from('farm_applications')
       .insert([
         {
@@ -84,28 +121,60 @@ export async function POST(request: NextRequest) {
       ])
       .select()
       .single();
-    if (error) {
-      return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
+
+    if (createError) {
+      console.error('Error creating farm application:', createError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to create application. Please try again.',
+          details: process.env.NODE_ENV === 'development' ? createError.message : undefined,
+        },
+        { status: 500 }
+      );
     }
+
+    // Success response with appropriate message
+    const successMessage =
+      isPaidPlan && !validatedData.paymentSlipUrl
+        ? 'Application submitted. Please upload payment slip to complete.'
+        : 'Application submitted successfully!';
+
     return NextResponse.json(
       {
         success: true,
         data: application,
-        message:
-          isPaidPlan && !validatedData.paymentSlipUrl
-            ? 'Application submitted. Please upload payment slip to complete.'
-            : 'Application submitted successfully!',
+        message: successMessage,
       },
       { status: 201 }
     );
   } catch (error) {
+    // Handle validation errors
     if (error instanceof z.ZodError) {
+      const errorMessages = error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        {
+          success: false,
+          error: 'Validation error - Please check your input',
+          details: errorMessages,
+        },
         { status: 400 }
       );
     }
-    return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
+
+    // Handle unexpected errors
+    console.error('Unexpected error in farm application creation:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'An unexpected error occurred. Please try again.',
+        details:
+          process.env.NODE_ENV === 'development' && error instanceof Error
+            ? error.message
+            : undefined,
+      },
+      { status: 500 }
+    );
   }
 }
 // GET: List user's farm applications

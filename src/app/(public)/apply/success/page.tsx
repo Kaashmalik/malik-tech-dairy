@@ -183,16 +183,12 @@ function SuccessContent() {
                     ? 'bg-emerald-100 text-emerald-700'
                     : application?.status === 'payment_uploaded'
                       ? 'bg-amber-100 text-amber-700'
-                      : application?.status === 'pending_payment'
-                        ? 'bg-orange-100 text-orange-700'
-                        : 'bg-gray-100 text-gray-700'
+                      : 'bg-gray-100 text-gray-700'
                 }`}
               >
                 {application?.status === 'payment_uploaded'
                   ? 'Under Review'
-                  : application?.status === 'pending_payment'
-                    ? 'Pending Payment'
-                    : application?.status?.replace('_', ' ')}
+                  : application?.status?.replace('_', ' ')}
               </span>
             </div>
           </div>

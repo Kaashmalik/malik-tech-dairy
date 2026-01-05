@@ -292,27 +292,47 @@ export default function ApplyForFarmPage() {
       toast.error('Please select a plan before submitting');
       return;
     }
+
     setSubmitting(true);
+
     try {
       const submitData = {
         ...data,
         requestedPlan: data.requestedPlan, // Ensure plan is included
         paymentSlipUrl: paymentSlipUrl || undefined,
       };
+
       const response = await fetch('/api/farm-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),
       });
+
       const result = await response.json();
+
       if (result.success) {
         toast.success(result.message || 'Application submitted successfully!');
         router.push(`/apply/success?id=${result.data.id}`);
       } else {
-        toast.error(result.error || 'Failed to submit application');
+        // Display detailed error message from API
+        const errorMessage = result.error || 'Failed to submit application';
+        const errorDetails = result.details
+          ? Array.isArray(result.details)
+            ? result.details.join(', ')
+            : result.details
+          : '';
+
+        toast.error(errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage);
       }
     } catch (error) {
-      toast.error('Failed to submit application');
+      console.error('Application submission error:', error);
+
+      // Check if it's a network error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast.error('Network error - Please check your internet connection');
+      } else {
+        toast.error('Failed to submit application. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }

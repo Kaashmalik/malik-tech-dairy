@@ -1,0 +1,441 @@
+// SEO-Optimized Landing Page for MTK Dairy
+// Target: Rank #1 for "dairy farm management software Pakistan"
+import Link from 'next/link';
+import { Metadata } from 'next';
+import { Button } from '@/components/ui/button';
+import { FAQPageSchema } from '@/components/seo/JsonLd';
+import { faqData, pricingPlans, targetCities } from '@/lib/seo/config';
+import {
+  Milk,
+  Heart,
+  Baby,
+  BarChart3,
+  Smartphone,
+  Shield,
+  Users,
+  Zap,
+  Globe,
+  CheckCircle2,
+  ArrowRight,
+  Star,
+  MapPin,
+} from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'MTK Dairy - #1 Smart Dairy Farm Management Software Pakistan',
+  description:
+    "Pakistan's leading smart dairy farm management software. Track milk production, manage cattle health, breeding records, and finances. Used by 500+ farmers in Punjab, Sindh, and KPK. Free plan available! ڈیری فارم مینجمنٹ",
+  alternates: {
+    canonical: '/',
+  },
+};
+
+// Features data
+const features = [
+  {
+    icon: Milk,
+    title: 'Milk Production Tracking',
+    titleUrdu: 'دودھ کی پیداوار ٹریکنگ',
+    description:
+      'Track daily milk production by animal, analyze trends, and optimize yields with real-time data.',
+  },
+  {
+    icon: Heart,
+    title: 'Cattle Health Management',
+    titleUrdu: 'مویشیوں کی صحت مینجمنٹ',
+    description:
+      'Manage vaccinations, treatments, and health records. Get alerts for upcoming checkups.',
+  },
+  {
+    icon: Baby,
+    title: 'Breeding & Pregnancy Tracking',
+    titleUrdu: 'افزائش اور حمل ٹریکنگ',
+    description:
+      'Track heat cycles, breeding records, and pregnancy status. Never miss a calving date.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Financial Reports & Analytics',
+    titleUrdu: 'مالی رپورٹس',
+    description:
+      'Track expenses, sales, and profits. Generate PDF reports for better decision making.',
+  },
+  {
+    icon: Smartphone,
+    title: 'Mobile App (PWA)',
+    titleUrdu: 'موبائل ایپ',
+    description: 'Access your farm data anywhere. Works offline and installs like a native app.',
+  },
+  {
+    icon: Shield,
+    title: 'Secure & Reliable',
+    titleUrdu: 'محفوظ اور قابل اعتماد',
+    description: 'Bank-level encryption. Your data is safe and backed up automatically.',
+  },
+];
+
+// Testimonials
+const testimonials = [
+  {
+    name: 'Muhammad Ashraf',
+    role: 'Farm Owner',
+    location: 'Lahore, Punjab',
+    text: 'MTK Dairy has transformed how I manage my buffalo farm. Milk tracking is now effortless!',
+    rating: 5,
+  },
+  {
+    name: 'Hassan Ali',
+    role: 'Dairy Farmer',
+    location: 'Karachi, Sindh',
+    text: 'The breeding tracker saved me from missing heat cycles. My herd productivity increased by 30%.',
+    rating: 5,
+  },
+  {
+    name: 'Imran Khan',
+    role: 'Farm Manager',
+    location: 'Faisalabad, Punjab',
+    text: 'Finally a software that understands Pakistani dairy farming. The Urdu support is excellent!',
+    rating: 5,
+  },
+];
+
+export default function HomePage() {
+  return (
+    <>
+      {/* FAQ Schema for Rich Snippets */}
+      <FAQPageSchema />
+
+      {/* Hero Section */}
+      <section className='relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800'>
+        <div className='container mx-auto px-4 py-20 md:py-28'>
+          <div className='grid items-center gap-12 lg:grid-cols-2'>
+            <div className='text-center lg:text-left'>
+              {/* Trust Badge */}
+              <div className='mb-6 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 dark:bg-emerald-900/30'>
+                <Star className='h-4 w-4 fill-amber-500 text-amber-500' />
+                <span className='text-sm font-medium text-emerald-800 dark:text-emerald-200'>
+                  Trusted by 500+ Farmers in Pakistan
+                </span>
+              </div>
+
+              {/* H1 - Primary Keyword */}
+              <h1 className='mb-6 text-4xl font-bold leading-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white'>
+                Smart{' '}
+                <span className='bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent'>
+                  Dairy Farm Management
+                </span>{' '}
+                Software for Pakistan
+              </h1>
+
+              {/* Subheadline with Urdu */}
+              <p className='mb-4 text-xl text-gray-600 dark:text-gray-300'>
+                Track milk production, manage cattle health, breeding records, and finances - all in
+                one platform.
+              </p>
+              <p className='font-urdu mb-8 text-lg text-gray-500 dark:text-gray-400'>
+                پاکستان کا نمبر 1 ڈیری فارم مینجمنٹ سافٹ ویئر
+              </p>
+
+              {/* CTA Buttons */}
+              <div className='flex flex-col justify-center gap-4 sm:flex-row lg:justify-start'>
+                <Link href='/apply'>
+                  <Button
+                    size='lg'
+                    className='w-full bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 text-lg shadow-xl shadow-emerald-500/25 hover:from-emerald-700 hover:to-emerald-800 sm:w-auto'
+                  >
+                    Start Free Trial
+                    <ArrowRight className='ml-2 h-5 w-5' />
+                  </Button>
+                </Link>
+                <Link href='/features'>
+                  <Button variant='outline' size='lg' className='w-full px-8 text-lg sm:w-auto'>
+                    View Features
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Social Proof */}
+              <div className='mt-8 flex items-center justify-center gap-6 lg:justify-start'>
+                <div className='flex -space-x-2'>
+                  {[1, 2, 3, 4].map(i => (
+                    <div
+                      key={i}
+                      className='flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-emerald-400 to-emerald-600 text-xs font-medium text-white dark:border-slate-800'
+                    >
+                      {['MA', 'HA', 'IK', 'AZ'][i - 1]}
+                    </div>
+                  ))}
+                </div>
+                <div className='text-left'>
+                  <div className='flex items-center gap-1'>
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <Star key={i} className='h-4 w-4 fill-amber-500 text-amber-500' />
+                    ))}
+                  </div>
+                  <p className='text-sm text-gray-500'>4.9/5 from 127 reviews</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Hero Image */}
+            <div className='relative'>
+              <div className='relative rounded-3xl bg-gradient-to-br from-emerald-100 to-blue-100 p-8 shadow-2xl dark:from-emerald-900/20 dark:to-blue-900/20'>
+                <div className='flex aspect-[4/3] items-center justify-center rounded-2xl bg-white shadow-lg dark:bg-slate-800'>
+                  <div className='p-8 text-center'>
+                    <span className='mb-4 block text-8xl'>🐄</span>
+                    <p className='text-2xl font-bold text-gray-800 dark:text-white'>
+                      Dashboard Preview
+                    </p>
+                    <p className='text-gray-500'>Interactive Demo Coming Soon</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className='bg-white py-20 dark:bg-slate-900' id='features'>
+        <div className='container mx-auto px-4'>
+          <div className='mb-16 text-center'>
+            <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl dark:text-white'>
+              Everything You Need to Manage Your Dairy Farm
+            </h2>
+            <p className='mx-auto max-w-3xl text-xl text-gray-600 dark:text-gray-300'>
+              From milk tracking to financial reports, MTK Dairy provides all the tools you need to
+              run a successful dairy farm in Pakistan.
+            </p>
+          </div>
+
+          <div className='grid gap-8 md:grid-cols-2 lg:grid-cols-3'>
+            {features.map((feature, index) => (
+              <article
+                key={index}
+                className='group rounded-2xl bg-gray-50 p-6 transition-all duration-300 hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50 hover:shadow-xl dark:bg-slate-800 dark:hover:from-emerald-900/20 dark:hover:to-blue-900/20'
+              >
+                <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 transition-transform group-hover:scale-110 dark:bg-emerald-900/30'>
+                  <feature.icon className='h-6 w-6 text-emerald-600' />
+                </div>
+                <h3 className='mb-2 text-xl font-semibold text-gray-900 dark:text-white'>
+                  {feature.title}
+                </h3>
+                <p className='font-urdu mb-2 text-sm text-emerald-600 dark:text-emerald-400'>
+                  {feature.titleUrdu}
+                </p>
+                <p className='text-gray-600 dark:text-gray-300'>{feature.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className='bg-gradient-to-r from-emerald-600 to-emerald-700 py-20'>
+        <div className='container mx-auto px-4'>
+          <div className='grid grid-cols-2 gap-8 text-center md:grid-cols-4'>
+            {[
+              { value: '500+', label: 'Active Farms' },
+              { value: '50K+', label: 'Animals Tracked' },
+              { value: '1M+', label: 'Milk Logs' },
+              { value: '99.9%', label: 'Uptime' },
+            ].map((stat, index) => (
+              <div key={index}>
+                <div className='mb-2 text-4xl font-bold text-white md:text-5xl'>{stat.value}</div>
+                <div className='text-emerald-100'>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className='bg-gray-50 py-20 dark:bg-slate-800'>
+        <div className='container mx-auto px-4'>
+          <div className='mb-16 text-center'>
+            <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl dark:text-white'>
+              Trusted by Farmers Across Pakistan
+            </h2>
+            <p className='text-xl text-gray-600 dark:text-gray-300'>
+              See what our users are saying about MTK Dairy
+            </p>
+          </div>
+
+          <div className='grid gap-8 md:grid-cols-3'>
+            {testimonials.map((testimonial, index) => (
+              <article key={index} className='rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-900'>
+                <div className='mb-4 flex items-center gap-1'>
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <Star key={i} className='h-5 w-5 fill-amber-500 text-amber-500' />
+                  ))}
+                </div>
+                <p className='mb-6 italic text-gray-700 dark:text-gray-300'>"{testimonial.text}"</p>
+                <div className='flex items-center gap-3'>
+                  <div className='flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 font-medium text-white'>
+                    {testimonial.name
+                      .split(' ')
+                      .map(n => n[0])
+                      .join('')}
+                  </div>
+                  <div>
+                    <p className='font-semibold text-gray-900 dark:text-white'>
+                      {testimonial.name}
+                    </p>
+                    <p className='flex items-center gap-1 text-sm text-gray-500'>
+                      <MapPin className='h-3 w-3' />
+                      {testimonial.location}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Preview */}
+      <section className='bg-white py-20 dark:bg-slate-900' id='pricing'>
+        <div className='container mx-auto px-4'>
+          <div className='mb-16 text-center'>
+            <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl dark:text-white'>
+              Simple, Transparent Pricing
+            </h2>
+            <p className='text-xl text-gray-600 dark:text-gray-300'>
+              Start free, upgrade when you need more
+            </p>
+          </div>
+
+          <div className='mx-auto grid max-w-5xl gap-8 md:grid-cols-3'>
+            {pricingPlans.slice(0, 3).map((plan, index) => (
+              <article
+                key={index}
+                className={`rounded-2xl border-2 p-8 ${
+                  index === 1
+                    ? 'scale-105 border-emerald-500 bg-emerald-50/50 shadow-xl dark:bg-emerald-900/20'
+                    : 'border-gray-200 dark:border-slate-700'
+                }`}
+              >
+                {index === 1 && (
+                  <div className='mb-4 text-center'>
+                    <span className='rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white'>
+                      MOST POPULAR
+                    </span>
+                  </div>
+                )}
+                <h3 className='mb-2 text-2xl font-bold text-gray-900 dark:text-white'>
+                  {plan.name}
+                </h3>
+                <div className='mb-6'>
+                  <span className='text-4xl font-bold text-gray-900 dark:text-white'>
+                    {plan.price === 0 ? 'Free' : `Rs. ${plan.price.toLocaleString()}`}
+                  </span>
+                  {plan.price > 0 && <span className='text-gray-500'>/month</span>}
+                </div>
+                <ul className='mb-8 space-y-3'>
+                  {plan.features.map((feature, i) => (
+                    <li
+                      key={i}
+                      className='flex items-center gap-2 text-gray-600 dark:text-gray-300'
+                    >
+                      <CheckCircle2 className='h-5 w-5 flex-shrink-0 text-emerald-500' />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link href='/apply'>
+                  <Button
+                    className={`w-full ${
+                      index === 1
+                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : 'bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900'
+                    }`}
+                  >
+                    Get Started
+                  </Button>
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className='bg-gray-50 py-20 dark:bg-slate-800' id='faq'>
+        <div className='container mx-auto px-4'>
+          <div className='mb-16 text-center'>
+            <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl dark:text-white'>
+              Frequently Asked Questions
+            </h2>
+            <p className='text-xl text-gray-600 dark:text-gray-300'>
+              Got questions? We've got answers.
+            </p>
+          </div>
+
+          <div className='mx-auto max-w-3xl space-y-4'>
+            {faqData.slice(0, 6).map((faq, index) => (
+              <details
+                key={index}
+                className='group rounded-xl bg-white p-6 shadow-sm dark:bg-slate-900'
+              >
+                <summary className='flex cursor-pointer list-none items-center justify-between font-semibold text-gray-900 dark:text-white'>
+                  {faq.question}
+                  <span className='text-emerald-500 transition-transform group-open:rotate-180'>
+                    ▼
+                  </span>
+                </summary>
+                <p className='mt-4 text-gray-600 dark:text-gray-300'>{faq.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className='bg-gradient-to-r from-emerald-600 to-emerald-700 py-20'>
+        <div className='container mx-auto px-4 text-center'>
+          <h2 className='mb-4 text-3xl font-bold text-white md:text-4xl'>
+            Ready to Transform Your Dairy Farm?
+          </h2>
+          <p className='mx-auto mb-8 max-w-2xl text-xl text-emerald-100'>
+            Join 500+ farmers in Pakistan who are already using MTK Dairy to increase productivity
+            and profits.
+          </p>
+          <Link href='/apply'>
+            <Button
+              size='lg'
+              className='bg-white px-8 text-lg text-emerald-700 shadow-xl hover:bg-emerald-50'
+            >
+              Start Your Free Trial Today
+              <ArrowRight className='ml-2 h-5 w-5' />
+            </Button>
+          </Link>
+          <p className='mt-4 text-sm text-emerald-200'>
+            No credit card required • Free plan available forever
+          </p>
+        </div>
+      </section>
+
+      {/* Local SEO - Cities */}
+      <section className='border-t border-gray-200 bg-white py-12 dark:border-slate-800 dark:bg-slate-900'>
+        <div className='container mx-auto px-4'>
+          <div className='text-center'>
+            <p className='mb-4 text-gray-500 dark:text-gray-400'>
+              Serving dairy farmers across Pakistan
+            </p>
+            <div className='flex flex-wrap justify-center gap-3'>
+              {targetCities.map((city, index) => (
+                <span
+                  key={index}
+                  className='flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400'
+                >
+                  <MapPin className='h-3 w-3' />
+                  {city.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
