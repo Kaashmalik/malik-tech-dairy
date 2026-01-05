@@ -16,7 +16,6 @@ const fonts = {
 let printer: any = null;
 function getPrinter() {
   if (!printer) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const PdfPrinter = require('pdfmake');
     printer = new PdfPrinter(fonts);
   }
@@ -31,8 +30,8 @@ async function getTenantConfig(tenantId: string) {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('tenants')
-      .select('name, settings')
-      .eq('clerk_org_id', tenantId)
+      .select('farm_name')
+      .eq('id', tenantId)
       .single();
 
     if (error) {
@@ -41,8 +40,8 @@ async function getTenantConfig(tenantId: string) {
     }
 
     return {
-      farmName: data?.name || 'Farm',
-      settings: data?.settings || {},
+      farmName: (data as any)?.farm_name || 'Farm',
+      settings: {}, // Settings field removed in favor of direct columns
     };
   } catch (error) {
     console.error('Error in getTenantConfig:', error);
@@ -247,7 +246,8 @@ async function generateAnimalReport(
   const statusCount: Record<string, number> = {};
 
   animals.forEach((animal: any) => {
-    speciesCount[animal.species || 'Unknown'] = (speciesCount[animal.species || 'Unknown'] || 0) + 1;
+    speciesCount[animal.species || 'Unknown'] =
+      (speciesCount[animal.species || 'Unknown'] || 0) + 1;
     statusCount[animal.status || 'Unknown'] = (statusCount[animal.status || 'Unknown'] || 0) + 1;
   });
 
@@ -314,13 +314,15 @@ async function generateAnimalReport(
           widths: ['auto', '*', '*', '*', '*'],
           body: [
             ['Tag', 'Name', 'Species', 'Breed', 'Status'],
-            ...animals.slice(0, 50).map((animal: any) => [
-              animal.tag_number || '',
-              animal.name || '',
-              animal.species || '',
-              animal.breed || '',
-              animal.status || '',
-            ]),
+            ...animals
+              .slice(0, 50)
+              .map((animal: any) => [
+                animal.tag_number || '',
+                animal.name || '',
+                animal.species || '',
+                animal.breed || '',
+                animal.status || '',
+              ]),
           ],
         },
       },
@@ -348,7 +350,10 @@ async function generateMilkReport(
   const milkLogs = await getMilkLogs(tenantId, startDate, endDate);
 
   const totalMilk = milkLogs.reduce((sum: number, log: any) => sum + (log.quantity || 0), 0);
-  const avgPerDay = milkLogs.length > 0 ? totalMilk / Math.max(1, new Set(milkLogs.map((l: any) => l.date)).size) : 0;
+  const avgPerDay =
+    milkLogs.length > 0
+      ? totalMilk / Math.max(1, new Set(milkLogs.map((l: any) => l.date)).size)
+      : 0;
 
   const sessionTotals: Record<string, number> = {};
   milkLogs.forEach((log: any) => {
@@ -409,12 +414,14 @@ async function generateMilkReport(
           widths: ['*', '*', '*', '*'],
           body: [
             ['Date', 'Session', 'Quantity (L)', 'Animal ID'],
-            ...milkLogs.slice(0, 50).map((log: any) => [
-              log.date || '',
-              log.session || '',
-              (log.quantity || 0).toFixed(2),
-              log.animal_id || '',
-            ]),
+            ...milkLogs
+              .slice(0, 50)
+              .map((log: any) => [
+                log.date || '',
+                log.session || '',
+                (log.quantity || 0).toFixed(2),
+                log.animal_id || '',
+              ]),
           ],
         },
       },
@@ -494,12 +501,14 @@ async function generateHealthReport(
           widths: ['auto', '*', '*', '*'],
           body: [
             ['Date', 'Type', 'Animal ID', 'Treatment'],
-            ...healthRecords.slice(0, 50).map((record: any) => [
-              record.date || '',
-              record.type || '',
-              record.animal_id || '',
-              record.treatment || '',
-            ]),
+            ...healthRecords
+              .slice(0, 50)
+              .map((record: any) => [
+                record.date || '',
+                record.type || '',
+                record.animal_id || '',
+                record.treatment || '',
+              ]),
           ],
         },
       },
@@ -575,12 +584,14 @@ async function generateFinancialReport(
           widths: ['*', '*', '*', '*'],
           body: [
             ['Date', 'Session', 'Quantity (L)', 'Animal ID'],
-            ...milkLogs.slice(0, 50).map((log: any) => [
-              log.date || '',
-              log.session || '',
-              (log.quantity || 0).toFixed(2),
-              log.animal_id || '',
-            ]),
+            ...milkLogs
+              .slice(0, 50)
+              .map((log: any) => [
+                log.date || '',
+                log.session || '',
+                (log.quantity || 0).toFixed(2),
+                log.animal_id || '',
+              ]),
           ],
         },
         margin: [0, 0, 0, 20],
@@ -596,11 +607,13 @@ async function generateFinancialReport(
           widths: ['*', '*', '*'],
           body: [
             ['Date', 'Category', 'Amount (PKR)'],
-            ...expenses.slice(0, 50).map((exp: any) => [
-              exp.date || '',
-              exp.category || '',
-              (exp.amount || 0).toLocaleString(),
-            ]),
+            ...expenses
+              .slice(0, 50)
+              .map((exp: any) => [
+                exp.date || '',
+                exp.category || '',
+                (exp.amount || 0).toLocaleString(),
+              ]),
           ],
         },
         margin: [0, 0, 0, 20],
@@ -616,12 +629,14 @@ async function generateFinancialReport(
           widths: ['*', '*', '*', '*'],
           body: [
             ['Date', 'Type', 'Quantity', 'Total (PKR)'],
-            ...sales.slice(0, 50).map((sale: any) => [
-              sale.date || '',
-              sale.type || '',
-              `${sale.quantity || 0} ${sale.unit || ''}`,
-              (sale.total || 0).toLocaleString(),
-            ]),
+            ...sales
+              .slice(0, 50)
+              .map((sale: any) => [
+                sale.date || '',
+                sale.type || '',
+                `${sale.quantity || 0} ${sale.unit || ''}`,
+                (sale.total || 0).toLocaleString(),
+              ]),
           ],
         },
       },

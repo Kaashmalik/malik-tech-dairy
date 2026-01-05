@@ -66,8 +66,8 @@ export default function LocationSettings() {
       const { data, error } = await supabase
         .from('tenants')
         .select('id, farm_location, weather_enabled, weather_unit')
-        .eq('clerk_org_id', organization.id)
-        .single();
+        .eq('id', organization.id)
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching tenant settings:', error);
@@ -82,57 +82,56 @@ export default function LocationSettings() {
   });
 
   // Update settings mutation with proper tenant filtering
-  const updateSettingsMutation = useMutation<TenantSettings | null, Error, Partial<TenantSettings>>({
-    mutationFn: async newSettings => {
-      if (!organization?.id) {
-        throw new Error('No organization found');
-      }
+  const updateSettingsMutation = useMutation<TenantSettings | null, Error, Partial<TenantSettings>>(
+    {
+      mutationFn: async newSettings => {
+        if (!organization?.id) {
+          throw new Error('No organization found');
+        }
 
-      // Get tenant ID first
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .select('id')
-        .eq('clerk_org_id', organization.id)
-        .single();
+        // Get organization slug from organization metadata if available, otherwise use farm name
+        const slug =
+          (organization as any)?.slug ||
+          (settings?.id ? '' : organization.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 
-      if (tenantError || !tenant) {
-        throw new Error('Tenant not found');
-      }
+        // Use upsert to handle both new and existing tenants
+        const { data, error } = await supabase
+          .from('tenants')
+          .upsert({
+            id: organization.id,
+            slug: slug,
+            farm_name: organization.name,
+            farm_location: newSettings.farm_location,
+            weather_enabled: newSettings.weather_enabled,
+            weather_unit: newSettings.weather_unit,
+            updated_at: new Date().toISOString(),
+          })
+          .select('id, farm_location, weather_enabled, weather_unit')
+          .single();
 
-      // Update with proper WHERE clause
-      const { data, error } = await supabase
-        .from('tenants')
-        .update({
-          farm_location: newSettings.farm_location,
-          weather_enabled: newSettings.weather_enabled,
-          weather_unit: newSettings.weather_unit,
-        })
-        .eq('id', tenant.id)
-        .select('id, farm_location, weather_enabled, weather_unit')
-        .single();
+        if (error) {
+          console.error('Error updating tenant settings:', error);
+          throw error;
+        }
 
-      if (error) {
-        console.error('Error updating tenant settings:', error);
-        throw error;
-      }
-
-      return data as TenantSettings | null;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenant-settings', organization?.id] });
-      toast({
-        title: 'Settings Updated',
-        description: 'Your farm location has been updated successfully.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update settings. Please try again.',
-        variant: 'destructive',
-      });
-    },
-  });
+        return data as TenantSettings | null;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['tenant-settings', organization?.id] });
+        toast({
+          title: 'Settings Updated',
+          description: 'Your farm location has been updated successfully.',
+        });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to update settings. Please try again.',
+          variant: 'destructive',
+        });
+      },
+    }
+  );
 
   // Load settings on mount
   useEffect(() => {
@@ -200,7 +199,8 @@ export default function LocationSettings() {
         let errorMessage = 'Failed to get your location.';
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Location access denied. Please enable location in your browser settings.';
+            errorMessage =
+              'Location access denied. Please enable location in your browser settings.';
             break;
           case error.POSITION_UNAVAILABLE:
             errorMessage = 'Location information is unavailable.';
