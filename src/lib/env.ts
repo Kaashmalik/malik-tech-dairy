@@ -94,20 +94,70 @@ const envSchema = z.object({
 
 // Validate environment variables
 export function validateEnv() {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
   try {
     const env = envSchema.parse(process.env);
-    return { success: true, env };
+
+    // Check for placeholder values
+    const placeholderPatterns = [
+      /your_/i,
+      /YOUR-/i,
+      /placeholder/i,
+      /whsec_your_webhook_secret_here/,
+      /\[YOUR-PASSWORD\]/,
+      /OK0ZoyX8Qt2XwkALJb_XzQflNwM/, // Default Cloudinary secret
+    ];
+
+    for (const [key, value] of Object.entries(env)) {
+      if (typeof value === 'string') {
+        for (const pattern of placeholderPatterns) {
+          if (pattern.test(value)) {
+            warnings.push(`Environment variable ${key} appears to contain a placeholder value`);
+            break;
+          }
+        }
+      }
+    }
+
+    // Security checks for production
+    if (process.env.NODE_ENV === 'production') {
+      if (!process.env.SENTRY_DSN && !process.env.NEXT_PUBLIC_SENTRY_DSN) {
+        warnings.push('Sentry DSN not configured in production - errors will not be tracked');
+      }
+      if (!process.env.UPSTASH_REDIS_REST_URL) {
+        warnings.push('Redis not configured - caching and rate limiting will not work optimally');
+      }
+      if (
+        !process.env.CLERK_WEBHOOK_SECRET ||
+        process.env.CLERK_WEBHOOK_SECRET === 'whsec_your_webhook_secret_here'
+      ) {
+        errors.push('CLERK_WEBHOOK_SECRET must be configured with a real value in production');
+      }
+    }
+
+    if (errors.length > 0) {
+      console.error('❌ Environment validation failed:');
+      errors.forEach(err => console.error(`   • ${err}`));
+      return { success: false, errors, warnings };
+    }
+
+    if (warnings.length > 0) {
+      console.warn('⚠️  Environment warnings:');
+      warnings.forEach(warn => console.warn(`   • ${warn}`));
+    }
+
+    console.log('✅ Environment validation passed');
+    return { success: true, env, warnings };
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('❌ Environment validation failed:');
       error.errors.forEach(err => {
         console.error(`   • ${err.path.join('.')}: ${err.message}`);
       });
-
-      // In development, show helpful message
-      if (process.env.NODE_ENV === 'development') {
-      }
     }
-    return { success: false, error };
+    return { success: false, error, warnings };
   }
 }
 

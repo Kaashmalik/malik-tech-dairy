@@ -105,6 +105,15 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // API configuration
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb', // Limit request body size to 1MB
+    },
+    responseLimit: '1mb', // Limit response size to 1MB
+    externalResolver: true,
+  },
+
   // Security headers
   async headers() {
     return [
@@ -112,6 +121,28 @@ const nextConfig: NextConfig = {
         // Apply security headers to all routes
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        // Add CORS headers for API routes
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: process.env.NODE_ENV === 'production' ? 'https://maliktechdairy.com' : '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization, X-Request-ID, X-Tenant-ID, X-CSRF-Token',
+          },
+          {
+            key: 'Access-Control-Max-Age',
+            value: '86400', // 24 hours
+          },
+        ],
       },
     ];
   },

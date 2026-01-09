@@ -4,7 +4,6 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'sonner';
 import { PWARegister } from '@/components/PWARegister';
 import { ThemeProvider } from '@/components/providers/theme-provider';
-import { AllSchemas } from '@/components/seo/JsonLd';
 import { siteConfig, allKeywords, alternateLanguages } from '@/lib/seo/config';
 import './globals.css';
 
@@ -190,23 +189,11 @@ export default function RootLayout({
           <meta name='distribution' content='Global' />
           <meta name='rating' content='General' />
           <meta name='revisit-after' content='7 days' />
-
-          {/* JSON-LD Structured Data */}
-          <AllSchemas />
         </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} antialiased`}
         >
-          <ThemeProvider
-            attribute='class'
-            defaultTheme='system'
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <PWARegister />
-            <Toaster position='top-right' richColors />
-          </ThemeProvider>
+          {children}
         </body>
       </html>
     </ClerkProvider>

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { TenantRole, PlatformRole } from '@/types/roles';
-import { createApiKey, listApiKeys, revokeApiKey } from '@/lib/api-keys';
+import { createApiKey, getTenantApiKeys, deactivateApiKey } from '@/lib/api-keys';
 import { createApiKeySchema, listApiKeysSchema } from '@/lib/validations/api-keys';
 import { withMFAEnforcement } from '@/lib/middleware/mfaMiddleware';
 export const dynamic = 'force-dynamic';
@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
       const query = listApiKeysSchema.parse({
         isActive: searchParams.get('isActive'),
       });
-      const keys = await listApiKeys(tenantId, {
-        includeInactive: query.isActive === false,
-      });
+      const keys = await getTenantApiKeys(tenantId);
+      // Filter based on query
+      const filteredKeys = query.isActive === false ? keys : keys.filter(k => k.isActive);
       // Remove sensitive data (keyHash) from response
-      const safeKeys = keys.map(({ keyHash, ...rest }) => ({
+      const safeKeys = filteredKeys.map(({ keyHash, ...rest }) => ({
         ...rest,
         key: undefined, // Never return the actual key
       }));
@@ -40,25 +40,25 @@ export async function POST(request: NextRequest) {
     try {
       const body = await req.json();
       const validated = createApiKeySchema.parse(body);
-      const { apiKey, plainKey } = await createApiKey(tenantId, userId, {
+      const result = (await createApiKey({
+        tenantId,
+        userId,
         name: validated.name,
-        description: validated.description,
-        permissions: validated.permissions,
-        expiresAt: validated.expiresAt ? new Date(validated.expiresAt) : undefined,
-      });
+        scopes: validated.permissions || [],
+        expiresInDays: validated.expiresAt
+          ? Math.ceil(
+              (new Date(validated.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            )
+          : undefined,
+      })) as { apiKey: string; prefix: string };
+
       // Return API key only once (client must save it)
       return NextResponse.json({
         success: true,
         apiKey: {
-          id: apiKey.id,
-          name: apiKey.name,
-          description: apiKey.description,
-          keyPrefix: apiKey.keyPrefix,
-          permissions: apiKey.permissions,
-          expiresAt: apiKey.expiresAt,
-          createdAt: apiKey.createdAt,
+          keyPrefix: result.prefix,
         },
-        key: plainKey, // Only returned once!
+        key: result.apiKey, // Only returned once!
         warning: 'Save this key securely. It will not be shown again.',
       });
     } catch (error: any) {

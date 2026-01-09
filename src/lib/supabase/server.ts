@@ -66,8 +66,10 @@ export function getSupabaseClient(): SupabaseClient<any> {
 
     supabaseClient = createClient<Database>(supabaseUrl, supabaseServiceKey, {
       auth: {
-        autoRefreshToken: false,
-        persistSession: false,
+        autoRefreshToken: true, // Enable automatic token refresh
+        persistSession: true, // Persist session in storage
+        detectSessionInUrl: true, // Detect session from URL
+        storage: typeof window !== 'undefined' ? (window as any).localStorage : undefined,
       },
     });
   }

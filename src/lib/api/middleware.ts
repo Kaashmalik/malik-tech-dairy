@@ -137,10 +137,12 @@ export async function checkUserRole(
         return aliases.includes(userRole);
       });
     }
+    // Fail closed - deny access if no role found
     return false;
   } catch (error) {
-    // Return true for graceful degradation (owner-level access)
-    return true;
+    // Fail closed - deny access on any error
+    console.error('Authorization check failed:', error);
+    return false;
   }
 }
 /**

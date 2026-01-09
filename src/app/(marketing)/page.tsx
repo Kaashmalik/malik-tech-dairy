@@ -2,13 +2,11 @@
 // Target: Rank #1 for "dairy farm management software Pakistan"
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { Button } from '@/components/ui/button';
-import { FAQPageSchema } from '@/components/seo/JsonLd';
 import { faqData, pricingPlans, targetCities } from '@/lib/seo/config';
 import {
   Milk,
   Heart,
-  Baby,
+  BabyIcon,
   BarChart3,
   Smartphone,
   Shield,
@@ -47,7 +45,7 @@ const features = [
       'Manage vaccinations, treatments, and health records. Get alerts for upcoming checkups.',
   },
   {
-    icon: Baby,
+    icon: BabyIcon,
     title: 'Breeding & Pregnancy Tracking',
     titleUrdu: 'افزائش اور حمل ٹریکنگ',
     description:
@@ -102,9 +100,6 @@ const testimonials = [
 export default function HomePage() {
   return (
     <>
-      {/* FAQ Schema for Rich Snippets */}
-      <FAQPageSchema />
-
       {/* Hero Section */}
       <section className='relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800'>
         <div className='container mx-auto px-4 py-20 md:py-28'>
@@ -139,18 +134,15 @@ export default function HomePage() {
               {/* CTA Buttons */}
               <div className='flex flex-col justify-center gap-4 sm:flex-row lg:justify-start'>
                 <Link href='/apply'>
-                  <Button
-                    size='lg'
-                    className='w-full bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 text-lg shadow-xl shadow-emerald-500/25 hover:from-emerald-700 hover:to-emerald-800 sm:w-auto'
-                  >
+                  <button className='w-full rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 py-3 text-lg font-medium text-white shadow-xl shadow-emerald-500/25 hover:from-emerald-700 hover:to-emerald-800 sm:w-auto'>
                     Start Free Trial
-                    <ArrowRight className='ml-2 h-5 w-5' />
-                  </Button>
+                    <ArrowRight className='ml-2 inline h-5 w-5' />
+                  </button>
                 </Link>
                 <Link href='/features'>
-                  <Button variant='outline' size='lg' className='w-full px-8 text-lg sm:w-auto'>
+                  <button className='w-full rounded-lg border-2 border-gray-300 px-8 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 sm:w-auto dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'>
                     View Features
-                  </Button>
+                  </button>
                 </Link>
               </div>
 
@@ -343,15 +335,15 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link href='/apply'>
-                  <Button
-                    className={`w-full ${
+                  <button
+                    className={`w-full rounded-lg px-6 py-3 font-medium ${
                       index === 1
-                        ? 'bg-emerald-600 hover:bg-emerald-700'
-                        : 'bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900'
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900'
                     }`}
                   >
                     Get Started
-                  </Button>
+                  </button>
                 </Link>
               </article>
             ))}
@@ -401,13 +393,10 @@ export default function HomePage() {
             and profits.
           </p>
           <Link href='/apply'>
-            <Button
-              size='lg'
-              className='bg-white px-8 text-lg text-emerald-700 shadow-xl hover:bg-emerald-50'
-            >
+            <button className='rounded-lg bg-white px-8 py-3 text-lg font-medium text-emerald-700 shadow-xl hover:bg-emerald-50'>
               Start Your Free Trial Today
-              <ArrowRight className='ml-2 h-5 w-5' />
-            </Button>
+              <ArrowRight className='ml-2 inline h-5 w-5' />
+            </button>
           </Link>
           <p className='mt-4 text-sm text-emerald-200'>
             No credit card required • Free plan available forever

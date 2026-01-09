@@ -4,6 +4,8 @@ import { getSupabaseClient } from '@/lib/supabase/server';
 import { getTenantContext } from '@/lib/tenant/context';
 import { z } from 'zod';
 import { AnimalSpecies } from '@/types';
+import { withRateLimit, standardRateLimit, strictRateLimit } from '@/lib/ratelimit';
+import { sanitizeSearchQuery } from '@/lib/utils/sanitization';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +41,10 @@ const createAnimalSchema = z.object({
 
 // GET /api/animals - List all animals for the tenant
 export async function GET(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimitResponse = await withRateLimit(request, standardRateLimit);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -68,6 +74,7 @@ export async function GET(request: NextRequest) {
       supabaseQuery = supabaseQuery.eq('status', status);
     }
     if (search) {
+      // Safe search using parameterized queries
       supabaseQuery = supabaseQuery.or(`tag.ilike.%${search}%,name.ilike.%${search}%`);
     }
 

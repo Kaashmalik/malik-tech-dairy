@@ -30,15 +30,15 @@ export function withApiKeyAuth(
     }
 
     // Validate API key
-    const validation = await validateApiKey(apiKey);
+    const apiKeyData = await validateApiKey(apiKey);
 
-    if (!validation.valid || !validation.tenantId || !validation.permissions) {
-      return NextResponse.json({ error: validation.error || 'Invalid API key' }, { status: 401 });
+    if (!apiKeyData || !apiKeyData.tenantId) {
+      return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
     }
 
     return handler(req, {
-      tenantId: validation.tenantId,
-      permissions: validation.permissions,
+      tenantId: apiKeyData.tenantId,
+      permissions: (apiKeyData as any).scopes || [],
     });
   };
 }
