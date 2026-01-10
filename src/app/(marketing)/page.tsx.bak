@@ -2,7 +2,8 @@
 // Target: Rank #1 for "dairy farm management software Pakistan"
 import Link from 'next/link';
 import { Metadata } from 'next';
-import NextImage from 'next/image';
+import { Button } from '@/components/ui/button';
+import { FAQPageSchema } from '@/components/seo/JsonLd';
 import { faqData, pricingPlans, targetCities } from '@/lib/seo/config';
 import {
   Milk,
@@ -135,15 +136,18 @@ export default function HomePage() {
               {/* CTA Buttons */}
               <div className='flex flex-col justify-center gap-4 sm:flex-row lg:justify-start'>
                 <Link href='/apply'>
-                  <button className='w-full rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 py-3 text-lg font-medium text-white shadow-xl shadow-emerald-500/25 hover:from-emerald-700 hover:to-emerald-800 sm:w-auto'>
+                  <Button
+                    size='lg'
+                    className='w-full bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 text-lg shadow-xl shadow-emerald-500/25 hover:from-emerald-700 hover:to-emerald-800 sm:w-auto'
+                  >
                     Start Free Trial
-                    <ArrowRight className='ml-2 inline h-5 w-5' />
-                  </button>
+                    <ArrowRight className='ml-2 h-5 w-5' />
+                  </Button>
                 </Link>
                 <Link href='/features'>
-                  <button className='w-full rounded-lg border-2 border-gray-300 px-8 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 sm:w-auto dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'>
+                  <Button variant='outline' size='lg' className='w-full px-8 text-lg sm:w-auto'>
                     View Features
-                  </button>
+                  </Button>
                 </Link>
               </div>
 
@@ -172,16 +176,15 @@ export default function HomePage() {
 
             {/* Hero Image */}
             <div className='relative'>
-              <div className='relative rounded-3xl bg-gradient-to-br from-emerald-100 to-blue-100 p-2 shadow-2xl md:p-4 dark:from-emerald-900/20 dark:to-blue-900/20'>
-                <div className='overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-slate-800'>
-                  <NextImage
-                    src='/images/dashboard-mockup.png'
-                    alt='MTK Dairy Dashboard Preview'
-                    width={800}
-                    height={600}
-                    className='h-auto w-full object-cover'
-                    priority
-                  />
+              <div className='relative rounded-3xl bg-gradient-to-br from-emerald-100 to-blue-100 p-8 shadow-2xl dark:from-emerald-900/20 dark:to-blue-900/20'>
+                <div className='flex aspect-[4/3] items-center justify-center rounded-2xl bg-white shadow-lg dark:bg-slate-800'>
+                  <div className='p-8 text-center'>
+                    <span className='mb-4 block text-8xl'>🐄</span>
+                    <p className='text-2xl font-bold text-gray-800 dark:text-white'>
+                      Dashboard Preview
+                    </p>
+                    <p className='text-gray-500'>Interactive Demo Coming Soon</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -303,10 +306,11 @@ export default function HomePage() {
             {pricingPlans.slice(0, 3).map((plan, index) => (
               <article
                 key={index}
-                className={`rounded-2xl border-2 p-8 ${index === 1
-                  ? 'scale-105 border-emerald-500 bg-emerald-50/50 shadow-xl dark:bg-emerald-900/20'
-                  : 'border-gray-200 dark:border-slate-700'
-                  }`}
+                className={`rounded-2xl border-2 p-8 ${
+                  index === 1
+                    ? 'scale-105 border-emerald-500 bg-emerald-50/50 shadow-xl dark:bg-emerald-900/20'
+                    : 'border-gray-200 dark:border-slate-700'
+                }`}
               >
                 {index === 1 && (
                   <div className='mb-4 text-center'>
@@ -336,14 +340,15 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link href='/apply'>
-                  <button
-                    className={`w-full rounded-lg px-6 py-3 font-medium ${index === 1
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900'
-                      }`}
+                  <Button
+                    className={`w-full ${
+                      index === 1
+                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : 'bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900'
+                    }`}
                   >
                     Get Started
-                  </button>
+                  </Button>
                 </Link>
               </article>
             ))}
@@ -393,10 +398,13 @@ export default function HomePage() {
             and profits.
           </p>
           <Link href='/apply'>
-            <button className='rounded-lg bg-white px-8 py-3 text-lg font-medium text-emerald-700 shadow-xl hover:bg-emerald-50'>
+            <Button
+              size='lg'
+              className='bg-white px-8 text-lg text-emerald-700 shadow-xl hover:bg-emerald-50'
+            >
               Start Your Free Trial Today
-              <ArrowRight className='ml-2 inline h-5 w-5' />
-            </button>
+              <ArrowRight className='ml-2 h-5 w-5' />
+            </Button>
           </Link>
           <p className='mt-4 text-sm text-emerald-200'>
             No credit card required • Free plan available forever

@@ -142,9 +142,11 @@ export function AnimalDetail({ params }: { params: Promise<{ id: string }> }) {
               {animal.name && <CardDescription className='text-lg'>{animal.name}</CardDescription>}
             </div>
             {animal.photoUrl && (
-              <img
+              <Image
                 src={animal.photoUrl}
                 alt={animal.name || animal.tag}
+                width={96}
+                height={96}
                 className='h-24 w-24 rounded-lg object-cover'
               />
             )}

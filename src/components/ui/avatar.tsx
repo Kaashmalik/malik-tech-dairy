@@ -32,8 +32,8 @@ const avatarVariants = cva(
 
 interface AvatarProps
   extends
-    React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>,
-    VariantProps<typeof avatarVariants> {
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>,
+  VariantProps<typeof avatarVariants> {
   status?: 'online' | 'offline' | 'busy' | 'away';
 }
 
@@ -50,10 +50,10 @@ const Avatar = React.forwardRef<React.ElementRef<typeof AvatarPrimitive.Root>, A
           className={cn(
             'ring-background absolute bottom-0 right-0 block rounded-full ring-2',
             size === 'xs' || size === 'sm' ? 'h-2 w-2' : 'h-3 w-3',
-            status === 'online' && 'bg-green-500',
-            status === 'offline' && 'bg-slate-400',
-            status === 'busy' && 'bg-red-500',
-            status === 'away' && 'bg-yellow-500'
+            status === 'online' && 'bg-success',
+            status === 'offline' && 'bg-muted-foreground',
+            status === 'busy' && 'bg-destructive',
+            status === 'away' && 'bg-warning'
           )}
         />
       )}

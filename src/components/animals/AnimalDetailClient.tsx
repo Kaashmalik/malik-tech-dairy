@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, ArrowLeft } from 'lucide-react';
@@ -116,9 +117,11 @@ export function AnimalDetailClient({ animalId }: { animalId: string }) {
               {animal.name && <CardDescription className='text-lg'>{animal.name}</CardDescription>}
             </div>
             {animal.photoUrl && (
-              <img
+              <Image
                 src={animal.photoUrl}
                 alt={animal.name || animal.tag}
+                width={96}
+                height={96}
                 className='h-24 w-24 rounded-lg object-cover'
               />
             )}

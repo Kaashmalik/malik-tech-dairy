@@ -24,7 +24,7 @@ const inputVariants = cva(
       state: {
         default: 'border-input',
         error: 'border-destructive focus-visible:ring-destructive',
-        success: 'border-green-500 focus-visible:ring-green-500',
+        success: 'border-success focus-visible:ring-success',
       },
     },
     defaultVariants: {
@@ -37,8 +37,8 @@ const inputVariants = cva(
 
 export interface InputProps
   extends
-    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
-    VariantProps<typeof inputVariants> {
+  Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
+  VariantProps<typeof inputVariants> {
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
   containerClassName?: string;

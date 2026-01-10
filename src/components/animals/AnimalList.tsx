@@ -1,12 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import type { Animal } from '@/types';
-import { useState } from 'react';
 import { AnimalListSkeleton } from '@/components/ui/skeleton';
 import { EmptyAnimals, EmptySearchResults, EmptyError } from '@/components/ui/empty-state';
 
@@ -76,12 +77,13 @@ export function AnimalList() {
       <div className='flex gap-4'>
         <div className='relative flex-1'>
           <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform' />
-          <input
+          <Input
             type='text'
             placeholder='Search by tag or name...'
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className='w-full rounded-md border py-2 pl-10 pr-4'
+            className='pl-10'
+            aria-label='Search animals by tag or name'
           />
         </div>
       </div>

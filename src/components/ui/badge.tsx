@@ -14,7 +14,7 @@ const badgeVariants = cva(
         secondary:
           'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90',
         destructive:
-          'border-transparent bg-destructive text-white hover:bg-destructive/90 shadow-sm',
+          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm',
         outline: 'text-foreground hover:bg-accent hover:text-accent-foreground',
         glass:
           'border-white/20 bg-white/20 backdrop-blur-md text-white hover:bg-white/30 shadow-sm',
@@ -54,10 +54,10 @@ function Badge({
   // Entrance animation properties
   const motionProps = !asChild
     ? {
-        initial: { opacity: 0, scale: 0.8 },
-        animate: { opacity: 1, scale: 1 },
-        transition: { type: 'spring', stiffness: 500, damping: 25 },
-      }
+      initial: { opacity: 0, scale: 0.8 },
+      animate: { opacity: 1, scale: 1 },
+      transition: { type: 'spring', stiffness: 500, damping: 25 },
+    }
     : {};
 
   return (
@@ -72,7 +72,7 @@ function Badge({
           className={cn(
             'relative mr-0.5 flex h-2 w-2',
             pulse &&
-              'after:absolute after:inline-flex after:h-full after:w-full after:animate-ping after:rounded-full after:bg-current after:opacity-75'
+            'after:absolute after:inline-flex after:h-full after:w-full after:animate-ping after:rounded-full after:bg-current after:opacity-75'
           )}
         >
           <span className='relative inline-flex h-2 w-2 rounded-full bg-current opacity-90'></span>

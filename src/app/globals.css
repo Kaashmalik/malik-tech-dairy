@@ -84,6 +84,16 @@
   --destructive: oklch(0.6 0.2 25);
   --destructive-foreground: oklch(0.99 0 0);
 
+  /* Semantic Status Colors */
+  --success: oklch(0.6 0.16 155);
+  --success-foreground: oklch(0.99 0 0);
+
+  --warning: oklch(0.7 0.15 80);
+  --warning-foreground: oklch(0.1 0.05 80);
+
+  --info: oklch(0.6 0.15 220);
+  --info-foreground: oklch(0.99 0 0);
+
   --border: oklch(0.94 0.01 200);
   --input: oklch(0.94 0.01 200);
   --ring: oklch(0.6 0.16 155 / 0.5);
@@ -137,6 +147,16 @@
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(0.99 0 0);
 
+  /* Semantic Status Colors - Dark Mode */
+  --success: oklch(0.7 0.15 155);
+  --success-foreground: oklch(0.1 0.05 155);
+
+  --warning: oklch(0.75 0.15 80);
+  --warning-foreground: oklch(0.15 0.05 80);
+
+  --info: oklch(0.65 0.15 220);
+  --info-foreground: oklch(0.1 0.05 220);
+
   --border: oklch(0.25 0.02 260);
   --input: oklch(0.25 0.02 260);
   --ring: oklch(0.7 0.15 155 / 0.5);
@@ -184,6 +204,7 @@
 }
 
 @layer utilities {
+
   /* Fluid Typography */
   .text-fluid-h1 {
     font-size: clamp(2rem, 5vw, 3.5rem);
@@ -246,6 +267,7 @@
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
