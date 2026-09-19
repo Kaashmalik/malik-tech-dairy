@@ -1,132 +1,141 @@
-// API Route: List & Create Milk Logs (Supabase-based)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase/server';
-import { createMilkLogSchema } from '@/lib/validations/milk';
-import { v4 as uuidv4 } from 'uuid';
-import { ZodError } from 'zod';
-import { transformMilkLogs, type MilkLogFromDb } from '@/lib/utils/transform';
+import { z } from 'zod';
+import { MilkService } from '@/lib/services/milk/milk.service';
+
 export const dynamic = 'force-dynamic';
-// GET: List milk logs (with optional filters)
+
+const milkQuerySchema = z.object({
+  page: z.string().optional().transform(val => (val ? parseInt(val) : 1)),
+  limit: z.string().optional().transform(val => (val ? parseInt(val) : 50)),
+  date: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  animalId: z.string().optional(),
+  session: z.enum(['morning', 'evening']).optional(),
+  summary: z.string().optional(),
+  trends: z.string().optional(),
+  days: z.string().optional().transform(val => (val ? parseInt(val) : 30)),
+});
+
+const createMilkLogSchema = z.object({
+  animalId: z.string().min(1, 'Animal is required'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+  session: z.enum(['morning', 'evening']),
+  quantity: z.number().min(0.1, 'Quantity must be greater than 0').max(100, 'Quantity exceeds realistic single milking limit'),
+  quality: z.number().min(1).max(10).optional(),
+  fat: z.number().min(0).max(20).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+const bulkMilkSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+  session: z.enum(['morning', 'evening']),
+  entries: z.array(
+    z.object({
+      animalId: z.string().min(1),
+      quantity: z.number().min(0.1),
+      quality: z.number().min(1).max(10).optional(),
+    })
+  ).min(1, 'At least one milk entry required'),
+});
+
+// GET: List milk logs, daily summary, or trends
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      const supabase = getSupabaseClient();
       const { searchParams } = new URL(req.url);
-      const date = searchParams.get('date');
-      const animalId = searchParams.get('animalId');
-      const startDate = searchParams.get('startDate');
-      const endDate = searchParams.get('endDate');
-      let query = supabase
-        .from('milk_logs')
-        .select('*, animals(tag, name)')
-        .eq('tenant_id', context.tenantId)
-        .order('date', { ascending: false })
-        .order('session', { ascending: false })
-        .limit(100);
-      if (date) {
-        query = query.eq('date', date);
-      } else if (startDate && endDate) {
-        query = query.gte('date', startDate).lte('date', endDate);
+      const query = milkQuerySchema.parse(Object.fromEntries(searchParams));
+
+      // 1. Daily Summary request
+      if (query.summary === 'true') {
+        const summary = await MilkService.getDailySummary(context, query.date);
+        return NextResponse.json({ success: true, summary, data: summary });
       }
-      if (animalId) {
-        query = query.eq('animal_id', animalId);
+
+      // 2. Production trends request
+      if (query.trends === 'true') {
+        const trends = await MilkService.getProductionTrends(context, query.days || 30);
+        return NextResponse.json({ success: true, trends, data: trends });
       }
-      const { data: logs, error } = await query;
-      if (error) {
+
+      // 3. Regular paginated list
+      const result = await MilkService.listLogs(context, {
+        date: query.date,
+        startDate: query.startDate,
+        endDate: query.endDate,
+        animalId: query.animalId,
+        session: query.session,
+        page: query.page,
+        limit: query.limit,
+      });
+
+      return NextResponse.json({
+        success: true,
+        logs: result.items, // backwards compatibility
+        data: {
+          logs: result.items,
+          pagination: result.pagination,
+        },
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
         return NextResponse.json(
-          { success: false, error: 'Failed to fetch milk logs', logs: [] },
-          { status: 500 }
+          { success: false, error: 'Invalid query parameters', details: error.errors },
+          { status: 400 }
         );
       }
-      // Transform to camelCase for frontend
-      const transformedLogs = transformMilkLogs((logs as MilkLogFromDb[]) || []);
-      return NextResponse.json({ success: true, logs: transformedLogs });
-    } catch (error) {
-      return NextResponse.json(
-        { success: false, error: 'Internal server error', logs: [] },
-        { status: 500 }
-      );
+      console.error('Error fetching milk logs:', error);
+      return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);
 }
-// POST: Create milk log
+
+// POST: Record milk log (single or bulk)
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      const supabase = getSupabaseClient();
       const body = await req.json();
-      // Validate with Zod
-      let validated;
-      try {
-        validated = createMilkLogSchema.parse(body);
-      } catch (error) {
-        if (error instanceof ZodError) {
-          return NextResponse.json(
-            { success: false, error: 'Validation failed', details: error.errors },
-            { status: 400 }
-          );
-        }
-        throw error;
+
+      // Check if bulk insert
+      if (body.entries && Array.isArray(body.entries)) {
+        const validatedBulk = bulkMilkSchema.parse(body);
+        const result = await MilkService.bulkLogMilk(context, validatedBulk);
+        return NextResponse.json({ ...result }, { status: 201 });
       }
-      const { animalId, date, session, quantity, quality, notes } = validated;
-      // Check if log already exists for this animal/date/session
-      const { data: existing } = await supabase
-        .from('milk_logs')
-        .select('id')
-        .eq('tenant_id', context.tenantId)
-        .eq('animal_id', animalId)
-        .eq('date', date)
-        .eq('session', session)
-        .limit(1)
-        .single();
-      if (existing) {
-        return NextResponse.json(
-          { success: false, error: 'Milk log already exists for this animal, date, and session' },
-          { status: 409 }
-        );
-      }
-      const now = new Date().toISOString();
-      const logId = uuidv4();
-      const milkLogData = {
-        id: logId,
-        tenant_id: context.tenantId,
-        animal_id: animalId,
-        date,
-        session,
-        quantity,
-        quality: quality || null,
-        notes: notes || null,
-        recorded_by: context.userId,
-        created_at: now,
-      };
-      const { data: newLog, error } = await supabase
-        .from('milk_logs')
-        .insert(milkLogData)
-        .select()
-        .single();
-      if (error) {
-        return NextResponse.json(
-          { success: false, error: 'Failed to create milk log', details: error.message },
-          { status: 500 }
-        );
-      }
-      return NextResponse.json({
-        success: true,
-        log: {
-          id: newLog.id,
-          tenantId: newLog.tenant_id,
-          animalId: newLog.animal_id,
-          date: newLog.date,
-          session: newLog.session,
-          quantity: newLog.quantity,
-          quality: newLog.quality,
-          notes: newLog.notes,
-          recordedBy: newLog.recorded_by,
-          createdAt: newLog.created_at,
+
+      // Single entry
+      const validated = createMilkLogSchema.parse(body);
+      const logged = await MilkService.logMilk(context, validated);
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: { log: logged },
+          message: 'Milk entry recorded successfully',
         },
-      });
-    } catch (error) {
+        { status: 201 }
+      );
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { success: false, error: 'Validation failed', details: error.errors },
+          { status: 400 }
+        );
+      }
+
+      const message = error.message || '';
+      if (message.startsWith('NOT_FOUND')) {
+        return NextResponse.json({ success: false, error: message }, { status: 404 });
+      }
+      if (message.startsWith('DUPLICATE_ENTRY')) {
+        return NextResponse.json({ success: false, error: message }, { status: 409 });
+      }
+      if (message.startsWith('INVALID_STATE')) {
+        return NextResponse.json({ success: false, error: message }, { status: 422 });
+      }
+
+      console.error('Error recording milk log:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   })(request);

@@ -62,12 +62,19 @@ export function MobileNavigation({
     setSidebarOpen(!sidebarOpen);
   };
 
-  const navItems = [
+  const navItems: Array<{
+    id: string;
+    label: string;
+    icon: any;
+    href: string;
+    badge?: number | string;
+  }> = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/dashboard' },
-    { id: 'animals', label: 'Animals', icon: Users, href: '/animals', badge: 156 },
+    { id: 'animals', label: 'Animals', icon: Users, href: '/animals' },
     { id: 'milk', label: 'Milk', icon: Package, href: '/milk' },
-    { id: 'health', label: 'Health', icon: Heart, href: '/health', badge: 3 },
+    { id: 'health', label: 'Health', icon: Heart, href: '/health' },
     { id: 'breeding', label: 'Breeding', icon: Activity, href: '/breeding' },
+    { id: 'feed', label: 'Feed', icon: Package, href: '/feed' },
     { id: 'finance', label: 'Finance', icon: DollarSign, href: '/finance' },
   ];
 

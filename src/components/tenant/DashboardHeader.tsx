@@ -31,6 +31,7 @@ import {
   Building,
   Pill,
   Package,
+  Wheat,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
@@ -122,6 +123,12 @@ export function DashboardHeader() {
       href: '/medicine',
       icon: Pill,
       module: 'health',
+    },
+    {
+      label: 'Feed',
+      href: '/feed',
+      icon: Wheat,
+      module: 'expenses',
     },
     {
       label: 'Finance',

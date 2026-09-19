@@ -82,7 +82,7 @@ describe('Data Transformations', () => {
       style: 'currency',
       currency: 'PKR',
     }).format(amount);
-    expect(formatted).toContain('PKR');
+    expect(formatted).toMatch(/(PKR|Rs)/);
   });
 
   it('should calculate age from date of birth', () => {

@@ -35,14 +35,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'API key required' }, { status: 401 });
     }
 
-    // TODO: Validate API key
-    // const isValidApiKey = await validateApiKey(apiKey);
-    // if (!isValidApiKey) {
-    //   return NextResponse.json(
-    //     { success: false, error: 'Invalid API key' },
-    //     { status: 401 }
-    //   );
-    // }
+    // Validate API key
+    const { validateApiKey } = await import('@/lib/api-keys');
+    const isValidApiKey = await validateApiKey(apiKey);
+    if (!isValidApiKey) {
+      return NextResponse.json({ success: false, error: 'Invalid API key' }, { status: 401 });
+    }
 
     const body = await request.json();
     const validatedData = webhookSensorDataSchema.parse(body);

@@ -173,3 +173,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// DELETE /api/feed-management/inventory?id=xxx - Soft delete feed inventory
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    const tenantContext = await getTenantContext();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Feed item ID is required' }, { status: 400 });
+    }
+    const db = getDrizzle();
+    await db
+      .update(feedInventory)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(and(eq(feedInventory.id, id), eq(feedInventory.tenantId, tenantContext.tenantId)));
+
+    return NextResponse.json({ success: true, message: 'Feed item archived successfully' });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+

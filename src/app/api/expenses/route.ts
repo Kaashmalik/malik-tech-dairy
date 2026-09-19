@@ -1,5 +1,5 @@
 // API Route: Expenses - Migrated to Supabase
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse } from '@/lib/api/response';
@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
       const supabase = getSupabaseClient();
-      let query = (supabase.from('expenses') as any)
+      let query = supabase
+        .from('expenses')
         .select('*', { count: 'exact' })
         .eq('tenant_id', context.tenantId)
         .order('date', { ascending: false })
@@ -69,6 +70,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
+      // RBAC check: only owner, manager, accountant, feed_manager, or super_admin
+      const allowedRoles = ['farm_owner', 'farm_manager', 'accountant', 'feed_manager', 'super_admin'];
+      if (!allowedRoles.includes(context.userRole)) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: Insufficient permissions to record expenses' },
+          { status: 403 }
+        );
+      }
+
       const body = await req.json();
 
       // Validate request body
@@ -80,7 +90,8 @@ export async function POST(request: NextRequest) {
         ...validatedData,
         recordedBy: context.userId,
       });
-      const { data, error } = await (supabase.from('expenses') as any)
+      const { data, error } = await supabase
+        .from('expenses')
         .insert({
           ...expenseData,
           tenant_id: context.tenantId,

@@ -14,8 +14,11 @@ export function sanitizeString(input: string): string {
     return '';
   }
 
+  // Strip script tags and their content completely
+  let sanitized = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
   // Trim whitespace
-  let sanitized = input.trim();
+  sanitized = sanitized.trim();
 
   // Escape HTML entities
   sanitized = validator.escape(sanitized);
@@ -236,8 +239,8 @@ export function sanitizeSearchQuery(input: string): string {
 
   let sanitized = input.trim();
 
-  // Remove special SQL characters
-  sanitized = sanitized.replace(/['";\\]/g, '');
+  // Remove special SQL characters and comment sequences
+  sanitized = sanitized.replace(/--/g, '').replace(/['";\\]/g, '');
 
   // Limit length
   if (sanitized.length > 100) {

@@ -41,7 +41,9 @@ export function MilkLogForm({ animalId, onSuccess }: MilkLogFormProps) {
   });
 
   const animals = animalsData?.animals || [];
-  const dairyAnimals = animals.filter((a: any) => a.species === 'cow' || a.species === 'buffalo');
+  const dairyAnimals = animals.filter((a: any) =>
+    ['cow', 'cattle', 'buffalo', 'goat', 'sheep'].includes(a.species?.toLowerCase())
+  );
 
   const {
     register,
@@ -82,7 +84,7 @@ export function MilkLogForm({ animalId, onSuccess }: MilkLogFormProps) {
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push('/dashboard/milk');
+        router.push('/milk');
       }
     } catch (error: any) {
       toast.error(error.message || 'An error occurred');

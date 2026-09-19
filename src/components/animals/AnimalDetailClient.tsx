@@ -42,7 +42,7 @@ export function AnimalDetailClient({ animalId }: { animalId: string }) {
       if (!res.ok) throw new Error('Failed to delete animal');
 
       toast.success('Animal deleted successfully');
-      router.push('/dashboard/animals');
+      router.push('/animals');
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete animal');
     }
@@ -56,7 +56,7 @@ export function AnimalDetailClient({ animalId }: { animalId: string }) {
     return (
       <div className='py-8 text-center'>
         <p className='text-muted-foreground mb-4'>Animal not found</p>
-        <Button onClick={() => router.push('/dashboard/animals')}>Back to Animals</Button>
+        <Button onClick={() => router.push('/animals')}>Back to Animals</Button>
       </div>
     );
   }

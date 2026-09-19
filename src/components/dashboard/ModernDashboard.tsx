@@ -393,81 +393,51 @@ export default function ModernDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  // Data fetching with React Query and proper error handling
+  // Aggregated KPI Data Fetching
+  const { data: statsResponse, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const res = await fetch('/api/dashboard/stats');
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data;
+    },
+    staleTime: 30000,
+  });
+
   const { data: animalsData, isLoading: animalsLoading } = useQuery({
     queryKey: ['dashboard', 'animals'],
     queryFn: async () => {
-      const res = await fetch('/api/animals');
-      if (!res.ok) throw new Error('Failed to fetch animals');
+      const res = await fetch('/api/animals?limit=10');
+      if (!res.ok) return { data: { animals: [] } };
       return res.json();
     },
     staleTime: 30000,
-    retry: 2,
   });
 
   const { data: healthData, isLoading: healthLoading } = useQuery({
     queryKey: ['dashboard', 'health-records'],
     queryFn: async () => {
-      const res = await fetch('/api/health/records');
-      if (!res.ok) throw new Error('Failed to fetch health records');
+      const res = await fetch('/api/health/records?limit=10');
+      if (!res.ok) return { records: [] };
       return res.json();
     },
     staleTime: 30000,
-    retry: 2,
-  });
-
-  const { data: milkData, isLoading: milkLoading } = useQuery({
-    queryKey: ['dashboard', 'milk-stats'],
-    queryFn: async () => {
-      const res = await fetch('/api/milk/stats?days=7');
-      if (!res.ok) throw new Error('Failed to fetch milk stats');
-      return res.json();
-    },
-    staleTime: 30000,
-    retry: 2,
-  });
-
-  const { data: salesData, isLoading: salesLoading } = useQuery({
-    queryKey: ['dashboard', 'sales'],
-    queryFn: async () => {
-      const res = await fetch('/api/sales');
-      if (!res.ok) throw new Error('Failed to fetch sales');
-      return res.json();
-    },
-    staleTime: 30000,
-    retry: 2,
-  });
-
-  const { data: expensesData, isLoading: expensesLoading } = useQuery({
-    queryKey: ['dashboard', 'expenses'],
-    queryFn: async () => {
-      const res = await fetch('/api/expenses');
-      if (!res.ok) throw new Error('Failed to fetch expenses');
-      return res.json();
-    },
-    staleTime: 30000,
-    retry: 2,
   });
 
   const { data: assetsData, isLoading: assetsLoading } = useQuery({
     queryKey: ['dashboard', 'assets'],
     queryFn: async () => {
       const res = await fetch('/api/assets');
-      if (!res.ok) throw new Error('Failed to fetch assets');
+      if (!res.ok) return { data: { assets: [] } };
       return res.json();
     },
     staleTime: 30000,
-    retry: 2,
   });
 
-  const isLoading =
-    animalsLoading || healthLoading || milkLoading || salesLoading || expensesLoading || assetsLoading;
+  const isLoading = statsLoading && animalsLoading;
 
-  // Calculate total revenue from sales
-  const totalRevenue = useMemo(() => {
-    if (!salesData?.data || !Array.isArray(salesData.data)) return 125430;
-    return salesData.data?.reduce((acc: number, sale: any) => acc + (sale.amount || 0), 0) || 0;
-  }, [salesData]);
+  const farmKPIs = statsResponse;
 
   // Module data with real values
   const modules: ModuleData[] = useMemo(
@@ -477,155 +447,130 @@ export default function ModernDashboard() {
         title: 'Animals',
         description: 'Livestock management',
         icon: '🐄',
-        count: animalsData?.data?.animals?.length || 0,
-        change: 12,
-        changeType: 'increase',
+        count: farmKPIs?.animals?.total ?? (animalsData?.data?.animals?.length || 0),
+        change: farmKPIs?.animals?.active ?? 0,
+        changeType: 'neutral',
         color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
         href: '/animals',
         category: 'livestock',
         status: 'active',
-        lastUpdate: '2 min ago',
+        lastUpdate: 'Live',
       },
       {
         id: 'health',
         title: 'Health Records',
-        description: 'Medical history',
+        description: 'Medical history & treatments',
         icon: '❤️',
         count: healthData?.records?.length || 0,
-        change: 8,
-        changeType: 'increase',
+        change: 0,
+        changeType: 'neutral',
         color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
         href: '/health',
         category: 'medical',
         status: 'active',
-        lastUpdate: '1 hour ago',
+        lastUpdate: 'Live',
       },
       {
         id: 'milk',
         title: 'Milk Production',
-        description: 'Daily yield',
+        description: 'Daily yield & herd tracking',
         icon: '🥛',
-        count: milkData?.todayTotal || 125,
-        change: 5,
-        changeType: 'increase',
+        count: Math.round(farmKPIs?.milk?.todayTotal || 0),
+        change: farmKPIs?.milk?.percentChange || 0,
+        changeType: (farmKPIs?.milk?.percentChange || 0) >= 0 ? 'increase' : 'decrease',
         color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
         href: '/milk',
         category: 'production',
         suffix: 'L',
         status: 'active',
-        lastUpdate: 'Just now',
+        lastUpdate: 'Today',
       },
       {
-        id: 'assets',
-        title: 'Assets',
-        description: 'Equipment & tools',
-        icon: '🔧',
-        count: assetsData?.data?.assets?.length || 0,
-        change: 0,
-        changeType: 'neutral',
+        id: 'feed',
+        title: 'Feed Inventory',
+        description: 'Ration & stock management',
+        icon: '🌾',
+        count: farmKPIs?.feed?.lowStockCount || 0,
+        change: farmKPIs?.feed?.lowStockCount ? -farmKPIs.feed.lowStockCount : 0,
+        changeType: farmKPIs?.feed?.lowStockCount ? 'decrease' : 'neutral',
         color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-        href: '/assets',
-        category: 'equipment',
-        lastUpdate: '3 days ago',
-      },
-      {
-        id: 'medicine',
-        title: 'Medicine',
-        description: 'Inventory tracking',
-        icon: '💊',
-        count: 12,
-        change: -3,
-        changeType: 'decrease',
-        color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-        href: '/medicine',
+        href: '/feed',
         category: 'inventory',
-        status: 'warning',
-        lastUpdate: '5 hours ago',
+        status: farmKPIs?.feed?.lowStockCount ? 'warning' : 'active',
+        lastUpdate: 'Live',
       },
       {
-        id: 'diseases',
-        title: 'Diseases',
-        description: 'Disease database',
-        icon: '🦠',
-        count: 5,
-        change: 0,
-        changeType: 'neutral',
-        color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-        href: '/diseases',
-        category: 'medical',
-        lastUpdate: '1 week ago',
-      },
-      {
-        id: 'sales',
-        title: 'Sales',
-        description: 'Revenue tracking',
-        icon: '💰',
-        count: salesData?.data?.length || 45,
-        change: 15,
+        id: 'breeding',
+        title: 'Breeding',
+        description: 'Insemination & pregnancy',
+        icon: '🐣',
+        count: farmKPIs?.breeding?.pregnantCount || 0,
+        change: farmKPIs?.breeding?.upcomingCalvings30d || 0,
         changeType: 'increase',
+        color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+        href: '/breeding',
+        category: 'livestock',
+        status: 'active',
+        lastUpdate: 'Live',
+      },
+      {
+        id: 'finance',
+        title: 'Finance & Sales',
+        description: 'Revenue & operating expenses',
+        icon: '💰',
+        count: Math.round(farmKPIs?.finance?.monthRevenue || 0),
+        change: Math.round(farmKPIs?.finance?.monthNetResult || 0),
+        changeType: (farmKPIs?.finance?.monthNetResult || 0) >= 0 ? 'increase' : 'decrease',
         color: 'bg-green-500/10 text-green-600 dark:text-green-400',
         href: '/finance',
         category: 'financial',
+        suffix: 'PKR',
         status: 'active',
-        lastUpdate: 'Yesterday',
-      },
-      {
-        id: 'expenses',
-        title: 'Expenses',
-        description: 'Cost management',
-        icon: '🛒',
-        count: expensesData?.data?.length || 12,
-        change: 7,
-        changeType: 'increase',
-        color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-        href: '/finance',
-        category: 'financial',
-        lastUpdate: '2 days ago',
+        lastUpdate: 'This Month',
       },
     ],
-    [animalsData, healthData, milkData, salesData, expensesData, assetsData]
+    [farmKPIs, animalsData, healthData]
   );
 
-  // Quick stats with real data
+  // Quick stats with real live data
   const quickStats: QuickStat[] = useMemo(
     () => [
       {
-        label: 'Total Revenue',
-        value: totalRevenue,
+        label: 'Monthly Revenue',
+        value: farmKPIs?.finance?.monthRevenue || 0,
         prefix: '₨',
-        change: '+12%',
-        positive: true,
+        change: `${farmKPIs?.finance?.monthNetResult ? (farmKPIs.finance.monthNetResult >= 0 ? '+' : '') + Math.round(farmKPIs.finance.monthNetResult).toLocaleString() : '0'} net`,
+        positive: (farmKPIs?.finance?.monthNetResult || 0) >= 0,
         icon: TrendingUp,
         color: 'bg-emerald-100/50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
       },
       {
         label: 'Active Animals',
-        value: animalsData?.data?.animals?.length || 24,
-        change: '+2',
+        value: farmKPIs?.animals?.active ?? (animalsData?.data?.animals?.length || 0),
+        change: `${farmKPIs?.animals?.total || 0} total`,
         positive: true,
         icon: Activity,
         color: 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
       },
       {
-        label: 'Milk Today',
-        value: milkData?.todayTotal || 125,
+        label: "Today's Milk",
+        value: Math.round(farmKPIs?.milk?.todayTotal || 0),
         suffix: 'L',
-        change: '+5%',
-        positive: true,
+        change: `${farmKPIs?.milk?.percentChange !== undefined ? (farmKPIs.milk.percentChange >= 0 ? '+' : '') + farmKPIs.milk.percentChange + '%' : '0%'}`,
+        positive: (farmKPIs?.milk?.percentChange || 0) >= 0,
         icon: Droplets,
         color: 'bg-cyan-100/50 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-400',
       },
       {
-        label: 'Health Score',
-        value: 94,
-        suffix: '%',
-        change: 'Good',
+        label: 'Active Pregnancies',
+        value: farmKPIs?.breeding?.pregnantCount || 0,
+        change: `${farmKPIs?.breeding?.upcomingCalvings30d || 0} due soon`,
         positive: true,
         icon: Heart,
         color: 'bg-rose-100/50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400',
       },
     ],
-    [animalsData, milkData, totalRevenue]
+    [farmKPIs, animalsData]
   );
 
   // Recent activities (mock data for now, could be fetched)

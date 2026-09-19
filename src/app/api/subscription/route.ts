@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
-      // Only owner can update subscription
-      const hasPermission = await checkUserRole(context.tenantId, context.userId, ['owner']);
+      // Only farm_owner can update subscription
+      const hasPermission = await checkUserRole(context.tenantId, context.userId, ['owner', 'farm_owner']);
       if (!hasPermission) {
         return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
       }

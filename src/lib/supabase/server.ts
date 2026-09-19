@@ -51,7 +51,7 @@ export function getDrizzle() {
  * Use sparingly - prefer Drizzle ORM for type safety
  * Note: Uses 'any' type for flexibility during migration
  */
-export function getSupabaseClient(): SupabaseClient<any> {
+export function getSupabaseClient<T = any>(): SupabaseClient<T> {
   if (typeof window !== 'undefined') {
     throw new Error('Supabase client can only be used server-side');
   }
@@ -64,17 +64,15 @@ export function getSupabaseClient(): SupabaseClient<any> {
       throw new Error('Supabase credentials not configured');
     }
 
-    supabaseClient = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+    supabaseClient = createClient<any>(supabaseUrl, supabaseServiceKey, {
       auth: {
-        autoRefreshToken: true, // Enable automatic token refresh
-        persistSession: true, // Persist session in storage
-        detectSessionInUrl: true, // Detect session from URL
-        storage: typeof window !== 'undefined' ? (window as any).localStorage : undefined,
+        autoRefreshToken: false,
+        persistSession: false,
       },
     });
   }
 
-  return supabaseClient as SupabaseClient<any>;
+  return supabaseClient as unknown as SupabaseClient<T>;
 }
 
 /**

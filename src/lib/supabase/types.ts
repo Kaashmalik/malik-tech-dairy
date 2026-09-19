@@ -1,5 +1,5 @@
 // Type helpers for Supabase operations
-import { Database } from '@/types/supabase';
+import { Database } from '@/types/database';
 
 // Common table types
 export type Animal = Database['public']['Tables']['animals']['Row'];
@@ -130,20 +130,20 @@ export type MilkSession = 'morning' | 'evening';
 
 export type HealthRecordType = HealthRecord['type'];
 
-export type BreedingType = BreedingRecord['type'];
-export type BreedingStatus = BreedingRecord['status'];
+export type BreedingMethod = BreedingRecord['method'];
+export type BreedingOutcome = BreedingRecord['outcome'];
 
-export type UserRole = PlatformUser['role'];
-export type TenantRole = TenantMember['role'];
+export type UserRole = (typeof USER_ROLES)[number];
+export type TenantRole = (typeof TENANT_ROLES)[number];
 
 export type SubscriptionPlan = Subscription['plan'];
 export type SubscriptionStatus = Subscription['status'];
 
-export type PaymentMethod = Payment['method'];
+export type PaymentGateway = Payment['gateway'];
 export type PaymentStatus = Payment['status'];
 
 export type ExpenseCategory = Expense['category'];
-export type SaleProductType = Sale['product_type'];
+export type SaleType = Sale['type'];
 
 export type EmailSubscriptionType = EmailSubscription['type'];
 export type PredictionType = Prediction['type'];
@@ -211,12 +211,14 @@ export function isValidAnimalBreed(breed: string | null): breed is NonNullable<A
   return breed.trim().length > 0;
 }
 
-export function isValidUserRole(role: string): role is UserRole {
-  return USER_ROLES.includes(role as UserRole);
+export function isValidUserRole(role: string | null | undefined): role is UserRole {
+  if (!role) return false;
+  return (USER_ROLES as readonly string[]).includes(role);
 }
 
-export function isValidTenantRole(role: string): role is TenantRole {
-  return TENANT_ROLES.includes(role as TenantRole);
+export function isValidTenantRole(role: string | null | undefined): role is TenantRole {
+  if (!role) return false;
+  return (TENANT_ROLES as readonly string[]).includes(role);
 }
 
 export function createApiResponse<T>(data: T, message?: string): ApiResponse<T> {

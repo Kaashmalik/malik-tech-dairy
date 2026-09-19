@@ -2,7 +2,7 @@
 import * as Sentry from '@sentry/nextjs';
 
 // Only initialize Sentry if DSN is configured
-if (false && process.env.NEXT_PUBLIC_SENTRY_DSN) {
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 

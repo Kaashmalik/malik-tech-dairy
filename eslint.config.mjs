@@ -51,6 +51,7 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     '.next/**',
+    '.next_corrupted_backup/**',
     'out/**',
     'build/**',
     'dist/**',
@@ -61,6 +62,10 @@ const eslintConfig = defineConfig([
     '*.config.mjs',
     'jest.setup.js',
     'public/**',
+    'scripts/**',
+    'tests/load/**',
+    'cypress/**',
+    '*.js',
   ]),
 ]);
 

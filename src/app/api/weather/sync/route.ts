@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
+import { getTenantContext } from '@/lib/tenant/context';
 import professionalWeatherService from '@/lib/weather/professional-weather-service';
 
 // This endpoint syncs weather data for tenants based on their farm locations
@@ -119,13 +120,7 @@ export async function POST(request: NextRequest) {
 // GET /api/weather/sync - Manual trigger for sync
 export async function GET(request: NextRequest) {
   try {
-    // For manual triggering, you might want to add authentication
-    const { searchParams } = new URL(request.url);
-    const tenantId = searchParams.get('tenantId');
-
-    if (!tenantId) {
-      return NextResponse.json({ success: false, error: 'Tenant ID is required' }, { status: 400 });
-    }
+    const { tenantId } = await getTenantContext();
 
     const supabase = getSupabaseClient();
 

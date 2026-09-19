@@ -10,14 +10,10 @@ export async function GET(request: NextRequest) {
   const handler = withRole(
     [PlatformRole.SUPER_ADMIN, TenantRole.FARM_OWNER, TenantRole.FARM_MANAGER],
     async (req: AuthenticatedRequest) => {
-      const tenantId =
-        req.user!.tenantId ||
-        req.nextUrl.searchParams.get('tenantId') ||
-        req.headers.get('x-tenant-id') ||
-        '';
+      const tenantId = req.user?.tenantId;
 
       if (!tenantId) {
-        return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
+        return NextResponse.json({ error: 'Tenant ID required or unauthorized' }, { status: 401 });
       }
 
       try {
@@ -84,14 +80,10 @@ export async function POST(request: NextRequest) {
   const handler = withRole(
     [PlatformRole.SUPER_ADMIN, TenantRole.FARM_OWNER, TenantRole.FARM_MANAGER],
     async (req: AuthenticatedRequest) => {
-      const tenantId =
-        req.user!.tenantId ||
-        req.nextUrl.searchParams.get('tenantId') ||
-        req.headers.get('x-tenant-id') ||
-        '';
+      const tenantId = req.user?.tenantId;
 
       if (!tenantId) {
-        return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
+        return NextResponse.json({ error: 'Tenant ID required or unauthorized' }, { status: 401 });
       }
 
       const { email, role, name } = await req.json();

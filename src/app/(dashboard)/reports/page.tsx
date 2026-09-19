@@ -184,6 +184,41 @@ export default function ReportsPage() {
     }
   };
 
+  const handleExportCSV = async () => {
+    if (!selectedType) {
+      toast.error('Please select a report type');
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const response = await fetch(
+        `/api/reports/export?type=${selectedType}&format=csv&startDate=${startDate}&endDate=${endDate}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to export CSV');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedType}-export-${startDate}-${endDate}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('CSV exported successfully!');
+    } catch (error) {
+      toast.error('Failed to export CSV. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const selectedReportType = reportTypes.find(r => r.id === selectedType);
 
   return (
@@ -337,23 +372,34 @@ export default function ReportsPage() {
                       {format(new Date(endDate), 'MMM d, yyyy')}
                     </p>
                   </div>
-                  <Button
-                    onClick={handleGenerateReport}
-                    disabled={isGenerating}
-                    className={`bg-gradient-to-r ${selectedReportType?.gradient} text-white shadow-lg`}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className='mr-2 h-4 w-4' />
-                        Generate PDF
-                      </>
-                    )}
-                  </Button>
+                  <div className='flex items-center gap-3'>
+                    <Button
+                      variant='outline'
+                      onClick={handleExportCSV}
+                      disabled={isGenerating}
+                      className='gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 border shadow-sm'
+                    >
+                      <FileSpreadsheet className='h-4 w-4 text-emerald-600' />
+                      Export CSV (Excel)
+                    </Button>
+                    <Button
+                      onClick={handleGenerateReport}
+                      disabled={isGenerating}
+                      className={`bg-gradient-to-r ${selectedReportType?.gradient} text-white shadow-lg`}
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Download className='mr-2 h-4 w-4' />
+                          Generate PDF
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

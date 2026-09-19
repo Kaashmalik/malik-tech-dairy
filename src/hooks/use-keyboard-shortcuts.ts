@@ -36,37 +36,37 @@ const createDefaultShortcuts = (router: ReturnType<typeof useRouter>): KeyboardS
     key: 'a',
     shift: true,
     description: 'Go to Animals',
-    action: () => router.push('/dashboard/animals'),
+    action: () => router.push('/animals'),
   },
   {
     key: 'm',
     shift: true,
     description: 'Go to Milk Production',
-    action: () => router.push('/dashboard/milk'),
+    action: () => router.push('/milk'),
   },
   {
     key: 'h',
     shift: true,
     description: 'Go to Health Records',
-    action: () => router.push('/dashboard/health'),
+    action: () => router.push('/health'),
   },
   {
     key: 'b',
     shift: true,
     description: 'Go to Breeding',
-    action: () => router.push('/dashboard/breeding'),
+    action: () => router.push('/breeding'),
   },
   {
     key: 'f',
     shift: true,
     description: 'Go to Finance',
-    action: () => router.push('/dashboard/finance'),
+    action: () => router.push('/finance'),
   },
   {
     key: 's',
     shift: true,
     description: 'Go to Settings',
-    action: () => router.push('/dashboard/settings'),
+    action: () => router.push('/settings'),
   },
   {
     key: 'n',
@@ -158,32 +158,32 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
             break;
           case 'ga':
             event.preventDefault();
-            router.push('/dashboard/animals');
+            router.push('/animals');
             sequenceRef.current = [];
             break;
           case 'gm':
             event.preventDefault();
-            router.push('/dashboard/milk');
+            router.push('/milk');
             sequenceRef.current = [];
             break;
           case 'gh':
             event.preventDefault();
-            router.push('/dashboard/health');
+            router.push('/health');
             sequenceRef.current = [];
             break;
           case 'gb':
             event.preventDefault();
-            router.push('/dashboard/breeding');
+            router.push('/breeding');
             sequenceRef.current = [];
             break;
           case 'gf':
             event.preventDefault();
-            router.push('/dashboard/finance');
+            router.push('/finance');
             sequenceRef.current = [];
             break;
           case 'gs':
             event.preventDefault();
-            router.push('/dashboard/settings');
+            router.push('/settings');
             sequenceRef.current = [];
             break;
         }

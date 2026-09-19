@@ -23,6 +23,7 @@ yarn.lock
 
 # Environment files
 .env*
+env.example
 !.env.example
 
 # IDE

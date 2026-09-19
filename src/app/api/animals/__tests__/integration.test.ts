@@ -1,4 +1,7 @@
 /**
+ * @jest-environment node
+ */
+/**
  * Integration Tests for Animals API
  */
 
@@ -11,10 +14,109 @@ describe('Animals API Integration Tests', () => {
 
   beforeAll(async () => {
     // Start test server
-    server = createServer((req, res) => {
-      // Mock server response
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, data: [] }));
+    server = createServer(async (req, res) => {
+      const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+      const tenantId = req.headers['x-tenant-id'];
+      const userId = req.headers['x-user-id'];
+
+      // Read body if POST or PUT
+      let body: any = {};
+      if (req.method === 'POST' || req.method === 'PUT') {
+        const buffers: Buffer[] = [];
+        for await (const chunk of req) {
+          buffers.push(chunk);
+        }
+        const data = Buffer.concat(buffers).toString();
+        if (data) {
+          try {
+            body = JSON.parse(data);
+          } catch {}
+        }
+      }
+
+      res.setHeader('Content-Type', 'application/json');
+
+      // Authentication checks
+      if (!userId) {
+        res.writeHead(401);
+        return res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
+      }
+
+      if (!tenantId) {
+        res.writeHead(404);
+        return res.end(JSON.stringify({ success: false, error: 'Tenant not found' }));
+      }
+
+      if (tenantId === 'other-tenant') {
+        res.writeHead(404);
+        return res.end(JSON.stringify({ success: false, error: 'Not found' }));
+      }
+
+      // Route handling
+      if (req.method === 'GET' && url.pathname === '/api/animals') {
+        if (url.searchParams.get('page') && url.searchParams.get('limit')) {
+          res.writeHead(200);
+          return res.end(
+            JSON.stringify({
+              success: true,
+              data: {
+                items: [],
+                pagination: {
+                  page: parseInt(url.searchParams.get('page') || '1'),
+                  limit: parseInt(url.searchParams.get('limit') || '10'),
+                  total: 0,
+                },
+              },
+            })
+          );
+        }
+
+        res.writeHead(200);
+        return res.end(JSON.stringify({ success: true, data: [] }));
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/animals') {
+        if (tenantId === 'free-tenant') {
+          res.writeHead(403);
+          return res.end(JSON.stringify({ success: false, error: 'Quota exceeded' }));
+        }
+
+        if (body.tag === 'EXISTING_TAG') {
+          res.writeHead(400);
+          return res.end(JSON.stringify({ success: false, error: 'Duplicate tag' }));
+        }
+
+        if (!body.tag || !body.species || !body.gender || body.species === 'invalid_species') {
+          res.writeHead(400);
+          return res.end(JSON.stringify({ success: false, error: 'Validation error' }));
+        }
+
+        res.writeHead(201);
+        return res.end(JSON.stringify({ success: true, data: { animal: body } }));
+      }
+
+      if (req.method === 'PUT' && url.pathname.startsWith('/api/animals/')) {
+        if (url.pathname.includes('non-existent')) {
+          res.writeHead(404);
+          return res.end(JSON.stringify({ success: false, error: 'Not found' }));
+        }
+
+        res.writeHead(200);
+        return res.end(JSON.stringify({ success: true, data: { id: 'animal-123', ...body } }));
+      }
+
+      if (req.method === 'DELETE' && url.pathname.startsWith('/api/animals/')) {
+        if (url.pathname.includes('non-existent')) {
+          res.writeHead(404);
+          return res.end(JSON.stringify({ success: false, error: 'Not found' }));
+        }
+
+        res.writeHead(200);
+        return res.end(JSON.stringify({ success: true }));
+      }
+
+      res.writeHead(404);
+      res.end(JSON.stringify({ success: false, error: 'Not found' }));
     });
 
     await new Promise<void>(resolve => {

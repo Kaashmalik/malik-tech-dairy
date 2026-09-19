@@ -128,7 +128,10 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: process.env.NODE_ENV === 'production' ? 'https://maliktechdairy.com' : '*',
+            value:
+              process.env.NODE_ENV === 'production'
+                ? process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'
+                : '*',
           },
           {
             key: 'Access-Control-Allow-Methods',

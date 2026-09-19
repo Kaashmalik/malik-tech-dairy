@@ -197,7 +197,7 @@ export function getClientIp(request: Request): string {
     return realIp;
   }
 
-  return 'unknown';
+  return 'anonymous';
 }
 
 /**
@@ -253,14 +253,21 @@ export async function getAuditLogs(params: {
 
   query = query.range(offset, offset + limit - 1);
 
-  const { data, count, error } = await query;
+  try {
+    const { data, count, error } = await query;
 
-  if (error) {
+    if (error) {
+      throw new Error('Failed to fetch audit logs');
+    }
+
+    return {
+      logs: data || [],
+      total: count || 0,
+    };
+  } catch (error: any) {
+    if (error.message === 'Failed to fetch audit logs') {
+      throw error;
+    }
     throw new Error('Failed to fetch audit logs');
   }
-
-  return {
-    logs: data || [],
-    total: count || 0,
-  };
 }

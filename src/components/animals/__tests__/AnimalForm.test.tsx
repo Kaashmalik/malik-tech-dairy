@@ -18,8 +18,8 @@ jest.mock('sonner', () => ({
 jest.mock('@/hooks/useTenantLimits', () => ({
   useTenantLimits: () => ({
     canAddAnimal: true,
-    currentAnimalCount: 5,
-    maxAnimals: 25,
+    animalCount: 5,
+    limits: { maxAnimals: 25 },
     isLoading: false,
   }),
 }));

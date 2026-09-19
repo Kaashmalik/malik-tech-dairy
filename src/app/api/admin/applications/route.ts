@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { Database } from '@/types/database';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { Tables } from '@/types/database';
 
 // Helper to check if user is super admin
 async function isSuperAdmin(userId: string): Promise<boolean> {
@@ -19,7 +20,8 @@ async function isSuperAdmin(userId: string): Promise<boolean> {
   // Safe check if user exists and has platform_role
   if (!user) return false;
 
-  return (user as any).platform_role === 'super_admin';
+  const userRecord = user as Tables<'platform_users'>;
+  return userRecord.platform_role === 'super_admin';
 }
 // GET: List all farm applications (super admin only)
 export async function GET(request: NextRequest) {

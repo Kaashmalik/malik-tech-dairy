@@ -4,6 +4,7 @@ import { getSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { updateTenantSubscription } from '@/lib/subscriptions/management';
 import { SubscriptionPlan, SubscriptionStatus } from '@/types';
+import { Tables, TablesUpdate } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,7 +95,10 @@ export async function PUT(request: NextRequest) {
       // 2. Update Payment Status to Completed
       await supabase
         .from('payments')
-        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .update({
+          status: 'completed',
+          updated_at: new Date().toISOString(),
+        } as TablesUpdate<'payments'>)
         .eq('id', paymentId);
 
       // 3. Upgrade Subscription
@@ -112,7 +116,10 @@ export async function PUT(request: NextRequest) {
       // Reject
       await supabase
         .from('payments')
-        .update({ status: 'failed', updated_at: new Date().toISOString() })
+        .update({
+          status: 'failed',
+          updated_at: new Date().toISOString(),
+        } as TablesUpdate<'payments'>)
         .eq('id', paymentId);
 
       return NextResponse.json({ success: true, message: 'Payment rejected' });

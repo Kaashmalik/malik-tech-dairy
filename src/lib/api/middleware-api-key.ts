@@ -38,7 +38,7 @@ export function withApiKeyAuth(
 
     return handler(req, {
       tenantId: apiKeyData.tenantId,
-      permissions: (apiKeyData as any).scopes || [],
+      permissions: (apiKeyData.scopes as string[]) || [],
     });
   };
 }

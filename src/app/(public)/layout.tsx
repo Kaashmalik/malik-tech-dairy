@@ -2,6 +2,7 @@
 // Used for: /apply, /apply/success, /apply/status
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { TablesInsert, TablesUpdate } from '@/types/database';
 export const dynamic = 'force-dynamic';
 // Super admin emails - users with these emails get super_admin role
 const SUPER_ADMIN_EMAILS = ['mtkdairy@gmail.com'];
@@ -48,7 +49,7 @@ async function ensureUserExists(userId: string, email: string, name?: string): P
       };
       const { error: insertError } = await supabase
         .from('platform_users')
-        .insert(newUser as PlatformUser);
+        .insert(newUser as TablesInsert<'platform_users'>);
       if (insertError) {
         return isSuperAdmin;
       }
@@ -60,7 +61,7 @@ async function ensureUserExists(userId: string, email: string, name?: string): P
         .update({
           platform_role: 'super_admin',
           updated_at: new Date().toISOString(),
-        } as Partial<PlatformUser>)
+        } as TablesUpdate<'platform_users'>)
         .eq('id', userId);
       if (updateError) {
       }

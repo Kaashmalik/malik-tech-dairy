@@ -57,7 +57,9 @@ async function getUserRoleFromSupabase(tenantId: string, userId: string): Promis
     }
     return TenantRole.GUEST;
   } catch (error) {
-    return TenantRole.FARM_OWNER; // Default to owner for graceful degradation
+    // Fail closed - deny access on any error
+    console.error('Authorization check failed:', error);
+    return TenantRole.GUEST;
   }
 }
 /**

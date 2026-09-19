@@ -40,13 +40,26 @@ afterAll(() => {
 // ============================================================================
 // Global Fetch Mock (fallback when MSW is not available)
 // ============================================================================
+const nativeFetch = globalThis.fetch;
+
 if (!server) {
-  global.fetch = jest.fn(() =>
-    Promise.resolve({
+  global.fetch = jest.fn(async (input, init) => {
+    const urlStr = typeof input === 'string' ? input : input?.url || '';
+    if (
+      (urlStr.startsWith('http://localhost') || urlStr.startsWith('http://127.0.0.1')) &&
+      typeof nativeFetch === 'function'
+    ) {
+      return nativeFetch(input, init);
+    }
+    return {
       ok: true,
-      json: () => Promise.resolve({}),
-    })
-  );
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers(),
+      json: async () => ({ success: true, data: [] }),
+      text: async () => '',
+    };
+  });
 }
 
 // Mock Next.js router
