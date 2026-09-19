@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { Geist, Geist_Mono, Noto_Nastaliq_Urdu } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'sonner';
@@ -157,14 +158,18 @@ export const metadata: Metadata = {
   classification: 'Business',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'en';
+  const isRTL = locale === 'ur';
+
   return (
     <ClerkProvider>
-      <html lang='en' suppressHydrationWarning>
+      <html lang={locale} dir={isRTL ? 'rtl' : 'ltr'} suppressHydrationWarning>
         <head>
           {/* Preconnect to External Resources */}
           <link rel='preconnect' href='https://fonts.googleapis.com' />
@@ -191,9 +196,14 @@ export default function RootLayout({
           <meta name='revisit-after' content='7 days' />
         </head>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} ${isRTL ? 'font-urdu' : ''} antialiased`}
         >
-          <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute='class'
+            defaultTheme='system'
+            enableSystem
+            disableTransitionOnChange
+          >
             {children}
             <Toaster />
             <PWARegister />

@@ -1,14 +1,11 @@
 // API Route: Create Payment Checkout
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { createJazzCashCheckout } from '@/lib/payments/jazzcash-server';
-import { createEasyPaisaCheckout } from '@/lib/payments/easypaisa-server';
-import { createXPayCheckout } from '@/lib/payments/xpay-server';
+import { PaymentRegistry } from '@/lib/payments/provider-registry';
 import { validateCoupon } from '@/lib/coupons/validation';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import type { PaymentGateway, SubscriptionPlan } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
 export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
@@ -47,54 +44,21 @@ export async function POST(request: NextRequest) {
           amount = couponCalculation.finalAmount;
         }
       }
-      // Generate order ID
-      const orderId = `ORD-${context.tenantId}-${Date.now()}-${uuidv4().slice(0, 8)}`;
-      // Create checkout based on gateway
-      let checkoutUrl: string;
-      const paymentRequest = {
-        amount,
-        orderId,
-        description: `MTK Dairy - ${planDetails.name} Plan`,
-        customerEmail: context.userId, // Will be replaced with actual email
-        customerPhone: '', // Will be replaced with actual phone
-      };
       const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/callback/${gateway}`;
-      if (gateway === 'jazzcash') {
-        const config = {
-          merchantId: process.env.JAZZCASH_MERCHANT_ID!,
-          password: process.env.JAZZCASH_PASSWORD!,
-          integritySalt: process.env.JAZZCASH_INTEGRETY_SALT!,
-          returnUrl,
-          isSandbox: process.env.NODE_ENV !== 'production',
-        };
-        const result = createJazzCashCheckout(config, paymentRequest);
-        checkoutUrl = result.checkoutUrl;
-      } else if (gateway === 'easypaisa') {
-        const config = {
-          storeId: process.env.EASYPAISA_STORE_ID!,
-          hashKey: process.env.EASYPAISA_HASH_KEY!,
-          returnUrl,
-          isSandbox: process.env.NODE_ENV !== 'production',
-        };
-        const result = createEasyPaisaCheckout(config, paymentRequest);
-        checkoutUrl = result.checkoutUrl;
-      } else if (gateway === 'xpay') {
-        const config = {
-          merchantId: process.env.XPAY_MERCHANT_ID!,
-          merchantKey: process.env.XPAY_MERCHANT_KEY!,
-          returnUrl,
-          isSandbox: process.env.NODE_ENV !== 'production',
-        };
-        const result = createXPayCheckout(config, paymentRequest);
-        checkoutUrl = result.checkoutUrl;
-      } else if (gateway === 'bank_transfer') {
-        // For bank transfer, we just create the pending order and redirect to a success/instructions page
-        // Or we could return a URL to a "Upload Receipt" page.
-        // For now, redirect to a "payment pending" page with instructions.
-        checkoutUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscription?payment_pending=true&order_id=${orderId}`;
-      } else {
-        return NextResponse.json({ error: 'Unsupported payment gateway' }, { status: 400 });
-      }
+
+      const provider = PaymentRegistry.getProvider(gateway as any);
+      const checkoutResult = await provider.createCheckout({
+        tenantId: context.tenantId,
+        userId: context.userId,
+        plan: plan as SubscriptionPlan,
+        amount,
+        currency: 'PKR',
+        description: `MTK Dairy - ${planDetails.name} Plan`,
+        returnUrl,
+      });
+
+      const orderId = checkoutResult.orderId;
+      const checkoutUrl = checkoutResult.checkoutUrl;
       // Store payment intent in database (for tracking)
       // Store payment intent in Supabase
       const supabase = getSupabaseClient();

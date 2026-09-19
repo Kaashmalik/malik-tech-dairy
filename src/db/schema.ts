@@ -1693,6 +1693,38 @@ export const milkQualityTestsRelations = relations(milkQualityTests, ({ one }) =
   }),
 }));
 
+// In-app Notifications table
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: text('id').primaryKey(),
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: text('user_id'),
+    type: varchar('type', { length: 50 }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    message: text('message').notNull(),
+    link: text('link'),
+    read: boolean('read').default(false).notNull(),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    tenantIdIdx: index('notifications_tenant_id_idx').on(table.tenantId),
+    userIdIdx: index('notifications_user_id_idx').on(table.userId),
+    readIdx: index('notifications_read_idx').on(table.read),
+    createdAtIdx: index('notifications_created_at_idx').on(table.createdAt),
+  })
+);
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [notifications.tenantId],
+    references: [tenants.id],
+  }),
+}));
+
 // Export relations for enhanced schema
 export { relations };
 

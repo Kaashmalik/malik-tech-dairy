@@ -279,7 +279,7 @@ export function useOfflineCreateMilkLog(tenantId: string) {
 // Sync status hook
 export function useSyncStatus(tenantId: string) {
   const [syncStatus, setSyncStatus] = useState({
-    isOnline: navigator.onLine,
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     pendingMutations: 0,
     lastSync: 0,
     syncInProgress: false,

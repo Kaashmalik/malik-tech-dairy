@@ -305,3 +305,41 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// DELETE /api/staff-management/tasks?id=xxx - Delete task assignment
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Task ID required' }, { status: 400 });
+    }
+    const tenantContext = await getTenantContext();
+    const db = getDrizzle();
+
+    const existingTask = await db
+      .select()
+      .from(taskAssignments)
+      .where(and(eq(taskAssignments.id, id), eq(taskAssignments.tenantId, tenantContext.tenantId)))
+      .limit(1);
+
+    if (!existingTask.length) {
+      return NextResponse.json({ success: false, error: 'Task not found' }, { status: 404 });
+    }
+
+    await db
+      .delete(taskAssignments)
+      .where(and(eq(taskAssignments.id, id), eq(taskAssignments.tenantId, tenantContext.tenantId)));
+
+    return NextResponse.json({
+      success: true,
+      message: 'Task assignment deleted successfully',
+    });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}

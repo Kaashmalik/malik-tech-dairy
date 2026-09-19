@@ -32,8 +32,12 @@ import {
   Pill,
   Package,
   Wheat,
+  ClipboardList,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { CompactSyncStatus } from '@/components/ui/sync-status';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,6 +103,12 @@ export function DashboardHeader() {
       href: '/milk',
       icon: Milk,
       module: 'milk',
+    },
+    {
+      label: 'Tasks',
+      href: '/tasks',
+      icon: ClipboardList,
+      module: 'dashboard',
     },
     {
       label: 'Health',
@@ -259,6 +269,14 @@ export function DashboardHeader() {
 
               {/* Right side */}
               <div className='flex items-center gap-2'>
+                {/* Offline Sync Status */}
+                <div className='hidden items-center sm:flex'>
+                  <CompactSyncStatus tenantId={organization?.id || ''} />
+                </div>
+
+                {/* Language Switcher */}
+                <LanguageSwitcher />
+
                 {/* Theme Toggle */}
                 <ThemeToggle />
 
@@ -275,13 +293,7 @@ export function DashboardHeader() {
                 </button>
 
                 {/* Notifications */}
-                <button
-                  className='relative rounded-xl border border-white/20 bg-white/50 p-2.5 transition-colors hover:bg-white/80 dark:bg-slate-800/50 dark:hover:bg-slate-700/50'
-                  aria-label='Notifications'
-                >
-                  <Bell className='h-4 w-4 text-gray-500 dark:text-slate-400' />
-                  <span className='absolute right-2 top-2 h-2 w-2 animate-pulse rounded-full bg-red-500'></span>
-                </button>
+                <NotificationBell />
 
                 {userRole && (
                   <span className='glass-panel hidden rounded-full border border-emerald-200/50 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 px-3 py-1.5 text-xs font-medium text-emerald-700 md:block dark:border-emerald-700/30 dark:from-emerald-900/30 dark:to-teal-900/30 dark:text-emerald-400'>

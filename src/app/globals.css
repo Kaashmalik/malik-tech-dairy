@@ -204,7 +204,6 @@
 }
 
 @layer utilities {
-
   /* Fluid Typography */
   .text-fluid-h1 {
     font-size: clamp(2rem, 5vw, 3.5rem);
@@ -267,7 +266,6 @@
 }
 
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0);
@@ -320,4 +318,14 @@
 
 .delay-300 {
   animation-delay: 300ms;
+}
+
+/* RTL & Urdu Typography Support */
+[dir='rtl'] {
+  font-family: var(--font-urdu), var(--font-geist-sans), system-ui, sans-serif;
+  letter-spacing: normal;
+}
+
+.font-urdu {
+  font-family: var(--font-urdu), system-ui, sans-serif;
 }

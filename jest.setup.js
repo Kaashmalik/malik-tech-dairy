@@ -1,6 +1,13 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
+// Global mock for uuid ESM module in Jest
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'mock-uuid-' + Math.random().toString(36).substring(2, 9)),
+  v5: jest.fn(() => 'mock-uuid-v5'),
+  v1: jest.fn(() => 'mock-uuid-v1'),
+}));
+
 // ============================================================================
 // MSW Server Setup (optional - gracefully handle if not available)
 // ============================================================================
