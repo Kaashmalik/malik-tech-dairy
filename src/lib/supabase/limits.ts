@@ -96,7 +96,7 @@ export async function getAnimalCount(tenantId: string): Promise<number> {
       .from('animals')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
-      .neq('status', 'deceased')) as { count: number | null; error: any };
+      .eq('status', 'active')) as { count: number | null; error: any };
     if (error) {
       return 0;
     }

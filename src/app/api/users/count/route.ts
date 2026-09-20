@@ -1,24 +1,18 @@
-// API Route: Get User Count for Tenant
+// API Route: Get User Count for Tenant (Supabase)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { adminDb } from '@/lib/firebase/admin';
+import { getUserCount } from '@/lib/supabase/limits';
+
 export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
-  return withTenantContext(async (req, context) => {
+  return withTenantContext(async (_req, context) => {
     try {
-      if (!adminDb) {
-        return NextResponse.json({ count: 0 });
-      }
-      // Count users belonging to this tenant
-      const usersSnapshot = await adminDb
-        .collection('users')
-        .where('tenantId', '==', context.tenantId)
-        .count()
-        .get();
-      const count = usersSnapshot.data().count || 0;
-      return NextResponse.json({ count });
+      const count = await getUserCount(context.tenantId);
+      return NextResponse.json({ success: true, count });
     } catch (error) {
-      return NextResponse.json({ count: 0 });
+      console.error('User count error:', error);
+      return NextResponse.json({ success: true, count: 0 });
     }
   })(request);
 }

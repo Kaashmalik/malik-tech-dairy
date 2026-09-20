@@ -1,7 +1,32 @@
-// Coupon Validation & Calculation
-import { adminDb } from '@/lib/firebase/admin';
+// Coupon Validation & Calculation (Postgres / Drizzle)
+import { getDrizzle } from '@/lib/supabase/server';
+import { coupons, couponUsage } from '@/db/schema';
+import { and, count, eq } from 'drizzle-orm';
+import { nanoid } from 'nanoid';
 import type { Coupon, DiscountCalculation, DiscountTarget } from './types';
 import type { SubscriptionPlan } from '@/types';
+
+function toCoupon(row: typeof coupons.$inferSelect): Coupon {
+  return {
+    id: row.id,
+    code: row.code,
+    type: row.type as Coupon['type'],
+    value: row.value,
+    targetPlans: (row.targetPlans || []) as DiscountTarget[],
+    minAmount: row.minAmount ?? undefined,
+    maxDiscount: row.maxDiscount ?? undefined,
+    validFrom: row.validFrom,
+    validUntil: row.validUntil,
+    maxUses: row.maxUses ?? undefined,
+    maxUsesPerUser: row.maxUsesPerUser ?? undefined,
+    isActive: row.isActive,
+    description: row.description ?? undefined,
+    createdBy: row.createdBy,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
 /**
  * Validate and calculate discount for a coupon
  */
@@ -9,39 +34,27 @@ export async function validateCoupon(
   code: string,
   plan: SubscriptionPlan,
   amount: number,
-  tenantId: string,
+  _tenantId: string,
   userId: string
 ): Promise<{ valid: boolean; calculation?: DiscountCalculation; error?: string }> {
-  if (!adminDb) {
-    return { valid: false, error: 'Database not available' };
-  }
   try {
-    // Find coupon by code
-    const couponsSnapshot = await adminDb
-      .collection('coupons')
-      .where('code', '==', code.toUpperCase())
-      .where('isActive', '==', true)
-      .limit(1)
-      .get();
-    if (couponsSnapshot.empty) {
+    const db = getDrizzle();
+    const [row] = await db
+      .select()
+      .from(coupons)
+      .where(and(eq(coupons.code, code.toUpperCase()), eq(coupons.isActive, true)))
+      .limit(1);
+
+    if (!row) {
       return { valid: false, error: 'Invalid coupon code' };
     }
-    const couponDoc = couponsSnapshot.docs[0];
-    const coupon = { id: couponDoc.id, ...couponDoc.data() } as Coupon;
-    // Check validity dates
+
+    const coupon = toCoupon(row);
     const now = new Date();
-    const validFrom =
-      coupon.validFrom instanceof Date
-        ? coupon.validFrom
-        : (coupon.validFrom as any)?.toDate?.() || new Date(coupon.validFrom);
-    const validUntil =
-      coupon.validUntil instanceof Date
-        ? coupon.validUntil
-        : (coupon.validUntil as any)?.toDate?.() || new Date(coupon.validUntil);
-    if (now < validFrom || now > validUntil) {
+    if (now < coupon.validFrom || now > coupon.validUntil) {
       return { valid: false, error: 'Coupon has expired' };
     }
-    // Check if coupon applies to this plan
+
     if (
       coupon.targetPlans.length > 0 &&
       !coupon.targetPlans.includes('all') &&
@@ -49,37 +62,34 @@ export async function validateCoupon(
     ) {
       return { valid: false, error: 'Coupon not valid for this plan' };
     }
-    // Check minimum amount
+
     if (coupon.minAmount && amount < coupon.minAmount) {
       return {
         valid: false,
         error: `Minimum purchase amount is PKR ${coupon.minAmount}`,
       };
     }
-    // Check max uses
+
     if (coupon.maxUses) {
-      const usageCount = await adminDb
-        .collection('coupon_usage')
-        .where('couponId', '==', coupon.id)
-        .count()
-        .get();
-      if (usageCount.data().count >= coupon.maxUses) {
+      const [usage] = await db
+        .select({ count: count() })
+        .from(couponUsage)
+        .where(eq(couponUsage.couponId, coupon.id));
+      if (Number(usage?.count || 0) >= coupon.maxUses) {
         return { valid: false, error: 'Coupon has reached maximum uses' };
       }
     }
-    // Check max uses per user
+
     if (coupon.maxUsesPerUser) {
-      const userUsageCount = await adminDb
-        .collection('coupon_usage')
-        .where('couponId', '==', coupon.id)
-        .where('userId', '==', userId)
-        .count()
-        .get();
-      if (userUsageCount.data().count >= coupon.maxUsesPerUser) {
+      const [userUsage] = await db
+        .select({ count: count() })
+        .from(couponUsage)
+        .where(and(eq(couponUsage.couponId, coupon.id), eq(couponUsage.userId, userId)));
+      if (Number(userUsage?.count || 0) >= coupon.maxUsesPerUser) {
         return { valid: false, error: 'You have already used this coupon' };
       }
     }
-    // Calculate discount
+
     let discountAmount = 0;
     if (coupon.type === 'percentage') {
       discountAmount = (amount * coupon.value) / 100;
@@ -89,8 +99,9 @@ export async function validateCoupon(
     } else if (coupon.type === 'fixed') {
       discountAmount = Math.min(coupon.value, amount);
     } else if (coupon.type === 'free_trial') {
-      discountAmount = amount; // Full discount for free trial
+      discountAmount = amount;
     }
+
     const finalAmount = Math.max(0, amount - discountAmount);
     return {
       valid: true,
@@ -102,9 +113,11 @@ export async function validateCoupon(
       },
     };
   } catch (error) {
+    console.error('Coupon validation error:', error);
     return { valid: false, error: 'Error validating coupon' };
   }
 }
+
 /**
  * Record coupon usage
  */
@@ -115,15 +128,14 @@ export async function recordCouponUsage(
   orderId: string,
   discountAmount: number
 ): Promise<void> {
-  if (!adminDb) {
-    throw new Error('Database not available');
-  }
-  await adminDb.collection('coupon_usage').add({
+  const db = getDrizzle();
+  await db.insert(couponUsage).values({
+    id: nanoid(),
     couponId,
     tenantId,
     userId,
     orderId,
-    discountAmount,
+    discountAmount: Math.round(discountAmount),
     usedAt: new Date(),
   });
 }

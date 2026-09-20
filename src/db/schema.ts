@@ -254,6 +254,52 @@ export const payments = pgTable(
   })
 );
 
+// Coupons (platform-level promo codes)
+export const coupons = pgTable(
+  'coupons',
+  {
+    id: text('id').primaryKey(),
+    code: varchar('code', { length: 50 }).notNull(),
+    type: varchar('type', { length: 20 }).notNull(), // percentage | fixed | free_trial
+    value: integer('value').notNull(),
+    targetPlans: jsonb('target_plans').$type<string[]>().notNull().default([]),
+    minAmount: integer('min_amount'),
+    maxDiscount: integer('max_discount'),
+    validFrom: timestamp('valid_from').notNull(),
+    validUntil: timestamp('valid_until').notNull(),
+    maxUses: integer('max_uses'),
+    maxUsesPerUser: integer('max_uses_per_user'),
+    isActive: boolean('is_active').default(true).notNull(),
+    description: text('description'),
+    createdBy: text('created_by').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    codeIdx: uniqueIndex('coupons_code_idx').on(table.code),
+    isActiveIdx: index('coupons_is_active_idx').on(table.isActive),
+  })
+);
+
+export const couponUsage = pgTable(
+  'coupon_usage',
+  {
+    id: text('id').primaryKey(),
+    couponId: text('coupon_id')
+      .notNull()
+      .references(() => coupons.id, { onDelete: 'cascade' }),
+    tenantId: text('tenant_id').notNull(),
+    userId: text('user_id').notNull(),
+    orderId: text('order_id').notNull(),
+    discountAmount: integer('discount_amount').notNull().default(0),
+    usedAt: timestamp('used_at').defaultNow().notNull(),
+  },
+  table => ({
+    couponIdIdx: index('coupon_usage_coupon_id_idx').on(table.couponId),
+    userIdIdx: index('coupon_usage_user_id_idx').on(table.userId),
+  })
+);
+
 // API Keys table
 export const apiKeys = pgTable(
   'api_keys',
