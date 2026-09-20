@@ -1,4 +1,4 @@
-// Tenant Utility Functions
+﻿// Tenant Utility Functions
 
 /**
  * Validate subdomain format
@@ -47,6 +47,7 @@ export function generateSubdomain(farmName: string): string {
  * Get tenant URL from subdomain
  */
 export function getTenantUrl(subdomain: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://maliktechdairy.com';
-  return `https://${subdomain}.${baseUrl.replace('https://', '')}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site';
+  const cleanBase = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  return `https://${subdomain}.${cleanBase}`;
 }

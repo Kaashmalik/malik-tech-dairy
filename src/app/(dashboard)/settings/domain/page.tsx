@@ -18,7 +18,9 @@ export default function CustomDomainPage() {
   const subdomain = tenantConfig?.subdomain || '';
   // customDomain may be available on extended tenant data from database
   const customDomain = (tenantConfig as { customDomain?: string } | null)?.customDomain || '';
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'maliktechdairy.com';
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'dairy.mtkcodex.site')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
   const cnameValue = subdomain ? `${subdomain}.${baseUrl}` : '';
 
   const copyToClipboard = (text: string, label: string) => {
@@ -246,8 +248,8 @@ export default function CustomDomainPage() {
             <h4 className='mb-1 font-semibold'>Need help?</h4>
             <p className='text-muted-foreground text-sm'>
               Contact support at{' '}
-              <a href='mailto:support@maliktechdairy.com' className='text-primary underline'>
-                support@maliktechdairy.com
+              <a href='mailto:support@dairy.mtkcodex.site' className='text-primary underline'>
+                support@dairy.mtkcodex.site
               </a>{' '}
               or check our{' '}
               <a href='/docs' className='text-primary underline'>

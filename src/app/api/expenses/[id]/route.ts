@@ -2,7 +2,13 @@
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase/server';
-import { successResponse, errorResponse, ValidationError, NotFoundError } from '@/lib/api/response';
+import {
+  successResponse,
+  errorResponse,
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+} from '@/lib/api/response';
 import { transformFromDb, transformToDb } from '@/lib/utils/transform';
 import { z } from 'zod';
 
@@ -116,6 +122,12 @@ export async function DELETE(
 ) {
   return withTenantContext(async (req, context) => {
     try {
+      if (!['farm_owner', 'super_admin', 'accountant'].includes(context.userRole)) {
+        return errorResponse(
+          new ForbiddenError('Only farm owners and accountants can delete expense records')
+        );
+      }
+
       const { id } = await params;
 
       const supabase = getSupabaseClient();

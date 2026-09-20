@@ -323,25 +323,6 @@ export default function ProfessionalWeatherWidget() {
           </CardContent>
         </Card>
       )}
-
-      {/* Add API Key Notice */}
-      {!process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY && (
-        <Alert>
-          <AlertDescription>
-            To enable weather features, add your OpenWeather API key to your environment variables
-            as NEXT_PUBLIC_OPENWEATHER_API_KEY. You can get a free API key from{' '}
-            <a
-              href='https://openweathermap.org/api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-blue-600 underline'
-            >
-              OpenWeatherMap
-            </a>
-            .
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 }

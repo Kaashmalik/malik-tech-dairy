@@ -3,6 +3,7 @@ import { animals, milkLogs, healthRecords, breedingRecords } from '@/db/schema';
 import { eq, and, or, ilike, desc, sql, count } from 'drizzle-orm';
 import { ServiceContext, PaginatedResult } from '../types';
 import { SubscriptionService } from '@/lib/subscriptions/management';
+import { checkTenantAnimalQuota } from '@/lib/tenant/context';
 import { AnimalSpecies } from '@/types';
 import { logAuditEvent } from '@/lib/audit';
 
@@ -72,10 +73,7 @@ export class AnimalService {
     const whereClause = and(...conditions);
 
     // Get total count
-    const [totalCount] = await db
-      .select({ count: count() })
-      .from(animals)
-      .where(whereClause);
+    const [totalCount] = await db.select({ count: count() }).from(animals).where(whereClause);
 
     const total = Number(totalCount?.count || 0);
 
@@ -189,7 +187,9 @@ export class AnimalService {
     const recentBreeding = await db
       .select()
       .from(breedingRecords)
-      .where(and(eq(breedingRecords.animalId, animalId), eq(breedingRecords.tenantId, ctx.tenantId)))
+      .where(
+        and(eq(breedingRecords.animalId, animalId), eq(breedingRecords.tenantId, ctx.tenantId))
+      )
       .orderBy(desc(breedingRecords.breedingDate))
       .limit(5);
 
@@ -225,16 +225,30 @@ export class AnimalService {
     const subscriptionService = new SubscriptionService(ctx.tenantId);
     const allowed = await subscriptionService.checkLimit('animals');
     if (!allowed) {
-      throw new Error('PLAN_LIMIT_REACHED: You have reached the maximum animals allowed on your subscription plan.');
+      throw new Error(
+        'PLAN_LIMIT_REACHED: You have reached the maximum animals allowed on your subscription plan.'
+      );
     }
 
     // Enforce species permission
-    const speciesAllowed = await subscriptionService.isSpeciesAllowed(normalizedSpecies as AnimalSpecies);
+    const speciesAllowed = await subscriptionService.isSpeciesAllowed(
+      normalizedSpecies as AnimalSpecies
+    );
     if (!speciesAllowed) {
-      throw new Error(`SPECIES_NOT_ALLOWED: The species '${data.species}' is not available on your current subscription plan.`);
+      throw new Error(
+        `SPECIES_NOT_ALLOWED: The species '${data.species}' is not available on your current subscription plan.`
+      );
     }
 
     const db = getDrizzle();
+
+    // Enforce tenant animal quota
+    const quota = await checkTenantAnimalQuota(ctx.tenantId);
+    if (!quota.allowed) {
+      throw new Error(
+        `PLAN_LIMIT_REACHED: Your farm has reached its limit of ${quota.limit} animals under the ${quota.plan} plan. Please upgrade your subscription to add more animals.`
+      );
+    }
 
     // Check duplicate tag within tenant
     const existing = await db
@@ -244,7 +258,9 @@ export class AnimalService {
       .limit(1);
 
     if (existing.length > 0) {
-      throw new Error('DUPLICATE_TAG: An animal with this ear tag number already exists on your farm.');
+      throw new Error(
+        'DUPLICATE_TAG: An animal with this ear tag number already exists on your farm.'
+      );
     }
 
     const animalId = `animal_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -329,19 +345,24 @@ export class AnimalService {
 
     if (data.tag !== undefined) updateValues.tag = data.tag.trim();
     if (data.name !== undefined) updateValues.name = data.name ? data.name.trim() : null;
-    if (data.species !== undefined) updateValues.species = data.species === 'cattle' ? 'cow' : data.species;
+    if (data.species !== undefined)
+      updateValues.species = data.species === 'cattle' ? 'cow' : data.species;
     if (data.breed !== undefined) updateValues.breed = data.breed ? data.breed.trim() : null;
-    if (data.dateOfBirth !== undefined) updateValues.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
+    if (data.dateOfBirth !== undefined)
+      updateValues.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
     if (data.gender !== undefined) updateValues.gender = data.gender;
     if (data.photoUrl !== undefined) updateValues.photoUrl = data.photoUrl || null;
     if (data.status !== undefined) updateValues.status = data.status;
-    if (data.weight !== undefined) updateValues.weight = data.weight ? Math.round(data.weight) : null;
+    if (data.weight !== undefined)
+      updateValues.weight = data.weight ? Math.round(data.weight) : null;
     if (data.color !== undefined) updateValues.color = data.color ? data.color.trim() : null;
     if (data.notes !== undefined) updateValues.notes = data.notes ? data.notes.trim() : null;
     if (data.motherId !== undefined) updateValues.motherId = data.motherId || null;
     if (data.fatherId !== undefined) updateValues.fatherId = data.fatherId || null;
-    if (data.purchaseDate !== undefined) updateValues.purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : null;
-    if (data.purchasePrice !== undefined) updateValues.purchasePrice = data.purchasePrice ? Math.round(data.purchasePrice) : null;
+    if (data.purchaseDate !== undefined)
+      updateValues.purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : null;
+    if (data.purchasePrice !== undefined)
+      updateValues.purchasePrice = data.purchasePrice ? Math.round(data.purchasePrice) : null;
 
     const [updated] = await db
       .update(animals)
@@ -369,7 +390,11 @@ export class AnimalService {
   /**
    * Soft archive / deactivate animal (preserves historical milk, health, and breeding records)
    */
-  static async archiveAnimal(ctx: ServiceContext, animalId: string, status: 'sold' | 'deceased' | 'quarantine' = 'deceased') {
+  static async archiveAnimal(
+    ctx: ServiceContext,
+    animalId: string,
+    status: 'sold' | 'deceased' | 'quarantine' = 'deceased'
+  ) {
     const existing = await this.getAnimalById(ctx, animalId);
     if (!existing) {
       throw new Error('NOT_FOUND: Animal not found.');

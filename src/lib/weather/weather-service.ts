@@ -296,7 +296,7 @@ class WeatherService {
   }
 }
 
-// Create singleton instance
-export const weatherService = new WeatherService(process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || '');
+// Create singleton instance (supports secure server-side OPENWEATHER_API_KEY)
+export const weatherService = new WeatherService(process.env.OPENWEATHER_API_KEY || '');
 
 export default weatherService;

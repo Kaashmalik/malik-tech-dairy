@@ -375,9 +375,9 @@ class ProfessionalWeatherService {
   }
 }
 
-// Create singleton instance
+// Create singleton instance (supports secure server-side OPENWEATHER_API_KEY)
 export const professionalWeatherService = new ProfessionalWeatherService(
-  process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || ''
+  process.env.OPENWEATHER_API_KEY || ''
 );
 
 export default professionalWeatherService;

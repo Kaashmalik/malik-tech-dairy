@@ -54,19 +54,19 @@ export async function GET(
       verification = verifyXPayResponse(config, responseData);
     } else {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=invalid_gateway`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=invalid_gateway`
       );
     }
     if (!verification.valid || verification.status !== 'success') {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=payment_failed`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=payment_failed`
       );
     }
     // Extract order ID from transaction ID or response
     const orderId = responseData.orderId || responseData.pp_TxnRefNo || verification.transactionId;
     if (!orderId || !adminDb) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=invalid_order`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=invalid_order`
       );
     }
     // Find payment intent by order ID
@@ -77,7 +77,7 @@ export async function GET(
       .get();
     if (paymentIntents.empty) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=order_not_found`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=order_not_found`
       );
     }
     const paymentIntent = paymentIntents.docs[0].data();
@@ -119,11 +119,11 @@ export async function GET(
       completedAt: new Date(),
     });
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?success=true`
+      `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?success=true`
     );
   } catch (error) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/subscription?error=processing_error`
+      `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=processing_error`
     );
   }
 }

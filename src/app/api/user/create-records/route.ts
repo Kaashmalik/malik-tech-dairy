@@ -7,11 +7,14 @@ import { TenantRole } from '@/types/roles';
 export async function POST(request: NextRequest) {
   try {
     // Authenticate the user with Clerk
-    const { userId } = await auth();
+    const { userId, orgId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { tenantId, role = TenantRole.FARM_OWNER } = await request.json();
+    if (orgId && orgId !== tenantId) {
+      return NextResponse.json({ error: 'Forbidden: Tenant mismatch' }, { status: 403 });
+    }
     if (!tenantId) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }

@@ -5,8 +5,15 @@
  */
 
 import { NextResponse } from 'next/server';
-import { ApiError, normalizeError, isApiError, ValidationError, NotFoundError } from './errors';
-export { ValidationError, NotFoundError, ApiError };
+import {
+  ApiError,
+  normalizeError,
+  isApiError,
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+} from './errors';
+export { ValidationError, NotFoundError, ForbiddenError, ApiError };
 import { ZodError } from 'zod';
 
 /**

@@ -5,6 +5,7 @@
 ### Option 1: Deploy via Vercel Dashboard (Recommended)
 
 1. **Push your code to GitHub/GitLab/Bitbucket**
+
    ```bash
    git add .
    git commit -m "Ready for production deployment"
@@ -35,16 +36,19 @@
 ### Option 2: Deploy via Vercel CLI
 
 1. **Install Vercel CLI**
+
    ```bash
    npm install -g vercel
    ```
 
 2. **Login to Vercel**
+
    ```bash
    vercel login
    ```
 
 3. **Deploy to Preview**
+
    ```bash
    vercel
    ```
@@ -61,6 +65,7 @@
 Add these in **Vercel Dashboard** → **Settings** → **Environment Variables**:
 
 ### 🔐 Clerk Authentication (Required)
+
 ```
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
 CLERK_SECRET_KEY=sk_live_...
@@ -72,6 +77,7 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/apply
 ```
 
 ### 🗄️ Supabase Database (Required)
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://gdditqkvzlpnklcoxspj.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -80,6 +86,7 @@ SUPABASE_DATABASE_URL=postgresql://postgres:[password]@db.gdditqkvzlpnklcoxspj.s
 ```
 
 ### 🔥 Firebase (Required - for activity feeds)
+
 ```
 NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSy...
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=mtk-dairy.firebaseapp.com
@@ -94,6 +101,7 @@ FIREBASE_ADMIN_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KE
 ```
 
 ### ☁️ Cloudinary (Required - for image storage)
+
 ```
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dujpst04m
 CLOUDINARY_CLOUD_NAME=dujpst04m
@@ -102,11 +110,13 @@ CLOUDINARY_API_SECRET=abc123def456
 ```
 
 ### 📧 Email Service (Optional - for notifications)
+
 ```
 RESEND_API_KEY=re_abc123def456...
 ```
 
 ### 💳 Payment Gateways (Optional)
+
 ```
 JAZZCASH_MERCHANT_ID=...
 JAZZCASH_API_KEY=...
@@ -120,18 +130,21 @@ XPAY_API_SECRET=...
 ```
 
 ### 🔄 Redis/Upstash (Optional - for rate limiting)
+
 ```
 UPSTASH_REDIS_REST_URL=https://...
 UPSTASH_REDIS_REST_TOKEN=...
 ```
 
 ### 🌐 App Configuration
+
 ```
 NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 NODE_ENV=production
 ```
 
 ### 🚀 Feature Flags
+
 ```
 REQUIRE_ADMIN_APPROVAL=true
 FREE_PLAN_ANIMAL_LIMIT=5
@@ -140,6 +153,7 @@ FARM_PLAN_ANIMAL_LIMIT=500
 ```
 
 ### 📊 Analytics (Optional)
+
 ```
 NEXT_PUBLIC_POSTHOG_KEY=phc_...
 NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
@@ -151,6 +165,7 @@ SENTRY_AUTH_TOKEN=...
 ```
 
 ### 🤖 AI/ML (Optional)
+
 ```
 OPENAI_API_KEY=sk-...
 ```
@@ -176,7 +191,7 @@ OPENAI_API_KEY=sk-...
 
 ### Important Notes:
 
-- **NEXT_PUBLIC_*** variables are exposed to the browser
+- **NEXT*PUBLIC*\*** variables are exposed to the browser
 - **Secret keys** should NEVER be prefixed with `NEXT_PUBLIC_`
 - Set variables for **Production** and **Preview** environments
 - After adding variables, **redeploy** your application
@@ -218,6 +233,7 @@ After deployment, update your Clerk webhook:
 ### 3. Verify Deployment
 
 Test these endpoints:
+
 - Homepage: `https://your-app.vercel.app`
 - Sign In: `https://your-app.vercel.app/sign-in`
 - API Health: `https://your-app.vercel.app/api/health`
@@ -237,7 +253,7 @@ Test these endpoints:
 
 1. Go to **Settings** → **Domains**
 2. Click **"Add Domain"**
-3. Enter your domain (e.g., `maliktechdairy.com`)
+3. Enter your domain (e.g., `dairy.mtkcodex.site`)
 4. Follow DNS configuration instructions
 
 ### 2. Update DNS Records
@@ -245,6 +261,7 @@ Test these endpoints:
 Add these DNS records to your domain provider:
 
 **For Root Domain:**
+
 ```
 Type: A
 Name: @
@@ -252,6 +269,7 @@ Value: 76.76.21.21
 ```
 
 **For WWW Subdomain:**
+
 ```
 Type: CNAME
 Name: www
@@ -261,8 +279,9 @@ Value: cname.vercel-dns.com
 ### 3. Update Environment Variables
 
 After domain is verified, update:
+
 ```
-NEXT_PUBLIC_APP_URL=https://maliktechdairy.com
+NEXT_PUBLIC_APP_URL=https://dairy.mtkcodex.site
 ```
 
 ---
@@ -300,7 +319,7 @@ These will run automatically on Vercel. No additional configuration needed.
 
 1. **Redeploy** after adding variables
 2. **Check variable names** (case-sensitive)
-3. **Verify NEXT_PUBLIC_*** prefix for client-side variables
+3. **Verify NEXT*PUBLIC*\*** prefix for client-side variables
 
 ### Database Connection Issues
 
@@ -371,4 +390,3 @@ If you encounter issues:
 ---
 
 **Ready to deploy?** Follow the steps above and your MTK Dairy application will be live on Vercel! 🚀
-

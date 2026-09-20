@@ -8,8 +8,12 @@ import { auth } from '@clerk/nextjs/server';
 export async function GET(request: NextRequest) {
   try {
     // Verify this is a cron job request (using cron secret)
-    const cronSecret = request.headers.get('x-cron-secret');
-    if (cronSecret !== process.env.CRON_SECRET) {
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = request.headers.get('authorization');
+    const xCronSecret = request.headers.get('x-cron-secret');
+    const isAuthorized =
+      cronSecret && (authHeader === `Bearer ${cronSecret}` || xCronSecret === cronSecret);
+    if (!isAuthorized) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized cron request' },
         { status: 401 }

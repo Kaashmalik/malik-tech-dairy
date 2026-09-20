@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { getDrizzle } from '@/lib/supabase/server';
-import { tenants, tenantMembers, platformUsers } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { tenants, tenantMembers, platformUsers, subscriptions, animals } from '@/db/schema';
+import { eq, and, count } from 'drizzle-orm';
 /**
  * Tenant context interface
  */
@@ -62,7 +62,7 @@ async function resolveUserRoleFromDatabase(userId: string, tenantId: string): Pr
     const membership = await db
       .select()
       .from(tenantMembers)
-      .where(eq(tenantMembers.userId, userId))
+      .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.tenantId, tenantId)))
       .limit(1);
     if (membership.length > 0) {
       return membership[0].role;
@@ -164,18 +164,182 @@ export async function getUserTenants() {
     return [];
   }
 }
+export const PLAN_HIERARCHY: Record<string, number> = {
+  free: 1,
+  professional: 2,
+  farm: 3,
+  enterprise: 4,
+};
+
+export const PLAN_LIMITS: Record<
+  string,
+  { maxAnimals: number; maxUsers: number; features: string[] }
+> = {
+  free: {
+    maxAnimals: 5,
+    maxUsers: 2,
+    features: ['milk_tracking', 'basic_health'],
+  },
+  professional: {
+    maxAnimals: 50,
+    maxUsers: 10,
+    features: ['milk_tracking', 'basic_health', 'breeding', 'finance', 'export_reports'],
+  },
+  farm: {
+    maxAnimals: 200,
+    maxUsers: 30,
+    features: [
+      'milk_tracking',
+      'basic_health',
+      'breeding',
+      'finance',
+      'export_reports',
+      'weather_integration',
+      'staff_management',
+    ],
+  },
+  enterprise: {
+    maxAnimals: 999999,
+    maxUsers: 999999,
+    features: ['*'],
+  },
+};
+
+export interface TenantSubscriptionInfo {
+  plan: 'free' | 'professional' | 'farm' | 'enterprise';
+  status: 'active' | 'trial' | 'expired' | 'cancelled' | 'past_due' | 'pending_approval';
+  renewDate?: Date;
+  trialEndsAt?: Date;
+  maxAnimals: number;
+  maxUsers: number;
+  features: string[];
+}
+
 /**
- * Check if tenant is on a specific subscription plan
+ * Fetch tenant subscription details from database
  */
-export async function checkTenantSubscription(planName: string): Promise<boolean> {
+export async function getTenantSubscriptionInfo(
+  tenantIdOverride?: string
+): Promise<TenantSubscriptionInfo> {
   try {
-    const context = await getTenantContext();
+    let tenantId = tenantIdOverride;
+    if (!tenantId) {
+      const context = await getTenantContext();
+      tenantId = context.tenantId;
+    }
+
     const db = getDrizzle();
-    // This would need to be implemented based on your subscription table structure
-    // For now, return true as placeholder
-    return true;
+    const [sub] = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.tenantId, tenantId))
+      .limit(1);
+
+    if (!sub) {
+      // Default fallback for unconfigured or new tenant
+      return {
+        plan: 'free',
+        status: 'active',
+        maxAnimals: PLAN_LIMITS.free.maxAnimals,
+        maxUsers: PLAN_LIMITS.free.maxUsers,
+        features: PLAN_LIMITS.free.features,
+      };
+    }
+
+    const now = new Date();
+    const isExpired = sub.renewDate && new Date(sub.renewDate) < now && sub.status !== 'trial';
+    const isTrialExpired =
+      sub.trialEndsAt && new Date(sub.trialEndsAt) < now && sub.status === 'trial';
+
+    const effectiveStatus = isExpired || isTrialExpired ? 'expired' : sub.status;
+    const effectivePlan =
+      effectiveStatus === 'expired' ? 'free' : (sub.plan as keyof typeof PLAN_LIMITS);
+    const limits = PLAN_LIMITS[effectivePlan] || PLAN_LIMITS.free;
+
+    return {
+      plan: effectivePlan as 'free' | 'professional' | 'farm' | 'enterprise',
+      status: effectiveStatus as
+        | 'active'
+        | 'trial'
+        | 'expired'
+        | 'cancelled'
+        | 'past_due'
+        | 'pending_approval',
+      renewDate: sub.renewDate ? new Date(sub.renewDate) : undefined,
+      trialEndsAt: sub.trialEndsAt ? new Date(sub.trialEndsAt) : undefined,
+      maxAnimals: limits.maxAnimals,
+      maxUsers: limits.maxUsers,
+      features: limits.features,
+    };
+  } catch (error) {
+    return {
+      plan: 'free',
+      status: 'active',
+      maxAnimals: PLAN_LIMITS.free.maxAnimals,
+      maxUsers: PLAN_LIMITS.free.maxUsers,
+      features: PLAN_LIMITS.free.features,
+    };
+  }
+}
+
+/**
+ * Check if tenant subscription meets or exceeds required plan level
+ */
+export async function checkTenantSubscription(
+  requiredPlan: string,
+  tenantIdOverride?: string
+): Promise<boolean> {
+  try {
+    const sub = await getTenantSubscriptionInfo(tenantIdOverride);
+    const tenantLevel = PLAN_HIERARCHY[sub.plan] || 1;
+    const requiredLevel = PLAN_HIERARCHY[requiredPlan.toLowerCase()] || 1;
+
+    return tenantLevel >= requiredLevel;
   } catch (error) {
     return false;
+  }
+}
+
+/**
+ * Check if tenant has capacity to add another animal under their active plan
+ */
+export async function checkTenantAnimalQuota(tenantIdOverride?: string): Promise<{
+  allowed: boolean;
+  currentCount: number;
+  limit: number;
+  plan: string;
+}> {
+  try {
+    let tenantId = tenantIdOverride;
+    if (!tenantId) {
+      const context = await getTenantContext();
+      tenantId = context.tenantId;
+    }
+
+    const sub = await getTenantSubscriptionInfo(tenantId);
+    const db = getDrizzle();
+
+    const [res] = await db
+      .select({ count: count() })
+      .from(animals)
+      .where(and(eq(animals.tenantId, tenantId), eq(animals.status, 'active')));
+
+    const currentCount = Number(res?.count || 0);
+    const allowed = currentCount < sub.maxAnimals;
+
+    return {
+      allowed,
+      currentCount,
+      limit: sub.maxAnimals,
+      plan: sub.plan,
+    };
+  } catch (error) {
+    return {
+      allowed: false,
+      currentCount: 0,
+      limit: 5,
+      plan: 'free',
+    };
   }
 }
 /**

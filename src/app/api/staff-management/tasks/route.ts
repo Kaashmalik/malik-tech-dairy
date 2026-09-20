@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDrizzle } from '@/lib/supabase/server';
-import { taskAssignments, animals, platformUsers, taskAssignmentsRelations } from '@/db/schema';
+import {
+  taskAssignments,
+  animals,
+  platformUsers,
+  tenantMembers,
+  taskAssignmentsRelations,
+} from '@/db/schema';
 import { eq, and, ilike, desc, gte, lte, inArray, sql } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
@@ -192,33 +198,64 @@ export async function POST(request: NextRequest) {
     }
     const body = await request.json();
     const validatedData = createTaskSchema.parse(body);
+
+    // Get tenant context for proper tenant isolation
+    const tenantContext = await getTenantContext();
     const db = getDrizzle();
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    // Verify assigned user exists
-    const assignedUser = await db
-      .select()
-      .from(platformUsers)
-      .where(eq(platformUsers.id, validatedData.assignedTo))
-      .limit(1);
-    if (!assignedUser.length) {
-      return NextResponse.json(
-        { success: false, error: 'Assigned user not found' },
-        { status: 404 }
-      );
+
+    // Verify assigned user exists and belongs to this tenant
+    const isSelfAssignment = validatedData.assignedTo === tenantContext.userId;
+    if (!isSelfAssignment) {
+      const assignedMember = await db
+        .select()
+        .from(tenantMembers)
+        .where(
+          and(
+            eq(tenantMembers.userId, validatedData.assignedTo),
+            eq(tenantMembers.tenantId, tenantContext.tenantId)
+          )
+        )
+        .limit(1);
+
+      if (!assignedMember.length) {
+        return NextResponse.json(
+          { success: false, error: 'Assigned user does not belong to this farm' },
+          { status: 403 }
+        );
+      }
+    } else {
+      const assignedUser = await db
+        .select()
+        .from(platformUsers)
+        .where(eq(platformUsers.id, validatedData.assignedTo))
+        .limit(1);
+
+      if (!assignedUser.length) {
+        return NextResponse.json(
+          { success: false, error: 'Assigned user not found' },
+          { status: 404 }
+        );
+      }
     }
-    // Verify animal exists if provided
+
+    // Verify animal exists if provided and belongs to this tenant
     if (validatedData.animalId) {
       const animal = await db
         .select()
         .from(animals)
-        .where(eq(animals.id, validatedData.animalId))
+        .where(
+          and(eq(animals.id, validatedData.animalId), eq(animals.tenantId, tenantContext.tenantId))
+        )
         .limit(1);
+
       if (!animal.length) {
-        return NextResponse.json({ success: false, error: 'Animal not found' }, { status: 404 });
+        return NextResponse.json(
+          { success: false, error: 'Animal not found in this farm' },
+          { status: 404 }
+        );
       }
     }
-    // Get tenant context
-    const tenantContext = await getTenantContext();
     const newTask = await db
       .insert(taskAssignments)
       .values({

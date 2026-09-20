@@ -291,7 +291,7 @@ export function OnboardingWizard() {
                         className='flex-1'
                       />
                       <span className='text-muted-foreground whitespace-nowrap'>
-                        .maliktechdairy.com
+                        .dairy.mtkcodex.site
                       </span>
                       {isCheckingSubdomain && (
                         <Loader2 className='text-muted-foreground h-4 w-4 animate-spin' />

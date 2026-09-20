@@ -191,14 +191,14 @@ export function generateOpenAPISpec(): OpenAPISpec {
       description: 'API for MTK Dairy Farm Management SaaS Platform',
       contact: {
         name: 'MTK Dairy Support',
-        email: 'support@maliktechdairy.com',
+        email: 'support@dairy.mtkcodex.site',
       },
     },
     servers: [
       {
         url:
           process.env.NODE_ENV === 'production'
-            ? 'https://api.maliktechdairy.com'
+            ? 'https://dairy.mtkcodex.site'
             : 'http://localhost:3000',
         description: process.env.NODE_ENV === 'production' ? 'Production' : 'Development',
       },

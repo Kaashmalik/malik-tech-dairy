@@ -54,6 +54,8 @@ export const medicineFormEnum = pgEnum('medicine_form', [
   'intramammary',
   'implant',
   'suspension',
+  'solution',
+  'oral_suspension',
 ]);
 
 export const administrationRouteEnum = pgEnum('administration_route', [

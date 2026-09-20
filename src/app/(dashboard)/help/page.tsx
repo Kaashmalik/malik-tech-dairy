@@ -102,7 +102,7 @@ const supportChannels = [
     color: 'from-purple-500 to-violet-600',
     bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     action: () => {
-      window.open('mailto:support@maliktechdairy.com?subject=MTK Dairy Support Request', '_blank');
+      window.open('mailto:support@dairy.mtkcodex.site?subject=MTK Dairy Support Request', '_blank');
     },
     actionLabel: 'Send Email',
     responseTime: '< 24 hours',

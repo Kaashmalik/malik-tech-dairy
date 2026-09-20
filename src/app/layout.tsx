@@ -130,11 +130,11 @@ export const metadata: Metadata = {
 
   // Verification Tags
   verification: {
-    google: siteConfig.verification.google,
-    yandex: siteConfig.verification.yandex,
-    other: {
-      'msvalidate.01': siteConfig.verification.bing,
-    },
+    ...(siteConfig.verification.google ? { google: siteConfig.verification.google } : {}),
+    ...(siteConfig.verification.yandex ? { yandex: siteConfig.verification.yandex } : {}),
+    ...(siteConfig.verification.bing
+      ? { other: { 'msvalidate.01': siteConfig.verification.bing } }
+      : {}),
   },
 
   // App Links

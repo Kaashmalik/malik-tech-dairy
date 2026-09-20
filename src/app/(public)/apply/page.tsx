@@ -438,10 +438,10 @@ export default function ApplyForFarmPage() {
               <p className='text-sm text-gray-500'>
                 Questions? Contact us at{' '}
                 <a
-                  href='mailto:support@maliktechdairy.com'
+                  href='mailto:support@dairy.mtkcodex.site'
                   className='text-emerald-600 hover:underline'
                 >
-                  support@maliktechdairy.com
+                  support@dairy.mtkcodex.site
                 </a>
               </p>
             )}

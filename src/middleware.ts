@@ -1,3 +1,4 @@
+import { handleCorsPreflight, getCorsHeaders } from '@/lib/cors';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -9,6 +10,11 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/webhooks(.*)',
+  '/api/system/health(.*)',
+  '/api/cron(.*)',
+  '/api/migration/schedule(.*)',
+  '/api/payments/callback(.*)',
+  '/api/weather/sync(.*)',
   '/',
   '/pricing',
   '/about',
@@ -39,19 +45,38 @@ const isOrganizationRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // Handle API CORS preflight OPTIONS requests before auth checks
+  if (req.nextUrl.pathname.startsWith('/api') && req.method === 'OPTIONS') {
+    const preflight = handleCorsPreflight(req);
+    if (preflight) {
+      return new NextResponse(null, {
+        status: preflight.status,
+        headers: preflight.headers,
+      });
+    }
+  }
   const { userId, orgId, orgSlug } = await auth();
 
   // Extract subdomain from hostname
   const hostname = req.headers.get('host') || '';
   const subdomain = hostname.split('.')[0];
   const isMainDomain =
-    hostname.includes('maliktechdairy.com') &&
+    hostname.includes('dairy.mtkcodex.site') &&
     !subdomain.includes('www') &&
+    subdomain !== 'dairy' &&
     subdomain !== 'maliktechdairy';
 
   // Allow public routes
   if (isPublicRoute(req)) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    if (req.nextUrl.pathname.startsWith('/api')) {
+      const origin = req.headers.get('origin');
+      const corsHeaders = getCorsHeaders(origin);
+      for (const [key, value] of Object.entries(corsHeaders)) {
+        response.headers.set(key, value);
+      }
+    }
+    return response;
   }
 
   // Redirect to sign-in if not authenticated on protected routes
@@ -82,7 +107,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       if (orgSlug !== subdomain) {
         // Redirect to correct tenant or show error
         const redirectUrl = new URL(
-          `https://${subdomain}.maliktechdairy.com${req.nextUrl.pathname}`,
+          `https://${subdomain}.dairy.mtkcodex.site${req.nextUrl.pathname}`,
           req.url
         );
         return NextResponse.redirect(redirectUrl);
@@ -108,11 +133,21 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     requestHeaders.set('x-user-id', userId);
   }
 
-  return NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
+
+  if (req.nextUrl.pathname.startsWith('/api')) {
+    const origin = req.headers.get('origin');
+    const corsHeaders = getCorsHeaders(origin);
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      response.headers.set(key, value);
+    }
+  }
+
+  return response;
 });
 
 export const config = {

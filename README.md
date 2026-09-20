@@ -387,8 +387,8 @@ See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed instructions.
 
 This is a proprietary project. For contributions or inquiries, please contact:
 
-- **Email**: support@maliktechdairy.com
-- **Website**: [maliktechdairy.com](https://maliktechdairy.com)
+- **Email**: support@dairy.mtkcodex.site
+- **Website**: [dairy.mtkcodex.site](https://dairy.mtkcodex.site)
 
 ---
 
@@ -414,6 +414,6 @@ Malik Tech
 
 **Built with ❤️ in Pakistan**
 
-[Website](https://maliktechdairy.com) • [Documentation](./docs) • [Support](mailto:support@maliktechdairy.com)
+[Website](https://dairy.mtkcodex.site) • [Documentation](./docs) • [Support](mailto:support@dairy.mtkcodex.site)
 
 </div>

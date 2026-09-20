@@ -74,7 +74,7 @@ describe('Tenant Utilities', () => {
       delete (process.env as any).NEXT_PUBLIC_APP_URL;
 
       const url = getTenantUrl('myfarm');
-      expect(url).toBe('https://myfarm.maliktechdairy.com');
+      expect(url).toBe('https://myfarm.dairy.mtkcodex.site');
 
       if (originalUrl) {
         process.env.NEXT_PUBLIC_APP_URL = originalUrl;

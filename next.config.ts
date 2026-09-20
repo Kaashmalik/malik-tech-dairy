@@ -25,25 +25,28 @@ const withPWA = withPWAInit({
   ],
 });
 
+const isProd = process.env.NODE_ENV === 'production';
+
 // Content Security Policy - Secure headers for production
 const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://js.sentry-cdn.com https://*.posthog.com https://challenges.cloudflare.com;
   worker-src 'self' blob:;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' data: blob: https: http:;
+  img-src 'self' data: blob: https://res.cloudinary.com https://*.supabase.co https://img.clerk.com https://images.clerk.dev https://*.googleusercontent.com https://*.googleapis.com https://*.firebaseapp.com https://openweathermap.org;
   font-src 'self' https://fonts.gstatic.com data:;
-  connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.supabase.co wss://*.supabase.co https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://api.cloudinary.com https://res.cloudinary.com https://*.upstash.io;
+  connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.supabase.co wss://*.supabase.co https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://us.i.posthog.com https://api.cloudinary.com https://res.cloudinary.com https://*.upstash.io https://api.openweathermap.org;
+  media-src 'self' https://res.cloudinary.com;
   frame-src 'self' https://clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com;
+  manifest-src 'self';
   object-src 'none';
   base-uri 'self';
   form-action 'self';
-  frame-ancestors 'none';${process.env.NODE_ENV === 'production' ? '\n  upgrade-insecure-requests;' : ''}
+  frame-ancestors 'none';${isProd ? '\n  upgrade-insecure-requests;' : ''}
 `
   .replace(/\s{2,}/g, ' ')
   .trim();
 
-// Security headers configuration
 const securityHeaders = [
   {
     key: 'Content-Security-Policy',
@@ -53,10 +56,14 @@ const securityHeaders = [
     key: 'X-DNS-Prefetch-Control',
     value: 'on',
   },
-  {
-    key: 'Strict-Transport-Security',
-    value: 'max-age=63072000; includeSubDomains; preload',
-  },
+  ...(isProd
+    ? [
+        {
+          key: 'Strict-Transport-Security',
+          value: 'max-age=63072000; includeSubDomains',
+        },
+      ]
+    : []),
   {
     key: 'X-Frame-Options',
     value: 'DENY',
@@ -75,7 +82,15 @@ const securityHeaders = [
   },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+    value: 'camera=(self), microphone=(), geolocation=(self), payment=(self), interest-cohort=()',
+  },
+  {
+    key: 'Cross-Origin-Opener-Policy',
+    value: 'same-origin-allow-popups',
+  },
+  {
+    key: 'Cross-Origin-Resource-Policy',
+    value: 'same-origin',
   },
 ];
 
@@ -128,10 +143,11 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value:
-              process.env.NODE_ENV === 'production'
-                ? process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'
-                : '*',
+            value: process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site',
+          },
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -139,7 +155,8 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization, X-Request-ID, X-Tenant-ID, X-CSRF-Token',
+            value:
+              'Content-Type, Authorization, X-Request-ID, X-Tenant-ID, X-CSRF-Token, Sentry-Trace, Baggage',
           },
           {
             key: 'Access-Control-Max-Age',

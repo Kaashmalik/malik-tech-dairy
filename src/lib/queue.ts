@@ -226,7 +226,7 @@ export function initializeJobWorkers() {
       const resendClient = new resend.Resend(process.env.RESEND_API_KEY);
 
       await resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'noreply@maliktechdairy.com',
+        from: process.env.RESEND_FROM_EMAIL || 'noreply@dairy.mtkcodex.site',
         to,
         subject,
         html,

@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'MTK Dairy - #1 Smart Dairy Farm Management Software Pakistan',
+  title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
   description:
-    "Pakistan's leading smart dairy farm management software. Track milk production, manage cattle health, breeding records, and finances. Used by 500+ farmers in Punjab, Sindh, and KPK. Free plan available! ڈیری فارم مینجمنٹ",
+    "Pakistan's leading smart dairy farm management software. Track milk production, manage cattle health, breeding records, and finances with offline PWA support. Free plan available! ڈیری فارم مینجمنٹ",
   alternates: {
     canonical: '/',
   },
@@ -110,7 +110,7 @@ export default function HomePage() {
               <div className='mb-6 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 dark:bg-emerald-900/30'>
                 <Star className='h-4 w-4 fill-amber-500 text-amber-500' />
                 <span className='text-sm font-medium text-emerald-800 dark:text-emerald-200'>
-                  Trusted by 500+ Farmers in Pakistan
+                  Built for Dairy Farmers Across Pakistan
                 </span>
               </div>
 
@@ -147,25 +147,19 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Social Proof */}
-              <div className='mt-8 flex items-center justify-center gap-6 lg:justify-start'>
-                <div className='flex -space-x-2'>
-                  {[1, 2, 3, 4].map(i => (
-                    <div
-                      key={i}
-                      className='flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-emerald-400 to-emerald-600 text-xs font-medium text-white dark:border-slate-800'
-                    >
-                      {['MA', 'HA', 'IK', 'AZ'][i - 1]}
-                    </div>
-                  ))}
+              {/* Value Highlights */}
+              <div className='mt-8 flex flex-wrap items-center justify-center gap-4 lg:justify-start'>
+                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300'>
+                  <CheckCircle2 className='h-4 w-4 text-emerald-600' />
+                  <span>Cloud & PWA Offline Sync</span>
                 </div>
-                <div className='text-left'>
-                  <div className='flex items-center gap-1'>
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <Star key={i} className='h-4 w-4 fill-amber-500 text-amber-500' />
-                    ))}
-                  </div>
-                  <p className='text-sm text-gray-500'>4.9/5 from 127 reviews</p>
+                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300'>
+                  <CheckCircle2 className='h-4 w-4 text-emerald-600' />
+                  <span>Bilingual (English & اردو)</span>
+                </div>
+                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300'>
+                  <CheckCircle2 className='h-4 w-4 text-emerald-600' />
+                  <span>Bank-Grade Isolation</span>
                 </div>
               </div>
             </div>
@@ -224,19 +218,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className='bg-gradient-to-r from-emerald-600 to-emerald-700 py-20'>
+      {/* Stats / Highlights Section */}
+      <section className='bg-gradient-to-r from-emerald-600 to-emerald-700 py-16'>
         <div className='container mx-auto px-4'>
           <div className='grid grid-cols-2 gap-8 text-center md:grid-cols-4'>
             {[
-              { value: '500+', label: 'Active Farms' },
-              { value: '50K+', label: 'Animals Tracked' },
-              { value: '1M+', label: 'Milk Logs' },
-              { value: '99.9%', label: 'Uptime' },
+              { value: 'Multi-Herd', label: 'Cattle, Buffalo & Dairy Breeds' },
+              { value: '100% Offline', label: 'PWA Mobile Data Sync' },
+              { value: 'Bilingual', label: 'Urdu & English Interface' },
+              { value: '99.9%', label: 'Cloud Infrastructure SLA' },
             ].map((stat, index) => (
               <div key={index}>
-                <div className='mb-2 text-4xl font-bold text-white md:text-5xl'>{stat.value}</div>
-                <div className='text-emerald-100'>{stat.label}</div>
+                <div className='mb-2 text-3xl font-bold text-white md:text-4xl'>{stat.value}</div>
+                <div className='text-sm text-emerald-100'>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -303,10 +297,11 @@ export default function HomePage() {
             {pricingPlans.slice(0, 3).map((plan, index) => (
               <article
                 key={index}
-                className={`rounded-2xl border-2 p-8 ${index === 1
-                  ? 'scale-105 border-emerald-500 bg-emerald-50/50 shadow-xl dark:bg-emerald-900/20'
-                  : 'border-gray-200 dark:border-slate-700'
-                  }`}
+                className={`rounded-2xl border-2 p-8 ${
+                  index === 1
+                    ? 'scale-105 border-emerald-500 bg-emerald-50/50 shadow-xl dark:bg-emerald-900/20'
+                    : 'border-gray-200 dark:border-slate-700'
+                }`}
               >
                 {index === 1 && (
                   <div className='mb-4 text-center'>
@@ -337,10 +332,11 @@ export default function HomePage() {
                 </ul>
                 <Link href='/apply'>
                   <button
-                    className={`w-full rounded-lg px-6 py-3 font-medium ${index === 1
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900'
-                      }`}
+                    className={`w-full rounded-lg px-6 py-3 font-medium ${
+                      index === 1
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900'
+                    }`}
                   >
                     Get Started
                   </button>

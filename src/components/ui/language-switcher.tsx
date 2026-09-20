@@ -26,7 +26,7 @@ export function LanguageSwitcher() {
     }
 
     // Set cookie
-    document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+    document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax${typeof location !== 'undefined' && location.protocol === 'https:' ? '; Secure' : ''}`;
     localStorage.setItem('mtk_locale', locale);
 
     // Update document immediately

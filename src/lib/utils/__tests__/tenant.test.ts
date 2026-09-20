@@ -82,7 +82,7 @@ describe('getTenantUrl', () => {
 
   it('should generate tenant URL with default base URL', () => {
     delete process.env.NEXT_PUBLIC_APP_URL;
-    expect(getTenantUrl('test')).toBe('https://test.maliktechdairy.com');
+    expect(getTenantUrl('test')).toBe('https://test.dairy.mtkcodex.site');
   });
 
   it('should generate tenant URL with custom base URL', () => {

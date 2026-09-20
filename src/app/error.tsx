@@ -180,10 +180,10 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
           >
             If this problem persists, please contact{' '}
             <a
-              href='mailto:support@maliktechdairy.com'
+              href='mailto:support@dairy.mtkcodex.site'
               className='text-emerald-600 hover:underline dark:text-emerald-400'
             >
-              support@maliktechdairy.com
+              support@dairy.mtkcodex.site
             </a>
           </motion.p>
         </motion.div>

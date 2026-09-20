@@ -52,7 +52,7 @@ UPSTASH_REDIS_REST_URL=https://...
 UPSTASH_REDIS_REST_TOKEN=...
 
 # App
-NEXT_PUBLIC_APP_URL=https://maliktechdairy.com
+NEXT_PUBLIC_APP_URL=https://dairy.mtkcodex.site
 
 # Payment Gateways (optional for dev)
 JAZZCASH_MERCHANT_ID=...
@@ -179,7 +179,7 @@ Click "Deploy" - Vercel will:
 ### 5.5 Custom Domain (Optional)
 
 1. Go to Vercel Dashboard → Settings → Domains
-2. Add domain: `maliktechdairy.com`
+2. Add domain: `dairy.mtkcodex.site`
 3. Follow DNS instructions
 4. Update `NEXT_PUBLIC_APP_URL` in environment variables
 
@@ -202,7 +202,7 @@ In Firestore Console, manually create super admin user:
 // Collection: users
 // Document ID: <clerk-user-id>
 {
-  email: "admin@maliktechdairy.com",
+  email: "admin@dairy.mtkcodex.site",
   name: "Admin",
   platformRole: "super_admin",
   createdAt: new Date(),
@@ -286,7 +286,7 @@ Vercel automatically provides SSL certificates for all domains.
 
 For issues or questions:
 
-- Email: support@maliktechdairy.com
+- Email: support@dairy.mtkcodex.site
 - Documentation: `/docs`
 - GitHub Issues: (if public repo)
 

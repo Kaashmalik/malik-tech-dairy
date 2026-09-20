@@ -5,7 +5,7 @@ export const siteConfig = {
   name: 'MTK Dairy',
   title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
   description:
-    "Pakistan's #1 smart dairy farm management software. Track milk production, manage cattle health, breeding records, and finances. Trusted by farmers in Punjab, Sindh, and KPK. ڈیری فارم مینجمنٹ سافٹ ویئر",
+    "Pakistan's modern smart dairy farm management software. Track milk production, cattle health, breeding records, and farm finances with multi-herd support and offline PWA capability. ڈیری فارم مینجمنٹ سافٹ ویئر",
   url: 'https://dairy.mtkcodex.site',
   ogImage: '/opengraph-image.png',
   logo: '/icon.png',
@@ -13,7 +13,7 @@ export const siteConfig = {
 
   // Contact Information
   contact: {
-    email: 'support@maliktechdairy.com',
+    email: 'support@dairy.mtkcodex.site',
     phone: '+92-302-0718182',
     address: {
       street: 'Bhubtian Branch',
@@ -39,11 +39,11 @@ export const siteConfig = {
     whatsapp: 'https://wa.me/923020718182',
   },
 
-  // Verification Tags
+  // Verification Tags (configured via environment variables in production)
   verification: {
-    google: 'your-google-verification-code',
-    bing: 'your-bing-verification-code',
-    yandex: 'your-yandex-verification-code',
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
+    bing: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || '',
+    yandex: process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION || '',
   },
 } as const;
 
@@ -189,7 +189,7 @@ export const faqData = [
   {
     question: 'How can I contact support?',
     answer:
-      'You can reach our support team via WhatsApp at +92-302-0718182, email at support@maliktechdairy.com, or through the in-app chat feature.',
+      'You can reach our support team via WhatsApp at +92-302-0718182, email at support@dairy.mtkcodex.site, or through the in-app chat feature.',
   },
 ];
 

@@ -382,13 +382,13 @@ RESEND_FROM_EMAIL=onboarding@resend.dev
 
 1. Go to **"Domains"** in sidebar
 2. Click **"Add Domain"**
-3. Enter your domain: `maliktechdairy.com`
+3. Enter your domain: `dairy.mtkcodex.site`
 4. Add the DNS records shown to your domain provider
 5. Wait for verification (usually 5-10 minutes)
 6. Set:
 
 ```env
-RESEND_FROM_EMAIL=MTK Dairy <noreply@maliktechdairy.com>
+RESEND_FROM_EMAIL=MTK Dairy <noreply@dairy.mtkcodex.site>
 ```
 
 #### Step 3: Get API Key
@@ -540,7 +540,7 @@ UPSTASH_REDIS_REST_TOKEN=Axxxxxxxxxx
 # RESEND EMAIL
 # -----------------------------------------------------------------------------
 RESEND_API_KEY=re_xxxxxxxxxx
-RESEND_FROM_EMAIL=MTK Dairy <noreply@maliktechdairy.com>
+RESEND_FROM_EMAIL=MTK Dairy <noreply@dairy.mtkcodex.site>
 
 # -----------------------------------------------------------------------------
 # POSTHOG ANALYTICS
@@ -564,12 +564,12 @@ SENTRY_AUTH_TOKEN=sntrys_xxxxxxxxxx
 JAZZCASH_MERCHANT_ID=your_merchant_id
 JAZZCASH_PASSWORD=your_password
 JAZZCASH_INTEGRETY_SALT=your_salt
-JAZZCASH_RETURN_URL=https://maliktechdairy.com/api/payments/jazzcash/callback
+JAZZCASH_RETURN_URL=https://dairy.mtkcodex.site/api/payments/jazzcash/callback
 
 # EasyPaisa
 EASYPAISA_STORE_ID=your_store_id
 EASYPAISA_HASH_KEY=your_hash_key
-EASYPAISA_RETURN_URL=https://maliktechdairy.com/api/payments/easypaisa/callback
+EASYPAISA_RETURN_URL=https://dairy.mtkcodex.site/api/payments/easypaisa/callback
 
 # Bank Transfer Details
 BANK_ACCOUNT_NAME=MTK Dairy Pvt Ltd
@@ -583,7 +583,7 @@ BANK_BRANCH=Main Branch, Lahore
 # -----------------------------------------------------------------------------
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=MTK Dairy
-NEXT_PUBLIC_SUPPORT_EMAIL=support@maliktechdairy.com
+NEXT_PUBLIC_SUPPORT_EMAIL=support@dairy.mtkcodex.site
 
 # Encryption Key (Generate with: openssl rand -hex 32)
 ENCRYPTION_KEY=your_32_byte_hex_key_here
@@ -771,19 +771,19 @@ npm run dev
 #### Step 4: Configure Custom Domain (Optional)
 
 1. Go to **"Settings"** → **"Domains"**
-2. Add your domain: `maliktechdairy.com`
+2. Add your domain: `dairy.mtkcodex.site`
 3. Follow DNS configuration instructions
 
 ### Update Environment Variables for Production
 
 ```env
 # Update these for production
-NEXT_PUBLIC_APP_URL=https://maliktechdairy.com
+NEXT_PUBLIC_APP_URL=https://dairy.mtkcodex.site
 NODE_ENV=production
 
 # Update callback URLs
-JAZZCASH_RETURN_URL=https://maliktechdairy.com/api/payments/jazzcash/callback
-EASYPAISA_RETURN_URL=https://maliktechdairy.com/api/payments/easypaisa/callback
+JAZZCASH_RETURN_URL=https://dairy.mtkcodex.site/api/payments/jazzcash/callback
+EASYPAISA_RETURN_URL=https://dairy.mtkcodex.site/api/payments/easypaisa/callback
 ```
 
 ---
@@ -836,7 +836,7 @@ npm install
 ### Getting Help
 
 - **GitHub Issues:** [Create an issue](https://github.com/your-username/malik-tech-dairy/issues)
-- **Email Support:** support@maliktechdairy.com
+- **Email Support:** support@dairy.mtkcodex.site
 - **Documentation:** Check the `docs/` folder
 
 ---

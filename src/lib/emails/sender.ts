@@ -1,4 +1,4 @@
-// Email Sender using Resend API
+﻿// Email Sender using Resend API
 import { Resend } from 'resend';
 import type { EmailTemplate } from './templates';
 if (!process.env.RESEND_API_KEY) {
@@ -23,7 +23,7 @@ export async function sendEmail(
   try {
     const result = await resend.emails.send({
       from:
-        options.from || process.env.RESEND_FROM_EMAIL || 'MTK Dairy <noreply@maliktechdairy.com>',
+        options.from || process.env.RESEND_FROM_EMAIL || 'MTK Dairy <noreply@dairy.mtkcodex.site>',
       to: options.to,
       subject: options.subject,
       html: options.html,

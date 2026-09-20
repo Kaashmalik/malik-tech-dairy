@@ -20,6 +20,11 @@ export class JazzCashProvider implements PaymentProvider {
     const integritySalt = process.env.JAZZCASH_INTEGRETY_SALT || '';
 
     if (!merchantId || !password || !integritySalt) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          'JazzCash payment provider is not configured with required merchant credentials'
+        );
+      }
       // Graceful fallback for environments without credentials
       const orderId = `JC-${request.tenantId}-${Date.now()}`;
       return {

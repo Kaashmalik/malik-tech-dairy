@@ -230,7 +230,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         review_notes: validatedData.reviewNotes || null,
         updated_at: new Date().toISOString(),
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const { data: updatedAppData, error: updateError } = await (
         supabase.from('farm_applications') as any
       )
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         rejection_reason: validatedData.rejectionReason,
         updated_at: new Date().toISOString(),
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const { data: updatedAppData, error: updateError } = await (
         supabase.from('farm_applications') as any
       )
@@ -348,7 +348,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json(
       {
         error: 'Failed to review application',

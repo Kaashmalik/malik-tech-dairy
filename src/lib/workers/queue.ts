@@ -1,4 +1,4 @@
-// BullMQ Queue Setup for Background Jobs
+﻿// BullMQ Queue Setup for Background Jobs
 // Note: BullMQ requires ioredis (TCP Redis), not Upstash REST API
 // This module provides mock queues during build and uses real queues at runtime if configured
 

@@ -135,7 +135,7 @@ function UnsubscribeContent() {
             <div className='bg-muted rounded-lg p-4'>
               <p className='text-muted-foreground text-sm'>
                 Sign in to your account to fully customize your email preferences or contact support
-                at support@maliktechdairy.com for assistance.
+                at support@dairy.mtkcodex.site for assistance.
               </p>
             </div>
 

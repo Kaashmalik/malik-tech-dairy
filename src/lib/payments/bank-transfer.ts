@@ -151,10 +151,10 @@ export async function getBankTransferByReference(
  */
 export function getBankAccountDetails() {
   return {
-    accountName: process.env.BANK_ACCOUNT_NAME || 'MTK Dairy Pvt Ltd',
-    accountNumber: process.env.BANK_ACCOUNT_NUMBER || '1234567890123',
+    accountName: process.env.BANK_ACCOUNT_NAME || process.env.ACCOUNT_HOLDER || 'MTK Dairy Pvt Ltd',
+    accountNumber: process.env.BANK_ACCOUNT_NUMBER || process.env.ACCOUNT_NUMBER || '1234567890123',
     bankName: process.env.BANK_NAME || 'Bank Alfalah',
-    iban: process.env.BANK_IBAN || 'PK12ALFH1234567890123456',
+    iban: process.env.BANK_IBAN || process.env.IBAN || 'PK12ALFH1234567890123456',
     branch: process.env.BANK_BRANCH || 'Main Branch, Lahore',
   };
 }

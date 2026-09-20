@@ -55,6 +55,9 @@ ui-debug.log
 # IDE
 .vscode/
 .idea/
+
+# Antigravity IDE agent config (contains secrets)
+.agents/
 *.swp
 *.swo
 *~

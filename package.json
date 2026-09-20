@@ -154,10 +154,6 @@
     ],
     "*.{json,md,css,scss}": [
       "prettier --write"
-    ],
-    "!**/.next_corrupted_backup/**": [
-      "eslint --fix",
-      "prettier --write"
     ]
   }
 }

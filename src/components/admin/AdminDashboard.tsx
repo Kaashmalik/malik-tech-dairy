@@ -155,7 +155,7 @@ export function AdminDashboard() {
                       </p>
                       {tenant.subdomain && (
                         <p className='text-muted-foreground mt-1 text-xs'>
-                          {tenant.subdomain}.maliktechdairy.com
+                          {tenant.subdomain}.dairy.mtkcodex.site
                         </p>
                       )}
                     </div>
