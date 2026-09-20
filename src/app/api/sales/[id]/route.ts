@@ -2,11 +2,20 @@
 import { NextRequest } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSupabaseClient } from '@/lib/supabase/server';
-import { successResponse, errorResponse, ValidationError, NotFoundError } from '@/lib/api/response';
+import {
+  successResponse,
+  errorResponse,
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+} from '@/lib/api/response';
 import { transformFromDb, transformToDb } from '@/lib/utils/transform';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const SALE_MUTATION_ROLES = ['farm_owner', 'farm_manager', 'accountant', 'super_admin'] as const;
+const SALE_DELETE_ROLES = ['farm_owner', 'accountant', 'super_admin'] as const;
 
 // Validation schema for updates
 const updateSaleSchema = z.object({
@@ -54,6 +63,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
+      if (!SALE_MUTATION_ROLES.includes(context.userRole as (typeof SALE_MUTATION_ROLES)[number])) {
+        return errorResponse(
+          new ForbiddenError('Forbidden: Insufficient permissions to update sales')
+        );
+      }
+
       const { id } = await params;
       const body = await req.json();
 
@@ -131,6 +146,12 @@ export async function DELETE(
 ) {
   return withTenantContext(async (req, context) => {
     try {
+      if (!SALE_DELETE_ROLES.includes(context.userRole as (typeof SALE_DELETE_ROLES)[number])) {
+        return errorResponse(
+          new ForbiddenError('Only farm owners and accountants can delete sale records')
+        );
+      }
+
       const { id } = await params;
 
       const supabase = getSupabaseClient();

@@ -60,6 +60,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withTenantContext(async (req, context) => {
     try {
+      if (!['farm_owner', 'farm_manager', 'accountant', 'super_admin'].includes(context.userRole)) {
+        return errorResponse(
+          new ForbiddenError('Forbidden: Insufficient permissions to update expenses')
+        );
+      }
+
       const { id } = await params;
       const body = await req.json();
 

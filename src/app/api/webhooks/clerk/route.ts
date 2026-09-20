@@ -4,23 +4,34 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { initializeTenant } from '@/lib/supabase/tenant'; // Use Supabase instead of Firestore
 import { adminDb } from '@/lib/firebase/admin'; // Keep for Firestore document data
+import { cacheClaimOnce, CacheTTL } from '@/lib/cache/redis-cache';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
-// Webhook event tracking to prevent replay attacks
+/** Process-local fallback when Redis is unavailable (dev / misconfigured). */
 const processedWebhooks = new Map<string, number>();
-const WEBHOOK_TTL = 5 * 60 * 1000; // 5 minutes
+const WEBHOOK_TTL_MS = CacheTTL.MEDIUM * 1000;
 
-// Clean up old webhook IDs
-setInterval(() => {
+async function claimWebhookOnce(webhookId: string): Promise<boolean> {
+  const redisClaim = await cacheClaimOnce(`webhook:clerk:${webhookId}`, CacheTTL.MEDIUM);
+  if (redisClaim !== null) {
+    return redisClaim;
+  }
+
+  // Fallback: in-memory (not durable across serverless instances)
   const now = Date.now();
   for (const [id, timestamp] of processedWebhooks.entries()) {
-    if (now - timestamp > WEBHOOK_TTL) {
+    if (now - timestamp > WEBHOOK_TTL_MS) {
       processedWebhooks.delete(id);
     }
   }
-}, 60 * 1000); // Clean every minute
+  if (processedWebhooks.has(webhookId)) {
+    return false;
+  }
+  processedWebhooks.set(webhookId, now);
+  return true;
+}
 
 export async function POST(request: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -58,12 +69,6 @@ export async function POST(request: Request) {
     .update(`${svix_id}-${svix_timestamp}-${svix_signature}`)
     .digest('hex');
 
-  // Check for replay attack
-  if (processedWebhooks.has(webhookId)) {
-    console.warn('Duplicate webhook detected, possible replay attack');
-    return NextResponse.json({ error: 'Duplicate webhook' }, { status: 400 });
-  }
-
   // Verify timestamp (prevent replay attacks with old timestamps)
   const webhookTimestamp = parseInt(svix_timestamp, 10);
   const now = Math.floor(Date.now() / 1000);
@@ -89,8 +94,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Webhook verification failed' }, { status: 400 });
   }
 
-  // Mark webhook as processed
-  processedWebhooks.set(webhookId, Date.now());
+  // Claim after verify so invalid payloads cannot poison the replay cache
+  const claimed = await claimWebhookOnce(webhookId);
+  if (!claimed) {
+    console.warn('Duplicate webhook detected, possible replay attack');
+    return NextResponse.json({ error: 'Duplicate webhook' }, { status: 400 });
+  }
 
   const eventType = evt.type;
   const data = evt.data;

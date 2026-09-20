@@ -106,6 +106,27 @@ export async function cacheDelete(key: string): Promise<boolean> {
 }
 
 /**
+ * Atomically claim a key once (SET NX + TTL).
+ * Returns true if this caller claimed it, false if already claimed.
+ * When Redis is unavailable, returns null so callers can fall back.
+ */
+export async function cacheClaimOnce(
+  key: string,
+  ttlSeconds: number = CacheTTL.MEDIUM
+): Promise<boolean | null> {
+  const client = getRedis();
+  if (!client) return null;
+
+  try {
+    const result = await client.set(key, '1', { nx: true, ex: ttlSeconds });
+    return result === 'OK';
+  } catch (error) {
+    logger.warn('Cache claimOnce failed', { key, error });
+    return null;
+  }
+}
+
+/**
  * Delete multiple keys by pattern
  */
 export async function cacheDeletePattern(pattern: string): Promise<boolean> {
