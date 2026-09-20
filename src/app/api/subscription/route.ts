@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     try {
       const supabase = getSupabaseClient();
       // Get tenant subscription from Supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const { data: tenant, error } = (await supabase
         .from('tenants')
         .select('subscription_plan, subscription_status, subscription_expires_at, created_at')
@@ -48,7 +48,10 @@ export async function PUT(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
       // Only farm_owner can update subscription
-      const hasPermission = await checkUserRole(context.tenantId, context.userId, ['owner', 'farm_owner']);
+      const hasPermission = await checkUserRole(context.tenantId, context.userId, [
+        'owner',
+        'farm_owner',
+      ]);
       if (!hasPermission) {
         return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
       }
@@ -61,7 +64,7 @@ export async function PUT(request: NextRequest) {
       const now = new Date();
       const expiresAt = new Date(now.setMonth(now.getMonth() + 1)).toISOString();
       // Update tenant subscription
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const { error } = (await supabase
         .from('tenants')
         .update({
@@ -75,7 +78,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
       }
       // Log the payment/subscription change
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       await (supabase.from('subscription_history').insert({
         tenant_id: context.tenantId,
         user_id: context.userId,
@@ -108,7 +111,7 @@ export async function DELETE(request: NextRequest) {
       }
       const supabase = getSupabaseClient();
       // Downgrade to free plan
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const { error } = (await supabase
         .from('tenants')
         .update({

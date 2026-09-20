@@ -3,6 +3,10 @@ import { getDrizzle } from '@/lib/supabase/server';
 import { tenants, tenantMembers, platformUsers, subscriptions, animals } from '@/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { resolveTenantAccess } from '@/lib/tenant/resolve-access';
+import {
+  PLAN_LIMITS as SUBSCRIPTION_PLAN_LIMITS,
+  PLAN_FEATURES as SUBSCRIPTION_PLAN_FEATURES,
+} from '@/lib/subscriptions/constants';
 /**
  * Tenant context interface
  */
@@ -184,37 +188,36 @@ export const PLAN_HIERARCHY: Record<string, number> = {
   enterprise: 4,
 };
 
+/** Single source of truth: re-export subscription constants with API-friendly shape */
 export const PLAN_LIMITS: Record<
   string,
   { maxAnimals: number; maxUsers: number; features: string[] }
 > = {
   free: {
-    maxAnimals: 5,
-    maxUsers: 2,
-    features: ['milk_tracking', 'basic_health'],
+    maxAnimals: SUBSCRIPTION_PLAN_LIMITS.free.maxAnimals,
+    maxUsers: SUBSCRIPTION_PLAN_LIMITS.free.maxUsers,
+    features: SUBSCRIPTION_PLAN_FEATURES.free,
   },
   professional: {
-    maxAnimals: 50,
-    maxUsers: 10,
-    features: ['milk_tracking', 'basic_health', 'breeding', 'finance', 'export_reports'],
+    maxAnimals: SUBSCRIPTION_PLAN_LIMITS.professional.maxAnimals,
+    maxUsers: SUBSCRIPTION_PLAN_LIMITS.professional.maxUsers,
+    features: SUBSCRIPTION_PLAN_FEATURES.professional,
   },
   farm: {
-    maxAnimals: 200,
-    maxUsers: 30,
-    features: [
-      'milk_tracking',
-      'basic_health',
-      'breeding',
-      'finance',
-      'export_reports',
-      'weather_integration',
-      'staff_management',
-    ],
+    maxAnimals: SUBSCRIPTION_PLAN_LIMITS.farm.maxAnimals,
+    maxUsers: SUBSCRIPTION_PLAN_LIMITS.farm.maxUsers,
+    features: SUBSCRIPTION_PLAN_FEATURES.farm,
   },
   enterprise: {
-    maxAnimals: 999999,
-    maxUsers: 999999,
-    features: ['*'],
+    maxAnimals:
+      SUBSCRIPTION_PLAN_LIMITS.enterprise.maxAnimals < 0
+        ? 999999
+        : SUBSCRIPTION_PLAN_LIMITS.enterprise.maxAnimals,
+    maxUsers:
+      SUBSCRIPTION_PLAN_LIMITS.enterprise.maxUsers < 0
+        ? 999999
+        : SUBSCRIPTION_PLAN_LIMITS.enterprise.maxUsers,
+    features: SUBSCRIPTION_PLAN_FEATURES.enterprise,
   },
 };
 

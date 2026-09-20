@@ -80,6 +80,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const { SubscriptionService } = await import('@/lib/subscriptions/management');
+      try {
+        await new SubscriptionService(context.tenantId).requireFeature('expense_tracking');
+      } catch (featureError: unknown) {
+        const message = featureError instanceof Error ? featureError.message : '';
+        if (message.startsWith('FEATURE_NOT_AVAILABLE')) {
+          return NextResponse.json({ success: false, error: message }, { status: 403 });
+        }
+        throw featureError;
+      }
+
       const body = await req.json();
 
       // Validate request body

@@ -12,7 +12,7 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   free: {
-    maxAnimals: 10,
+    maxAnimals: 5,
     maxUsers: 1,
     maxStorageMB: 100, // 100MB
     maxMonthlyEmails: 50,
@@ -27,14 +27,14 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   },
   farm: {
     maxAnimals: 500,
-    maxUsers: 20,
+    maxUsers: 15,
     maxStorageMB: 1024 * 20, // 20GB
     maxMonthlyEmails: 10000,
     allowedSpecies: ['cow', 'buffalo', 'goat', 'sheep', 'chicken', 'horse'],
   },
   enterprise: {
-    maxAnimals: 10000, // Effectively unlimited
-    maxUsers: 1000, // Effectively unlimited
+    maxAnimals: -1, // Unlimited
+    maxUsers: -1,
     maxStorageMB: 1024 * 100, // 100GB
     maxMonthlyEmails: 100000,
     allowedSpecies: ['cow', 'buffalo', 'goat', 'sheep', 'chicken', 'horse'],
@@ -42,7 +42,7 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
 };
 
 export const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
-  free: ['basic_records', 'milk_logging', 'simple_reports'],
+  free: ['basic_records', 'milk_logging', 'simple_reports', 'health_records'],
   professional: [
     'basic_records',
     'milk_logging',

@@ -3,6 +3,7 @@ import { expenses, sales } from '@/db/schema';
 import { eq, and, gte, lte, desc, sql, count } from 'drizzle-orm';
 import { ServiceContext, PaginatedResult } from '../types';
 import { logAuditEvent } from '@/lib/audit';
+import { SubscriptionService } from '@/lib/subscriptions/management';
 
 export interface ExpenseFilters {
   category?: string;
@@ -45,7 +46,10 @@ export class FinanceService {
   /**
    * List expenses with category and date filtering
    */
-  static async listExpenses(ctx: ServiceContext, filters: ExpenseFilters = {}): Promise<PaginatedResult<any>> {
+  static async listExpenses(
+    ctx: ServiceContext,
+    filters: ExpenseFilters = {}
+  ): Promise<PaginatedResult<any>> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
     const offset = (page - 1) * limit;
@@ -67,10 +71,7 @@ export class FinanceService {
 
     const whereClause = and(...conditions);
 
-    const [totalCount] = await db
-      .select({ count: count() })
-      .from(expenses)
-      .where(whereClause);
+    const [totalCount] = await db.select({ count: count() }).from(expenses).where(whereClause);
 
     const total = Number(totalCount?.count || 0);
 
@@ -110,6 +111,9 @@ export class FinanceService {
    * Record new expense
    */
   static async recordExpense(ctx: ServiceContext, data: CreateExpenseDTO) {
+    const subscriptionService = new SubscriptionService(ctx.tenantId);
+    await subscriptionService.requireFeature('expense_tracking');
+
     const db = getDrizzle();
     const expenseId = `exp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const descriptionText = data.description?.trim() || `${data.category} expense`;
@@ -150,7 +154,10 @@ export class FinanceService {
   /**
    * List sales
    */
-  static async listSales(ctx: ServiceContext, filters: SaleFilters = {}): Promise<PaginatedResult<any>> {
+  static async listSales(
+    ctx: ServiceContext,
+    filters: SaleFilters = {}
+  ): Promise<PaginatedResult<any>> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
     const offset = (page - 1) * limit;
@@ -172,10 +179,7 @@ export class FinanceService {
 
     const whereClause = and(...conditions);
 
-    const [totalCount] = await db
-      .select({ count: count() })
-      .from(sales)
-      .where(whereClause);
+    const [totalCount] = await db.select({ count: count() }).from(sales).where(whereClause);
 
     const total = Number(totalCount?.count || 0);
 
@@ -218,9 +222,15 @@ export class FinanceService {
    * Record new sale
    */
   static async recordSale(ctx: ServiceContext, data: CreateSaleDTO) {
+    const subscriptionService = new SubscriptionService(ctx.tenantId);
+    await subscriptionService.requireFeature('expense_tracking');
+
     const db = getDrizzle();
     const saleId = `sale_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const calculatedTotal = data.total !== undefined ? Math.round(data.total) : Math.round(data.quantity * data.pricePerUnit);
+    const calculatedTotal =
+      data.total !== undefined
+        ? Math.round(data.total)
+        : Math.round(data.quantity * data.pricePerUnit);
 
     const [created] = await db
       .insert(sales)
@@ -261,10 +271,18 @@ export class FinanceService {
   /**
    * Server-side financial summary with accurate Revenue, Operating Expenses, and Net Result
    */
-  static async getFinancialSummary(ctx: ServiceContext, startDateStr?: string, endDateStr?: string) {
+  static async getFinancialSummary(
+    ctx: ServiceContext,
+    startDateStr?: string,
+    endDateStr?: string
+  ) {
     const now = new Date();
-    const start = startDateStr ? new Date(startDateStr) : new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = endDateStr ? new Date(endDateStr) : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const start = startDateStr
+      ? new Date(startDateStr)
+      : new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = endDateStr
+      ? new Date(endDateStr)
+      : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     const db = getDrizzle();
 
@@ -284,7 +302,9 @@ export class FinanceService {
         countExpenses: count(),
       })
       .from(expenses)
-      .where(and(eq(expenses.tenantId, ctx.tenantId), gte(expenses.date, start), lte(expenses.date, end)));
+      .where(
+        and(eq(expenses.tenantId, ctx.tenantId), gte(expenses.date, start), lte(expenses.date, end))
+      );
 
     const totalRevenue = Number(salesSum?.totalRevenue || 0);
     const totalExpenses = Number(expensesSum?.totalExpenses || 0);
@@ -297,7 +317,9 @@ export class FinanceService {
         amount: sql<number>`coalesce(sum(${expenses.amount}), 0)`,
       })
       .from(expenses)
-      .where(and(eq(expenses.tenantId, ctx.tenantId), gte(expenses.date, start), lte(expenses.date, end)))
+      .where(
+        and(eq(expenses.tenantId, ctx.tenantId), gte(expenses.date, start), lte(expenses.date, end))
+      )
       .groupBy(expenses.category);
 
     return {

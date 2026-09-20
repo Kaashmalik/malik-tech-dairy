@@ -1,7 +1,8 @@
-import { getDrizzle, getSupabaseClient } from '@/lib/supabase/server';
-import { subscriptions, animals } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { getDrizzle } from '@/lib/supabase/server';
+import { subscriptions, animals, tenantMembers } from '@/db/schema';
+import { eq, and, count } from 'drizzle-orm';
 import { PLAN_LIMITS, PLAN_FEATURES, PROBATION_PERIOD_DAYS } from './constants';
+import { isWithinPlanLimit, featureNotAvailableMessage } from './plan-limits';
 import type { SubscriptionPlan, AnimalSpecies } from '@/types';
 
 // Re-export constants
@@ -96,47 +97,57 @@ export class SubscriptionService {
   async checkLimit(resource: ResourceType, currentCountOverride?: number): Promise<boolean> {
     const sub = await this.getSubscription();
 
-    // Block everything if expired
+    // Block everything if expired/cancelled
     if (sub.status !== 'active' && sub.status !== 'trial' && sub.status !== 'past_due') {
       return false;
     }
 
-    // Enterprise has no effective limits for most things
-    if (sub.plan === 'enterprise') return true;
-
     const limit = sub.limits;
     let currentUsage = 0;
+    let maxAllowed = 0;
 
-    if (typeof currentCountOverride === 'number') {
-      currentUsage = currentCountOverride;
-    } else {
-      // Fetch dynamic usage based on resource
-      switch (resource) {
-        case 'animals':
-          const animalCount = await this.db
-            .select({ count: sql<number>`count(*)` })
-            .from(animals)
-            .where(eq(animals.tenantId, this.tenantId));
-          currentUsage = Number(animalCount[0]?.count || 0);
-          return currentUsage < limit.maxAnimals;
-
-        case 'users':
-          // Note: This matches users by tenant metadata usually,
-          // but for now we assume we query your customized users table or clerk
-          // Here assuming we check local users table mirror if exists, or simple counter
-          // For now, let's use a dummy query or user table if available
-          /* 
-             const userCount = await this.db.select({ count: sql`count(*)` }).from(users)... 
-          */
-          // Simplified: Always require override or impl specific query
-          return true; // TODO: Implement actual user counting query when needed
-
-        default:
-          return true;
+    if (resource === 'animals') {
+      maxAllowed = limit.maxAnimals;
+      if (typeof currentCountOverride === 'number') {
+        currentUsage = currentCountOverride;
+      } else {
+        const [animalCount] = await this.db
+          .select({ count: count() })
+          .from(animals)
+          .where(and(eq(animals.tenantId, this.tenantId), eq(animals.status, 'active')));
+        currentUsage = Number(animalCount?.count || 0);
       }
+      return isWithinPlanLimit(currentUsage, maxAllowed);
     }
 
+    if (resource === 'users') {
+      maxAllowed = limit.maxUsers;
+      if (typeof currentCountOverride === 'number') {
+        currentUsage = currentCountOverride;
+      } else {
+        const [userCount] = await this.db
+          .select({ count: count() })
+          .from(tenantMembers)
+          .where(
+            and(eq(tenantMembers.tenantId, this.tenantId), eq(tenantMembers.status, 'active'))
+          );
+        currentUsage = Number(userCount?.count || 0);
+      }
+      return isWithinPlanLimit(currentUsage, maxAllowed);
+    }
+
+    // storage/emails not enforced here yet — allow
     return true;
+  }
+
+  /**
+   * Require a plan feature or throw FEATURE_NOT_AVAILABLE
+   */
+  async requireFeature(feature: string): Promise<void> {
+    const allowed = await this.hasFeature(feature);
+    if (!allowed) {
+      throw new Error(featureNotAvailableMessage(feature));
+    }
   }
 
   /**

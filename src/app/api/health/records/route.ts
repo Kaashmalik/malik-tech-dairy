@@ -65,6 +65,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withTenantContext(async (req, context) => {
     try {
+      const { SubscriptionService } = await import('@/lib/subscriptions/management');
+      try {
+        await new SubscriptionService(context.tenantId).requireFeature('health_records');
+      } catch (featureError: unknown) {
+        const message = featureError instanceof Error ? featureError.message : '';
+        if (message.startsWith('FEATURE_NOT_AVAILABLE')) {
+          return NextResponse.json({ success: false, error: message }, { status: 403 });
+        }
+        throw featureError;
+      }
+
       const supabase = getSupabaseClient();
       const body = await req.json();
       // Validate with Zod

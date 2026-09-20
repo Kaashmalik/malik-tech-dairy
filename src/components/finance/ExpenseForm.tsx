@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { PlanUpgradeNotice } from '@/components/subscription/PlanUpgradeNotice';
 import type { Expense } from '@/types';
 import { format } from 'date-fns';
 
@@ -135,6 +136,10 @@ export function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
               {mutation.isPending ? 'Saving...' : 'Add Expense'}
             </Button>
           </div>
+
+          {mutation.isError && (
+            <PlanUpgradeNotice message={mutation.error?.message || 'Failed to save expense'} />
+          )}
         </form>
       </CardContent>
     </Card>

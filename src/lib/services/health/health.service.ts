@@ -3,6 +3,7 @@ import { healthRecords, animals } from '@/db/schema';
 import { eq, and, gte, lte, desc, sql, count } from 'drizzle-orm';
 import { ServiceContext, PaginatedResult } from '../types';
 import { logAuditEvent } from '@/lib/audit';
+import { SubscriptionService } from '@/lib/subscriptions/management';
 
 export interface HealthRecordFilters {
   animalId?: string;
@@ -30,7 +31,10 @@ export class HealthService {
   /**
    * List health records with animal details and pagination
    */
-  static async listRecords(ctx: ServiceContext, filters: HealthRecordFilters = {}): Promise<PaginatedResult<any>> {
+  static async listRecords(
+    ctx: ServiceContext,
+    filters: HealthRecordFilters = {}
+  ): Promise<PaginatedResult<any>> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
     const offset = (page - 1) * limit;
@@ -56,10 +60,7 @@ export class HealthService {
 
     const whereClause = and(...conditions);
 
-    const [totalCount] = await db
-      .select({ count: count() })
-      .from(healthRecords)
-      .where(whereClause);
+    const [totalCount] = await db.select({ count: count() }).from(healthRecords).where(whereClause);
 
     const total = Number(totalCount?.count || 0);
 
@@ -119,6 +120,9 @@ export class HealthService {
    * Create a health record
    */
   static async createRecord(ctx: ServiceContext, data: CreateHealthRecordDTO) {
+    const subscriptionService = new SubscriptionService(ctx.tenantId);
+    await subscriptionService.requireFeature('health_records');
+
     const db = getDrizzle();
 
     // Verify animal exists
@@ -133,7 +137,10 @@ export class HealthService {
     }
 
     const recordId = `health_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const fullDesc = data.description || [data.diagnosis, data.treatment, data.notes].filter(Boolean).join(' - ') || 'Health check';
+    const fullDesc =
+      data.description ||
+      [data.diagnosis, data.treatment, data.notes].filter(Boolean).join(' - ') ||
+      'Health check';
 
     const [created] = await db
       .insert(healthRecords)
@@ -188,12 +195,7 @@ export class HealthService {
       })
       .from(healthRecords)
       .leftJoin(animals, eq(healthRecords.animalId, animals.id))
-      .where(
-        and(
-          eq(healthRecords.tenantId, ctx.tenantId),
-          gte(healthRecords.date, thirtyDaysAgo)
-        )
-      )
+      .where(and(eq(healthRecords.tenantId, ctx.tenantId), gte(healthRecords.date, thirtyDaysAgo)))
       .orderBy(desc(healthRecords.date))
       .limit(10);
 

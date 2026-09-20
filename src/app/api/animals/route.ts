@@ -8,8 +8,14 @@ import { AnimalService } from '@/lib/services/animals/animal.service';
 export const dynamic = 'force-dynamic';
 
 const animalQuerySchema = z.object({
-  page: z.string().optional().transform(val => (val ? parseInt(val) : 1)),
-  limit: z.string().optional().transform(val => (val ? parseInt(val) : 50)),
+  page: z
+    .string()
+    .optional()
+    .transform(val => (val ? parseInt(val) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform(val => (val ? parseInt(val) : 50)),
   species: z.string().optional(),
   status: z.string().optional(),
   gender: z.string().optional(),
@@ -20,7 +26,17 @@ const animalQuerySchema = z.object({
 const createAnimalSchema = z.object({
   tag: z.string().min(1, 'Tag is required').max(50),
   name: z.string().max(100).optional(),
-  species: z.enum(['cow', 'buffalo', 'cattle', 'goat', 'sheep', 'chicken', 'horse', 'poultry', 'other']),
+  species: z.enum([
+    'cow',
+    'buffalo',
+    'cattle',
+    'goat',
+    'sheep',
+    'chicken',
+    'horse',
+    'poultry',
+    'other',
+  ]),
   breed: z.string().max(100).optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(['male', 'female']),

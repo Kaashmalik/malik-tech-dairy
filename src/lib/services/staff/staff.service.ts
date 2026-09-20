@@ -57,7 +57,9 @@ export class StaffService {
     const subscriptionService = new SubscriptionService(ctx.tenantId);
     const allowed = await subscriptionService.checkLimit('users');
     if (!allowed) {
-      throw new Error('PLAN_LIMIT_REACHED: You have reached the maximum staff members allowed on your plan. Please upgrade to invite more team members.');
+      throw new Error(
+        'PLAN_LIMIT_REACHED: You have reached the maximum staff members allowed on your plan. Please upgrade to invite more team members.'
+      );
     }
 
     const db = getDrizzle();
@@ -69,7 +71,8 @@ export class StaffService {
       .where(eq(platformUsers.email, email.trim().toLowerCase()))
       .limit(1);
 
-    const userId = existingUser?.id || `user_inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const userId =
+      existingUser?.id || `user_inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 
     if (!existingUser) {
       await db

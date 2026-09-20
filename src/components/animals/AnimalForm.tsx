@@ -12,6 +12,7 @@ import type { AnimalSpecies, CustomField } from '@/types';
 import { useTenantLimits } from '@/hooks/useTenantLimits';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { usePostHogAnalytics } from '@/hooks/usePostHog';
 import { CustomFieldsRenderer } from '@/components/custom-fields/CustomFieldsRenderer';
 import { invalidateAnimalQueries } from '@/lib/query/farm-cache';
@@ -143,7 +144,12 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
 
   const onSubmit = async (data: AnimalFormData) => {
     if (!canAddAnimal && !animalId) {
-      toast.error('Animal limit reached. Please upgrade your plan.');
+      toast.error('Animal limit reached. Please upgrade your plan.', {
+        action: {
+          label: 'Upgrade',
+          onClick: () => router.push('/subscription'),
+        },
+      });
       return;
     }
     setIsSubmitting(true);
@@ -221,9 +227,17 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
                   : `${animalCount} of ${limits?.maxAnimals || 0} animals used`}
               </span>
               {!canAddAnimal && (
-                <Badge variant='secondary' className='ml-auto bg-red-500/20 text-white'>
-                  Limit Reached
-                </Badge>
+                <>
+                  <Badge variant='secondary' className='ml-auto bg-red-500/20 text-white'>
+                    Limit Reached
+                  </Badge>
+                  <Link
+                    href='/subscription'
+                    className='rounded-lg bg-white/20 px-3 py-1 text-sm font-medium underline-offset-2 hover:bg-white/30 hover:underline'
+                  >
+                    Upgrade
+                  </Link>
+                </>
               )}
             </div>
           )}

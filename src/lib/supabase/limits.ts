@@ -1,7 +1,8 @@
 // Supabase-based Tenant Limits
 // Gets subscription plan from Supabase and returns plan limits from constants
 import { getSupabaseClient } from '@/lib/supabase/server';
-import { SUBSCRIPTION_PLANS, SubscriptionPlanKey } from '@/lib/constants';
+import { SubscriptionPlanKey } from '@/lib/constants';
+import { PLAN_FEATURES, PLAN_LIMITS } from '@/lib/subscriptions/constants';
 import type { TenantLimits } from '@/types';
 export interface SubscriptionWithLimits {
   plan: SubscriptionPlanKey;
@@ -74,22 +75,15 @@ export async function getSubscriptionWithLimits(
   }
 }
 /**
- * Get default limits for a subscription plan
+ * Get default limits for a subscription plan (single source: subscriptions/constants)
  */
 export function getDefaultLimits(plan: SubscriptionPlanKey): TenantLimits {
-  const planConfig = SUBSCRIPTION_PLANS[plan];
-  if (!planConfig) {
-    // Fallback to free tier
-    return {
-      maxAnimals: 5,
-      maxUsers: 1,
-      features: ['basic_milk_logs', 'mobile_app'],
-    };
-  }
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free;
   return {
-    maxAnimals: planConfig.maxAnimals,
-    maxUsers: planConfig.maxUsers,
-    features: [...planConfig.features],
+    maxAnimals: limits.maxAnimals,
+    maxUsers: limits.maxUsers,
+    features: [...features],
   };
 }
 /**

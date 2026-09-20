@@ -4,7 +4,7 @@ import {
   calculateDaysRemaining,
   GESTATION_PERIODS,
 } from '@/lib/breeding-constants';
-import { PLAN_LIMITS, SUBSCRIPTION_PLANS } from '@/lib/subscriptions/constants';
+import { PLAN_LIMITS } from '@/lib/subscriptions/constants';
 
 describe('Domain Services & Dairy Business Logic Unit Tests', () => {
   describe('Breeding Calculations & Gestation', () => {
@@ -94,10 +94,12 @@ describe('Domain Services & Dairy Business Logic Unit Tests', () => {
       expect(PLAN_LIMITS.farm).toBeDefined();
       expect(PLAN_LIMITS.enterprise).toBeDefined();
 
-      expect(PLAN_LIMITS.free.maxAnimals).toBe(10);
+      expect(PLAN_LIMITS.free.maxAnimals).toBe(5);
       expect(PLAN_LIMITS.professional.maxAnimals).toBe(100);
       expect(PLAN_LIMITS.farm.maxAnimals).toBe(500);
-      expect(PLAN_LIMITS.enterprise.maxAnimals).toBe(10000);
+      expect(PLAN_LIMITS.enterprise.maxAnimals).toBe(-1);
+      expect(PLAN_LIMITS.free.maxUsers).toBe(1);
+      expect(PLAN_LIMITS.farm.maxUsers).toBe(15);
     });
 
     it('should allow cow and buffalo for dairy plans', () => {
@@ -119,7 +121,12 @@ describe('Domain Services & Dairy Business Logic Unit Tests', () => {
       };
 
       const escapeCSV = (val: string) => `"${val.replace(/"/g, '""')}"`;
-      const formatted = [sampleRecord.id, escapeCSV(sampleRecord.tag), escapeCSV(sampleRecord.name), sampleRecord.species].join(',');
+      const formatted = [
+        sampleRecord.id,
+        escapeCSV(sampleRecord.tag),
+        escapeCSV(sampleRecord.name),
+        sampleRecord.species,
+      ].join(',');
 
       expect(formatted).toBe('rec_1,"PK-COW-001","Daisy, The Champion",cow');
     });

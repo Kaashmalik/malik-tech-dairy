@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { PlanUpgradeNotice } from '@/components/subscription/PlanUpgradeNotice';
 import type { Sale } from '@/types';
 import { format } from 'date-fns';
 
@@ -181,6 +182,10 @@ export function SaleForm({ onClose, onSuccess }: SaleFormProps) {
               {mutation.isPending ? 'Saving...' : 'Add Sale'}
             </Button>
           </div>
+
+          {mutation.isError && (
+            <PlanUpgradeNotice message={mutation.error?.message || 'Failed to save sale'} />
+          )}
         </form>
       </CardContent>
     </Card>

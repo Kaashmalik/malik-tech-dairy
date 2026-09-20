@@ -5,6 +5,7 @@ import { ServiceContext, PaginatedResult } from '../types';
 import { calculateExpectedDueDate } from '@/lib/breeding-constants';
 import { AnimalSpecies } from '@/types/database';
 import { logAuditEvent } from '@/lib/audit';
+import { SubscriptionService } from '@/lib/subscriptions/management';
 
 export interface BreedingRecordFilters {
   animalId?: string;
@@ -36,7 +37,10 @@ export class BreedingService {
   /**
    * List breeding records with animal details and expected due dates
    */
-  static async listRecords(ctx: ServiceContext, filters: BreedingRecordFilters = {}): Promise<PaginatedResult<any>> {
+  static async listRecords(
+    ctx: ServiceContext,
+    filters: BreedingRecordFilters = {}
+  ): Promise<PaginatedResult<any>> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
     const offset = (page - 1) * limit;
@@ -93,7 +97,9 @@ export class BreedingService {
     const now = new Date();
     const items = rows.map(r => {
       const dueDate = r.expectedDueDate ? new Date(r.expectedDueDate) : null;
-      const daysRemaining = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+      const daysRemaining = dueDate
+        ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        : null;
 
       return {
         id: r.id,
@@ -134,11 +140,19 @@ export class BreedingService {
    * Create breeding record with impossible-state validation
    */
   static async createRecord(ctx: ServiceContext, data: CreateBreedingRecordDTO) {
+    const subscriptionService = new SubscriptionService(ctx.tenantId);
+    await subscriptionService.requireFeature('breeding_tracking');
+
     const db = getDrizzle();
 
     // 1. Verify female animal exists and is active
     const [animal] = await db
-      .select({ id: animals.id, gender: animals.gender, status: animals.status, species: animals.species })
+      .select({
+        id: animals.id,
+        gender: animals.gender,
+        status: animals.status,
+        species: animals.species,
+      })
       .from(animals)
       .where(and(eq(animals.id, data.animalId), eq(animals.tenantId, ctx.tenantId)))
       .limit(1);
@@ -175,7 +189,10 @@ export class BreedingService {
 
     // 3. Calculate expected due date based on species
     const breedingDateObj = new Date(data.breedingDate);
-    const expectedDueDate = calculateExpectedDueDate(breedingDateObj, (animal.species as AnimalSpecies) || 'cow');
+    const expectedDueDate = calculateExpectedDueDate(
+      breedingDateObj,
+      (animal.species as AnimalSpecies) || 'cow'
+    );
 
     const recordId = `breeding_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
@@ -226,7 +243,12 @@ export class BreedingService {
     const [breeding] = await db
       .select()
       .from(breedingRecords)
-      .where(and(eq(breedingRecords.id, data.breedingRecordId), eq(breedingRecords.tenantId, ctx.tenantId)))
+      .where(
+        and(
+          eq(breedingRecords.id, data.breedingRecordId),
+          eq(breedingRecords.tenantId, ctx.tenantId)
+        )
+      )
       .limit(1);
 
     if (!breeding) {
@@ -241,7 +263,11 @@ export class BreedingService {
     }
 
     const isPregnant = data.result === 'pregnant';
-    const newStatus = isPregnant ? 'confirmed' : data.result === 'not_pregnant' ? 'not_pregnant' : 'check_pending';
+    const newStatus = isPregnant
+      ? 'confirmed'
+      : data.result === 'not_pregnant'
+        ? 'not_pregnant'
+        : 'check_pending';
 
     const [updated] = await db
       .update(breedingRecords)
@@ -252,7 +278,12 @@ export class BreedingService {
         status: newStatus,
         updatedAt: new Date(),
       })
-      .where(and(eq(breedingRecords.id, data.breedingRecordId), eq(breedingRecords.tenantId, ctx.tenantId)))
+      .where(
+        and(
+          eq(breedingRecords.id, data.breedingRecordId),
+          eq(breedingRecords.tenantId, ctx.tenantId)
+        )
+      )
       .returning();
 
     try {

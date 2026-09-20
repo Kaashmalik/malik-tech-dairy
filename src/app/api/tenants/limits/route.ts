@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
 import { getSubscriptionWithLimits, getAnimalCount, getUserCount } from '@/lib/supabase/limits';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
+import { PLAN_FEATURES, PLAN_LIMITS } from '@/lib/subscriptions/constants';
 export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   return withTenantContext(async (req, context) => {
@@ -16,9 +17,9 @@ export async function GET(request: NextRequest) {
           plan: 'free',
           planDisplayName: SUBSCRIPTION_PLANS.free.displayName,
           status: 'trial',
-          maxAnimals: 5,
-          maxUsers: 1,
-          features: ['basic_milk_logs', 'mobile_app'],
+          maxAnimals: PLAN_LIMITS.free.maxAnimals,
+          maxUsers: PLAN_LIMITS.free.maxUsers,
+          features: PLAN_FEATURES.free,
           animalCount: 0,
           userCount: 0,
           trialEndsAt: null,

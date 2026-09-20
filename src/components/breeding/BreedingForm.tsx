@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Syringe, Heart, Calendar, User } from 'lucide-react';
+import { PlanUpgradeNotice } from '@/components/subscription/PlanUpgradeNotice';
 import type { BreedingRecord, Animal, SemenInventory } from '@/types';
 import { format, addDays } from 'date-fns';
 import { GESTATION_PERIODS, BREEDING_METHODS } from '@/lib/breeding-constants';
@@ -401,12 +402,9 @@ export function BreedingForm({ animalId, record, onClose, onSuccess }: BreedingF
 
           {/* Error Display */}
           {mutation.isError && (
-            <div className='rounded-lg bg-red-50 p-3 dark:bg-red-900/20'>
-              <p className='flex items-center gap-2 text-sm text-red-600 dark:text-red-400'>
-                <AlertCircle className='h-4 w-4' />
-                {mutation.error?.message || 'Failed to save breeding record'}
-              </p>
-            </div>
+            <PlanUpgradeNotice
+              message={mutation.error?.message || 'Failed to save breeding record'}
+            />
           )}
         </form>
       </CardContent>
