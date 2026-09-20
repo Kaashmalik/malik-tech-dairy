@@ -21,7 +21,8 @@ interface Tenant {
 }
 
 async function ensureTenantMember(
-  supabase: ReturnType<typeof getSupabaseClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
   tenantId: string,
   userId: string,
   role: string
@@ -57,7 +58,8 @@ async function ensureTenantMember(
 }
 
 async function remapTenantToClerkOrg(
-  supabase: ReturnType<typeof getSupabaseClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
   tenant: Tenant,
   clerkOrgId: string,
   slug: string
