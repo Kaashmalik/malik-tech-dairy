@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getTenantContext } from '@/lib/tenant/context';
+import { getTenantContext, TenantAccessError } from '@/lib/tenant/context';
 import { z } from 'zod';
 import { withRateLimit, standardRateLimit } from '@/lib/ratelimit';
 import { AnimalService } from '@/lib/services/animals/animal.service';
@@ -80,6 +80,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof TenantAccessError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: error.status });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Invalid query parameters', details: error.errors },
@@ -118,6 +121,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    if (error instanceof TenantAccessError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: error.status });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validation error', details: error.errors },

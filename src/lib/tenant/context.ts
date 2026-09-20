@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { getDrizzle } from '@/lib/supabase/server';
+import { getDrizzle, getSupabaseClient } from '@/lib/supabase/server';
 import { tenants, tenantMembers, platformUsers, subscriptions, animals } from '@/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { resolveTenantAccess } from '@/lib/tenant/resolve-access';
@@ -19,6 +19,16 @@ export interface TenantContext {
   organizationId: string;
   membershipId?: string;
 }
+
+export class TenantAccessError extends Error {
+  status: number;
+  constructor(message: string, status = 403) {
+    super(message);
+    this.name = 'TenantAccessError';
+    this.status = status;
+  }
+}
+
 /**
  * Extract tenant context from Clerk authentication
  * This replaces all hardcoded 'tenant_placeholder' usage
@@ -26,32 +36,39 @@ export interface TenantContext {
 export async function getTenantContext(): Promise<TenantContext> {
   const { userId, orgId, orgRole } = await auth();
   if (!userId) {
-    throw new Error('User authentication required');
+    throw new TenantAccessError('User authentication required', 401);
   }
 
-  const db = getDrizzle();
-  const userMemberships = await db
-    .select()
-    .from(tenantMembers)
-    .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.status, 'active')));
+  // Prefer Supabase REST for membership lookup (works when serverless cannot open Postgres)
+  const supabase = getSupabaseClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: members } = await (supabase.from('tenant_members') as any)
+    .select('tenant_id, role, status')
+    .eq('user_id', userId)
+    .eq('status', 'active');
 
-  const pUser = await db.select().from(platformUsers).where(eq(platformUsers.id, userId)).limit(1);
-  const isSuperAdmin = pUser.length > 0 && pUser[0].platformRole === 'super_admin';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: platformUser } = await (supabase.from('platform_users') as any)
+    .select('platform_role')
+    .eq('id', userId)
+    .maybeSingle();
 
   const resolved = resolveTenantAccess({
     clerkOrgId: orgId,
     headerTenantId: null,
-    memberships: userMemberships.map(m => ({
-      tenantId: m.tenantId,
-      role: m.role,
-      status: m.status,
-    })),
-    isSuperAdmin,
+    memberships: ((members || []) as { tenant_id: string; role: string; status: string }[]).map(
+      m => ({
+        tenantId: m.tenant_id,
+        role: m.role,
+        status: m.status,
+      })
+    ),
+    isSuperAdmin: platformUser?.platform_role === 'super_admin',
     clerkOrgRole: orgRole,
   });
 
   if (!resolved.ok) {
-    throw new Error(resolved.error);
+    throw new TenantAccessError(resolved.error, resolved.status);
   }
 
   const tenantId = resolved.tenantId;

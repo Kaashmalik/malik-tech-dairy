@@ -17,6 +17,11 @@ In the Vercel project for this app, set (Production):
 - `CLERK_SECRET_KEY` = `sk_live_...`
 - `CLERK_WEBHOOK_SECRET` = `whsec_...`
 - Confirm `NEXT_PUBLIC_APP_URL` = `https://dairy.mtkcodex.site`
+- Set Clerk redirects to the new props (remove deprecated afterSignIn URLs):
+  - `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/api/auth/redirect`
+  - `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/api/auth/redirect`
+  - Delete `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` and `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL`
+- `SUPABASE_DATABASE_URL` must be the **transaction pooler** URL (`*.pooler.supabase.com:6543?...pgbouncer=true`), not `db.*.supabase.co:5432`, so Drizzle works on Vercel serverless.
 
 Redeploy from `main` after saving.
 

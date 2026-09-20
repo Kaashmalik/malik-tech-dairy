@@ -20,8 +20,14 @@ function resolveDatabaseUrl(): string {
     throw new Error('SUPABASE_DATABASE_URL is not set');
   }
 
-  // If connection URL uses pooler host with postgres.gdditqkvzlpnklcoxspj,
-  // automatically route to the verified direct host to prevent pooler ENOTFOUND errors
+  // Vercel/serverless: never rewrite to the direct db.*:5432 host.
+  // That host is often unreachable from serverless; use the pooler URL from env
+  // (typically *.pooler.supabase.com:6543 with ?pgbouncer=true).
+  if (process.env.VERCEL) {
+    return envUrl;
+  }
+
+  // Local/dev only: rewrite broken legacy pooler hostnames to direct if needed
   if (
     envUrl.includes('aws-0-ap-south-1.pooler.supabase.com') ||
     envUrl.includes('postgres.gdditqkvzlpnklcoxspj')

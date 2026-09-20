@@ -1,121 +1,113 @@
-import { getDrizzle } from '@/lib/supabase/server';
-import { animals, milkLogs, breedingRecords, feedInventory, sales, expenses } from '@/db/schema';
-import { eq, and, gte, lte, sql, count } from 'drizzle-orm';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { ServiceContext } from '../types';
 
 export class DashboardService {
   /**
-   * Fetch all farm KPI metrics in efficient tenant-isolated queries
+   * Fetch all farm KPI metrics via Supabase REST (serverless-safe).
    */
   static async getFarmKPIs(ctx: ServiceContext) {
-    const db = getDrizzle();
+    const supabase = getSupabaseClient();
+    const tenantId = ctx.tenantId;
 
     const todayStr = new Date().toISOString().split('T')[0];
     const prevDateObj = new Date();
     prevDateObj.setDate(prevDateObj.getDate() - 1);
     const yesterdayStr = prevDateObj.toISOString().split('T')[0];
-
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthStartStr = monthStart.toISOString().split('T')[0];
-
     const thirtyDaysAhead = new Date();
     thirtyDaysAhead.setDate(thirtyDaysAhead.getDate() + 30);
+    const thirtyDaysAheadStr = thirtyDaysAhead.toISOString();
 
-    // 1. Animals counts
-    const [animalCounts] = await db
-      .select({
-        total: count(),
-        active: sql<number>`count(case when ${animals.status} = 'active' then 1 end)`,
-      })
-      .from(animals)
-      .where(eq(animals.tenantId, ctx.tenantId));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
 
-    // 2. Milk production (today, yesterday, month)
-    const [todayMilkRow] = await db
-      .select({
-        total: sql<number>`coalesce(sum(${milkLogs.quantity}), 0)`,
-        milkingCount: sql<number>`count(distinct ${milkLogs.animalId})`,
-      })
-      .from(milkLogs)
-      .where(and(eq(milkLogs.tenantId, ctx.tenantId), eq(milkLogs.date, todayStr)));
+    const [
+      animalsRes,
+      activeAnimalsRes,
+      todayMilkRes,
+      yesterdayMilkRes,
+      monthMilkRes,
+      pregnantRes,
+      upcomingRes,
+      salesRes,
+      expensesRes,
+      feedRes,
+    ] = await Promise.all([
+      sb.from('animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      sb
+        .from('animals')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('status', 'active'),
+      sb
+        .from('milk_logs')
+        .select('quantity, animal_id')
+        .eq('tenant_id', tenantId)
+        .eq('date', todayStr),
+      sb.from('milk_logs').select('quantity').eq('tenant_id', tenantId).eq('date', yesterdayStr),
+      sb.from('milk_logs').select('quantity').eq('tenant_id', tenantId).gte('date', monthStartStr),
+      sb
+        .from('breeding_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('pregnancy_confirmed', true)
+        .is('actual_birth_date', null),
+      sb
+        .from('breeding_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('pregnancy_confirmed', true)
+        .is('actual_birth_date', null)
+        .gte('expected_due_date', now.toISOString())
+        .lte('expected_due_date', thirtyDaysAheadStr),
+      sb.from('sales').select('total').eq('tenant_id', tenantId).gte('date', monthStartStr),
+      sb.from('expenses').select('amount').eq('tenant_id', tenantId).gte('date', monthStartStr),
+      sb.from('feed_inventory').select('quantity, minimum_stock').eq('tenant_id', tenantId),
+    ]);
 
-    const [yesterdayMilkRow] = await db
-      .select({
-        total: sql<number>`coalesce(sum(${milkLogs.quantity}), 0)`,
-      })
-      .from(milkLogs)
-      .where(and(eq(milkLogs.tenantId, ctx.tenantId), eq(milkLogs.date, yesterdayStr)));
+    const sumField = (
+      rows: { quantity?: number; total?: number; amount?: number }[] | null,
+      key: 'quantity' | 'total' | 'amount'
+    ) => (rows || []).reduce((acc, row) => acc + Number(row[key] || 0), 0);
 
-    const [monthMilkRow] = await db
-      .select({
-        total: sql<number>`coalesce(sum(${milkLogs.quantity}), 0)`,
-      })
-      .from(milkLogs)
-      .where(and(eq(milkLogs.tenantId, ctx.tenantId), gte(milkLogs.date, monthStartStr)));
+    const todayMilkRows = todayMilkRes.data || [];
+    const todayMilk = sumField(todayMilkRows, 'quantity');
+    const milkingCount = new Set(
+      todayMilkRows.map((r: { animal_id?: string }) => r.animal_id).filter(Boolean)
+    ).size;
 
-    // 3. Breeding metrics
-    const [breedingKPIs] = await db
-      .select({
-        pregnant: sql<number>`count(case when ${breedingRecords.pregnancyConfirmed} = true and ${breedingRecords.actualBirthDate} is null then 1 end)`,
-        upcomingCalvings: sql<number>`count(case when ${breedingRecords.pregnancyConfirmed} = true and ${breedingRecords.actualBirthDate} is null and ${breedingRecords.expectedDueDate} >= ${now} and ${breedingRecords.expectedDueDate} <= ${thirtyDaysAhead} then 1 end)`,
-      })
-      .from(breedingRecords)
-      .where(eq(breedingRecords.tenantId, ctx.tenantId));
-
-    // 4. Financial metrics this month
-    const [monthSales] = await db
-      .select({
-        revenue: sql<number>`coalesce(sum(${sales.total}), 0)`,
-      })
-      .from(sales)
-      .where(and(eq(sales.tenantId, ctx.tenantId), gte(sales.date, monthStart)));
-
-    const [monthExpenses] = await db
-      .select({
-        expenses: sql<number>`coalesce(sum(${expenses.amount}), 0)`,
-      })
-      .from(expenses)
-      .where(and(eq(expenses.tenantId, ctx.tenantId), gte(expenses.date, monthStart)));
-
-    // 5. Low stock alerts
-    const feedItems = await db
-      .select({
-        quantity: feedInventory.quantity,
-        minimumStock: feedInventory.minimumStock,
-      })
-      .from(feedInventory)
-      .where(eq(feedInventory.tenantId, ctx.tenantId));
-
+    const totalRevenue = sumField(salesRes.data, 'total');
+    const totalExpenses = sumField(expensesRes.data, 'amount');
+    const feedItems = feedRes.data || [];
     const lowStockCount = feedItems.filter(
-      item => item.minimumStock && Number(item.quantity) <= Number(item.minimumStock)
+      (item: { quantity?: number; minimum_stock?: number }) =>
+        item.minimum_stock != null && Number(item.quantity) <= Number(item.minimum_stock)
     ).length;
-
-    const totalRevenue = Number(monthSales?.revenue || 0);
-    const totalExpenses = Number(monthExpenses?.expenses || 0);
 
     return {
       animals: {
-        total: Number(animalCounts?.total || 0),
-        active: Number(animalCounts?.active || 0),
+        total: animalsRes.count || 0,
+        active: activeAnimalsRes.count || 0,
       },
       milk: {
-        today: Math.round(Number(todayMilkRow?.total || 0) * 10) / 10,
-        yesterday: Math.round(Number(yesterdayMilkRow?.total || 0) * 10) / 10,
-        monthlyTotal: Math.round(Number(monthMilkRow?.total || 0) * 10) / 10,
-        activeMilkingAnimals: Number(todayMilkRow?.milkingCount || 0),
+        today: todayMilk,
+        yesterday: sumField(yesterdayMilkRes.data, 'quantity'),
+        month: sumField(monthMilkRes.data, 'quantity'),
+        milkingAnimals: milkingCount,
       },
       breeding: {
-        confirmedPregnant: Number(breedingKPIs?.pregnant || 0),
-        upcomingCalvings: Number(breedingKPIs?.upcomingCalvings || 0),
-      },
-      inventory: {
-        lowStockAlerts: lowStockCount,
+        pregnant: pregnantRes.count || 0,
+        upcomingCalvings: upcomingRes.count || 0,
       },
       finance: {
         monthRevenue: totalRevenue,
         monthExpenses: totalExpenses,
-        monthNetResult: totalRevenue - totalExpenses,
+        monthProfit: totalRevenue - totalExpenses,
+      },
+      inventory: {
+        lowStockItems: lowStockCount,
       },
     };
   }

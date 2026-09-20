@@ -47,66 +47,60 @@ export class AnimalService {
   ): Promise<PaginatedResult<any>> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
-    const offset = (page - 1) * limit;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
-    const db = getDrizzle();
-
-    const conditions = [eq(animals.tenantId, ctx.tenantId)];
+    const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (supabase.from('animals') as any)
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (filters.species) {
-      conditions.push(eq(animals.species, filters.species));
+      query = query.eq('species', filters.species);
     }
     if (filters.status) {
-      conditions.push(eq(animals.status, filters.status));
+      query = query.eq('status', filters.status);
     }
     if (filters.gender) {
-      conditions.push(eq(animals.gender, filters.gender));
+      query = query.eq('gender', filters.gender);
     }
     if (filters.breed) {
-      conditions.push(eq(animals.breed, filters.breed));
+      query = query.eq('breed', filters.breed);
     }
     if (filters.search) {
-      const sanitized = `%${filters.search.trim()}%`;
-      conditions.push(or(ilike(animals.tag, sanitized), ilike(animals.name, sanitized))!);
+      const term = filters.search.trim();
+      query = query.or(`tag.ilike.%${term}%,name.ilike.%${term}%`);
     }
 
-    const whereClause = and(...conditions);
+    const { data, error, count } = await query;
+    if (error) {
+      throw new Error(`Failed to list animals: ${error.message}`);
+    }
 
-    // Get total count
-    const [totalCount] = await db.select({ count: count() }).from(animals).where(whereClause);
-
-    const total = Number(totalCount?.count || 0);
-
-    // Get items
-    const rows = await db
-      .select()
-      .from(animals)
-      .where(whereClause)
-      .orderBy(desc(animals.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    // Transform to camelCase format
-    const items = rows.map(r => ({
+    const total = count || 0;
+    const items = (data || []).map((r: Record<string, unknown>) => ({
       id: r.id,
-      tenantId: r.tenantId,
+      tenantId: r.tenant_id,
       tag: r.tag,
       name: r.name,
       species: r.species,
       breed: r.breed,
-      dateOfBirth: r.dateOfBirth,
+      dateOfBirth: r.date_of_birth,
       gender: r.gender,
-      photoUrl: r.photoUrl,
+      photoUrl: r.photo_url,
       status: r.status,
       weight: r.weight,
       color: r.color,
       notes: r.notes,
-      motherId: r.motherId,
-      fatherId: r.fatherId,
-      purchaseDate: r.purchaseDate,
-      purchasePrice: r.purchasePrice,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
+      motherId: r.mother_id,
+      fatherId: r.father_id,
+      purchaseDate: r.purchase_date,
+      purchasePrice: r.purchase_price,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
     }));
 
     return {
@@ -115,7 +109,7 @@ export class AnimalService {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit) || 0,
       },
     };
   }
