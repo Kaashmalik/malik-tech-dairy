@@ -677,11 +677,14 @@ export const expenses = pgTable(
     receiptUrl: text('receipt_url'),
     recordedBy: text('recorded_by').references(() => platformUsers.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+    deletedAt: timestamp('deleted_at'),
   },
   table => ({
     tenantIdIdx: index('expenses_tenant_id_idx').on(table.tenantId),
     dateIdx: index('expenses_date_idx').on(table.date),
     categoryIdx: index('expenses_category_idx').on(table.category),
+    deletedAtIdx: index('expenses_deleted_at_idx').on(table.deletedAt),
   })
 );
 
@@ -705,11 +708,14 @@ export const sales = pgTable(
     notes: text('notes'),
     recordedBy: text('recorded_by').references(() => platformUsers.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+    deletedAt: timestamp('deleted_at'),
   },
   table => ({
     tenantIdIdx: index('sales_tenant_id_idx').on(table.tenantId),
     dateIdx: index('sales_date_idx').on(table.date),
     typeIdx: index('sales_type_idx').on(table.type),
+    deletedAtIdx: index('sales_deleted_at_idx').on(table.deletedAt),
   })
 );
 

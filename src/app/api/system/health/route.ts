@@ -70,13 +70,26 @@ async function checkDatabase(): Promise<ServiceCheck> {
 async function checkClerk(): Promise<ServiceCheck> {
   try {
     const start = performance.now();
+    const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-    // Check if Clerk env vars are configured
-    if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    if (!publishableKey) {
       return { status: 'down', error: 'Clerk not configured' };
     }
 
     const latencyMs = Math.round(performance.now() - start);
+    const isProductionRuntime =
+      process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+    const isTestKey = publishableKey.startsWith('pk_test_');
+
+    if (isProductionRuntime && isTestKey) {
+      return {
+        status: 'degraded',
+        latencyMs,
+        error:
+          'Clerk test keys in production — set pk_live_ / sk_live_ (see docs/PRODUCTION-GO-LIVE-CHECKLIST.md)',
+      };
+    }
+
     return { status: 'up', latencyMs };
   } catch (error) {
     return {

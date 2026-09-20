@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
         .from('sales')
         .select('*', { count: 'exact' })
         .eq('tenant_id', context.tenantId)
+        .is('deleted_at', null)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false });
       // Apply filters

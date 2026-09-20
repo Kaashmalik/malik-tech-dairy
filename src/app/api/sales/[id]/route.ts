@@ -40,6 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         .select('*')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
+        .is('deleted_at', null)
         .single();
 
       if (error) {
@@ -161,6 +162,7 @@ export async function DELETE(
         .select('id, type, quantity, unit')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
+        .is('deleted_at', null)
         .single();
 
       if (fetchError) {
@@ -170,15 +172,8 @@ export async function DELETE(
         return errorResponse(fetchError);
       }
 
-      // Delete the sale
-      const { error } = await (supabase.from('sales') as any)
-        .delete()
-        .eq('id', id)
-        .eq('tenant_id', context.tenantId);
-
-      if (error) {
-        return errorResponse(error);
-      }
+      const { softDeleteSale } = await import('@/lib/soft-delete');
+      await softDeleteSale(id, context.tenantId);
 
       return successResponse(
         { id, deleted: true },

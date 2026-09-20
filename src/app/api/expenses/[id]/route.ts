@@ -37,6 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         .select('*')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
+        .is('deleted_at', null)
         .single();
 
       if (error) {
@@ -143,6 +144,7 @@ export async function DELETE(
         .select('id, description')
         .eq('id', id)
         .eq('tenant_id', context.tenantId)
+        .is('deleted_at', null)
         .single();
 
       if (fetchError) {
@@ -152,15 +154,8 @@ export async function DELETE(
         return errorResponse(fetchError);
       }
 
-      // Delete the expense
-      const { error } = await (supabase.from('expenses') as any)
-        .delete()
-        .eq('id', id)
-        .eq('tenant_id', context.tenantId);
-
-      if (error) {
-        return errorResponse(error);
-      }
+      const { softDeleteExpense } = await import('@/lib/soft-delete');
+      await softDeleteExpense(id, context.tenantId);
 
       return successResponse(
         { id, deleted: true },

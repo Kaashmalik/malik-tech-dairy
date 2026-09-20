@@ -86,16 +86,23 @@ export async function softDeleteBreedingRecord(breedingRecordId: string): Promis
 /**
  * Soft delete an expense
  */
-export async function softDeleteExpense(expenseId: string): Promise<void> {
+export async function softDeleteExpense(expenseId: string, tenantId?: string): Promise<void> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase
+  let query = supabase
     .from('expenses')
     .update({
       deleted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', expenseId);
+    .eq('id', expenseId)
+    .is('deleted_at', null);
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { error } = await query;
 
   if (error) {
     throw new Error('Failed to soft delete expense');
@@ -105,16 +112,23 @@ export async function softDeleteExpense(expenseId: string): Promise<void> {
 /**
  * Soft delete a sale
  */
-export async function softDeleteSale(saleId: string): Promise<void> {
+export async function softDeleteSale(saleId: string, tenantId?: string): Promise<void> {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase
+  let query = supabase
     .from('sales')
     .update({
       deleted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', saleId);
+    .eq('id', saleId)
+    .is('deleted_at', null);
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { error } = await query;
 
   if (error) {
     throw new Error('Failed to soft delete sale');

@@ -1,13 +1,23 @@
-// API Route: Payment Gateway Callbacks
+// API Route: Payment Gateway Callbacks (Postgres payment intents — no Firebase)
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJazzCashResponse } from '@/lib/payments/jazzcash-server';
 import { verifyEasyPaisaResponse } from '@/lib/payments/easypaisa-server';
 import { verifyXPayResponse } from '@/lib/payments/xpay-server';
-import { adminDb } from '@/lib/firebase/admin';
 import { updateTenantSubscription } from '@/lib/subscriptions/management';
 import { recordCouponUsage } from '@/lib/coupons/validation';
+import { getDrizzle } from '@/lib/supabase/server';
+import { payments } from '@/db/schema';
+import { eq, or, sql } from 'drizzle-orm';
 import type { PaymentGateway } from '@/types';
+
 export const dynamic = 'force-dynamic';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site';
+
+function redirectWith(query: string) {
+  return NextResponse.redirect(`${APP_URL}/dashboard/subscription?${query}`);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ gateway: string }> }
@@ -15,115 +25,121 @@ export async function GET(
   try {
     const { gateway } = await params;
     const { searchParams } = new URL(request.url);
-    // Get all query parameters
     const responseData: Record<string, string> = {};
     searchParams.forEach((value, key) => {
       responseData[key] = value;
     });
-    // Verify payment based on gateway
+
     let verification: {
       valid: boolean;
       transactionId?: string;
       amount?: number;
       status?: string;
     };
+
     if (gateway === 'jazzcash') {
-      const config = {
-        merchantId: process.env.JAZZCASH_MERCHANT_ID!,
-        password: process.env.JAZZCASH_PASSWORD!,
-        integritySalt: process.env.JAZZCASH_INTEGRETY_SALT!,
-        returnUrl: request.url.split('?')[0],
-        isSandbox: process.env.NODE_ENV !== 'production',
-      };
-      verification = verifyJazzCashResponse(config, responseData);
+      verification = verifyJazzCashResponse(
+        {
+          merchantId: process.env.JAZZCASH_MERCHANT_ID!,
+          password: process.env.JAZZCASH_PASSWORD!,
+          integritySalt: process.env.JAZZCASH_INTEGRETY_SALT!,
+          returnUrl: request.url.split('?')[0],
+          isSandbox: process.env.NODE_ENV !== 'production',
+        },
+        responseData
+      );
     } else if (gateway === 'easypaisa') {
-      const config = {
-        storeId: process.env.EASYPAISA_STORE_ID!,
-        hashKey: process.env.EASYPAISA_HASH_KEY!,
-        returnUrl: request.url.split('?')[0],
-        isSandbox: process.env.NODE_ENV !== 'production',
-      };
-      verification = verifyEasyPaisaResponse(config, responseData);
+      verification = verifyEasyPaisaResponse(
+        {
+          storeId: process.env.EASYPAISA_STORE_ID!,
+          hashKey: process.env.EASYPAISA_HASH_KEY!,
+          returnUrl: request.url.split('?')[0],
+          isSandbox: process.env.NODE_ENV !== 'production',
+        },
+        responseData
+      );
     } else if (gateway === 'xpay') {
-      const config = {
-        merchantId: process.env.XPAY_MERCHANT_ID!,
-        merchantKey: process.env.XPAY_MERCHANT_KEY!,
-        returnUrl: request.url.split('?')[0],
-        isSandbox: process.env.NODE_ENV !== 'production',
-      };
-      verification = verifyXPayResponse(config, responseData);
+      verification = verifyXPayResponse(
+        {
+          merchantId: process.env.XPAY_MERCHANT_ID!,
+          merchantKey: process.env.XPAY_MERCHANT_KEY!,
+          returnUrl: request.url.split('?')[0],
+          isSandbox: process.env.NODE_ENV !== 'production',
+        },
+        responseData
+      );
     } else {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=invalid_gateway`
-      );
+      return redirectWith('error=invalid_gateway');
     }
+
     if (!verification.valid || verification.status !== 'success') {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=payment_failed`
-      );
+      return redirectWith('error=payment_failed');
     }
-    // Extract order ID from transaction ID or response
+
     const orderId = responseData.orderId || responseData.pp_TxnRefNo || verification.transactionId;
-    if (!orderId || !adminDb) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=invalid_order`
-      );
+    if (!orderId) {
+      return redirectWith('error=invalid_order');
     }
-    // Find payment intent by order ID
-    const paymentIntents = await adminDb
-      .collection('payment_intents')
-      .where('orderId', '==', orderId)
-      .limit(1)
-      .get();
-    if (paymentIntents.empty) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=order_not_found`
-      );
-    }
-    const paymentIntent = paymentIntents.docs[0].data();
-    const { tenantId, plan, userId, couponCode, discountAmount } = paymentIntent;
-    // Record payment in Supabase
-    const { getDrizzle } = await import('@/lib/supabase/server');
-    const { payments } = await import('@/db/schema');
-    const { nanoid } = await import('nanoid');
+
     const db = getDrizzle();
-    await db.insert(payments).values({
-      id: nanoid(),
-      tenantId,
-      amount: (verification.amount || paymentIntent.amount) * 100, // Convert to paise
-      currency: 'PKR',
-      gateway: gateway as any,
-      status: 'completed',
-      transactionId: verification.transactionId || null,
-      plan: plan as any,
-      metadata: { orderId, couponCode, discountAmount },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    // Record coupon usage if applicable
-    if (couponCode && discountAmount > 0) {
-      await recordCouponUsage(paymentIntent.couponId, tenantId, userId, orderId, discountAmount);
+    const [paymentIntent] = await db
+      .select()
+      .from(payments)
+      .where(
+        or(
+          eq(payments.id, orderId),
+          eq(payments.transactionId, orderId),
+          sql`${payments.metadata}->>'orderId' = ${orderId}`
+        )
+      )
+      .limit(1);
+
+    if (!paymentIntent) {
+      return redirectWith('error=order_not_found');
     }
-    // Update tenant subscription
-    await updateTenantSubscription(tenantId, {
-      plan,
+
+    if (paymentIntent.status === 'completed') {
+      return redirectWith('success=true');
+    }
+
+    const metadata = (paymentIntent.metadata || {}) as Record<string, unknown>;
+    const couponCode = (metadata.couponCode || metadata.coupon_code) as string | null;
+    const couponId = (metadata.couponId || metadata.coupon_id) as string | null;
+    const discountAmount = Number(metadata.discountAmount || metadata.discount_amount || 0);
+    const userId = (metadata.userId || metadata.user_id) as string | undefined;
+    const paidAmount = verification.amount ?? paymentIntent.amount;
+
+    await db
+      .update(payments)
+      .set({
+        status: 'completed',
+        transactionId: verification.transactionId || paymentIntent.transactionId,
+        amount: Math.round(paidAmount),
+        metadata: {
+          ...metadata,
+          orderId,
+          completedAt: new Date().toISOString(),
+        },
+        updatedAt: new Date(),
+      })
+      .where(eq(payments.id, paymentIntent.id));
+
+    if (couponCode && couponId && discountAmount > 0 && userId) {
+      await recordCouponUsage(couponId, paymentIntent.tenantId, userId, orderId, discountAmount);
+    }
+
+    await updateTenantSubscription(paymentIntent.tenantId, {
+      plan: paymentIntent.plan,
       status: 'active',
       gateway: gateway as PaymentGateway,
-      renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      amount: verification.amount || paymentIntent.amount,
+      renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      amount: paidAmount,
       currency: 'PKR',
     });
-    // Mark payment intent as completed
-    await adminDb.collection('payment_intents').doc(paymentIntents.docs[0].id).update({
-      status: 'completed',
-      completedAt: new Date(),
-    });
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?success=true`
-    );
+
+    return redirectWith('success=true');
   } catch (error) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site'}/dashboard/subscription?error=processing_error`
-    );
+    console.error('Payment callback error:', error);
+    return redirectWith('error=processing_error');
   }
 }
