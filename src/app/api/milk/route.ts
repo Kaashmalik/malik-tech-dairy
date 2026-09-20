@@ -6,8 +6,14 @@ import { MilkService } from '@/lib/services/milk/milk.service';
 export const dynamic = 'force-dynamic';
 
 const milkQuerySchema = z.object({
-  page: z.string().optional().transform(val => (val ? parseInt(val) : 1)),
-  limit: z.string().optional().transform(val => (val ? parseInt(val) : 50)),
+  page: z
+    .string()
+    .optional()
+    .transform(val => (val ? parseInt(val) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform(val => (val ? parseInt(val) : 50)),
   date: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -15,14 +21,20 @@ const milkQuerySchema = z.object({
   session: z.enum(['morning', 'evening']).optional(),
   summary: z.string().optional(),
   trends: z.string().optional(),
-  days: z.string().optional().transform(val => (val ? parseInt(val) : 30)),
+  days: z
+    .string()
+    .optional()
+    .transform(val => (val ? parseInt(val) : 30)),
 });
 
 const createMilkLogSchema = z.object({
   animalId: z.string().min(1, 'Animal is required'),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
   session: z.enum(['morning', 'evening']),
-  quantity: z.number().min(0.1, 'Quantity must be greater than 0').max(100, 'Quantity exceeds realistic single milking limit'),
+  quantity: z
+    .number()
+    .min(0.1, 'Quantity must be greater than 0')
+    .max(100, 'Quantity exceeds realistic single milking limit'),
   quality: z.number().min(1).max(10).optional(),
   fat: z.number().min(0).max(20).optional(),
   notes: z.string().max(500).optional(),
@@ -31,13 +43,15 @@ const createMilkLogSchema = z.object({
 const bulkMilkSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
   session: z.enum(['morning', 'evening']),
-  entries: z.array(
-    z.object({
-      animalId: z.string().min(1),
-      quantity: z.number().min(0.1),
-      quality: z.number().min(1).max(10).optional(),
-    })
-  ).min(1, 'At least one milk entry required'),
+  entries: z
+    .array(
+      z.object({
+        animalId: z.string().min(1),
+        quantity: z.number().min(0.1),
+        quality: z.number().min(1).max(10).optional(),
+      })
+    )
+    .min(1, 'At least one milk entry required'),
 });
 
 // GET: List milk logs, daily summary, or trends

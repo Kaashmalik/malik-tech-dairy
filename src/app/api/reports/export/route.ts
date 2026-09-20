@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
       }
 
       // If PDF format requested
-      const start = query.startDate ? new Date(query.startDate) : new Date(Date.now() - 30 * 86400000);
+      const start = query.startDate
+        ? new Date(query.startDate)
+        : new Date(Date.now() - 30 * 86400000);
       const end = query.endDate ? new Date(query.endDate) : new Date();
 
       const pdfBuffer = await ReportService.generatePDF(context, query.type, start, end);

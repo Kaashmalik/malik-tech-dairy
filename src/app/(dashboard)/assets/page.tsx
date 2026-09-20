@@ -108,7 +108,11 @@ export default function AssetsPage() {
   });
 
   // Fetch assets
-  const { data, isLoading, error: fetchError } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: fetchError,
+  } = useQuery({
     queryKey: ['assets'],
     queryFn: async () => {
       const response = await fetch('/api/assets');
@@ -148,7 +152,7 @@ export default function AssetsPage() {
         purchaseDate: format(new Date(), 'yyyy-MM-dd'),
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast.error(error.message);
     },
   });
@@ -164,7 +168,7 @@ export default function AssetsPage() {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       toast.success('Asset deleted successfully');
     },
-    onError: (error) => {
+    onError: error => {
       toast.error(error.message);
     },
   });
@@ -172,7 +176,10 @@ export default function AssetsPage() {
   // Calculate stats
   const stats = {
     total: assets.length,
-    totalValue: assets.reduce((sum, a) => sum + (Number(a.currentValue) || Number(a.purchasePrice) || 0), 0),
+    totalValue: assets.reduce(
+      (sum, a) => sum + (Number(a.currentValue) || Number(a.purchasePrice) || 0),
+      0
+    ),
     active: assets.filter(a => a.status === 'operational' || a.status === 'active').length,
     inMaintenance: assets.filter(a => a.status === 'maintenance').length,
     retired: assets.filter(a => a.status === 'retired').length,
@@ -184,7 +191,10 @@ export default function AssetsPage() {
       asset.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.serialNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || asset.category === selectedCategory || asset.type === selectedCategory;
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      asset.category === selectedCategory ||
+      asset.type === selectedCategory;
     const matchesStatus = selectedStatus === 'all' || asset.status === selectedStatus;
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -337,16 +347,19 @@ export default function AssetsPage() {
 
       {/* Loading & Error States */}
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+        <div className='flex h-64 items-center justify-center'>
+          <Loader2 className='h-8 w-8 animate-spin text-purple-600' />
         </div>
       ) : fetchError ? (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-red-600">
-            <AlertTriangle className="mb-4 h-12 w-12" />
-            <h3 className="text-lg font-semibold">Error loading assets</h3>
-            <p className="mt-1 text-sm">{(fetchError as Error).message}</p>
-            <Button className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['assets'] })}>
+        <Card className='border-red-200 bg-red-50'>
+          <CardContent className='flex flex-col items-center justify-center py-12 text-red-600'>
+            <AlertTriangle className='mb-4 h-12 w-12' />
+            <h3 className='text-lg font-semibold'>Error loading assets</h3>
+            <p className='mt-1 text-sm'>{(fetchError as Error).message}</p>
+            <Button
+              className='mt-4'
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['assets'] })}
+            >
               Retry
             </Button>
           </CardContent>
@@ -462,7 +475,11 @@ export default function AssetsPage() {
                         className='h-8 w-8 p-0 text-red-500 hover:text-red-600'
                         disabled={deleteMutation.isPending}
                       >
-                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className='h-4 w-4' />}
+                        {deleteMutation.isPending ? (
+                          <Loader2 className='h-4 w-4 animate-spin' />
+                        ) : (
+                          <Trash2 className='h-4 w-4' />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -500,7 +517,9 @@ export default function AssetsPage() {
                 <select
                   className='h-10 w-full rounded-lg border px-3'
                   value={newAsset.category}
-                  onChange={e => setNewAsset({ ...newAsset, category: e.target.value, type: e.target.value })}
+                  onChange={e =>
+                    setNewAsset({ ...newAsset, category: e.target.value, type: e.target.value })
+                  }
                 >
                   {Object.entries(categoryConfig).map(([key, config]) => (
                     <option key={key} value={key}>
@@ -537,7 +556,9 @@ export default function AssetsPage() {
                   type='number'
                   placeholder='0'
                   value={newAsset.purchasePrice}
-                  onChange={e => setNewAsset({ ...newAsset, purchasePrice: Number(e.target.value) })}
+                  onChange={e =>
+                    setNewAsset({ ...newAsset, purchasePrice: Number(e.target.value) })
+                  }
                 />
               </div>
             </div>
@@ -551,7 +572,11 @@ export default function AssetsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setShowAddDialog(false)} disabled={createMutation.isPending}>
+            <Button
+              variant='outline'
+              onClick={() => setShowAddDialog(false)}
+              disabled={createMutation.isPending}
+            >
               Cancel
             </Button>
             <Button

@@ -99,7 +99,10 @@ describe('Diseases & Medicines API Tests', () => {
           return res(200, { success: true, data: newDisease });
         }
         if (method === 'PUT') {
-          return res(200, { success: true, data: { id: createdDiseaseId || 'dis-created-1', ...testDisease, ...body } });
+          return res(200, {
+            success: true,
+            data: { id: createdDiseaseId || 'dis-created-1', ...testDisease, ...body },
+          });
         }
         if (url.includes('category=invalid')) {
           return res(200, { success: true, data: [] });
@@ -112,9 +115,16 @@ describe('Diseases & Medicines API Tests', () => {
         }
         const idMatch = url.match(/\/api\/diseases\/([^\?]+)/);
         if (idMatch) {
-          return res(200, { success: true, data: { id: idMatch[1], name: testDisease.name, treatments: [] } });
+          return res(200, {
+            success: true,
+            data: { id: idMatch[1], name: testDisease.name, treatments: [] },
+          });
         }
-        return res(200, { success: true, data: diseasesList, pagination: { page: 1, limit: 50, total: diseasesList.length } });
+        return res(200, {
+          success: true,
+          data: diseasesList,
+          pagination: { page: 1, limit: 50, total: diseasesList.length },
+        });
       }
 
       // Medicines API
@@ -125,7 +135,10 @@ describe('Diseases & Medicines API Tests', () => {
           return res(200, { success: true, data: newMed });
         }
         if (method === 'PUT') {
-          return res(200, { success: true, data: { id: createdMedicineId || 'med-created-1', ...testMedicine, ...body } });
+          return res(200, {
+            success: true,
+            data: { id: createdMedicineId || 'med-created-1', ...testMedicine, ...body },
+          });
         }
         if (url.includes('category=antibiotic')) {
           return res(200, { success: true, data: [{ ...testMedicine, category: 'antibiotic' }] });
@@ -135,7 +148,10 @@ describe('Diseases & Medicines API Tests', () => {
         }
         const idMatch = url.match(/\/api\/medicines\/([^\?]+)/);
         if (idMatch) {
-          return res(200, { success: true, data: { id: idMatch[1], name: testMedicine.name, treats_diseases: [] } });
+          return res(200, {
+            success: true,
+            data: { id: idMatch[1], name: testMedicine.name, treats_diseases: [] },
+          });
         }
         return res(200, { success: true, data: medicinesList });
       }
@@ -196,7 +212,8 @@ describe('Diseases & Medicines API Tests', () => {
           return res(200, { success: true, data: item });
         }
         if (method === 'PUT') {
-          const item = inventoryList.find(i => i.id === body.id) || inventoryList[0] || { id: 'inv-1', quantity: 100 };
+          const item = inventoryList.find(i => i.id === body.id) ||
+            inventoryList[0] || { id: 'inv-1', quantity: 100 };
           item.quantity = item.quantity - (body.quantity || 10);
           return res(200, { success: true, data: item });
         }

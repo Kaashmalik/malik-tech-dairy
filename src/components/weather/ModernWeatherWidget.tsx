@@ -48,7 +48,8 @@ const getWeatherIcon = (code: number, isDay: boolean = true, className = 'w-6 h-
   if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86))
     return <CloudSnow className={`${className} text-white`} />;
   // Thunderstorm
-  if (code >= 95 && code <= 99) return <CloudLightning className={`${className} text-yellow-400`} />;
+  if (code >= 95 && code <= 99)
+    return <CloudLightning className={`${className} text-yellow-400`} />;
 
   return isDay ? (
     <Sun className={`${className} text-yellow-300`} />
@@ -204,10 +205,11 @@ export default function ModernWeatherWidget() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1 }}
-          className={`absolute inset-0 bg-gradient-to-br ${weather.isDay
+          className={`absolute inset-0 bg-gradient-to-br ${
+            weather.isDay
               ? 'from-sky-400 via-blue-500 to-indigo-600'
               : 'from-slate-900 via-indigo-950 to-slate-900'
-            } opacity-95 transition-all duration-1000 group-hover:opacity-100`}
+          } opacity-95 transition-all duration-1000 group-hover:opacity-100`}
         />
       </AnimatePresence>
 

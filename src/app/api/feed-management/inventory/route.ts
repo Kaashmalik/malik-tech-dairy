@@ -185,7 +185,10 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) {
-      return NextResponse.json({ success: false, error: 'Feed item ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Feed item ID is required' },
+        { status: 400 }
+      );
     }
     const db = getDrizzle();
     await db
@@ -198,4 +201,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
-

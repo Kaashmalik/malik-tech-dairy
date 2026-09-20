@@ -46,9 +46,7 @@ describe('Logger', () => {
 
       logger.debug('Test debug message');
 
-      expect(consoleSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining('Test debug message')
-      );
+      expect(consoleSpy.debug).toHaveBeenCalledWith(expect.stringContaining('Test debug message'));
 
       process.env.NODE_ENV = originalEnv;
     });
@@ -69,9 +67,7 @@ describe('Logger', () => {
     it('should log info messages', () => {
       logger.info('Test info message');
 
-      expect(consoleSpy.info).toHaveBeenCalledWith(
-        expect.stringContaining('Test info message')
-      );
+      expect(consoleSpy.info).toHaveBeenCalledWith(expect.stringContaining('Test info message'));
     });
 
     it('should include context in log message', () => {

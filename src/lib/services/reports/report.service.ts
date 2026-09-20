@@ -24,7 +24,18 @@ export class ReportService {
           .where(eq(animals.tenantId, ctx.tenantId))
           .orderBy(desc(animals.createdAt));
 
-        const headers = ['ID', 'Tag', 'Name', 'Species', 'Breed', 'Gender', 'Status', 'Weight', 'Date of Birth', 'Created At'];
+        const headers = [
+          'ID',
+          'Tag',
+          'Name',
+          'Species',
+          'Breed',
+          'Gender',
+          'Status',
+          'Weight',
+          'Date of Birth',
+          'Created At',
+        ];
         const csvRows = rows.map(r => [
           r.id,
           `"${r.tag}"`,
@@ -62,7 +73,15 @@ export class ReportService {
           .where(and(...conditions))
           .orderBy(desc(milkLogs.date));
 
-        const headers = ['Log ID', 'Date', 'Session', 'Animal Tag', 'Quantity (L)', 'Quality (1-10)', 'Notes'];
+        const headers = [
+          'Log ID',
+          'Date',
+          'Session',
+          'Animal Tag',
+          'Quantity (L)',
+          'Quality (1-10)',
+          'Notes',
+        ];
         const csvRows = rows.map(r => [
           r.id,
           r.date,
@@ -83,34 +102,52 @@ export class ReportService {
         const expenseRows = await db
           .select()
           .from(expenses)
-          .where(and(eq(expenses.tenantId, ctx.tenantId), gte(expenses.date, start), lte(expenses.date, end)));
+          .where(
+            and(
+              eq(expenses.tenantId, ctx.tenantId),
+              gte(expenses.date, start),
+              lte(expenses.date, end)
+            )
+          );
 
         const saleRows = await db
           .select()
           .from(sales)
-          .where(and(eq(sales.tenantId, ctx.tenantId), gte(sales.date, start), lte(sales.date, end)));
+          .where(
+            and(eq(sales.tenantId, ctx.tenantId), gte(sales.date, start), lte(sales.date, end))
+          );
 
-        const headers = ['Type', 'Date', 'Category/Product', 'Amount/Total (PKR)', 'Description/Notes'];
+        const headers = [
+          'Type',
+          'Date',
+          'Category/Product',
+          'Amount/Total (PKR)',
+          'Description/Notes',
+        ];
         const lines: string[] = [headers.join(',')];
 
         for (const exp of expenseRows) {
-          lines.push([
-            'Expense',
-            new Date(exp.date).toISOString().split('T')[0],
-            `"${exp.category}"`,
-            exp.amount,
-            `"${(exp.description || '').replace(/"/g, '""')}"`,
-          ].join(','));
+          lines.push(
+            [
+              'Expense',
+              new Date(exp.date).toISOString().split('T')[0],
+              `"${exp.category}"`,
+              exp.amount,
+              `"${(exp.description || '').replace(/"/g, '""')}"`,
+            ].join(',')
+          );
         }
 
         for (const sale of saleRows) {
-          lines.push([
-            'Sale (Revenue)',
-            new Date(sale.date).toISOString().split('T')[0],
-            `"${sale.type}"`,
-            sale.total,
-            `"${(sale.notes || '').replace(/"/g, '""')}"`,
-          ].join(','));
+          lines.push(
+            [
+              'Sale (Revenue)',
+              new Date(sale.date).toISOString().split('T')[0],
+              `"${sale.type}"`,
+              sale.total,
+              `"${(sale.notes || '').replace(/"/g, '""')}"`,
+            ].join(',')
+          );
         }
 
         return lines.join('\n');

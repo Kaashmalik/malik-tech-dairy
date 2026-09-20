@@ -124,7 +124,9 @@ export class FeedService {
     const newStock = currentStock + delta;
 
     if (newStock < 0) {
-      throw new Error(`INSUFFICIENT_STOCK: Current stock is only ${currentStock} ${item.unit}. Cannot deduct ${Math.abs(data.quantityChange)} ${item.unit}.`);
+      throw new Error(
+        `INSUFFICIENT_STOCK: Current stock is only ${currentStock} ${item.unit}. Cannot deduct ${Math.abs(data.quantityChange)} ${item.unit}.`
+      );
     }
 
     const [updated] = await db

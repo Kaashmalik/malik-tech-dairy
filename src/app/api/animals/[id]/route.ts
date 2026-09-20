@@ -8,7 +8,9 @@ export const dynamic = 'force-dynamic';
 const updateAnimalSchema = z.object({
   tag: z.string().min(1, 'Tag is required').max(50).optional(),
   name: z.string().max(100).optional(),
-  species: z.enum(['cow', 'buffalo', 'cattle', 'goat', 'sheep', 'chicken', 'horse', 'poultry', 'other']).optional(),
+  species: z
+    .enum(['cow', 'buffalo', 'cattle', 'goat', 'sheep', 'chicken', 'horse', 'poultry', 'other'])
+    .optional(),
   breed: z.string().max(100).optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(['male', 'female']).optional(),
@@ -85,7 +87,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // DELETE: Soft-archive animal (preserves historical milk, health, and breeding data)
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   return withTenantContext(async (req, context) => {
     try {
       if (context.userRole !== 'farm_owner' && context.userRole !== 'super_admin') {

@@ -231,10 +231,11 @@ const QuickStatsSection = ({ stats, isLoading }: { stats: QuickStat[]; isLoading
                 <stat.icon className='h-5 w-5' />
               </div>
               <span
-                className={`rounded-full px-2 py-1 text-xs font-medium ${stat.positive
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  }`}
+                className={`rounded-full px-2 py-1 text-xs font-medium ${
+                  stat.positive
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                }`}
               >
                 {stat.change}
               </span>

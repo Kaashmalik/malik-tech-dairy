@@ -377,7 +377,7 @@ export default function ReportsPage() {
                       variant='outline'
                       onClick={handleExportCSV}
                       disabled={isGenerating}
-                      className='gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 border shadow-sm'
+                      className='gap-2 border bg-white shadow-sm hover:bg-slate-50 dark:bg-slate-800'
                     >
                       <FileSpreadsheet className='h-4 w-4 text-emerald-600' />
                       Export CSV (Excel)

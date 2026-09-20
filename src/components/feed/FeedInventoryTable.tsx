@@ -13,15 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Package,
-  AlertTriangle,
-  Search,
-  Filter,
-  Plus,
-  Trash2,
-  RefreshCw,
-} from 'lucide-react';
+import { Package, AlertTriangle, Search, Filter, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -88,7 +80,12 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
         const unitCost = Number(item.unitPrice || 0) / 100;
         const currentStock = Number(item.quantity || 0);
         const reorderLevel = Number(item.minimumStock || 0);
-        const stockStatus = currentStock <= reorderLevel ? (currentStock <= reorderLevel / 2 ? 'critical' : 'low') : 'adequate';
+        const stockStatus =
+          currentStock <= reorderLevel
+            ? currentStock <= reorderLevel / 2
+              ? 'critical'
+              : 'low'
+            : 'adequate';
 
         return {
           id: item.id,
@@ -224,19 +221,19 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
-        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+        <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
           <div>
             <CardTitle className='flex items-center text-xl'>
               <Package className='mr-2 h-5 w-5 text-amber-600' />
               Feed & Ration Inventory
             </CardTitle>
-            <p className='text-muted-foreground text-sm mt-1'>
+            <p className='text-muted-foreground mt-1 text-sm'>
               Real-time stock levels, reorder thresholds, and ration costs.
             </p>
           </div>
           <div className='flex items-center space-x-2'>
             <Button variant='outline' size='sm' onClick={fetchFeedItems} disabled={loading}>
-              <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />
+              <RefreshCw className={cn('mr-1 h-4 w-4', loading && 'animate-spin')} />
               Refresh
             </Button>
             <Button size='sm' onClick={() => setIsAddOpen(true)}>
@@ -247,10 +244,10 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
         </div>
 
         {/* Filter bar */}
-        <div className='flex flex-col sm:flex-row gap-3 pt-4'>
-          <form onSubmit={handleSearch} className='flex-1 flex gap-2'>
+        <div className='flex flex-col gap-3 pt-4 sm:flex-row'>
+          <form onSubmit={handleSearch} className='flex flex-1 gap-2'>
             <div className='relative flex-1'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Search className='text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4' />
               <Input
                 placeholder='Search feed by name or supplier...'
                 value={search}
@@ -266,7 +263,7 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
-            className='rounded-md border bg-background px-3 py-1.5 text-sm'
+            className='bg-background rounded-md border px-3 py-1.5 text-sm'
           >
             <option value=''>All Categories</option>
             <option value='concentrate'>Concentrate</option>
@@ -281,14 +278,14 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
       <CardContent>
         {loading ? (
           <div className='py-12 text-center'>
-            <RefreshCw className='h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2' />
-            <p className='text-sm text-muted-foreground'>Loading feed inventory...</p>
+            <RefreshCw className='text-muted-foreground mx-auto mb-2 h-8 w-8 animate-spin' />
+            <p className='text-muted-foreground text-sm'>Loading feed inventory...</p>
           </div>
         ) : feedItems.length === 0 ? (
-          <div className='py-16 text-center space-y-3'>
-            <Package className='h-10 w-10 text-muted-foreground mx-auto opacity-50' />
-            <h4 className='font-semibold text-base'>No feed items recorded</h4>
-            <p className='text-sm text-muted-foreground max-w-sm mx-auto'>
+          <div className='space-y-3 py-16 text-center'>
+            <Package className='text-muted-foreground mx-auto h-10 w-10 opacity-50' />
+            <h4 className='text-base font-semibold'>No feed items recorded</h4>
+            <p className='text-muted-foreground mx-auto max-w-sm text-sm'>
               {search || categoryFilter
                 ? 'No inventory matched your search filter criteria.'
                 : 'Track daily silage, hay, concentrates, and mineral supplements by adding your first batch.'}
@@ -302,7 +299,7 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead>
-                <tr className='border-b bg-muted/40 text-muted-foreground'>
+                <tr className='bg-muted/40 text-muted-foreground border-b'>
                   <th className='p-2.5 text-left font-medium'>Ingredient / Item</th>
                   <th className='p-2.5 text-left font-medium'>Category</th>
                   <th className='p-2.5 text-right font-medium'>Current Stock</th>
@@ -317,11 +314,11 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
                 {feedItems.map(item => (
                   <tr key={item.id} className='hover:bg-muted/30 transition-colors'>
                     <td className='p-2.5'>
-                      <div className='font-medium text-foreground'>{item.ingredientName}</div>
-                      <div className='text-xs text-muted-foreground'>{item.supplierName}</div>
+                      <div className='text-foreground font-medium'>{item.ingredientName}</div>
+                      <div className='text-muted-foreground text-xs'>{item.supplierName}</div>
                     </td>
                     <td className='p-2.5'>
-                      <Badge variant='outline' className='capitalize text-xs font-normal'>
+                      <Badge variant='outline' className='text-xs font-normal capitalize'>
                         {item.category}
                       </Badge>
                     </td>
@@ -329,7 +326,7 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
                       <div className='font-semibold'>
                         {item.currentStock.toLocaleString()} {item.unit}
                       </div>
-                      <div className='text-xs text-muted-foreground'>
+                      <div className='text-muted-foreground text-xs'>
                         Reorder at {item.reorderLevel} {item.unit}
                       </div>
                     </td>
@@ -341,12 +338,10 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
                     <td className='p-2.5 text-right font-mono text-xs'>
                       {formatCurrency(item.unitCost)} / {item.unit}
                     </td>
-                    <td className='p-2.5 text-right font-medium text-foreground'>
+                    <td className='text-foreground p-2.5 text-right font-medium'>
                       {formatCurrency(item.totalValue)}
                     </td>
-                    <td className='p-2.5 text-xs text-muted-foreground'>
-                      {item.storageLocation}
-                    </td>
+                    <td className='text-muted-foreground p-2.5 text-xs'>{item.storageLocation}</td>
                     <td className='p-2.5 text-center'>
                       <Button
                         variant='ghost'
@@ -366,7 +361,7 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
 
         {/* Summary Footer */}
         {feedItems.length > 0 && (
-          <div className='mt-4 rounded-lg bg-muted/50 p-4'>
+          <div className='bg-muted/50 mt-4 rounded-lg p-4'>
             <div className='grid grid-cols-2 gap-4 text-sm sm:grid-cols-4'>
               <div>
                 <span className='text-muted-foreground'>Total Items:</span>
@@ -375,7 +370,10 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
               <div>
                 <span className='text-muted-foreground'>Low Stock Alerts:</span>
                 <span className='ml-2 font-semibold text-rose-600'>
-                  {feedItems.filter(i => i.stockStatus === 'critical' || i.stockStatus === 'low').length}
+                  {
+                    feedItems.filter(i => i.stockStatus === 'critical' || i.stockStatus === 'low')
+                      .length
+                  }
                 </span>
               </div>
               <div>
@@ -422,7 +420,7 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
                 <select
                   value={formData.feedType}
                   onChange={e => setFormData({ ...formData, feedType: e.target.value })}
-                  className='w-full rounded-md border bg-background px-3 py-2 text-sm'
+                  className='bg-background w-full rounded-md border px-3 py-2 text-sm'
                 >
                   <option value='concentrate'>Concentrate</option>
                   <option value='silage'>Silage</option>
@@ -438,7 +436,7 @@ export function FeedInventoryTable({ className, onDataChange }: FeedInventoryTab
                 <select
                   value={formData.unit}
                   onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                  className='w-full rounded-md border bg-background px-3 py-2 text-sm'
+                  className='bg-background w-full rounded-md border px-3 py-2 text-sm'
                 >
                   <option value='kg'>Kilograms (kg)</option>
                   <option value='tons'>Metric Tons</option>

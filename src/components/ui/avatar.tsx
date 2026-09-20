@@ -32,8 +32,8 @@ const avatarVariants = cva(
 
 interface AvatarProps
   extends
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>,
-  VariantProps<typeof avatarVariants> {
+    React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>,
+    VariantProps<typeof avatarVariants> {
   status?: 'online' | 'offline' | 'busy' | 'away';
 }
 
