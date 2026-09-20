@@ -76,29 +76,6 @@ const featureList = [
 export default function FeaturesPage() {
   return (
     <div className='min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100'>
-      {/* Top Navbar */}
-      <header className='border-b border-slate-200/80 bg-white/70 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/70'>
-        <div className='container mx-auto flex h-16 items-center justify-between px-4'>
-          <Link href='/' className='flex items-center gap-2 text-xl font-bold text-emerald-600'>
-            <span>MTK Dairy</span>
-          </Link>
-          <div className='flex items-center gap-4'>
-            <Link
-              href='/sign-in'
-              className='text-sm font-medium text-slate-700 hover:text-emerald-600 dark:text-slate-300'
-            >
-              Sign In
-            </Link>
-            <Link
-              href='/apply'
-              className='rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700'
-            >
-              Start Free Trial
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className='container mx-auto px-4 py-16 text-center lg:py-24'>
         <span className='rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'>
