@@ -18,16 +18,16 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'About MTK Dairy | Pakistan’s Leading Dairy Management Platform',
+  title: 'About MTK Dairy | Dairy Management Platform for Pakistan',
   description:
-    'Learn about MTK Dairy by MalikTech, our mission to empower Pakistani dairy farmers with cutting-edge livestock technology, offline PWA access, and precision analytics.',
+    'Learn about MTK Dairy by MalikTech — dairy farm software built in Lahore for Pakistani livestock operations, with offline PWA access and bilingual workflows.',
   alternates: {
     canonical: `${siteConfig.url}/about`,
   },
   openGraph: {
-    title: 'About MTK Dairy - Empowering Pakistani Livestock Farmers',
+    title: 'About MTK Dairy - Dairy Software for Pakistani Farms',
     description:
-      'The story, team, and technology driving MTK Dairy. Built in Lahore for cattle and buffalo herds across Pakistan.',
+      'The mission and technology behind MTK Dairy. Built in Lahore for cattle and buffalo herds across Pakistan.',
     url: `${siteConfig.url}/about`,
   },
 };
@@ -138,24 +138,24 @@ export default function AboutPage() {
               <div className='grid gap-6 sm:grid-cols-2'>
                 <div className='rounded-2xl border border-slate-100 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-800/40'>
                   <div className='text-3xl font-black text-emerald-600 dark:text-emerald-400'>
-                    500+
+                    EN + اردو
                   </div>
                   <div className='mt-1 font-semibold text-slate-800 dark:text-white'>
-                    Farmers & Herds
+                    Bilingual by design
                   </div>
                   <p className='mt-1 text-xs text-slate-500'>
-                    Across Lahore, Faisalabad, Multan, Sahiwal, and Karachi
+                    Built for owners and workers across Punjab, Sindh, and beyond
                   </p>
                 </div>
                 <div className='rounded-2xl border border-slate-100 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-800/40'>
                   <div className='text-3xl font-black text-emerald-600 dark:text-emerald-400'>
-                    99.9%
+                    Offline PWA
                   </div>
                   <div className='mt-1 font-semibold text-slate-800 dark:text-white'>
-                    System Reliability
+                    Shed-ready workflows
                   </div>
                   <p className='mt-1 text-xs text-slate-500'>
-                    Cloud automated backup, offline recovery, and SSL protection
+                    Record milk and health entries even with weak connectivity
                   </p>
                 </div>
               </div>
@@ -174,7 +174,7 @@ export default function AboutPage() {
               Ready to modernise your farm operations?
             </h2>
             <p className='mt-4 text-slate-600 dark:text-slate-400'>
-              Join hundreds of innovative Pakistani dairy owners stepping into the digital era.
+              Apply for a farm workspace and start digitizing milk, health, and breeding records.
             </p>
             <div className='mt-8 flex justify-center gap-4'>
               <Link

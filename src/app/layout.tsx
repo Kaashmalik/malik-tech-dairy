@@ -43,11 +43,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   // Primary Meta Tags
   title: {
-    default: 'MTK Dairy - #1 Smart Dairy Farm Management Software Pakistan',
+    default: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
     template: '%s | MTK Dairy',
   },
   description:
-    "Pakistan's leading smart dairy farm management software. Track milk production, manage cattle health, breeding records, and finances. Trusted by 500+ farmers in Punjab, Sindh, and KPK. Free plan available! ڈیری فارم مینجمنٹ سافٹ ویئر",
+    'Dairy farm management software for Pakistan. Track milk production, cattle health, breeding records, and finances with English & Urdu support and offline PWA. Free plan available. ڈیری فارم مینجمنٹ سافٹ ویئر',
   keywords: allKeywords,
   authors: [{ name: 'MTK Dairy Team', url: siteConfig.url }],
   creator: 'MalikTech',
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
     description:
-      "Pakistan's #1 dairy farm management software. Track milk production, manage cattle health & breeding. Free plan available!",
+      'Dairy farm management software for Pakistan. Track milk, health, breeding & finances. Free plan available.',
     images: [
       {
         url: '/opengraph-image.png',
@@ -110,7 +110,7 @@ export const metadata: Metadata = {
     site: '@mtkdairy',
     creator: '@mtkdairy',
     title: 'MTK Dairy - Smart Dairy Farm Management',
-    description: "Pakistan's leading dairy farm management software. Free plan available!",
+    description: 'Dairy farm management software for Pakistan. Free plan available.',
     images: ['/opengraph-image.png'],
   },
 

@@ -199,20 +199,20 @@ export default function HelpPage() {
 
           <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
             <div className='rounded-xl bg-white/15 p-4 text-center backdrop-blur'>
-              <p className='text-2xl font-bold'>24/7</p>
-              <p className='text-sm text-emerald-100'>Support Available</p>
+              <p className='text-2xl font-bold'>WhatsApp</p>
+              <p className='text-sm text-emerald-100'>Primary support</p>
             </div>
             <div className='rounded-xl bg-white/15 p-4 text-center backdrop-blur'>
-              <p className='text-2xl font-bold'>&lt; 5min</p>
-              <p className='text-sm text-emerald-100'>Response Time</p>
+              <p className='text-2xl font-bold'>In-app</p>
+              <p className='text-sm text-emerald-100'>Help guides</p>
             </div>
             <div className='rounded-xl bg-white/15 p-4 text-center backdrop-blur'>
-              <p className='text-2xl font-bold'>500+</p>
-              <p className='text-sm text-emerald-100'>Farms Supported</p>
+              <p className='text-2xl font-bold'>EN + اردو</p>
+              <p className='text-sm text-emerald-100'>Bilingual docs</p>
             </div>
             <div className='rounded-xl bg-white/15 p-4 text-center backdrop-blur'>
-              <p className='text-2xl font-bold'>4.9★</p>
-              <p className='text-sm text-emerald-100'>User Rating</p>
+              <p className='text-2xl font-bold'>PWA</p>
+              <p className='text-sm text-emerald-100'>Mobile friendly</p>
             </div>
           </div>
         </div>

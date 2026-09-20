@@ -20,7 +20,8 @@ export default function SignUpPage() {
         <div className='space-y-6'>
           <h2 className='text-3xl font-bold'>Start Your Journey</h2>
           <p className='text-lg text-emerald-100'>
-            Join thousands of dairy farmers who trust MTK Dairy for their farm management.
+            Start managing milk, herd health, and breeding records with software built for Pakistani
+            dairy farms.
           </p>
           <ul className='space-y-3 text-emerald-100'>
             <li className='flex items-center gap-3'>

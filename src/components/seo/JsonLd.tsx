@@ -66,13 +66,6 @@ export function SoftwareApplicationSchema() {
       highPrice: '12999',
       offerCount: pricingPlans.length,
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      ratingCount: '127',
-      bestRating: '5',
-      worstRating: '1',
-    },
     description: siteConfig.description,
     screenshot: `${siteConfig.url}/opengraph-image.png`,
     image: `${siteConfig.url}/opengraph-image.png`,
@@ -155,7 +148,6 @@ export function LocalBusinessSchema() {
       closes: '18:00',
     },
     priceRange: 'PKR 0 - PKR 12,999/month',
-    servesCuisine: 'Dairy Farm Management Software',
     areaServed: [
       { '@type': 'Country', name: 'Pakistan' },
       { '@type': 'City', name: 'Lahore' },
@@ -235,6 +227,7 @@ export function WebSiteSchema() {
     name: siteConfig.name,
     url: siteConfig.url,
     description: siteConfig.description,
+    inLanguage: ['en-PK', 'ur-PK'],
     publisher: {
       '@type': 'Organization',
       name: siteConfig.name,
@@ -242,14 +235,6 @@ export function WebSiteSchema() {
         '@type': 'ImageObject',
         url: `${siteConfig.url}${siteConfig.logo}`,
       },
-    },
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
     },
   };
 
@@ -269,6 +254,7 @@ export function AllSchemas() {
       <SoftwareApplicationSchema />
       <WebSiteSchema />
       <LocalBusinessSchema />
+      <FAQPageSchema />
     </>
   );
 }

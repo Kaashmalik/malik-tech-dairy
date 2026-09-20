@@ -158,7 +158,7 @@ export const faqData = [
   {
     question: 'What is MTK Dairy?',
     answer:
-      "MTK Dairy is Pakistan's leading smart dairy farm management software that helps farmers track milk production, manage cattle health, breeding records, and farm finances all in one place.",
+      'MTK Dairy is a smart dairy farm management software built for Pakistan that helps farmers track milk production, manage cattle health, breeding records, and farm finances all in one place.',
   },
   {
     question: 'Is MTK Dairy free to use?',

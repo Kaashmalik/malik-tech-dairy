@@ -11,9 +11,6 @@ import {
   BarChart3,
   Smartphone,
   Shield,
-  Users,
-  Zap,
-  Globe,
   CheckCircle2,
   ArrowRight,
   Star,
@@ -23,9 +20,22 @@ import {
 export const metadata: Metadata = {
   title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
   description:
-    "Pakistan's leading smart dairy farm management software. Track milk production, manage cattle health, breeding records, and finances with offline PWA support. Free plan available! ڈیری فارم مینجمنٹ",
+    'Dairy farm management software built for Pakistan. Track milk production, cattle health, breeding, and finances with bilingual English & Urdu support and offline PWA. Free plan available. ڈیری فارم مینجمنٹ',
   alternates: {
     canonical: '/',
+  },
+  openGraph: {
+    title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
+    description:
+      'Track milk, health, breeding, and finances for dairy farms in Pakistan. Free plan available with English & Urdu support.',
+    url: '/',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MTK Dairy - Smart Dairy Farm Management',
+    description:
+      'Dairy farm software for Pakistan: milk tracking, herd health, breeding, and finances. Free plan available.',
   },
 };
 
@@ -73,28 +83,21 @@ const features = [
   },
 ];
 
-// Testimonials
-const testimonials = [
+// Early-value highlights (no fabricated reviews)
+const valuePoints = [
   {
-    name: 'Muhammad Ashraf',
-    role: 'Farm Owner',
-    location: 'Lahore, Punjab',
-    text: 'MTK Dairy has transformed how I manage my buffalo farm. Milk tracking is now effortless!',
-    rating: 5,
+    title: 'Built for Pakistani herds',
+    description:
+      'Support for cows, buffaloes, and mixed dairy operations with workflows that match local farm routines.',
   },
   {
-    name: 'Hassan Ali',
-    role: 'Dairy Farmer',
-    location: 'Karachi, Sindh',
-    text: 'The breeding tracker saved me from missing heat cycles. My herd productivity increased by 30%.',
-    rating: 5,
+    title: 'Works in the shed',
+    description:
+      'Progressive Web App support so staff can log milk and health records even when connectivity is weak.',
   },
   {
-    name: 'Imran Khan',
-    role: 'Farm Manager',
-    location: 'Faisalabad, Punjab',
-    text: 'Finally a software that understands Pakistani dairy farming. The Urdu support is excellent!',
-    rating: 5,
+    title: 'English & Urdu ready',
+    description: 'Bilingual interface so owners and workers can use the same system comfortably.',
   },
 ];
 
@@ -129,7 +132,7 @@ export default function HomePage() {
                 one platform.
               </p>
               <p className='font-urdu mb-8 text-lg text-gray-500 dark:text-gray-400'>
-                پاکستان کا نمبر 1 ڈیری فارم مینجمنٹ سافٹ ویئر
+                پاکستان کے ڈیری فارمز کے لیے جدید مینجمنٹ سافٹ ویئر
               </p>
 
               {/* CTA Buttons */}
@@ -224,9 +227,9 @@ export default function HomePage() {
           <div className='grid grid-cols-2 gap-8 text-center md:grid-cols-4'>
             {[
               { value: 'Multi-Herd', label: 'Cattle, Buffalo & Dairy Breeds' },
-              { value: '100% Offline', label: 'PWA Mobile Data Sync' },
+              { value: 'Offline PWA', label: 'Log data with weak connectivity' },
               { value: 'Bilingual', label: 'Urdu & English Interface' },
-              { value: '99.9%', label: 'Cloud Infrastructure SLA' },
+              { value: 'Free Plan', label: 'Start with up to 5 animals' },
             ].map((stat, index) => (
               <div key={index}>
                 <div className='mb-2 text-3xl font-bold text-white md:text-4xl'>{stat.value}</div>
@@ -237,44 +240,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Why MTK Dairy */}
       <section className='bg-gray-50 py-20 dark:bg-slate-800'>
         <div className='container mx-auto px-4'>
           <div className='mb-16 text-center'>
             <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl dark:text-white'>
-              Trusted by Farmers Across Pakistan
+              Designed for Dairy Farms Across Pakistan
             </h2>
             <p className='text-xl text-gray-600 dark:text-gray-300'>
-              See what our users are saying about MTK Dairy
+              Practical tools for day-one farm operations — without inflated claims
             </p>
           </div>
 
           <div className='grid gap-8 md:grid-cols-3'>
-            {testimonials.map((testimonial, index) => (
+            {valuePoints.map((point, index) => (
               <article key={index} className='rounded-2xl bg-white p-6 shadow-lg dark:bg-slate-900'>
-                <div className='mb-4 flex items-center gap-1'>
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <Star key={i} className='h-5 w-5 fill-amber-500 text-amber-500' />
-                  ))}
+                <div className='mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40'>
+                  <CheckCircle2 className='h-5 w-5 text-emerald-600' />
                 </div>
-                <p className='mb-6 italic text-gray-700 dark:text-gray-300'>"{testimonial.text}"</p>
-                <div className='flex items-center gap-3'>
-                  <div className='flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 font-medium text-white'>
-                    {testimonial.name
-                      .split(' ')
-                      .map(n => n[0])
-                      .join('')}
-                  </div>
-                  <div>
-                    <p className='font-semibold text-gray-900 dark:text-white'>
-                      {testimonial.name}
-                    </p>
-                    <p className='flex items-center gap-1 text-sm text-gray-500'>
-                      <MapPin className='h-3 w-3' />
-                      {testimonial.location}
-                    </p>
-                  </div>
-                </div>
+                <h3 className='mb-2 text-lg font-semibold text-gray-900 dark:text-white'>
+                  {point.title}
+                </h3>
+                <p className='text-gray-600 dark:text-gray-300'>{point.description}</p>
               </article>
             ))}
           </div>
@@ -405,8 +392,8 @@ export default function HomePage() {
             Ready to Transform Your Dairy Farm?
           </h2>
           <p className='mx-auto mb-8 max-w-2xl text-xl text-emerald-100'>
-            Join 500+ farmers in Pakistan who are already using MTK Dairy to increase productivity
-            and profits.
+            Apply for a farm workspace and start tracking milk, health, and breeding in one place —
+            with a free plan for small herds.
           </p>
           <Link href='/apply'>
             <button className='rounded-lg bg-white px-8 py-3 text-lg font-medium text-emerald-700 shadow-xl hover:bg-emerald-50'>

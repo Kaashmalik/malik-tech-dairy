@@ -24,12 +24,12 @@ export default function SignInPage() {
           </p>
           <div className='mt-8 grid grid-cols-2 gap-4'>
             <div className='rounded-lg bg-white/10 p-4'>
-              <p className='text-2xl font-bold'>500+</p>
-              <p className='text-sm text-emerald-200'>Active Farms</p>
+              <p className='text-2xl font-bold'>EN + اردو</p>
+              <p className='text-sm text-emerald-200'>Bilingual support</p>
             </div>
             <div className='rounded-lg bg-white/10 p-4'>
-              <p className='text-2xl font-bold'>10K+</p>
-              <p className='text-sm text-emerald-200'>Animals Managed</p>
+              <p className='text-2xl font-bold'>PWA</p>
+              <p className='text-sm text-emerald-200'>Works offline</p>
             </div>
           </div>
         </div>

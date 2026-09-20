@@ -16,7 +16,7 @@ export function MarketingFooter() {
               Smart dairy & livestock farm management platform. Built for farmers across Pakistan.
             </p>
             <p className='font-urdu mt-2 text-sm text-slate-500'>
-              پاکستان کا نمبر 1 ڈیری فارم مینجمنٹ سافٹ ویئر
+              پاکستان کے ڈیری فارمز کے لیے جدید مینجمنٹ پلیٹ فارم
             </p>
           </div>
 
