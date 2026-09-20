@@ -3,47 +3,61 @@ import { getDrizzle } from '@/lib/supabase/server';
 import { platformUsers, tenantMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
-import { TenantRole } from '@/types/roles';
+import { mapClerkOrgRole } from '@/lib/tenant/resolve-access';
+
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate the user with Clerk
-    const { userId, orgId } = await auth();
+    const { userId, orgId, orgRole } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    const { tenantId, role = TenantRole.FARM_OWNER } = await request.json();
-    if (orgId && orgId !== tenantId) {
-      return NextResponse.json({ error: 'Forbidden: Tenant mismatch' }, { status: 403 });
+    if (!orgId) {
+      return NextResponse.json(
+        { success: false, error: 'No organization (tenant) found. Please complete onboarding.' },
+        { status: 403 }
+      );
     }
-    if (!tenantId) {
-      return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
+
+    let body: { tenantId?: string } = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
     }
+
+    if (body.tenantId && body.tenantId !== orgId) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden: Tenant mismatch' },
+        { status: 403 }
+      );
+    }
+
+    const tenantId = orgId;
+    const role = mapClerkOrgRole(orgRole);
     const db = getDrizzle();
-    // Check if user already exists in platform_users
+
     const existingPlatformUser = await db
       .select()
       .from(platformUsers)
       .where(eq(platformUsers.id, userId))
       .limit(1);
     if (existingPlatformUser.length === 0) {
-      // Create platform user record
       await db.insert(platformUsers).values({
         id: userId,
-        email: 'user@example.com', // Will be updated by Clerk webhook
+        email: 'user@example.com',
         name: 'User',
-        platformRole: 'user', // Default platform role
+        platformRole: 'user',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
     }
-    // Check if user already exists in tenant_members
+
     const existingMember = await db
       .select()
       .from(tenantMembers)
       .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.tenantId, tenantId)))
       .limit(1);
     if (existingMember.length === 0) {
-      // Create tenant member record
       await db.insert(tenantMembers).values({
         id: `${tenantId}_${userId}`,
         tenantId,
@@ -55,22 +69,23 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       });
     }
+
+    const persistedRole = existingMember[0]?.role || role;
+
     return NextResponse.json({
       success: true,
       message: 'User records created successfully',
       data: {
         userId,
         tenantId,
-        role,
+        role: persistedRole,
         platformUserCreated: existingPlatformUser.length === 0,
         tenantMemberCreated: existingMember.length === 0,
       },
     });
   } catch (error) {
     const err = error as Error;
-    return NextResponse.json(
-      { error: 'Internal server error', details: err.message },
-      { status: 500 }
-    );
+    console.error('create-records error:', err);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

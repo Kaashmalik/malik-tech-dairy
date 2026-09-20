@@ -3,17 +3,16 @@ import { redirect } from 'next/navigation';
 import { getDrizzle } from '@/lib/supabase/server';
 import { farmApplications } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { getPostLoginPath } from '@/lib/auth/post-login-destination';
+
 export const dynamic = 'force-dynamic';
+
 export default async function OnboardingPage() {
   const { userId, orgId } = await auth();
   if (!userId) {
     redirect('/sign-in');
   }
-  // If user already has an organization, go to dashboard
-  if (orgId) {
-    redirect('/dashboard');
-  }
-  // Check if user has a pending application
+
   try {
     const db = getDrizzle();
     const [application] = await db
@@ -22,11 +21,28 @@ export default async function OnboardingPage() {
       .where(eq(farmApplications.applicantId, userId))
       .orderBy(desc(farmApplications.createdAt))
       .limit(1);
-    if (application) {
-      // User has an application - redirect to status page
-      redirect(`/apply/status?id=${application.id}`);
+
+    redirect(
+      getPostLoginPath({
+        isSuperAdmin: false,
+        hasActiveOrg: Boolean(orgId),
+        hasMemberships: false,
+        latestApplication: application ? { id: application.id, status: application.status } : null,
+      })
+    );
+  } catch (error) {
+    // Next.js redirect() throws; rethrow those
+    if (error && typeof error === 'object' && 'digest' in error) {
+      throw error;
     }
-  } catch (error) {}
-  // No application - redirect to apply page
-  redirect('/apply');
+  }
+
+  redirect(
+    getPostLoginPath({
+      isSuperAdmin: false,
+      hasActiveOrg: Boolean(orgId),
+      hasMemberships: false,
+      latestApplication: null,
+    })
+  );
 }

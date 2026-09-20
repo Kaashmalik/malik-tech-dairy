@@ -71,8 +71,8 @@ export default function SignUpPage() {
 
           <SignUp
             signInUrl='/sign-in'
-            fallbackRedirectUrl='/apply'
-            forceRedirectUrl='/apply'
+            fallbackRedirectUrl='/api/auth/redirect'
+            forceRedirectUrl='/api/auth/redirect'
             appearance={{
               variables: {
                 colorPrimary: '#059669',

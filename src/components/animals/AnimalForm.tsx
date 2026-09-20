@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +13,8 @@ import { useTenantLimits } from '@/hooks/useTenantLimits';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { usePostHogAnalytics } from '@/hooks/usePostHog';
-import { useOfflineCreateAnimal, useOfflineUpdateAnimal } from '@/lib/offline/hooks';
 import { CustomFieldsRenderer } from '@/components/custom-fields/CustomFieldsRenderer';
+import { invalidateAnimalQueries } from '@/lib/query/farm-cache';
 import {
   Beef,
   Camera,
@@ -58,6 +58,7 @@ const speciesConfig = {
 };
 export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { canAddAnimal, animalCount, limits } = useTenantLimits();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { trackAnimalCreation } = usePostHogAnalytics();
@@ -139,13 +140,6 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
       fileInputRef.current.value = '';
     }
   };
-  // Offline mutation hooks
-  const createAnimal = useOfflineCreateAnimal(
-    (initialData?.customFields?.tenantId as string) || 'default-tenant'
-  ); // TODO: Get actual tenantId
-  const updateAnimal = useOfflineUpdateAnimal(
-    (initialData?.customFields?.tenantId as string) || 'default-tenant'
-  );
 
   const onSubmit = async (data: AnimalFormData) => {
     if (!canAddAnimal && !animalId) {
@@ -154,11 +148,28 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
     }
     setIsSubmitting(true);
     try {
+      const payload = {
+        ...data,
+        photoUrl: data.photoUrl || imagePreview || undefined,
+        customFields: customFieldValues,
+      };
+
+      const response = await fetch(animalId ? `/api/animals/${animalId}` : '/api/animals', {
+        method: animalId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to save animal');
+      }
+
+      await invalidateAnimalQueries(queryClient);
+
       if (animalId) {
-        await updateAnimal.mutateAsync({ id: animalId, ...data });
         toast.success('Animal updated successfully');
       } else {
-        await createAnimal.mutateAsync({ ...data, tenantId: 'default-tenant' }); // Ensure tenantId is passed
         toast.success('Animal created successfully');
         trackAnimalCreation({
           species: data.species,
@@ -170,6 +181,7 @@ export function AnimalForm({ animalId, initialData, onSuccess }: AnimalFormProps
         onSuccess();
       } else {
         router.push('/animals');
+        router.refresh();
       }
     } catch (error: any) {
       toast.error(error.message || 'An error occurred');

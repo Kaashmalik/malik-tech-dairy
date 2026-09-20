@@ -197,9 +197,9 @@ export function useOfflineCreateAnimal(tenantId: string) {
       return await OfflineDB.addAnimal(animalData, tenantId);
     },
     {
-      invalidateQueries: [['animals', tenantId]],
+      invalidateQueries: [['animals']],
       onMutate: async (newAnimal: any) => {
-        await queryClient.cancelQueries({ queryKey: ['animals', tenantId] });
+        await queryClient.cancelQueries({ queryKey: ['animals'] });
         const previousAnimals = queryClient.getQueryData(['animals', tenantId]);
         queryClient.setQueryData(['animals', tenantId], (old: any[] = []) => [
           { ...newAnimal, id: 'temp-' + Date.now(), isOptimistic: true },
@@ -211,7 +211,8 @@ export function useOfflineCreateAnimal(tenantId: string) {
         queryClient.setQueryData(['animals', tenantId], context.previousAnimals);
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ['animals', tenantId] });
+        queryClient.invalidateQueries({ queryKey: ['animals'] });
+        queryClient.invalidateQueries({ queryKey: ['animal-count'] });
       },
     }
   );
@@ -221,7 +222,7 @@ export function useOfflineUpdateAnimal(tenantId: string) {
     tenantId,
     async ({ id, ...updates }: any) => {
       const response = await fetch(`/api/animals/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
@@ -233,7 +234,7 @@ export function useOfflineUpdateAnimal(tenantId: string) {
       return id;
     },
     {
-      invalidateQueries: [['animals', tenantId]],
+      invalidateQueries: [['animals'], ['animal-count']],
     }
   );
 }
@@ -252,7 +253,7 @@ export function useOfflineDeleteAnimal(tenantId: string) {
       return id;
     },
     {
-      invalidateQueries: [['animals', tenantId]],
+      invalidateQueries: [['animals'], ['animal-count']],
     }
   );
 }
@@ -272,7 +273,7 @@ export function useOfflineCreateMilkLog(tenantId: string) {
       return await OfflineDB.addMilkLog(logData, tenantId);
     },
     {
-      invalidateQueries: [['milkLogs', tenantId]],
+      invalidateQueries: [['milk-logs'], ['milk-summary'], ['milk'], ['milkLogs']],
     }
   );
 }

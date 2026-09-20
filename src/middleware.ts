@@ -1,4 +1,5 @@
 import { handleCorsPreflight, getCorsHeaders } from '@/lib/cors';
+import { getNoOrgFallbackPath } from '@/lib/auth/post-login-destination';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -30,13 +31,17 @@ const isPublicRoute = createRouteMatcher([
   '/api/migration/schedule(.*)',
   '/api/payments/callback(.*)',
   '/api/weather/sync(.*)',
+  '/api/auth/redirect(.*)',
 ]);
 
 // Routes that require authentication but NOT organization
 const isAuthOnlyRoute = createRouteMatcher([
   '/apply(.*)',
   '/onboarding(.*)',
+  '/select-farm(.*)',
   '/api/farm-applications(.*)',
+  '/api/user/farms(.*)',
+  '/api/user/join-org(.*)',
   '/api/upload(.*)',
   '/admin(.*)', // Super admin routes
   '/super-admin(.*)', // Super admin routes
@@ -110,14 +115,17 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // Handle auth-only routes (apply, onboarding, etc.)
+  // Handle auth-only routes (apply, onboarding, select-farm, etc.)
   if (isAuthOnlyRoute(req) && userId) {
-    // User is authenticated - allow access
-    // If user has org, redirect to dashboard from onboarding/apply
-    if (orgId && (req.nextUrl.pathname === '/onboarding' || req.nextUrl.pathname === '/apply')) {
+    // Users who already have an active farm skip apply/onboarding
+    if (
+      orgId &&
+      (req.nextUrl.pathname === '/onboarding' ||
+        req.nextUrl.pathname === '/apply' ||
+        req.nextUrl.pathname === '/select-farm')
+    ) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-    // Continue to the route
   }
 
   // Handle organization (tenant) routes
@@ -135,12 +143,15 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       }
     }
 
-    // If no orgId and user is on organization route, redirect to apply
+    // No active org → farm picker (not apply). Apply is only for brand-new users.
     if (!orgId) {
       if (req.nextUrl.pathname.startsWith('/api')) {
-        return NextResponse.json({ error: 'No organization found' }, { status: 403 });
+        return NextResponse.json(
+          { success: false, error: 'Select a farm organization before continuing.' },
+          { status: 403 }
+        );
       }
-      return NextResponse.redirect(new URL('/apply', req.url));
+      return NextResponse.redirect(new URL(getNoOrgFallbackPath(), req.url));
     }
   }
 

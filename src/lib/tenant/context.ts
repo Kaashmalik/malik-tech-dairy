@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getDrizzle } from '@/lib/supabase/server';
 import { tenants, tenantMembers, platformUsers, subscriptions, animals } from '@/db/schema';
 import { eq, and, count } from 'drizzle-orm';
+import { resolveTenantAccess } from '@/lib/tenant/resolve-access';
 /**
  * Tenant context interface
  */
@@ -24,65 +25,34 @@ export async function getTenantContext(): Promise<TenantContext> {
     throw new Error('User authentication required');
   }
 
-  let tenantId = orgId;
-  let userRole = 'guest';
+  const db = getDrizzle();
+  const userMemberships = await db
+    .select()
+    .from(tenantMembers)
+    .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.status, 'active')));
 
-  // If Clerk session does not provide orgId, resolve from Supabase
-  if (!tenantId) {
-    try {
-      const db = getDrizzle();
-      // 1. Check if user has an active tenant membership
-      const userMemberships = await db
-        .select()
-        .from(tenantMembers)
-        .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.status, 'active')))
-        .limit(1);
+  const pUser = await db.select().from(platformUsers).where(eq(platformUsers.id, userId)).limit(1);
+  const isSuperAdmin = pUser.length > 0 && pUser[0].platformRole === 'super_admin';
 
-      if (userMemberships.length > 0) {
-        tenantId = userMemberships[0].tenantId;
-        userRole = userMemberships[0].role;
-      } else {
-        // 2. Check if user is a platform super admin
-        const pUser = await db
-          .select()
-          .from(platformUsers)
-          .where(eq(platformUsers.id, userId))
-          .limit(1);
+  const resolved = resolveTenantAccess({
+    clerkOrgId: orgId,
+    headerTenantId: null,
+    memberships: userMemberships.map(m => ({
+      tenantId: m.tenantId,
+      role: m.role,
+      status: m.status,
+    })),
+    isSuperAdmin,
+    clerkOrgRole: orgRole,
+  });
 
-        const isSuperAdmin = pUser.length > 0 && pUser[0].platformRole === 'super_admin';
-
-        // 3. Fallback to active farm tenant in the system
-        const activeTenants = await db.select().from(tenants).limit(1);
-        if (activeTenants.length > 0) {
-          tenantId = activeTenants[0].id;
-          userRole = isSuperAdmin ? 'super_admin' : 'farm_owner';
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to resolve tenant from database:', err);
-    }
+  if (!resolved.ok) {
+    throw new Error(resolved.error);
   }
 
-  if (!tenantId) {
-    throw new Error('Organization selection required');
-  }
-
+  const tenantId = resolved.tenantId;
+  const userRole = resolved.userRole;
   const organizationId = tenantId;
-
-  // If userRole is still guest or undetermined, resolve role
-  if (userRole === 'guest') {
-    switch (orgRole) {
-      case 'org:admin':
-        userRole = 'farm_owner';
-        break;
-      case 'org:member':
-        userRole = 'farm_manager';
-        break;
-      default:
-        userRole = await resolveUserRoleFromDatabase(userId, tenantId);
-        break;
-    }
-  }
 
   return {
     tenantId,
@@ -96,7 +66,10 @@ export async function getTenantContext(): Promise<TenantContext> {
  * Resolve user role from database membership
  * Fallback when Clerk role doesn't provide enough detail
  */
-async function resolveUserRoleFromDatabase(userId: string, tenantId: string): Promise<string> {
+export async function resolveUserRoleFromDatabase(
+  userId: string,
+  tenantId: string
+): Promise<string> {
   try {
     const db = getDrizzle();
     const membership = await db
@@ -112,9 +85,9 @@ async function resolveUserRoleFromDatabase(userId: string, tenantId: string): Pr
     if (user.length > 0 && user[0].platformRole === 'super_admin') {
       return 'super_admin';
     }
-    return 'farm_owner';
+    return 'guest';
   } catch (error) {
-    return 'farm_owner';
+    return 'guest';
   }
 }
 /**

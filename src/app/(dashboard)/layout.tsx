@@ -7,6 +7,7 @@ import { DashboardHeader } from '@/components/tenant/DashboardHeader';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import ToastProviderWrapper from '@/components/providers/ToastProviderWrapper';
+import { getNoOrgFallbackPath } from '@/lib/auth/post-login-destination';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   if (!orgId) {
-    // Redirect to farm selection page instead of onboarding
-    redirect('/select-farm');
+    redirect(getNoOrgFallbackPath());
   }
 
   return (

@@ -2,14 +2,28 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Droplets, Sun, Moon, TrendingUp, TrendingDown, Calendar, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Plus,
+  Droplets,
+  Sun,
+  Moon,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyMilkRecords, EmptySearchResults, EmptyError } from '@/components/ui/empty-state';
 
 export default function MilkLogsPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [sessionFilter, setSessionFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
@@ -27,7 +41,12 @@ export default function MilkLogsPage() {
   });
 
   // Logs list query
-  const { data: logsData, isLoading: isLogsLoading } = useQuery({
+  const {
+    data: logsData,
+    isLoading: isLogsLoading,
+    isError: isLogsError,
+    refetch: refetchLogs,
+  } = useQuery({
     queryKey: ['milk-logs', page, sessionFilter, dateFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -41,7 +60,7 @@ export default function MilkLogsPage() {
         params.append('date', dateFilter);
       }
       const res = await fetch(`/api/milk?${params.toString()}`);
-      if (!res.ok) return { logs: [], pagination: { total: 0, totalPages: 1 } };
+      if (!res.ok) throw new Error('Failed to fetch milk logs');
       const json = await res.json();
       return {
         logs: json.logs || json.data?.logs || [],
@@ -54,11 +73,12 @@ export default function MilkLogsPage() {
   const summary = summaryData;
   const logs = logsData?.logs || [];
   const pagination = logsData?.pagination || { total: 0, totalPages: 1, page: 1 };
+  const hasActiveFilters = sessionFilter !== 'all' || Boolean(dateFilter);
 
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>Milk Production</h1>
           <p className='text-muted-foreground'>
@@ -79,7 +99,9 @@ export default function MilkLogsPage() {
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>Today&apos;s Total</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
+              Today&apos;s Total
+            </CardTitle>
             <Droplets className='h-4 w-4 text-blue-500' />
           </CardHeader>
           <CardContent>
@@ -87,18 +109,19 @@ export default function MilkLogsPage() {
               <Skeleton className='h-8 w-24' />
             ) : (
               <div>
-                <div className='text-2xl font-bold'>{summary?.todayTotal?.toFixed(1) || '0.0'} L</div>
-                <div className='flex items-center gap-1 text-xs text-muted-foreground mt-1'>
+                <div className='text-2xl font-bold'>
+                  {summary?.todayTotal?.toFixed(1) || '0.0'} L
+                </div>
+                <div className='text-muted-foreground mt-1 flex items-center gap-1 text-xs'>
                   {summary?.percentChange !== undefined && (
                     <>
                       {summary.percentChange >= 0 ? (
-                        <span className='text-emerald-600 flex items-center font-medium'>
-                          <TrendingUp className='h-3 w-3 mr-0.5' />
-                          +{summary.percentChange}%
+                        <span className='flex items-center font-medium text-emerald-600'>
+                          <TrendingUp className='mr-0.5 h-3 w-3' />+{summary.percentChange}%
                         </span>
                       ) : (
-                        <span className='text-rose-600 flex items-center font-medium'>
-                          <TrendingDown className='h-3 w-3 mr-0.5' />
+                        <span className='flex items-center font-medium text-rose-600'>
+                          <TrendingDown className='mr-0.5 h-3 w-3' />
                           {summary.percentChange}%
                         </span>
                       )}
@@ -113,7 +136,9 @@ export default function MilkLogsPage() {
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>Morning Session</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
+              Morning Session
+            </CardTitle>
             <Sun className='h-4 w-4 text-amber-500' />
           </CardHeader>
           <CardContent>
@@ -121,8 +146,10 @@ export default function MilkLogsPage() {
               <Skeleton className='h-8 w-24' />
             ) : (
               <div>
-                <div className='text-2xl font-bold'>{summary?.morningTotal?.toFixed(1) || '0.0'} L</div>
-                <p className='text-xs text-muted-foreground mt-1'>Early yield</p>
+                <div className='text-2xl font-bold'>
+                  {summary?.morningTotal?.toFixed(1) || '0.0'} L
+                </div>
+                <p className='text-muted-foreground mt-1 text-xs'>Early yield</p>
               </div>
             )}
           </CardContent>
@@ -130,7 +157,9 @@ export default function MilkLogsPage() {
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>Evening Session</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
+              Evening Session
+            </CardTitle>
             <Moon className='h-4 w-4 text-indigo-500' />
           </CardHeader>
           <CardContent>
@@ -138,8 +167,10 @@ export default function MilkLogsPage() {
               <Skeleton className='h-8 w-24' />
             ) : (
               <div>
-                <div className='text-2xl font-bold'>{summary?.eveningTotal?.toFixed(1) || '0.0'} L</div>
-                <p className='text-xs text-muted-foreground mt-1'>Late yield</p>
+                <div className='text-2xl font-bold'>
+                  {summary?.eveningTotal?.toFixed(1) || '0.0'} L
+                </div>
+                <p className='text-muted-foreground mt-1 text-xs'>Late yield</p>
               </div>
             )}
           </CardContent>
@@ -147,7 +178,9 @@ export default function MilkLogsPage() {
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>Herd Average</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
+              Herd Average
+            </CardTitle>
             <Droplets className='h-4 w-4 text-emerald-500' />
           </CardHeader>
           <CardContent>
@@ -155,8 +188,10 @@ export default function MilkLogsPage() {
               <Skeleton className='h-8 w-24' />
             ) : (
               <div>
-                <div className='text-2xl font-bold'>{summary?.averagePerAnimal?.toFixed(1) || '0.0'} L/head</div>
-                <p className='text-xs text-muted-foreground mt-1'>
+                <div className='text-2xl font-bold'>
+                  {summary?.averagePerAnimal?.toFixed(1) || '0.0'} L/head
+                </div>
+                <p className='text-muted-foreground mt-1 text-xs'>
                   {summary?.activeMilkingAnimals || 0} active milking animals
                 </p>
               </div>
@@ -168,10 +203,10 @@ export default function MilkLogsPage() {
       {/* Filter Toolbar */}
       <Card>
         <CardContent className='pt-6'>
-          <div className='flex flex-col sm:flex-row gap-4 items-center justify-between'>
-            <div className='flex flex-wrap items-center gap-3 w-full sm:w-auto'>
+          <div className='flex flex-col items-center justify-between gap-4 sm:flex-row'>
+            <div className='flex w-full flex-wrap items-center gap-3 sm:w-auto'>
               <div className='flex items-center gap-2'>
-                <Filter className='h-4 w-4 text-muted-foreground' />
+                <Filter className='text-muted-foreground h-4 w-4' />
                 <span className='text-sm font-medium'>Filters:</span>
               </div>
               <select
@@ -180,7 +215,7 @@ export default function MilkLogsPage() {
                   setSessionFilter(e.target.value);
                   setPage(1);
                 }}
-                className='rounded-md border bg-background px-3 py-1.5 text-sm ring-offset-background'
+                className='bg-background ring-offset-background rounded-md border px-3 py-1.5 text-sm'
               >
                 <option value='all'>All Sessions</option>
                 <option value='morning'>Morning Only</option>
@@ -188,7 +223,7 @@ export default function MilkLogsPage() {
               </select>
 
               <div className='flex items-center gap-2'>
-                <Calendar className='h-4 w-4 text-muted-foreground' />
+                <Calendar className='text-muted-foreground h-4 w-4' />
                 <input
                   type='date'
                   value={dateFilter}
@@ -196,7 +231,7 @@ export default function MilkLogsPage() {
                     setDateFilter(e.target.value);
                     setPage(1);
                   }}
-                  className='rounded-md border bg-background px-3 py-1.5 text-sm ring-offset-background'
+                  className='bg-background ring-offset-background rounded-md border px-3 py-1.5 text-sm'
                 />
               </div>
 
@@ -215,7 +250,7 @@ export default function MilkLogsPage() {
               )}
             </div>
 
-            <div className='text-sm text-muted-foreground'>
+            <div className='text-muted-foreground text-sm'>
               Showing {logs.length} records {pagination.total > 0 && `of ${pagination.total}`}
             </div>
           </div>
@@ -237,26 +272,20 @@ export default function MilkLogsPage() {
             </Card>
           ))}
         </div>
+      ) : isLogsError ? (
+        <Card>
+          <CardContent className='py-8'>
+            <EmptyError onRetry={() => refetchLogs()} />
+          </CardContent>
+        </Card>
       ) : logs.length === 0 ? (
         <Card>
-          <CardContent className='py-16 text-center space-y-4'>
-            <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950'>
-              <Droplets className='h-6 w-6 text-blue-600 dark:text-blue-400' />
-            </div>
-            <div>
-              <h3 className='text-lg font-medium'>No milk logs found</h3>
-              <p className='text-muted-foreground text-sm max-w-md mx-auto mt-1'>
-                {sessionFilter !== 'all' || dateFilter
-                  ? 'No records matched your current filter criteria. Try adjusting the filters above.'
-                  : 'Start recording your herd daily milking sessions to track production metrics and trends.'}
-              </p>
-            </div>
-            <Link href='/milk/new'>
-              <Button>
-                <Plus className='mr-2 h-4 w-4' />
-                Log First Milk Entry
-              </Button>
-            </Link>
+          <CardContent className='py-8'>
+            {hasActiveFilters ? (
+              <EmptySearchResults query={dateFilter || sessionFilter} />
+            ) : (
+              <EmptyMilkRecords onLog={() => router.push('/milk/new')} />
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -264,26 +293,30 @@ export default function MilkLogsPage() {
           {logs.map((log: any) => (
             <Card key={log.id} className='hover:border-primary/40 transition-colors'>
               <CardContent className='p-4 sm:p-6'>
-                <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
-                  <div className='flex items-start sm:items-center gap-4'>
-                    <div className={`p-2.5 rounded-lg ${log.session === 'morning' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400'}`}>
-                      {log.session === 'morning' ? <Sun className='h-5 w-5' /> : <Moon className='h-5 w-5' />}
+                <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
+                  <div className='flex items-start gap-4 sm:items-center'>
+                    <div
+                      className={`rounded-lg p-2.5 ${log.session === 'morning' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400'}`}
+                    >
+                      {log.session === 'morning' ? (
+                        <Sun className='h-5 w-5' />
+                      ) : (
+                        <Moon className='h-5 w-5' />
+                      )}
                     </div>
                     <div>
                       <div className='flex items-center gap-2'>
-                        <span className='font-semibold text-base'>
-                          {log.animalTag || 'Animal'}
-                        </span>
+                        <span className='text-base font-semibold'>{log.animalTag || 'Animal'}</span>
                         {log.animalName && (
                           <span className='text-muted-foreground text-sm font-normal'>
                             • {log.animalName}
                           </span>
                         )}
-                        <span className='inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-muted capitalize'>
+                        <span className='bg-muted inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize'>
                           {log.session}
                         </span>
                       </div>
-                      <p className='text-muted-foreground text-xs mt-0.5'>
+                      <p className='text-muted-foreground mt-0.5 text-xs'>
                         {format(new Date(log.date), 'EEEE, MMMM d, yyyy')}
                       </p>
                     </div>
@@ -291,15 +324,16 @@ export default function MilkLogsPage() {
 
                   <div className='flex items-center gap-6 self-end sm:self-auto'>
                     <div className='text-right'>
-                      <div className='text-2xl font-bold tracking-tight text-foreground'>
-                        {log.quantity} <span className='text-sm font-normal text-muted-foreground'>L</span>
+                      <div className='text-foreground text-2xl font-bold tracking-tight'>
+                        {log.quantity}{' '}
+                        <span className='text-muted-foreground text-sm font-normal'>L</span>
                       </div>
                       {log.quality && (
-                        <p className='text-xs text-muted-foreground'>Quality: {log.quality}/10</p>
+                        <p className='text-muted-foreground text-xs'>Quality: {log.quality}/10</p>
                       )}
                     </div>
                     {log.notes && (
-                      <p className='hidden md:block max-w-xs text-xs text-muted-foreground text-right italic truncate'>
+                      <p className='text-muted-foreground hidden max-w-xs truncate text-right text-xs italic md:block'>
                         &ldquo;{log.notes}&rdquo;
                       </p>
                     )}
@@ -321,7 +355,7 @@ export default function MilkLogsPage() {
               >
                 <ChevronLeft className='h-4 w-4' /> Previous
               </Button>
-              <span className='text-sm text-muted-foreground'>
+              <span className='text-muted-foreground text-sm'>
                 Page {page} of {pagination.totalPages}
               </span>
               <Button

@@ -2,10 +2,17 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import type { Animal } from '@/types';
@@ -13,6 +20,7 @@ import { AnimalListSkeleton } from '@/components/ui/skeleton';
 import { EmptyAnimals, EmptySearchResults, EmptyError } from '@/components/ui/empty-state';
 
 export function AnimalList() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -54,7 +62,9 @@ export function AnimalList() {
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Animals</h1>
-          <p className='text-muted-foreground'>Manage your farm livestock ({pagination.total} total)</p>
+          <p className='text-muted-foreground'>
+            Manage your farm livestock ({pagination.total} total)
+          </p>
         </div>
         <Link href='/animals/new'>
           <Button>
@@ -127,7 +137,7 @@ export function AnimalList() {
         searchQuery || selectedSpecies !== 'all' || selectedStatus !== 'all' ? (
           <EmptySearchResults query={searchQuery} />
         ) : (
-          <EmptyAnimals onAdd={() => (window.location.href = '/animals/new')} />
+          <EmptyAnimals onAdd={() => router.push('/animals/new')} />
         )
       ) : (
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
@@ -141,9 +151,10 @@ export function AnimalList() {
                       className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
                         animal.status === 'active'
                           ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
-                          : (animal.status as string) === 'sick' || (animal.status as string) === 'quarantine'
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
-                          : 'bg-muted text-muted-foreground'
+                          : (animal.status as string) === 'sick' ||
+                              (animal.status as string) === 'quarantine'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                            : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {animal.status}
@@ -184,7 +195,8 @@ export function AnimalList() {
         <div className='flex items-center justify-between border-t pt-4'>
           <p className='text-muted-foreground text-sm'>
             Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} animals
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}{' '}
+            animals
           </p>
           <div className='flex items-center gap-2'>
             <Button
@@ -193,9 +205,9 @@ export function AnimalList() {
               disabled={pagination.page <= 1}
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             >
-              <ChevronLeft className='h-4 w-4 mr-1' /> Previous
+              <ChevronLeft className='mr-1 h-4 w-4' /> Previous
             </Button>
-            <span className='text-sm font-medium px-2'>
+            <span className='px-2 text-sm font-medium'>
               Page {pagination.page} of {pagination.totalPages}
             </span>
             <Button
@@ -204,7 +216,7 @@ export function AnimalList() {
               disabled={pagination.page >= pagination.totalPages}
               onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
             >
-              Next <ChevronRight className='h-4 w-4 ml-1' />
+              Next <ChevronRight className='ml-1 h-4 w-4' />
             </Button>
           </div>
         </div>

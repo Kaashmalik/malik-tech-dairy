@@ -2,10 +2,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
-import { Database, Tables } from '@/types/supabase';
 import { UserRole, PlatformRole, TenantRole } from '@/types/roles';
-type PlatformUser = Tables<'platform_users'>;
-type TenantMember = Tables<'tenant_members'>;
+import { resolveTenantAccess } from '@/lib/tenant/resolve-access';
 export interface TenantContext {
   tenantId: string;
   tenantSlug: string;
@@ -26,40 +24,8 @@ export function getTenantContext(request: NextRequest): TenantContext | null {
     tenantId,
     tenantSlug: tenantSlug || '',
     userId,
-    userRole: 'farm_owner' as UserRole, // Default role
+    userRole: TenantRole.GUEST,
   };
-}
-/**
- * Get user role from Supabase
- */
-async function getUserRoleFromSupabase(tenantId: string, userId: string): Promise<UserRole> {
-  try {
-    const supabase = getSupabaseClient();
-    // Check if user is super admin
-    const { data: platformUser } = (await supabase
-      .from('platform_users')
-      .select('platform_role')
-      .eq('id', userId)
-      .maybeSingle()) as { data: { platform_role: string } | null };
-    if (platformUser?.platform_role === 'super_admin') {
-      return PlatformRole.SUPER_ADMIN;
-    }
-    // Check tenant member role
-    const { data: member } = (await supabase
-      .from('tenant_members')
-      .select('role')
-      .eq('tenant_id', tenantId)
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .maybeSingle()) as { data: { role: string } | null };
-    if (member?.role) {
-      return member.role as TenantRole;
-    }
-    return TenantRole.FARM_OWNER; // Graceful fallback
-  } catch (error) {
-    console.error('Authorization check failed:', error);
-    return TenantRole.FARM_OWNER;
-  }
 }
 /**
  * Middleware wrapper for API routes that require tenant context
@@ -69,62 +35,51 @@ export function withTenantContext(
 ) {
   return async (req: NextRequest) => {
     try {
-      const { userId, orgId } = await auth();
+      const { userId, orgId, orgRole } = await auth();
       if (!userId) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
       }
 
-      let effectiveTenantId = orgId || req.headers.get('x-tenant-id') || null;
+      const supabase = getSupabaseClient();
+      const { data: members } = (await supabase
+        .from('tenant_members')
+        .select('tenant_id, role, status')
+        .eq('user_id', userId)
+        .eq('status', 'active')) as {
+        data: { tenant_id: string; role: string; status: string }[] | null;
+      };
 
-      if (!effectiveTenantId) {
-        // Resolve tenant from database membership or super admin
-        const supabase = getSupabaseClient();
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', userId)
-          .eq('status', 'active')
-          .limit(1)
-          .maybeSingle();
+      const { data: platformUser } = (await supabase
+        .from('platform_users')
+        .select('platform_role')
+        .eq('id', userId)
+        .maybeSingle()) as { data: { platform_role: string } | null };
 
-        if (member?.tenant_id) {
-          effectiveTenantId = member.tenant_id;
-        } else {
-          // Check if platform super admin
-          const { data: platformUser } = await supabase
-            .from('platform_users')
-            .select('platform_role')
-            .eq('id', userId)
-            .maybeSingle();
+      const resolved = resolveTenantAccess({
+        clerkOrgId: orgId,
+        headerTenantId: req.headers.get('x-tenant-id'),
+        memberships: (members || []).map(m => ({
+          tenantId: m.tenant_id,
+          role: m.role,
+          status: m.status,
+        })),
+        isSuperAdmin: platformUser?.platform_role === 'super_admin',
+        clerkOrgRole: orgRole,
+      });
 
-          const { data: defaultTenant } = await supabase
-            .from('tenants')
-            .select('id')
-            .limit(1)
-            .maybeSingle();
-
-          if (defaultTenant?.id) {
-            effectiveTenantId = defaultTenant.id;
-          }
-        }
-      }
-
-      if (!effectiveTenantId) {
+      if (!resolved.ok) {
         return NextResponse.json(
-          { success: false, error: 'No organization (tenant) found. Please complete onboarding.' },
-          { status: 403 }
+          { success: false, error: resolved.error },
+          { status: resolved.status }
         );
       }
 
-      // Get organization slug from request or Clerk
       const orgSlug = req.headers.get('x-tenant-slug') || '';
-      // Fetch user role from Supabase
-      const userRole = await getUserRoleFromSupabase(effectiveTenantId, userId);
       const context: TenantContext = {
-        tenantId: effectiveTenantId,
+        tenantId: resolved.tenantId,
         tenantSlug: orgSlug,
         userId,
-        userRole,
+        userRole: resolved.userRole,
       };
       return handler(req, context);
     } catch (error) {

@@ -102,10 +102,15 @@ export default function SelectFarmPage() {
       });
       const data = await response.json();
       if (data.success) {
-        // Refresh the page to get updated memberships
-        window.location.reload();
+        const organizationId = data.data?.organizationId as string | undefined;
+        if (organizationId && setActive) {
+          await setActive({ organization: organizationId });
+          router.replace('/dashboard');
+          return;
+        }
+        // Fallback: refresh memberships then pick farm
+        window.location.assign('/select-farm');
       } else {
-        // Show detailed error if available
         const errorMsg = data.details
           ? `${data.error}: ${data.details}`
           : data.error || 'Failed to join organization';
