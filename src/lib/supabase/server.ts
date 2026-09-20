@@ -12,6 +12,31 @@ let connectionPool: postgres.Sql | null = null;
 let supabaseClient: SupabaseClient<Database> | null = null;
 
 /**
+ * Resolve database URL with fallback for direct connection
+ */
+function resolveDatabaseUrl(): string {
+  const envUrl = process.env.SUPABASE_DATABASE_URL;
+  if (!envUrl) {
+    throw new Error('SUPABASE_DATABASE_URL is not set');
+  }
+
+  // If connection URL uses pooler host with postgres.gdditqkvzlpnklcoxspj,
+  // automatically route to the verified direct host to prevent pooler ENOTFOUND errors
+  if (
+    envUrl.includes('aws-0-ap-south-1.pooler.supabase.com') ||
+    envUrl.includes('postgres.gdditqkvzlpnklcoxspj')
+  ) {
+    const match = envUrl.match(/postgres(?:\.[^:]+)?:([^@]+)@/);
+    if (match && match[1]) {
+      const password = match[1];
+      return `postgres://postgres:${password}@db.gdditqkvzlpnklcoxspj.supabase.co:5432/postgres?sslmode=require`;
+    }
+  }
+
+  return envUrl;
+}
+
+/**
  * Get Supabase connection pool (server-only)
  * Uses connection pooling for optimal performance
  */
@@ -21,11 +46,7 @@ export function getSupabasePool() {
   }
 
   if (!connectionPool) {
-    const connectionString = process.env.SUPABASE_DATABASE_URL;
-
-    if (!connectionString) {
-      throw new Error('SUPABASE_DATABASE_URL is not set');
-    }
+    const connectionString = resolveDatabaseUrl();
 
     // Create connection pool with optimal settings
     connectionPool = postgres(connectionString, {

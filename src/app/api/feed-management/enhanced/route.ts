@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
           // Computed fields
           daysUntilExpiry: sql<number>`CASE 
             WHEN ${feedInventory.expiryDate} IS NULL THEN NULL 
-            ELSE GREATEST(0, ${feedInventory.expiryDate} - CURRENT_DATE) 
+            ELSE GREATEST(0, EXTRACT(DAY FROM (${feedInventory.expiryDate} - CURRENT_TIMESTAMP))::integer) 
           END`.as('daysUntilExpiry'),
           stockStatus: sql<string>`CASE
             WHEN ${feedInventory.quantity} <= ${feedInventory.minimumStock} THEN 'critical'
@@ -269,8 +269,8 @@ export async function GET(request: NextRequest) {
             storageLocation,
           },
           available: {
-            categories: await getDistinctValues('category', tenantContext.tenantId, db),
-            qualityGrades: await getDistinctValues('quality_grade', tenantContext.tenantId, db),
+            categories: await getDistinctValues('feed_type', tenantContext.tenantId, db),
+            qualityGrades: ['A', 'B', 'C'],
             storageLocations: await getDistinctValues(
               'storage_location',
               tenantContext.tenantId,

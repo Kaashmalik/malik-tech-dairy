@@ -16,6 +16,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/payments/callback(.*)',
   '/api/weather/sync(.*)',
   '/',
+  '/features(.*)',
   '/pricing',
   '/about',
 ]);

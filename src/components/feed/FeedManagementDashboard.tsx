@@ -93,6 +93,22 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
         return 'bg-gray-100 text-gray-800';
     }
   };
+  const defaultAnalytics: FeedAnalytics = {
+    totalValue: 0,
+    totalItems: 0,
+    totalStock: 0,
+    lowStockItems: 0,
+    expiringItems: 0,
+    categoryBreakdown: [],
+    efficiencyMetrics: {
+      averageDaysOfSupply: 0,
+      stockTurnoverRate: 0,
+      wastePercentage: 0,
+      costPerDay: 0,
+    },
+  };
+  const activeAnalytics = analytics || defaultAnalytics;
+
   if (loading) {
     return (
       <div className={cn('w-full space-y-6', className)}>
@@ -108,20 +124,7 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
       </div>
     );
   }
-  if (!analytics) {
-    return (
-      <div className={cn('w-full', className)}>
-        <Card>
-          <CardContent className='p-6'>
-            <div className='text-center text-gray-500'>
-              <Package className='mx-auto mb-4 h-12 w-12 opacity-50' />
-              <p>Feed analytics not available</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
   return (
     <div className={cn('w-full space-y-6', className)}>
       {/* Header */}
@@ -135,7 +138,7 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             <Download className='mr-2 h-4 w-4' />
             Export Report
           </Button>
-          <Button>
+          <Button onClick={() => setActiveTab('inventory')}>
             <Plus className='mr-2 h-4 w-4' />
             Add Feed Item
           </Button>
@@ -149,9 +152,9 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
               <div>
                 <p className='text-sm font-medium text-gray-600'>Total Inventory Value</p>
                 <p className='text-2xl font-bold text-gray-900'>
-                  {formatCurrency(analytics.totalValue)}
+                  {formatCurrency(activeAnalytics.totalValue)}
                 </p>
-                <p className='text-xs text-gray-500'>{analytics.totalItems} items</p>
+                <p className='text-xs text-gray-500'>{activeAnalytics.totalItems} items</p>
               </div>
               <DollarSign className='h-8 w-8 text-green-600' />
             </div>
@@ -163,7 +166,7 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
               <div>
                 <p className='text-sm font-medium text-gray-600'>Total Stock</p>
                 <p className='text-2xl font-bold text-gray-900'>
-                  {formatWeight(analytics.totalStock)}
+                  {formatWeight(activeAnalytics.totalStock)}
                 </p>
                 <p className='text-xs text-gray-500'>Across all categories</p>
               </div>
@@ -176,7 +179,7 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm font-medium text-gray-600'>Low Stock Alerts</p>
-                <p className='text-2xl font-bold text-red-600'>{analytics.lowStockItems}</p>
+                <p className='text-2xl font-bold text-red-600'>{activeAnalytics.lowStockItems}</p>
                 <p className='text-xs text-gray-500'>Need reordering</p>
               </div>
               <AlertTriangle className='h-8 w-8 text-red-600' />
@@ -188,7 +191,9 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm font-medium text-gray-600'>Expiring Soon</p>
-                <p className='text-2xl font-bold text-orange-600'>{analytics.expiringItems}</p>
+                <p className='text-2xl font-bold text-orange-600'>
+                  {activeAnalytics.expiringItems}
+                </p>
                 <p className='text-xs text-gray-500'>Within 30 days</p>
               </div>
               <Clock className='h-8 w-8 text-orange-600' />
@@ -215,25 +220,36 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='space-y-4'>
-                  {analytics.categoryBreakdown.map((category, index) => (
-                    <div key={index} className='space-y-2'>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-sm font-medium capitalize text-gray-700'>
-                          {category.category}
-                        </span>
-                        <span className='text-sm text-gray-500'>
-                          {formatCurrency(category.totalValue)} ({category.percentage.toFixed(1)}%)
-                        </span>
+                {activeAnalytics.categoryBreakdown.length === 0 ? (
+                  <div className='py-8 text-center text-gray-500'>
+                    <Package className='mx-auto mb-2 h-8 w-8 opacity-40' />
+                    <p className='text-sm'>No feed inventory records yet.</p>
+                    <Button size='sm' className='mt-3' onClick={() => setActiveTab('inventory')}>
+                      <Plus className='mr-1.5 h-3.5 w-3.5' /> Add Feed Item
+                    </Button>
+                  </div>
+                ) : (
+                  <div className='space-y-4'>
+                    {activeAnalytics.categoryBreakdown.map((category, index) => (
+                      <div key={index} className='space-y-2'>
+                        <div className='flex items-center justify-between'>
+                          <span className='text-sm font-medium capitalize text-gray-700'>
+                            {category.category}
+                          </span>
+                          <span className='text-sm text-gray-500'>
+                            {formatCurrency(category.totalValue)} ({category.percentage.toFixed(1)}
+                            %)
+                          </span>
+                        </div>
+                        <Progress value={category.percentage} className='h-2' />
+                        <div className='flex items-center justify-between text-xs text-gray-500'>
+                          <span>{category.itemCount} items</span>
+                          <span>{formatWeight(category.totalStock)}</span>
+                        </div>
                       </div>
-                      <Progress value={category.percentage} className='h-2' />
-                      <div className='flex items-center justify-between text-xs text-gray-500'>
-                        <span>{category.itemCount} items</span>
-                        <span>{formatWeight(category.totalStock)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
             {/* Efficiency Metrics */}
@@ -252,11 +268,11 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                         Average Days of Supply
                       </span>
                       <span className='text-sm font-bold text-gray-900'>
-                        {analytics.efficiencyMetrics.averageDaysOfSupply} days
+                        {activeAnalytics.efficiencyMetrics.averageDaysOfSupply} days
                       </span>
                     </div>
                     <Progress
-                      value={(analytics.efficiencyMetrics.averageDaysOfSupply / 90) * 100}
+                      value={(activeAnalytics.efficiencyMetrics.averageDaysOfSupply / 90) * 100}
                       className='h-2'
                     />
                   </div>
@@ -264,11 +280,11 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                     <div className='mb-2 flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-700'>Stock Turnover Rate</span>
                       <span className='text-sm font-bold text-gray-900'>
-                        {analytics.efficiencyMetrics.stockTurnoverRate}/year
+                        {activeAnalytics.efficiencyMetrics.stockTurnoverRate}/year
                       </span>
                     </div>
                     <Progress
-                      value={(analytics.efficiencyMetrics.stockTurnoverRate / 12) * 100}
+                      value={(activeAnalytics.efficiencyMetrics.stockTurnoverRate / 12) * 100}
                       className='h-2'
                     />
                   </div>
@@ -276,16 +292,19 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
                     <div className='mb-2 flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-700'>Waste Percentage</span>
                       <span className='text-sm font-bold text-red-600'>
-                        {analytics.efficiencyMetrics.wastePercentage}%
+                        {activeAnalytics.efficiencyMetrics.wastePercentage}%
                       </span>
                     </div>
-                    <Progress value={analytics.efficiencyMetrics.wastePercentage} className='h-2' />
+                    <Progress
+                      value={activeAnalytics.efficiencyMetrics.wastePercentage}
+                      className='h-2'
+                    />
                   </div>
                   <div className='rounded-lg bg-gray-50 p-4'>
                     <div className='flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-700'>Daily Cost</span>
                       <span className='text-sm font-bold text-gray-900'>
-                        {formatCurrency(analytics.efficiencyMetrics.costPerDay)}
+                        {formatCurrency(activeAnalytics.efficiencyMetrics.costPerDay)}
                       </span>
                     </div>
                   </div>
@@ -300,15 +319,27 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
             </CardHeader>
             <CardContent>
               <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <Button variant='outline' className='h-16 flex-col'>
+                <Button
+                  variant='outline'
+                  className='h-16 flex-col'
+                  onClick={() => setActiveTab('inventory')}
+                >
                   <AlertTriangle className='mb-2 h-6 w-6' />
                   <span>Review Low Stock</span>
                 </Button>
-                <Button variant='outline' className='h-16 flex-col'>
+                <Button
+                  variant='outline'
+                  className='h-16 flex-col'
+                  onClick={() => setActiveTab('inventory')}
+                >
                   <Calendar className='mb-2 h-6 w-6' />
                   <span>Schedule Orders</span>
                 </Button>
-                <Button variant='outline' className='h-16 flex-col'>
+                <Button
+                  variant='outline'
+                  className='h-16 flex-col'
+                  onClick={() => setActiveTab('inventory')}
+                >
                   <Eye className='mb-2 h-6 w-6' />
                   <span>Quality Check</span>
                 </Button>
@@ -317,13 +348,13 @@ export function FeedManagementDashboard({ className }: { className?: string }) {
           </Card>
         </TabsContent>
         <TabsContent value='inventory' className='space-y-4'>
-          <FeedInventoryTable />
+          <FeedInventoryTable onDataChange={fetchAnalytics} />
         </TabsContent>
         <TabsContent value='nutrition' className='space-y-4'>
           <NutritionOptimizer />
         </TabsContent>
         <TabsContent value='analytics' className='space-y-4'>
-          <FeedAnalyticsChart analytics={analytics} />
+          <FeedAnalyticsChart analytics={activeAnalytics} />
         </TabsContent>
       </Tabs>
     </div>

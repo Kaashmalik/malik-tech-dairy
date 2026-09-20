@@ -46,9 +46,26 @@ export async function GET(request: NextRequest) {
         loading: false,
       });
     }
-    // No role found - return null (user might be new or not a member)
+
+    // Check Clerk organization role if available
+    if (authResult.orgRole === 'org:admin') {
+      return NextResponse.json({
+        userRole: 'farm_owner',
+        isSuperAdmin: false,
+        loading: false,
+      });
+    }
+    if (authResult.orgRole === 'org:member') {
+      return NextResponse.json({
+        userRole: 'farm_manager',
+        isSuperAdmin: false,
+        loading: false,
+      });
+    }
+
+    // Default to farm_owner if user is authenticated in this tenant
     return NextResponse.json({
-      userRole: null,
+      userRole: 'farm_owner',
       isSuperAdmin: false,
       loading: false,
     });

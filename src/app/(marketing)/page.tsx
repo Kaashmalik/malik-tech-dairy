@@ -140,7 +140,7 @@ export default function HomePage() {
                     <ArrowRight className='ml-2 inline h-5 w-5' />
                   </button>
                 </Link>
-                <Link href='/features'>
+                <Link href='#features'>
                   <button className='w-full rounded-lg border-2 border-gray-300 px-8 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 sm:w-auto dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'>
                     View Features
                   </button>

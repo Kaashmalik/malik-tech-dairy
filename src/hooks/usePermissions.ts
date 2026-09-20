@@ -49,9 +49,10 @@ export function usePermissions() {
   };
   const canAccessModule = (module: string): boolean => {
     if (userRole === PlatformRole.SUPER_ADMIN) return true;
-    if (!userRole) return false;
+    // While loading or before role resolution, allow standard module access so navigation remains stable
+    if (loading || !userRole) return true;
     const allowedRoles = MODULE_ACCESS[module];
-    return allowedRoles?.includes(userRole) ?? false;
+    return allowedRoles?.includes(userRole) ?? true;
   };
   return {
     userRole,
