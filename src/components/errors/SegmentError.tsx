@@ -2,11 +2,20 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, RefreshCw, Home, Droplets, Package } from 'lucide-react';
+import {
+  AlertTriangle,
+  RefreshCw,
+  Home,
+  Droplets,
+  Package,
+  Heart,
+  Baby,
+  DollarSign,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-type Segment = 'animals' | 'milk';
+type Segment = 'animals' | 'milk' | 'health' | 'breeding' | 'finance';
 
 interface SegmentErrorProps {
   error: Error & { digest?: string };
@@ -21,7 +30,7 @@ const COPY: Record<
     description: string;
     homeHref: string;
     homeLabel: string;
-    icon: 'animals' | 'milk';
+    icon: Segment;
   }
 > = {
   animals: {
@@ -38,7 +47,44 @@ const COPY: Record<
     homeLabel: 'Back to Milk',
     icon: 'milk',
   },
+  health: {
+    title: 'Health section error',
+    description: 'Something went wrong while loading health records. Your data is safe.',
+    homeHref: '/health',
+    homeLabel: 'Back to Health',
+    icon: 'health',
+  },
+  breeding: {
+    title: 'Breeding section error',
+    description: 'Something went wrong while loading breeding records. Your data is safe.',
+    homeHref: '/breeding',
+    homeLabel: 'Back to Breeding',
+    icon: 'breeding',
+  },
+  finance: {
+    title: 'Finance section error',
+    description: 'Something went wrong while loading finance data. Your records are safe.',
+    homeHref: '/finance',
+    homeLabel: 'Back to Finance',
+    icon: 'finance',
+  },
 };
+
+function SegmentIcon({ icon }: { icon: Segment }) {
+  const className = 'h-7 w-7 text-red-600 dark:text-red-400';
+  switch (icon) {
+    case 'milk':
+      return <Droplets className={className} />;
+    case 'health':
+      return <Heart className={className} />;
+    case 'breeding':
+      return <Baby className={className} />;
+    case 'finance':
+      return <DollarSign className={className} />;
+    default:
+      return <Package className={className} />;
+  }
+}
 
 export function SegmentError({ error, reset, segment }: SegmentErrorProps) {
   const copy = COPY[segment];
@@ -52,11 +98,7 @@ export function SegmentError({ error, reset, segment }: SegmentErrorProps) {
       <Card className='w-full max-w-lg border-red-200 bg-gradient-to-br from-red-50 to-orange-50 dark:border-red-800 dark:from-red-900/20 dark:to-orange-900/20'>
         <CardHeader className='text-center'>
           <div className='mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50'>
-            {copy.icon === 'milk' ? (
-              <Droplets className='h-7 w-7 text-red-600 dark:text-red-400' />
-            ) : (
-              <Package className='h-7 w-7 text-red-600 dark:text-red-400' />
-            )}
+            <SegmentIcon icon={copy.icon} />
           </div>
           <CardTitle className='text-xl'>{copy.title}</CardTitle>
           <CardDescription>{copy.description}</CardDescription>

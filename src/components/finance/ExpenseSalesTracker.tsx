@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Plus, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { ExpenseForm } from './ExpenseForm';
 import { SaleForm } from './SaleForm';
 import type { Expense, Sale } from '@/types';
+import { EmptyFinanceRecords, EmptyError } from '@/components/ui/empty-state';
+import { invalidateFinanceQueries } from '@/lib/query/farm-cache';
 
 export function ExpenseSalesTracker() {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -20,7 +22,12 @@ export function ExpenseSalesTracker() {
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
 
-  const { data: expensesData, isLoading: expensesLoading } = useQuery<{ expenses: Expense[] }>({
+  const {
+    data: expensesData,
+    isLoading: expensesLoading,
+    isError: expensesError,
+    refetch: refetchExpenses,
+  } = useQuery<{ expenses: Expense[] }>({
     queryKey: ['expenses', monthStart.toISOString(), monthEnd.toISOString()],
     queryFn: async () => {
       const res = await fetch(
@@ -31,7 +38,12 @@ export function ExpenseSalesTracker() {
     },
   });
 
-  const { data: salesData, isLoading: salesLoading } = useQuery<{ sales: Sale[] }>({
+  const {
+    data: salesData,
+    isLoading: salesLoading,
+    isError: salesError,
+    refetch: refetchSales,
+  } = useQuery<{ sales: Sale[] }>({
     queryKey: ['sales', monthStart.toISOString(), monthEnd.toISOString()],
     queryFn: async () => {
       const res = await fetch(
@@ -64,6 +76,10 @@ export function ExpenseSalesTracker() {
     },
     {} as Record<string, number>
   );
+
+  const refreshFinance = () => {
+    void invalidateFinanceQueries(queryClient);
+  };
 
   return (
     <div className='space-y-6'>
@@ -133,7 +149,7 @@ export function ExpenseSalesTracker() {
           onClose={() => setShowExpenseForm(false)}
           onSuccess={() => {
             setShowExpenseForm(false);
-            queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            refreshFinance();
           }}
         />
       )}
@@ -143,7 +159,7 @@ export function ExpenseSalesTracker() {
           onClose={() => setShowSaleForm(false)}
           onSuccess={() => {
             setShowSaleForm(false);
-            queryClient.invalidateQueries({ queryKey: ['sales'] });
+            refreshFinance();
           }}
         />
       )}
@@ -156,11 +172,22 @@ export function ExpenseSalesTracker() {
 
         <TabsContent value='expenses' className='space-y-4'>
           {expensesLoading ? (
-            <div className='py-8 text-center'>Loading expenses...</div>
+            <div className='text-muted-foreground py-8 text-center text-sm'>
+              Loading expenses...
+            </div>
+          ) : expensesError ? (
+            <Card>
+              <CardContent className='py-8'>
+                <EmptyError onRetry={() => refetchExpenses()} />
+              </CardContent>
+            </Card>
           ) : expenses.length === 0 ? (
             <Card>
-              <CardContent className='py-12 text-center'>
-                <p className='text-muted-foreground'>No expenses recorded this month</p>
+              <CardContent className='py-8'>
+                <EmptyFinanceRecords onAdd={() => setShowExpenseForm(true)} />
+                <p className='text-muted-foreground mt-2 text-center text-sm'>
+                  No expenses recorded this month yet.
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -202,11 +229,20 @@ export function ExpenseSalesTracker() {
 
         <TabsContent value='sales' className='space-y-4'>
           {salesLoading ? (
-            <div className='py-8 text-center'>Loading sales...</div>
+            <div className='text-muted-foreground py-8 text-center text-sm'>Loading sales...</div>
+          ) : salesError ? (
+            <Card>
+              <CardContent className='py-8'>
+                <EmptyError onRetry={() => refetchSales()} />
+              </CardContent>
+            </Card>
           ) : sales.length === 0 ? (
             <Card>
-              <CardContent className='py-12 text-center'>
-                <p className='text-muted-foreground'>No sales recorded this month</p>
+              <CardContent className='py-8'>
+                <EmptyFinanceRecords onAdd={() => setShowSaleForm(true)} />
+                <p className='text-muted-foreground mt-2 text-center text-sm'>
+                  No sales recorded this month yet.
+                </p>
               </CardContent>
             </Card>
           ) : (

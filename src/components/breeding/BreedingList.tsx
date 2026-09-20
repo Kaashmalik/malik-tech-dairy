@@ -32,6 +32,9 @@ import type { BreedingRecord, Animal } from '@/types';
 import { BREEDING_STATUSES } from '@/lib/breeding-constants';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { EmptyBreedingRecords, EmptyAnimals, EmptyError } from '@/components/ui/empty-state';
+import { invalidateBreedingQueries } from '@/lib/query/farm-cache';
 
 interface EnhancedBreedingRecord extends BreedingRecord {
   daysRemaining?: number;
@@ -62,6 +65,7 @@ const itemVariants = {
 };
 
 export function BreedingList() {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Partial<BreedingRecord> | null>(null);
   const queryClient = useQueryClient();
@@ -70,6 +74,7 @@ export function BreedingList() {
     data: breedingData,
     isLoading: breedingLoading,
     error: breedingError,
+    refetch: refetchBreeding,
   } = useQuery<{
     data: EnhancedBreedingRecord[];
   }>({
@@ -100,12 +105,13 @@ export function BreedingList() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['breeding-records'] });
+      void invalidateBreedingQueries(queryClient);
     },
   });
 
   const records = breedingData?.data || [];
   const animals = animalsData?.animals || [];
+  const femaleAnimals = animals.filter(a => a.gender === 'female' && a.status === 'active');
 
   const getAnimalName = (id: string) => {
     const animal = animals.find(a => a.id === id);
@@ -142,7 +148,7 @@ export function BreedingList() {
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditingRecord(null);
-    queryClient.invalidateQueries({ queryKey: ['breeding-records'] });
+    void invalidateBreedingQueries(queryClient);
   };
 
   // Summary stats
@@ -209,10 +215,9 @@ export function BreedingList() {
 
   if (breedingError) {
     return (
-      <Card className='border-red-200 dark:border-red-800'>
-        <CardContent className='pt-6 text-center text-red-600'>
-          <AlertCircle className='mx-auto mb-4 h-12 w-12' />
-          <p>Failed to load breeding records</p>
+      <Card>
+        <CardContent className='py-8'>
+          <EmptyError onRetry={() => refetchBreeding()} />
         </CardContent>
       </Card>
     );
@@ -365,14 +370,16 @@ export function BreedingList() {
             <CardDescription>All insemination and pregnancy records</CardDescription>
           </CardHeader>
           <CardContent>
-            {records.length === 0 ? (
-              <div className='py-12 text-center'>
-                <Heart className='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
-                <p className='text-muted-foreground'>No breeding records yet</p>
-                <Button variant='outline' className='mt-4' onClick={() => setShowForm(true)}>
-                  <Plus className='mr-2 h-4 w-4' />
-                  Record First Insemination
-                </Button>
+            {femaleAnimals.length === 0 ? (
+              <div className='py-8'>
+                <EmptyAnimals onAdd={() => router.push('/animals/new')} />
+                <p className='text-muted-foreground mt-2 text-center text-sm'>
+                  Add an active female animal before recording breeding.
+                </p>
+              </div>
+            ) : records.length === 0 ? (
+              <div className='py-8'>
+                <EmptyBreedingRecords onAdd={() => setShowForm(true)} />
               </div>
             ) : (
               <div className='overflow-x-auto'>

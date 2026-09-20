@@ -1,6 +1,9 @@
 import {
   invalidateAnimalQueries,
   invalidateMilkQueries,
+  invalidateHealthQueries,
+  invalidateBreedingQueries,
+  invalidateFinanceQueries,
   farmQueryKeys,
 } from '@/lib/query/farm-cache';
 
@@ -36,6 +39,54 @@ describe('farm-cache invalidation helpers', () => {
       [...farmQueryKeys.milkLogs],
       [...farmQueryKeys.milkSummary],
       [...farmQueryKeys.milk],
+      [...farmQueryKeys.dashboardStats],
+    ]);
+  });
+
+  it('invalidates health records and dashboard', async () => {
+    const calls: unknown[][] = [];
+    const queryClient = {
+      invalidateQueries: jest.fn(async ({ queryKey }: { queryKey: readonly unknown[] }) => {
+        calls.push([...queryKey]);
+      }),
+    };
+
+    await invalidateHealthQueries(queryClient);
+
+    expect(calls).toEqual([[...farmQueryKeys.healthRecords], [...farmQueryKeys.dashboardStats]]);
+  });
+
+  it('invalidates breeding, pregnancy, semen, and dashboard', async () => {
+    const calls: unknown[][] = [];
+    const queryClient = {
+      invalidateQueries: jest.fn(async ({ queryKey }: { queryKey: readonly unknown[] }) => {
+        calls.push([...queryKey]);
+      }),
+    };
+
+    await invalidateBreedingQueries(queryClient);
+
+    expect(calls).toEqual([
+      [...farmQueryKeys.breedingRecords],
+      [...farmQueryKeys.pregnantAnimals],
+      [...farmQueryKeys.semenInventory],
+      [...farmQueryKeys.dashboardStats],
+    ]);
+  });
+
+  it('invalidates expenses, sales, and dashboard', async () => {
+    const calls: unknown[][] = [];
+    const queryClient = {
+      invalidateQueries: jest.fn(async ({ queryKey }: { queryKey: readonly unknown[] }) => {
+        calls.push([...queryKey]);
+      }),
+    };
+
+    await invalidateFinanceQueries(queryClient);
+
+    expect(calls).toEqual([
+      [...farmQueryKeys.expenses],
+      [...farmQueryKeys.sales],
       [...farmQueryKeys.dashboardStats],
     ]);
   });

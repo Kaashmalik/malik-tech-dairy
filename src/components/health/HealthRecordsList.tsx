@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,17 +11,20 @@ import Link from 'next/link';
 import { HealthRecordForm } from './HealthRecordForm';
 import { useState } from 'react';
 import type { HealthRecord, Animal } from '@/types';
+import { EmptyHealthRecords, EmptyAnimals, EmptyError } from '@/components/ui/empty-state';
+import { invalidateHealthQueries } from '@/lib/query/farm-cache';
 
 interface HealthRecordsListProps {
   animalId?: string;
 }
 
 export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<HealthRecord | null>(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery<{ records: HealthRecord[] }>({
+  const { data, isLoading, isError, refetch } = useQuery<{ records: HealthRecord[] }>({
     queryKey: ['health-records', animalId],
     queryFn: async () => {
       const url = animalId ? `/api/health/records?animalId=${animalId}` : '/api/health/records';
@@ -30,7 +34,7 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
     },
   });
 
-  const { data: animals } = useQuery<{ animals: Animal[] }>({
+  const { data: animalsData } = useQuery<{ animals: Animal[] }>({
     queryKey: ['animals'],
     queryFn: async () => {
       const res = await fetch('/api/animals');
@@ -38,7 +42,7 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
       const response = await res.json();
       return response.data;
     },
-    enabled: !animalId, // Only fetch if we need to show animal names
+    enabled: !animalId,
   });
 
   const deleteMutation = useMutation({
@@ -49,7 +53,7 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
       if (!res.ok) throw new Error('Failed to delete record');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['health-records'] });
+      void invalidateHealthQueries(queryClient);
     },
   });
 
@@ -68,17 +72,33 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
     }
   };
 
+  const animalList = animalsData?.animals || [];
+
   const getAnimalName = (id: string) => {
-    if (!animals || !Array.isArray(animals)) return id;
-    const animal = animals.find(a => a.id === id);
+    const animal = animalList.find(a => a.id === id);
     return animal ? `${animal.name || 'Unnamed'} (${animal.tag})` : id;
   };
 
   if (isLoading) {
-    return <div className='py-8 text-center'>Loading health records...</div>;
+    return (
+      <div className='text-muted-foreground py-8 text-center text-sm'>
+        Loading health records...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardContent className='py-8'>
+          <EmptyError onRetry={() => refetch()} />
+        </CardContent>
+      </Card>
+    );
   }
 
   const records = data?.records || [];
+  const hasAnimals = Boolean(animalId) || animalList.length > 0;
 
   return (
     <div className='space-y-4'>
@@ -89,7 +109,7 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
             Track vaccinations, treatments, checkups, and diseases
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => setShowForm(true)} disabled={!hasAnimals}>
           <Plus className='mr-2 h-4 w-4' />
           Add Record
         </Button>
@@ -106,20 +126,24 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
           onSuccess={() => {
             setShowForm(false);
             setEditingRecord(null);
-            queryClient.invalidateQueries({ queryKey: ['health-records'] });
+            void invalidateHealthQueries(queryClient);
           }}
         />
       )}
 
-      {records.length === 0 ? (
+      {!hasAnimals ? (
         <Card>
-          <CardContent className='py-12 text-center'>
-            <AlertCircle className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-            <p className='text-muted-foreground'>No health records yet</p>
-            <Button variant='outline' className='mt-4' onClick={() => setShowForm(true)}>
-              <Plus className='mr-2 h-4 w-4' />
-              Add First Record
-            </Button>
+          <CardContent className='py-8'>
+            <EmptyAnimals onAdd={() => router.push('/animals/new')} />
+            <p className='text-muted-foreground mt-2 text-center text-sm'>
+              Add an animal before recording vaccinations or treatments.
+            </p>
+          </CardContent>
+        </Card>
+      ) : records.length === 0 ? (
+        <Card>
+          <CardContent className='py-8'>
+            <EmptyHealthRecords onAdd={() => setShowForm(true)} />
           </CardContent>
         </Card>
       ) : (
