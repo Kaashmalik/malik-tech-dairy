@@ -1,8 +1,5 @@
-import { getDrizzle } from '@/lib/supabase/server';
-import { milkLogs, animals } from '@/db/schema';
-import { eq, and, gte, lte, desc, sql, count } from 'drizzle-orm';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { ServiceContext, PaginatedResult } from '../types';
-import { logAuditEvent } from '@/lib/audit';
 
 export interface MilkLogFilters {
   date?: string;
@@ -34,79 +31,74 @@ export interface BulkMilkEntryDTO {
   }>;
 }
 
+type MilkRow = {
+  id: string;
+  tenant_id: string;
+  animal_id: string;
+  date: string;
+  session: string;
+  quantity: number;
+  quality: number | null;
+  fat: number | null;
+  notes: string | null;
+  created_at: string;
+  animals?: { tag?: string; name?: string; species?: string } | null;
+};
+
 export class MilkService {
   /**
-   * List milk logs with tenant isolation, date range, and pagination
+   * List milk logs with tenant isolation, date range, and pagination (Supabase REST)
    */
-  static async listLogs(ctx: ServiceContext, filters: MilkLogFilters = {}): Promise<PaginatedResult<any>> {
+  static async listLogs(
+    ctx: ServiceContext,
+    filters: MilkLogFilters = {}
+  ): Promise<PaginatedResult<any>> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
-    const offset = (page - 1) * limit;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
-    const db = getDrizzle();
-
-    const conditions = [eq(milkLogs.tenantId, ctx.tenantId)];
+    const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (supabase.from('milk_logs') as any)
+      .select('*, animals(tag, name, species)', { count: 'exact' })
+      .eq('tenant_id', ctx.tenantId)
+      .order('date', { ascending: false })
+      .order('session', { ascending: false })
+      .range(from, to);
 
     if (filters.date) {
-      conditions.push(eq(milkLogs.date, filters.date));
+      query = query.eq('date', filters.date);
     } else if (filters.startDate && filters.endDate) {
-      conditions.push(and(gte(milkLogs.date, filters.startDate), lte(milkLogs.date, filters.endDate))!);
+      query = query.gte('date', filters.startDate).lte('date', filters.endDate);
     }
     if (filters.animalId) {
-      conditions.push(eq(milkLogs.animalId, filters.animalId));
+      query = query.eq('animal_id', filters.animalId);
     }
     if (filters.session) {
-      conditions.push(eq(milkLogs.session, filters.session));
+      query = query.eq('session', filters.session);
     }
 
-    const whereClause = and(...conditions);
+    const { data, error, count } = await query;
+    if (error) {
+      throw new Error(`Failed to list milk logs: ${error.message}`);
+    }
 
-    // Get total count
-    const [totalCount] = await db
-      .select({ count: count() })
-      .from(milkLogs)
-      .where(whereClause);
-
-    const total = Number(totalCount?.count || 0);
-
-    // Join with animals table to get tag and name
-    const rows = await db
-      .select({
-        id: milkLogs.id,
-        tenantId: milkLogs.tenantId,
-        animalId: milkLogs.animalId,
-        date: milkLogs.date,
-        session: milkLogs.session,
-        quantity: milkLogs.quantity,
-        quality: milkLogs.quality,
-        fat: milkLogs.fat,
-        notes: milkLogs.notes,
-        createdAt: milkLogs.createdAt,
-        animalTag: animals.tag,
-        animalName: animals.name,
-        animalSpecies: animals.species,
-      })
-      .from(milkLogs)
-      .leftJoin(animals, eq(milkLogs.animalId, animals.id))
-      .where(whereClause)
-      .orderBy(desc(milkLogs.date), desc(milkLogs.session))
-      .limit(limit)
-      .offset(offset);
-
-    const items = rows.map(r => ({
+    const total = count || 0;
+    const items = ((data || []) as MilkRow[]).map(r => ({
       id: r.id,
-      tenantId: r.tenantId,
-      animalId: r.animalId,
-      animalTag: r.animalTag || 'Unknown',
-      animalName: r.animalName || '',
-      animalSpecies: r.animalSpecies || 'cow',
+      tenantId: r.tenant_id,
+      animalId: r.animal_id,
+      animalTag: r.animals?.tag || 'Unknown',
+      animalName: r.animals?.name || '',
+      animalSpecies: r.animals?.species || 'cow',
       date: r.date,
       session: r.session,
-      quantity: r.quantity, // Liters
+      quantity: r.quantity,
       quality: r.quality,
-      fat: r.fat ? r.fat / 100 : undefined,
+      fat: r.fat != null ? r.fat / 100 : undefined,
       notes: r.notes,
-      createdAt: r.createdAt,
+      createdAt: r.created_at,
     }));
 
     return {
@@ -115,7 +107,7 @@ export class MilkService {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit) || 0,
       },
     };
   }
@@ -124,60 +116,66 @@ export class MilkService {
    * Log milk for a single animal with duplicate detection and validation
    */
   static async logMilk(ctx: ServiceContext, data: CreateMilkLogDTO) {
-    const db = getDrizzle();
+    const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
 
-    // Verify animal exists and belongs to tenant
-    const animalRows = await db
-      .select({ id: animals.id, status: animals.status, tag: animals.tag })
-      .from(animals)
-      .where(and(eq(animals.id, data.animalId), eq(animals.tenantId, ctx.tenantId)))
-      .limit(1);
+    const { data: animal, error: animalError } = await sb
+      .from('animals')
+      .select('id, status, tag')
+      .eq('id', data.animalId)
+      .eq('tenant_id', ctx.tenantId)
+      .maybeSingle();
 
-    if (animalRows.length === 0) {
+    if (animalError) {
+      throw new Error(`Failed to verify animal: ${animalError.message}`);
+    }
+    if (!animal) {
       throw new Error('NOT_FOUND: Animal not found in your farm.');
     }
-
-    if (['deceased', 'sold'].includes(animalRows[0].status)) {
-      throw new Error(`INVALID_STATE: Cannot log milk for animal with status '${animalRows[0].status}'.`);
+    if (['deceased', 'sold'].includes(animal.status)) {
+      throw new Error(`INVALID_STATE: Cannot log milk for animal with status '${animal.status}'.`);
     }
 
-    // Check duplicate entry
-    const existing = await db
-      .select({ id: milkLogs.id })
-      .from(milkLogs)
-      .where(
-        and(
-          eq(milkLogs.tenantId, ctx.tenantId),
-          eq(milkLogs.animalId, data.animalId),
-          eq(milkLogs.date, data.date),
-          eq(milkLogs.session, data.session)
-        )
-      )
-      .limit(1);
+    const { data: existing } = await sb
+      .from('milk_logs')
+      .select('id')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('animal_id', data.animalId)
+      .eq('date', data.date)
+      .eq('session', data.session)
+      .maybeSingle();
 
-    if (existing.length > 0) {
-      throw new Error('DUPLICATE_ENTRY: Milk log already recorded for this animal, date, and session.');
+    if (existing?.id) {
+      throw new Error(
+        'DUPLICATE_ENTRY: Milk log already recorded for this animal, date, and session.'
+      );
     }
 
     const logId = `milk_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const fatVal = data.fat ? Math.round(data.fat * 100) : null;
 
-    const [created] = await db
-      .insert(milkLogs)
-      .values({
+    const { data: created, error: insertError } = await sb
+      .from('milk_logs')
+      .insert({
         id: logId,
-        tenantId: ctx.tenantId,
-        animalId: data.animalId,
+        tenant_id: ctx.tenantId,
+        animal_id: data.animalId,
         date: data.date,
         session: data.session,
         quantity: Math.round(data.quantity * 10) / 10,
         quality: data.quality || null,
         fat: fatVal,
         notes: data.notes?.trim() || null,
-        recordedBy: ctx.userId,
-        createdAt: new Date(),
+        recorded_by: ctx.userId,
+        created_at: new Date().toISOString(),
       })
-      .returning();
+      .select()
+      .single();
+
+    if (insertError) {
+      throw new Error(`Failed to record milk: ${insertError.message}`);
+    }
 
     return created;
   }
@@ -224,42 +222,37 @@ export class MilkService {
     prevDateObj.setDate(prevDateObj.getDate() - 1);
     const prevDate = prevDateObj.toISOString().split('T')[0];
 
-    const db = getDrizzle();
+    const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
 
-    // Target day logs
-    const todayLogs = await db
-      .select()
-      .from(milkLogs)
-      .where(and(eq(milkLogs.tenantId, ctx.tenantId), eq(milkLogs.date, targetDate)));
+    const [{ data: todayLogs }, { data: yesterdayLogs }] = await Promise.all([
+      sb
+        .from('milk_logs')
+        .select('animal_id, session, quantity')
+        .eq('tenant_id', ctx.tenantId)
+        .eq('date', targetDate),
+      sb.from('milk_logs').select('quantity').eq('tenant_id', ctx.tenantId).eq('date', prevDate),
+    ]);
 
-    // Previous day logs for comparison
-    const yesterdayLogs = await db
-      .select()
-      .from(milkLogs)
-      .where(and(eq(milkLogs.tenantId, ctx.tenantId), eq(milkLogs.date, prevDate)));
+    const today = (todayLogs || []) as { animal_id: string; session: string; quantity: number }[];
+    const yesterday = (yesterdayLogs || []) as { quantity: number }[];
 
-    const morningTotal = todayLogs
+    const morningTotal = today
       .filter(l => l.session === 'morning')
       .reduce((sum, l) => sum + Number(l.quantity), 0);
 
-    const eveningTotal = todayLogs
+    const eveningTotal = today
       .filter(l => l.session === 'evening')
       .reduce((sum, l) => sum + Number(l.quantity), 0);
 
     const todayTotal = morningTotal + eveningTotal;
-
-    const yesterdayTotal = yesterdayLogs.reduce((sum, l) => sum + Number(l.quantity), 0);
-
-    const activeMilkingAnimals = new Set(todayLogs.map(l => l.animalId)).size;
-
-    const averagePerAnimal = activeMilkingAnimals > 0
-      ? Math.round((todayTotal / activeMilkingAnimals) * 10) / 10
-      : 0;
-
+    const yesterdayTotal = yesterday.reduce((sum, l) => sum + Number(l.quantity), 0);
+    const activeMilkingAnimals = new Set(today.map(l => l.animal_id)).size;
+    const averagePerAnimal =
+      activeMilkingAnimals > 0 ? Math.round((todayTotal / activeMilkingAnimals) * 10) / 10 : 0;
     const difference = todayTotal - yesterdayTotal;
-    const percentChange = yesterdayTotal > 0
-      ? Math.round((difference / yesterdayTotal) * 100)
-      : 0;
+    const percentChange = yesterdayTotal > 0 ? Math.round((difference / yesterdayTotal) * 100) : 0;
 
     return {
       date: targetDate,
@@ -278,25 +271,25 @@ export class MilkService {
    * Trend analytics for 7, 30, or 90 days
    */
   static async getProductionTrends(ctx: ServiceContext, days = 30) {
-    const db = getDrizzle();
     const startDateObj = new Date();
     startDateObj.setDate(startDateObj.getDate() - days);
     const startDate = startDateObj.toISOString().split('T')[0];
 
-    const logs = await db
-      .select({
-        date: milkLogs.date,
-        session: milkLogs.session,
-        quantity: milkLogs.quantity,
-      })
-      .from(milkLogs)
-      .where(and(eq(milkLogs.tenantId, ctx.tenantId), gte(milkLogs.date, startDate)))
-      .orderBy(milkLogs.date);
+    const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: logs, error } = await (supabase.from('milk_logs') as any)
+      .select('date, session, quantity')
+      .eq('tenant_id', ctx.tenantId)
+      .gte('date', startDate)
+      .order('date', { ascending: true });
 
-    // Group by date
+    if (error) {
+      throw new Error(`Failed to load milk trends: ${error.message}`);
+    }
+
     const dailyMap = new Map<string, { morning: number; evening: number; total: number }>();
 
-    for (const log of logs) {
+    for (const log of (logs || []) as { date: string; session: string; quantity: number }[]) {
       if (!dailyMap.has(log.date)) {
         dailyMap.set(log.date, { morning: 0, evening: 0, total: 0 });
       }
@@ -310,13 +303,11 @@ export class MilkService {
       entry.total += qty;
     }
 
-    const trends = Array.from(dailyMap.entries()).map(([date, data]) => ({
+    return Array.from(dailyMap.entries()).map(([date, data]) => ({
       date,
       morning: Math.round(data.morning * 10) / 10,
       evening: Math.round(data.evening * 10) / 10,
       total: Math.round(data.total * 10) / 10,
     }));
-
-    return trends;
   }
 }
