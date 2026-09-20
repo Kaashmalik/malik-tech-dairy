@@ -74,7 +74,8 @@ export function SoftwareApplicationSchema() {
       worstRating: '1',
     },
     description: siteConfig.description,
-    screenshot: `${siteConfig.url}/screenshots/dashboard.png`,
+    screenshot: `${siteConfig.url}/opengraph-image.png`,
+    image: `${siteConfig.url}/opengraph-image.png`,
     featureList: [
       'Milk Production Tracking',
       'Cattle Health Management',

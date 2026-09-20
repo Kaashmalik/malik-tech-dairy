@@ -6,6 +6,7 @@ import { Toaster } from 'sonner';
 import { PWARegister } from '@/components/PWARegister';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { siteConfig, allKeywords, alternateLanguages } from '@/lib/seo/config';
+import { AllSchemas } from '@/components/seo/JsonLd';
 import './globals.css';
 
 const geistSans = Geist({
@@ -194,6 +195,9 @@ export default async function RootLayout({
           <meta name='distribution' content='Global' />
           <meta name='rating' content='General' />
           <meta name='revisit-after' content='7 days' />
+
+          {/* JSON-LD Structured Data for Google Knowledge Graph & Rich Snippets */}
+          <AllSchemas />
         </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} ${isRTL ? 'font-urdu' : ''} antialiased`}

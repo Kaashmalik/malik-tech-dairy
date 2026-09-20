@@ -41,8 +41,12 @@ export const siteConfig = {
 
   // Verification Tags (configured via environment variables in production)
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
-    bing: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || '',
+    google:
+      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+      process.env.GOOGLE_SITE_VERIFICATION ||
+      '',
+    bing:
+      process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || process.env.BING_SITE_VERIFICATION || '',
     yandex: process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION || '',
   },
 } as const;

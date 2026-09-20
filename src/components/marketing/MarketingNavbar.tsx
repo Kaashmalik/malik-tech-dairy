@@ -28,22 +28,34 @@ export function MarketingNavbar() {
         {/* Desktop Nav Links */}
         <nav className='hidden items-center gap-6 md:flex'>
           <Link
-            href='/#features'
+            href='/features'
             className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
           >
             Features
           </Link>
           <Link
-            href='/#pricing'
+            href='/pricing'
             className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
           >
             Pricing
           </Link>
           <Link
-            href='/#faq'
+            href='/about'
+            className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
+          >
+            About
+          </Link>
+          <Link
+            href='/faq'
             className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
           >
             FAQ
+          </Link>
+          <Link
+            href='/contact'
+            className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
+          >
+            Contact
           </Link>
           <Link
             href='/super-admin'
@@ -87,25 +99,39 @@ export function MarketingNavbar() {
         <div className='border-b border-slate-200 bg-white px-4 py-4 md:hidden dark:border-slate-800 dark:bg-slate-900'>
           <nav className='flex flex-col gap-3'>
             <Link
-              href='/#features'
+              href='/features'
               onClick={() => setIsOpen(false)}
               className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
             >
               Features
             </Link>
             <Link
-              href='/#pricing'
+              href='/pricing'
               onClick={() => setIsOpen(false)}
               className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
             >
               Pricing
             </Link>
             <Link
-              href='/#faq'
+              href='/about'
+              onClick={() => setIsOpen(false)}
+              className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
+            >
+              About Us
+            </Link>
+            <Link
+              href='/faq'
               onClick={() => setIsOpen(false)}
               className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
             >
               FAQ
+            </Link>
+            <Link
+              href='/contact'
+              onClick={() => setIsOpen(false)}
+              className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
+            >
+              Contact Us
             </Link>
             <Link
               href='/super-admin'

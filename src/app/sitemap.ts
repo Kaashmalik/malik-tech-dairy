@@ -1,6 +1,12 @@
 import { MetadataRoute } from 'next';
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site';
+const productionDomain = 'https://dairy.mtkcodex.site';
+const baseUrl =
+  process.env.NEXT_PUBLIC_APP_URL &&
+  !process.env.NEXT_PUBLIC_APP_URL.includes('localhost') &&
+  !process.env.NEXT_PUBLIC_APP_URL.includes('127.0.0.1')
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : productionDomain;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages with SEO priorities

@@ -23,7 +23,7 @@ export function MarketingFooter() {
           {/* Col 2 */}
           <div>
             <h4 className='text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white'>
-              Product
+              Platform
             </h4>
             <ul className='mt-3 space-y-2 text-sm'>
               <li>
@@ -32,18 +32,23 @@ export function MarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href='/#pricing' className='transition-colors hover:text-emerald-600'>
-                  Pricing Plans
+                <Link href='/pricing' className='transition-colors hover:text-emerald-600'>
+                  Pricing & Subscriptions
                 </Link>
               </li>
               <li>
-                <Link href='/#faq' className='transition-colors hover:text-emerald-600'>
+                <Link href='/about' className='transition-colors hover:text-emerald-600'>
+                  About MTK Dairy
+                </Link>
+              </li>
+              <li>
+                <Link href='/faq' className='transition-colors hover:text-emerald-600'>
                   Frequently Asked Questions
                 </Link>
               </li>
               <li>
                 <Link href='/apply' className='transition-colors hover:text-emerald-600'>
-                  Register Your Farm
+                  Register Your Farm (Free)
                 </Link>
               </li>
             </ul>
@@ -52,7 +57,7 @@ export function MarketingFooter() {
           {/* Col 3 */}
           <div>
             <h4 className='text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white'>
-              Portals & Access
+              Portals & Legal
             </h4>
             <ul className='mt-3 space-y-2 text-sm'>
               <li>
@@ -74,6 +79,16 @@ export function MarketingFooter() {
                   Super Admin Portal
                 </Link>
               </li>
+              <li>
+                <Link href='/privacy-policy' className='transition-colors hover:text-emerald-600'>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href='/terms-of-service' className='transition-colors hover:text-emerald-600'>
+                  Terms of Service
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -83,6 +98,11 @@ export function MarketingFooter() {
               Contact & Support
             </h4>
             <ul className='mt-3 space-y-2 text-sm'>
+              <li>
+                <Link href='/contact' className='font-semibold text-emerald-600 hover:underline'>
+                  Contact & Inquiry Form →
+                </Link>
+              </li>
               <li className='flex items-center gap-2'>
                 <Mail className='h-4 w-4 text-emerald-600' />
                 <a href='mailto:mtkdairy@gmail.com' className='hover:underline'>
@@ -91,15 +111,26 @@ export function MarketingFooter() {
               </li>
               <li className='flex items-center gap-2'>
                 <MapPin className='h-4 w-4 text-emerald-600' />
-                <span>Punjab, Pakistan</span>
+                <span>Lahore, Punjab, Pakistan</span>
               </li>
-              <li className='text-xs text-slate-400'>24/7 Monitoring & Cloud Backup</li>
+              <li className='text-xs text-slate-400'>WhatsApp Support: +92 302 0718182</li>
             </ul>
           </div>
         </div>
 
-        <div className='mt-8 border-t border-slate-200/80 pt-8 text-center text-xs text-slate-500 dark:border-slate-800/80'>
-          © {new Date().getFullYear()} MTK Dairy / Malik Tech Dairy. All rights reserved.
+        <div className='mt-8 flex flex-col items-center justify-between gap-4 border-t border-slate-200/80 pt-8 text-xs text-slate-500 sm:flex-row dark:border-slate-800/80'>
+          <div>© {new Date().getFullYear()} MTK Dairy / MalikTech Dairy. All rights reserved.</div>
+          <div className='flex gap-6'>
+            <Link href='/privacy-policy' className='hover:underline'>
+              Privacy Policy
+            </Link>
+            <Link href='/terms-of-service' className='hover:underline'>
+              Terms of Service
+            </Link>
+            <Link href='/sitemap.xml' className='hover:underline'>
+              Sitemap
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

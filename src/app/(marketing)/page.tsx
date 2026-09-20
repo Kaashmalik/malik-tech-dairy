@@ -140,7 +140,7 @@ export default function HomePage() {
                     <ArrowRight className='ml-2 inline h-5 w-5' />
                   </button>
                 </Link>
-                <Link href='#features'>
+                <Link href='/features'>
                   <button className='w-full rounded-lg border-2 border-gray-300 px-8 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 sm:w-auto dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'>
                     View Features
                   </button>
@@ -344,6 +344,16 @@ export default function HomePage() {
               </article>
             ))}
           </div>
+
+          <div className='mt-12 text-center'>
+            <Link
+              href='/pricing'
+              className='inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 hover:text-emerald-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:bg-slate-800'
+            >
+              <span>View Full Feature Comparison & Enterprise Plans</span>
+              <ArrowRight className='h-4 w-4' />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -374,6 +384,16 @@ export default function HomePage() {
                 <p className='mt-4 text-gray-600 dark:text-gray-300'>{faq.answer}</p>
               </details>
             ))}
+          </div>
+
+          <div className='mt-12 text-center'>
+            <Link
+              href='/faq'
+              className='inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+            >
+              <span>Have More Questions? Read Complete FAQ Knowledge Base</span>
+              <ArrowRight className='h-4 w-4' />
+            </Link>
           </div>
         </div>
       </section>

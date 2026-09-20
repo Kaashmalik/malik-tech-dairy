@@ -7,18 +7,29 @@ import type { NextRequest } from 'next/server';
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
+  '/',
+  '/features(.*)',
+  '/pricing(.*)',
+  '/about(.*)',
+  '/contact(.*)',
+  '/faq(.*)',
+  '/privacy-policy(.*)',
+  '/terms-of-service(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/llms.txt',
+  '/llms-full.txt',
+  '/google(.*)',
+  '/.well-known(.*)',
+  '/api/seo(.*)',
   '/api/webhooks(.*)',
   '/api/system/health(.*)',
   '/api/cron(.*)',
   '/api/migration/schedule(.*)',
   '/api/payments/callback(.*)',
   '/api/weather/sync(.*)',
-  '/',
-  '/features(.*)',
-  '/pricing',
-  '/about',
 ]);
 
 // Routes that require authentication but NOT organization
@@ -46,6 +57,15 @@ const isOrganizationRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // Google Search Console Instant HTML File Verification
+  if (req.nextUrl.pathname.startsWith('/google') && req.nextUrl.pathname.endsWith('.html')) {
+    const filename = req.nextUrl.pathname.replace('/', '');
+    return new NextResponse(`google-site-verification: ${filename}`, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+  }
+
   // Handle API CORS preflight OPTIONS requests before auth checks
   if (req.nextUrl.pathname.startsWith('/api') && req.method === 'OPTIONS') {
     const preflight = handleCorsPreflight(req);
@@ -154,7 +174,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|manifest\\.json|sw\\.js|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|json)).*)',
+    '/((?!_next|manifest\\.json|sw\\.js|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|json|xml|txt)).*)',
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
