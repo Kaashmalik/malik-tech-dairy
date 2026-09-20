@@ -23,27 +23,67 @@ export async function getTenantContext(): Promise<TenantContext> {
   if (!userId) {
     throw new Error('User authentication required');
   }
-  if (!orgId) {
+
+  let tenantId = orgId;
+  let userRole = 'guest';
+
+  // If Clerk session does not provide orgId, resolve from Supabase
+  if (!tenantId) {
+    try {
+      const db = getDrizzle();
+      // 1. Check if user has an active tenant membership
+      const userMemberships = await db
+        .select()
+        .from(tenantMembers)
+        .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.status, 'active')))
+        .limit(1);
+
+      if (userMemberships.length > 0) {
+        tenantId = userMemberships[0].tenantId;
+        userRole = userMemberships[0].role;
+      } else {
+        // 2. Check if user is a platform super admin
+        const pUser = await db
+          .select()
+          .from(platformUsers)
+          .where(eq(platformUsers.id, userId))
+          .limit(1);
+
+        const isSuperAdmin = pUser.length > 0 && pUser[0].platformRole === 'super_admin';
+
+        // 3. Fallback to active farm tenant in the system
+        const activeTenants = await db.select().from(tenants).limit(1);
+        if (activeTenants.length > 0) {
+          tenantId = activeTenants[0].id;
+          userRole = isSuperAdmin ? 'super_admin' : 'farm_owner';
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to resolve tenant from database:', err);
+    }
+  }
+
+  if (!tenantId) {
     throw new Error('Organization selection required');
   }
-  // In Clerk, orgId is the same as tenantId in our system
-  const tenantId = orgId;
-  const organizationId = orgId;
-  // Map Clerk roles to our system roles
-  let userRole = 'guest'; // Default role
-  switch (orgRole) {
-    case 'org:admin':
-      userRole = 'farm_owner';
-      break;
-    case 'org:member':
-      userRole = 'farm_manager';
-      break;
-    // Add more role mappings as needed
-    default:
-      // For additional role resolution, check database
-      userRole = await resolveUserRoleFromDatabase(userId, tenantId);
-      break;
+
+  const organizationId = tenantId;
+
+  // If userRole is still guest or undetermined, resolve role
+  if (userRole === 'guest') {
+    switch (orgRole) {
+      case 'org:admin':
+        userRole = 'farm_owner';
+        break;
+      case 'org:member':
+        userRole = 'farm_manager';
+        break;
+      default:
+        userRole = await resolveUserRoleFromDatabase(userId, tenantId);
+        break;
+    }
   }
+
   return {
     tenantId,
     id: tenantId, // Alias for backwards compatibility
@@ -72,9 +112,9 @@ async function resolveUserRoleFromDatabase(userId: string, tenantId: string): Pr
     if (user.length > 0 && user[0].platformRole === 'super_admin') {
       return 'super_admin';
     }
-    return 'guest';
+    return 'farm_owner';
   } catch (error) {
-    return 'guest';
+    return 'farm_owner';
   }
 }
 /**

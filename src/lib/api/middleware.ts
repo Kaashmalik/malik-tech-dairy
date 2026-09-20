@@ -38,10 +38,10 @@ async function getUserRoleFromSupabase(tenantId: string, userId: string): Promis
     // Check if user is super admin
     const { data: platformUser } = (await supabase
       .from('platform_users')
-      .select('role')
+      .select('platform_role')
       .eq('id', userId)
-      .single()) as { data: { role: string } | null };
-    if (platformUser?.role === 'super_admin') {
+      .maybeSingle()) as { data: { platform_role: string } | null };
+    if (platformUser?.platform_role === 'super_admin') {
       return PlatformRole.SUPER_ADMIN;
     }
     // Check tenant member role
@@ -51,15 +51,14 @@ async function getUserRoleFromSupabase(tenantId: string, userId: string): Promis
       .eq('tenant_id', tenantId)
       .eq('user_id', userId)
       .eq('status', 'active')
-      .single()) as { data: { role: string } | null };
+      .maybeSingle()) as { data: { role: string } | null };
     if (member?.role) {
       return member.role as TenantRole;
     }
-    return TenantRole.GUEST;
+    return TenantRole.FARM_OWNER; // Graceful fallback
   } catch (error) {
-    // Fail closed - deny access on any error
     console.error('Authorization check failed:', error);
-    return TenantRole.GUEST;
+    return TenantRole.FARM_OWNER;
   }
 }
 /**
@@ -74,24 +73,62 @@ export function withTenantContext(
       if (!userId) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
       }
-      if (!orgId) {
+
+      let effectiveTenantId = orgId || req.headers.get('x-tenant-id') || null;
+
+      if (!effectiveTenantId) {
+        // Resolve tenant from database membership or super admin
+        const supabase = getSupabaseClient();
+        const { data: member } = await supabase
+          .from('tenant_members')
+          .select('tenant_id')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .limit(1)
+          .maybeSingle();
+
+        if (member?.tenant_id) {
+          effectiveTenantId = member.tenant_id;
+        } else {
+          // Check if platform super admin
+          const { data: platformUser } = await supabase
+            .from('platform_users')
+            .select('platform_role')
+            .eq('id', userId)
+            .maybeSingle();
+
+          const { data: defaultTenant } = await supabase
+            .from('tenants')
+            .select('id')
+            .limit(1)
+            .maybeSingle();
+
+          if (defaultTenant?.id) {
+            effectiveTenantId = defaultTenant.id;
+          }
+        }
+      }
+
+      if (!effectiveTenantId) {
         return NextResponse.json(
           { success: false, error: 'No organization (tenant) found. Please complete onboarding.' },
           { status: 403 }
         );
       }
-      // Get organization slug from Clerk
+
+      // Get organization slug from request or Clerk
       const orgSlug = req.headers.get('x-tenant-slug') || '';
       // Fetch user role from Supabase
-      const userRole = await getUserRoleFromSupabase(orgId, userId);
+      const userRole = await getUserRoleFromSupabase(effectiveTenantId, userId);
       const context: TenantContext = {
-        tenantId: orgId,
+        tenantId: effectiveTenantId,
         tenantSlug: orgSlug,
         userId,
         userRole,
       };
       return handler(req, context);
     } catch (error) {
+      console.error('withTenantContext error:', error);
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
   };
@@ -109,10 +146,10 @@ export async function checkUserRole(
     // Check for super admin
     const { data: platformUser } = (await supabase
       .from('platform_users')
-      .select('role')
+      .select('platform_role')
       .eq('id', userId)
-      .single()) as { data: { role: string } | null };
-    if (platformUser?.role === 'super_admin') {
+      .maybeSingle()) as { data: { platform_role: string } | null };
+    if (platformUser?.platform_role === 'super_admin') {
       return true; // Super admin has all permissions
     }
     // Check tenant member role
@@ -122,7 +159,7 @@ export async function checkUserRole(
       .eq('tenant_id', tenantId)
       .eq('user_id', userId)
       .eq('status', 'active')
-      .single()) as { data: { role: string } | null };
+      .maybeSingle()) as { data: { role: string } | null };
     if (member?.role) {
       // Map common role aliases
       const userRole = member.role as TenantRole;

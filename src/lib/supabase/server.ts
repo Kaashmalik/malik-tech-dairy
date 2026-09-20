@@ -15,7 +15,7 @@ let supabaseClient: SupabaseClient<Database> | null = null;
  * Resolve database URL with fallback for direct connection
  */
 function resolveDatabaseUrl(): string {
-  const envUrl = process.env.SUPABASE_DATABASE_URL;
+  const envUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
   if (!envUrl) {
     throw new Error('SUPABASE_DATABASE_URL is not set');
   }
@@ -50,9 +50,10 @@ export function getSupabasePool() {
 
     // Create connection pool with optimal settings
     connectionPool = postgres(connectionString, {
-      max: 20, // Maximum pool size
+      max: 15, // Maximum pool size
       idle_timeout: 20, // Close idle connections after 20s
       connect_timeout: 10, // Connection timeout
+      prepare: false, // Disable prepared statements for compatibility with transaction poolers
     });
   }
 
