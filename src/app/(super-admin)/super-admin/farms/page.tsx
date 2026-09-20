@@ -78,37 +78,11 @@ export default function FarmsPage() {
       if (data.success) {
         setFarms(data.data || []);
       } else {
-        // Mock data for demo
-        setFarms([
-          {
-            id: '1',
-            farmName: 'Green Valley Dairy',
-            slug: 'green-valley',
-            ownerName: 'Ahmad Khan',
-            email: 'ahmad@example.com',
-            plan: 'professional',
-            status: 'active',
-            animalCount: 45,
-            userCount: 3,
-            city: 'Lahore',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            farmName: 'Sunrise Farm',
-            slug: 'sunrise-farm',
-            ownerName: 'Sara Ali',
-            email: 'sara@example.com',
-            plan: 'free',
-            status: 'active',
-            animalCount: 5,
-            userCount: 1,
-            city: 'Karachi',
-            createdAt: new Date().toISOString(),
-          },
-        ]);
+        toast.error(data.error || 'Failed to load farms');
+        setFarms([]);
       }
     } catch (error) {
+      toast.error('Failed to load farms');
       setFarms([]);
     } finally {
       setLoading(false);

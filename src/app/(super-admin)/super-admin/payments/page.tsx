@@ -71,39 +71,59 @@ export default function PaymentsPage() {
       const response = await fetch('/api/admin/payments');
       const data = await response.json();
       if (data.success) {
-        setPayments(data.data || []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mapped = (data.data || []).map((p: any) => ({
+          id: p.id,
+          farmName: p.tenant?.farmName || p.farmName || 'Unknown Farm',
+          amount: p.amount,
+          currency: p.currency || 'PKR',
+          gateway: p.gateway,
+          status:
+            p.status === 'manual_verification'
+              ? 'pending'
+              : p.status === 'failed'
+                ? 'failed'
+                : p.status === 'completed'
+                  ? 'completed'
+                  : p.status === 'refunded'
+                    ? 'refunded'
+                    : 'pending',
+          plan: p.plan,
+          transactionId: p.metadata?.transactionId || p.transactionId,
+          createdAt: p.createdAt || p.created_at,
+          rawStatus: p.status,
+        }));
+        setPayments(mapped);
       } else {
-        // Mock data for demo
-        setPayments([
-          {
-            id: '1',
-            farmName: 'Green Valley Dairy',
-            amount: 499900,
-            currency: 'PKR',
-            gateway: 'jazzcash',
-            status: 'completed',
-            plan: 'professional',
-            transactionId: 'JC-2024-001234',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            farmName: 'Sunrise Farm',
-            amount: 1299900,
-            currency: 'PKR',
-            gateway: 'bank_transfer',
-            status: 'pending',
-            plan: 'farm',
-            createdAt: new Date().toISOString(),
-          },
-        ]);
+        toast.error(data.error || 'Failed to load payments');
+        setPayments([]);
       }
     } catch (error) {
+      toast.error('Failed to load payments');
       setPayments([]);
     } finally {
       setLoading(false);
     }
   }
+
+  async function handlePaymentAction(paymentId: string, action: 'approve' | 'reject') {
+    try {
+      const res = await fetch('/api/admin/payments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Failed to ${action} payment`);
+      }
+      toast.success(data.message || `Payment ${action}d`);
+      fetchPayments();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Operation failed');
+    }
+  }
+
   const totalRevenue = payments
     .filter(p => p.status === 'completed')
     .reduce((acc, p) => acc + p.amount, 0);
@@ -232,7 +252,10 @@ export default function PaymentsPage() {
               {filteredPayments.map(payment => {
                 const status = statusConfig[payment.status];
                 const StatusIcon = status.icon;
-                const gateway = gatewayConfig[payment.gateway];
+                const gateway = gatewayConfig[payment.gateway] || {
+                  label: payment.gateway || 'Other',
+                  color: 'bg-gray-100 text-gray-700',
+                };
                 return (
                   <div key={payment.id} className='space-y-3 p-4'>
                     <div className='flex items-start justify-between'>
@@ -252,9 +275,20 @@ export default function PaymentsPage() {
                           <DropdownMenuItem>
                             <Eye className='mr-2 h-4 w-4' /> View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className='mr-2 h-4 w-4' /> Download Receipt
-                          </DropdownMenuItem>
+                          {payment.status === 'pending' && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handlePaymentAction(payment.id, 'approve')}
+                              >
+                                <CheckCircle2 className='mr-2 h-4 w-4' /> Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handlePaymentAction(payment.id, 'reject')}
+                              >
+                                <XCircle className='mr-2 h-4 w-4' /> Reject
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -319,7 +353,10 @@ export default function PaymentsPage() {
                   {filteredPayments.map(payment => {
                     const status = statusConfig[payment.status];
                     const StatusIcon = status.icon;
-                    const gateway = gatewayConfig[payment.gateway];
+                    const gateway = gatewayConfig[payment.gateway] || {
+                      label: payment.gateway || 'Other',
+                      color: 'bg-gray-100 text-gray-700',
+                    };
                     return (
                       <tr key={payment.id} className='hover:bg-gray-50 dark:hover:bg-slate-700/30'>
                         <td className='px-6 py-4'>
@@ -361,9 +398,33 @@ export default function PaymentsPage() {
                           {format(new Date(payment.createdAt), 'MMM d, yyyy')}
                         </td>
                         <td className='px-6 py-4 text-right'>
-                          <Button variant='ghost' size='sm'>
-                            <Eye className='mr-1 h-4 w-4' /> View
-                          </Button>
+                          <div className='flex justify-end gap-1'>
+                            {payment.status === 'pending' && (
+                              <>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  className='text-emerald-600'
+                                  onClick={() => handlePaymentAction(payment.id, 'approve')}
+                                >
+                                  <CheckCircle2 className='mr-1 h-4 w-4' /> Approve
+                                </Button>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  className='text-red-600'
+                                  onClick={() => handlePaymentAction(payment.id, 'reject')}
+                                >
+                                  <XCircle className='mr-1 h-4 w-4' /> Reject
+                                </Button>
+                              </>
+                            )}
+                            {payment.status !== 'pending' && (
+                              <Button variant='ghost' size='sm'>
+                                <Eye className='mr-1 h-4 w-4' /> View
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

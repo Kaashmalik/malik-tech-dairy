@@ -1,88 +1,84 @@
-// API Route: Get Admin Statistics
-import { NextRequest, NextResponse } from 'next/server';
+// API Route: Get Admin Statistics (Supabase REST)
+import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { adminDb } from '@/lib/firebase/admin';
-import { PlatformRole } from '@/types/roles';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { isPlatformSuperAdmin } from '@/lib/admin/require-super-admin';
+
 export const dynamic = 'force-dynamic';
-async function isSuperAdmin(userId: string): Promise<boolean> {
-  if (!adminDb) return false;
-  try {
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      return userData?.platformRole === PlatformRole.SUPER_ADMIN;
-    }
-    return false;
-  } catch (error) {
-    return false;
-  }
-}
-export async function GET(request: NextRequest) {
+
+const PLAN_MRR: Record<string, number> = {
+  free: 0,
+  starter: 2999,
+  professional: 7999,
+  farm: 7999,
+  enterprise: 19999,
+};
+
+export async function GET() {
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId || !(await isPlatformSuperAdmin(userId))) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden - Super admin only' },
+        { status: 403 }
+      );
     }
-    const isAdmin = await isSuperAdmin(userId);
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Super admin only' }, { status: 403 });
-    }
-    if (!adminDb) {
-      return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
-    }
-    // Get all tenants
-    const tenantsSnapshot = await adminDb.collection('tenants').get();
-    const tenants = tenantsSnapshot.docs;
-    let totalTenants = 0;
+
+    const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+
+    const [
+      { count: totalTenants },
+      { count: totalAnimals },
+      { count: totalUsers },
+      { count: pendingApplications },
+      { data: subscriptions },
+    ] = await Promise.all([
+      sb.from('tenants').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+      sb.from('animals').select('*', { count: 'exact', head: true }).neq('status', 'deleted'),
+      sb.from('platform_users').select('*', { count: 'exact', head: true }),
+      sb
+        .from('farm_applications')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['pending', 'payment_uploaded', 'under_review']),
+      sb.from('subscriptions').select('plan, status'),
+    ]);
+
     let activeTenants = 0;
     let trialTenants = 0;
     let monthlyRecurringRevenue = 0;
-    let totalAnimals = 0;
-    let totalUsers = 0;
-    const subscriptionPlans: Record<string, number> = {
-      free: 0,
-      starter: 2999,
-      professional: 7999,
-      enterprise: 19999,
-    };
-    for (const tenantDoc of tenants) {
-      totalTenants++;
-      // Get subscription
-      const subDoc = await tenantDoc.ref.collection('subscription').doc('main').get();
-      if (subDoc.exists) {
-        const subData = subDoc.data();
-        const status = subData?.status || 'inactive';
-        const plan = subData?.plan || 'free';
-        if (status === 'active') {
-          activeTenants++;
-          monthlyRecurringRevenue += subscriptionPlans[plan] || 0;
-        } else if (status === 'trial') {
-          trialTenants++;
-        }
+
+    for (const sub of subscriptions || []) {
+      if (sub.status === 'active') {
+        activeTenants++;
+        monthlyRecurringRevenue += PLAN_MRR[sub.plan] || 0;
+      } else if (sub.status === 'trial') {
+        trialTenants++;
       }
-      // Count animals
-      const animalsRef = adminDb
-        .collection('tenants_data')
-        .doc(`${tenantDoc.id}_animals`)
-        .collection('animals');
-      const animalsSnapshot = await animalsRef.where('status', '!=', 'deceased').get();
-      totalAnimals += animalsSnapshot.size;
-      // Count users
-      const usersSnapshot = await adminDb
-        .collection('users')
-        .where('tenantId', '==', tenantDoc.id)
-        .get();
-      totalUsers += usersSnapshot.size;
     }
+
     return NextResponse.json({
-      totalTenants,
+      success: true,
+      data: {
+        totalTenants: totalTenants || 0,
+        activeTenants,
+        trialTenants,
+        monthlyRecurringRevenue,
+        totalAnimals: totalAnimals || 0,
+        totalUsers: totalUsers || 0,
+        pendingApplications: pendingApplications || 0,
+      },
+      // Legacy flat shape for AdminDashboard.tsx
+      totalTenants: totalTenants || 0,
       activeTenants,
       trialTenants,
       monthlyRecurringRevenue,
-      totalAnimals,
-      totalUsers,
+      totalAnimals: totalAnimals || 0,
+      totalUsers: totalUsers || 0,
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Admin stats error:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

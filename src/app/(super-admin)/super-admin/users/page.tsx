@@ -78,32 +78,11 @@ export default function UsersPage() {
       if (data.success) {
         setUsers(data.data || []);
       } else {
-        // Mock data for demo
-        setUsers([
-          {
-            id: '1',
-            name: 'Malik Kashif',
-            email: 'mtkdairy@gmail.com',
-            platformRole: 'super_admin',
-            isActive: true,
-            emailVerified: true,
-            farmCount: 0,
-            createdAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            name: 'Ahmad Khan',
-            email: 'ahmad@example.com',
-            platformRole: 'user',
-            isActive: true,
-            emailVerified: true,
-            farmCount: 1,
-            createdAt: new Date().toISOString(),
-          },
-        ]);
+        toast.error(data.error || 'Failed to load users');
+        setUsers([]);
       }
     } catch (error) {
+      toast.error('Failed to load users');
       setUsers([]);
     } finally {
       setLoading(false);

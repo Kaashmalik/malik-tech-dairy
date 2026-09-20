@@ -1,29 +1,27 @@
-// Coupon Validation & Calculation (Postgres / Drizzle)
-import { getDrizzle } from '@/lib/supabase/server';
-import { coupons, couponUsage } from '@/db/schema';
-import { and, count, eq } from 'drizzle-orm';
+// Coupon Validation & Calculation (Supabase REST)
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { nanoid } from 'nanoid';
 import type { Coupon, DiscountCalculation, DiscountTarget } from './types';
 import type { SubscriptionPlan } from '@/types';
 
-function toCoupon(row: typeof coupons.$inferSelect): Coupon {
+function toCoupon(row: Record<string, any>): Coupon {
   return {
     id: row.id,
     code: row.code,
     type: row.type as Coupon['type'],
     value: row.value,
-    targetPlans: (row.targetPlans || []) as DiscountTarget[],
-    minAmount: row.minAmount ?? undefined,
-    maxDiscount: row.maxDiscount ?? undefined,
-    validFrom: row.validFrom,
-    validUntil: row.validUntil,
-    maxUses: row.maxUses ?? undefined,
-    maxUsesPerUser: row.maxUsesPerUser ?? undefined,
-    isActive: row.isActive,
+    targetPlans: (row.target_plans || []) as DiscountTarget[],
+    minAmount: row.min_amount ?? undefined,
+    maxDiscount: row.max_discount ?? undefined,
+    validFrom: new Date(row.valid_from),
+    validUntil: new Date(row.valid_until),
+    maxUses: row.max_uses ?? undefined,
+    maxUsesPerUser: row.max_uses_per_user ?? undefined,
+    isActive: row.is_active,
     description: row.description ?? undefined,
-    createdBy: row.createdBy,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -38,12 +36,16 @@ export async function validateCoupon(
   userId: string
 ): Promise<{ valid: boolean; calculation?: DiscountCalculation; error?: string }> {
   try {
-    const db = getDrizzle();
-    const [row] = await db
-      .select()
-      .from(coupons)
-      .where(and(eq(coupons.code, code.toUpperCase()), eq(coupons.isActive, true)))
-      .limit(1);
+    const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+
+    const { data: row } = await sb
+      .from('coupons')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .eq('is_active', true)
+      .maybeSingle();
 
     if (!row) {
       return { valid: false, error: 'Invalid coupon code' };
@@ -71,21 +73,22 @@ export async function validateCoupon(
     }
 
     if (coupon.maxUses) {
-      const [usage] = await db
-        .select({ count: count() })
-        .from(couponUsage)
-        .where(eq(couponUsage.couponId, coupon.id));
-      if (Number(usage?.count || 0) >= coupon.maxUses) {
+      const { count } = await sb
+        .from('coupon_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('coupon_id', coupon.id);
+      if (Number(count || 0) >= coupon.maxUses) {
         return { valid: false, error: 'Coupon has reached maximum uses' };
       }
     }
 
     if (coupon.maxUsesPerUser) {
-      const [userUsage] = await db
-        .select({ count: count() })
-        .from(couponUsage)
-        .where(and(eq(couponUsage.couponId, coupon.id), eq(couponUsage.userId, userId)));
-      if (Number(userUsage?.count || 0) >= coupon.maxUsesPerUser) {
+      const { count } = await sb
+        .from('coupon_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('coupon_id', coupon.id)
+        .eq('user_id', userId);
+      if (Number(count || 0) >= coupon.maxUsesPerUser) {
         return { valid: false, error: 'You have already used this coupon' };
       }
     }
@@ -128,14 +131,19 @@ export async function recordCouponUsage(
   orderId: string,
   discountAmount: number
 ): Promise<void> {
-  const db = getDrizzle();
-  await db.insert(couponUsage).values({
+  const supabase = getSupabaseClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('coupon_usage') as any).insert({
     id: nanoid(),
-    couponId,
-    tenantId,
-    userId,
-    orderId,
-    discountAmount: Math.round(discountAmount),
-    usedAt: new Date(),
+    coupon_id: couponId,
+    tenant_id: tenantId,
+    user_id: userId,
+    order_id: orderId,
+    discount_amount: Math.round(discountAmount),
+    used_at: new Date().toISOString(),
   });
+
+  if (error) {
+    throw new Error(`Failed to record coupon usage: ${error.message}`);
+  }
 }

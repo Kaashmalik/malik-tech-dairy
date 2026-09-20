@@ -1,8 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { getDrizzle } from '@/lib/supabase/server';
-import { farmApplications } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { getSupabaseClient } from '@/lib/supabase/server';
 import { getPostLoginPath } from '@/lib/auth/post-login-destination';
 
 export const dynamic = 'force-dynamic';
@@ -14,19 +12,34 @@ export default async function OnboardingPage() {
   }
 
   try {
-    const db = getDrizzle();
-    const [application] = await db
-      .select()
-      .from(farmApplications)
-      .where(eq(farmApplications.applicantId, userId))
-      .orderBy(desc(farmApplications.createdAt))
+    const supabase = getSupabaseClient();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: user } = await (supabase.from('platform_users') as any)
+      .select('platform_role')
+      .eq('id', userId)
+      .maybeSingle();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: memberships } = await (supabase.from('tenant_members') as any)
+      .select('tenant_id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
       .limit(1);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: application } = await (supabase.from('farm_applications') as any)
+      .select('id, status')
+      .eq('applicant_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     redirect(
       getPostLoginPath({
-        isSuperAdmin: false,
+        isSuperAdmin: user?.platform_role === 'super_admin',
         hasActiveOrg: Boolean(orgId),
-        hasMemberships: false,
+        hasMemberships: Boolean(memberships?.length),
         latestApplication: application ? { id: application.id, status: application.status } : null,
       })
     );

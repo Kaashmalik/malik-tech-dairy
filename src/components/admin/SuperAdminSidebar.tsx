@@ -14,7 +14,7 @@ import {
   BarChart3,
   Bell,
   Shield,
-  LogOut,
+  Tag,
 } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 
@@ -44,6 +44,11 @@ const sidebarItems = [
     title: 'Payments',
     href: '/super-admin/payments',
     icon: CreditCard,
+  },
+  {
+    title: 'Coupons',
+    href: '/super-admin/coupons',
+    icon: Tag,
   },
   {
     title: 'Analytics',

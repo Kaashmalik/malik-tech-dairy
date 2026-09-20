@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import {
@@ -9,7 +8,7 @@ import {
   getRolloutStats,
   clearFeatureFlagCache,
 } from '@/lib/feature-flags/service';
-import { hasRole } from '@/lib/tenant/context';
+import { isPlatformSuperAdmin } from '@/lib/admin/require-super-admin';
 // Validation schemas
 const updateFeatureFlagSchema = z.object({
   featureKey: z.enum(Object.values(ENTERPRISE_FEATURE_FLAGS) as [EnterpriseFeatureFlag]),
@@ -22,11 +21,17 @@ const updateFeatureFlagSchema = z.object({
 const bulkUpdateSchema = z.object({
   updates: z.array(updateFeatureFlagSchema),
 });
+
+async function requireAdmin(): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) return false;
+  return isPlatformSuperAdmin(userId);
+}
+
 // GET /api/admin/feature-flags - List all feature flags and their status
 export async function GET(request: NextRequest) {
   try {
-    // Check if user is super admin
-    const isAdmin = await hasRole('super_admin');
+    const isAdmin = await requireAdmin();
     if (!isAdmin) {
       return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
@@ -70,25 +75,19 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // Check if user is super admin
-    const isAdmin = await hasRole('super_admin');
+    const isAdmin = await requireAdmin();
     if (!isAdmin) {
       return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
     const body = await request.json();
     const validatedData = updateFeatureFlagSchema.parse(body);
-    // In a real implementation, this would update a database table
-    // For now, we'll simulate by updating environment variables
-    // and logging the change for audit purposes
-    const db = getDrizzle();
-    // Create audit log entry
+    // In-memory / env-based flags for now; log for audit
     const auditLogId = `feature_flag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    // TODO: Implement proper audit logging
     console.log('Feature flag update:', {
       id: auditLogId,
       featureKey: validatedData.featureKey,
       changes: validatedData,
       timestamp: new Date().toISOString(),
-      // adminId: await getCurrentUserId(),
     });
     // Clear cache to ensure changes take effect
     clearFeatureFlagCache();
@@ -115,7 +114,7 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check if user is super admin
-    const isAdmin = await hasRole('super_admin');
+    const isAdmin = await requireAdmin();
     if (!isAdmin) {
       return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
@@ -169,7 +168,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Check if user is super admin
-    const isAdmin = await hasRole('super_admin');
+    const isAdmin = await requireAdmin();
     if (!isAdmin) {
       return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }

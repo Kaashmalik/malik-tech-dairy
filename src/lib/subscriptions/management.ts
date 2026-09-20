@@ -160,59 +160,68 @@ export class SubscriptionService {
 }
 
 /**
- * Update tenant subscription in Supabase
+ * Update tenant subscription via Supabase REST (serverless-safe)
  */
 export async function updateTenantSubscription(
   tenantId: string,
   update: SubscriptionUpdate
 ): Promise<void> {
-  const db = getDrizzle();
+  const { getSupabaseClient } = await import('@/lib/supabase/server');
+  const supabase = getSupabaseClient();
   const subscriptionId = `${tenantId}_subscription`;
+  const now = new Date().toISOString();
 
-  await db
-    .insert(subscriptions)
-    .values({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('subscriptions') as any).upsert(
+    {
       id: subscriptionId,
-      tenantId,
+      tenant_id: tenantId,
       plan: update.plan,
       status: update.status,
-      gateway: (update.gateway as any) || 'bank_transfer',
-      renewDate: update.renewDate,
+      gateway: update.gateway || 'bank_transfer',
+      renew_date: update.renewDate.toISOString(),
       token: update.token || null,
       amount: update.amount,
       currency: update.currency,
-      trialEndsAt: update.trialEndsAt || null,
-      updatedAt: new Date(),
+      trial_ends_at: update.trialEndsAt ? update.trialEndsAt.toISOString() : null,
+      updated_at: now,
+      created_at: now,
+    },
+    { onConflict: 'id' }
+  );
+
+  if (error) {
+    throw new Error(`Failed to update subscription: ${error.message}`);
+  }
+
+  // Keep tenants table in sync when those columns exist
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('tenants') as any)
+    .update({
+      subscription_plan: update.plan,
+      subscription_status: update.status,
+      updated_at: now,
     })
-    .onConflictDoUpdate({
-      target: subscriptions.id,
-      set: {
-        plan: update.plan,
-        status: update.status,
-        gateway: (update.gateway as any) || 'bank_transfer',
-        renewDate: update.renewDate,
-        token: update.token || null,
-        amount: update.amount,
-        trialEndsAt: update.trialEndsAt || null,
-        updatedAt: new Date(),
-      },
-    });
+    .eq('id', tenantId);
 }
 
 /**
- * Cancel subscription in Supabase
+ * Cancel subscription via Supabase REST
  */
 export async function cancelSubscription(tenantId: string): Promise<void> {
-  const db = getDrizzle();
+  const { getSupabaseClient } = await import('@/lib/supabase/server');
+  const supabase = getSupabaseClient();
   const subscriptionId = `${tenantId}_subscription`;
+  const now = new Date().toISOString();
 
-  await db
-    .update(subscriptions)
-    .set({
-      status: 'cancelled',
-      updatedAt: new Date(),
-    })
-    .where(eq(subscriptions.id, subscriptionId));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('subscriptions') as any)
+    .update({ status: 'cancelled', updated_at: now })
+    .eq('id', subscriptionId);
+
+  if (error) {
+    throw new Error(`Failed to cancel subscription: ${error.message}`);
+  }
 }
 
 /**

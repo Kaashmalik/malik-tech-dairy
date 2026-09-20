@@ -45,7 +45,10 @@ export default function AdminPaymentsPage() {
     queryFn: async () => {
       const res = await fetch('/api/admin/payments');
       if (!res.ok) throw new Error('Failed to fetch payments');
-      return res.json();
+      const json = await res.json();
+      if (Array.isArray(json)) return json;
+      if (json.success && Array.isArray(json.data)) return json.data;
+      throw new Error(json.error || 'Failed to fetch payments');
     },
   });
 
