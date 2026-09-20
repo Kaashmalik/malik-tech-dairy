@@ -120,13 +120,14 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // API configuration
-  api: {
-    bodyParser: {
-      sizeLimit: '1mb', // Limit request body size to 1MB
+  // Turbopack configuration
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
     },
-    responseLimit: '1mb', // Limit response size to 1MB
-    externalResolver: true,
   },
 
   // Security headers
@@ -178,15 +179,6 @@ const nextConfig: NextConfig = {
       'recharts',
       'zod',
     ],
-    // Enable turbopack for faster builds
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
   },
 
   // Suppress warnings for lockfile detection
