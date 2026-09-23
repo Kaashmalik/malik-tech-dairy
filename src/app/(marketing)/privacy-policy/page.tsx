@@ -140,10 +140,11 @@ export default function PrivacyPolicyPage() {
                     <strong>Email:</strong> support@dairy.mtkcodex.site / mtkdairy@gmail.com
                   </div>
                   <div className='mt-1'>
-                    <strong>WhatsApp / Phone:</strong> +92 302 0718182
+                    <strong>WhatsApp / Phone:</strong> +92 303 8111297
                   </div>
                   <div className='mt-1'>
-                    <strong>Headquarters:</strong> Bhubtian Branch, Lahore, Punjab, Pakistan
+                    <strong>Headquarters:</strong> Garhi Shahu, Allama Iqbal Road, Lahore, Punjab,
+                    Pakistan
                   </div>
                 </div>
               </section>

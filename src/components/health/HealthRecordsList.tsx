@@ -35,9 +35,9 @@ export function HealthRecordsList({ animalId }: HealthRecordsListProps) {
   });
 
   const { data: animalsData } = useQuery<{ animals: Animal[] }>({
-    queryKey: ['animals'],
+    queryKey: ['animals', 'health-lookup'],
     queryFn: async () => {
-      const res = await fetch('/api/animals');
+      const res = await fetch('/api/animals?limit=100&page=1');
       if (!res.ok) throw new Error('Failed to fetch animals');
       const response = await res.json();
       return response.data;

@@ -158,11 +158,12 @@ export async function POST(request: NextRequest) {
         logger.warn('Natural breeding without sire ID specified', { animalId });
       }
 
-      // Get animal species for gestation calculation
+      // Get animal species for gestation calculation (tenant-scoped)
       const { data: animal, error: animalError } = await supabase
         .from('animals')
         .select('species')
         .eq('id', animalId)
+        .eq('tenant_id', context.tenantId)
         .single();
 
       if (animalError || !animal) {

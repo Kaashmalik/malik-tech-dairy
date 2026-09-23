@@ -158,7 +158,7 @@ export function UsageLimits() {
                   <p className='mt-1 text-xs text-yellow-700'>
                     Upgrade to a higher plan to continue growing your farm.
                   </p>
-                  <Link href='/dashboard/subscription'>
+                  <Link href='/subscription'>
                     <Button size='sm' className='mt-3' variant='outline'>
                       View Plans & Upgrade
                     </Button>

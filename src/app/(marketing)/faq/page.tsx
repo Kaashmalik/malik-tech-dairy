@@ -110,7 +110,7 @@ export default function FAQPage() {
             </p>
             <div className='mt-8 flex flex-wrap justify-center gap-4'>
               <a
-                href='https://wa.me/923020718182?text=Hello%20MTK%20Dairy%20team,%20I%20have%20a%20question'
+                href='https://wa.me/923038111297?text=Hello%20MTK%20Dairy%20team,%20I%20have%20a%20question'
                 target='_blank'
                 rel='noopener noreferrer'
                 className='flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-md hover:bg-emerald-700'

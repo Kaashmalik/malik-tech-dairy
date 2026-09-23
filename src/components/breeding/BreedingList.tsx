@@ -27,6 +27,7 @@ import {
   Stethoscope,
 } from 'lucide-react';
 import { BreedingForm } from './BreedingForm';
+import { PregnancyCheckForm } from './PregnancyCheckForm';
 import { useState } from 'react';
 import type { BreedingRecord, Animal } from '@/types';
 import { BREEDING_STATUSES } from '@/lib/breeding-constants';
@@ -35,6 +36,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { EmptyBreedingRecords, EmptyAnimals, EmptyError } from '@/components/ui/empty-state';
 import { invalidateBreedingQueries } from '@/lib/query/farm-cache';
+import { PlanUpgradeNotice } from '@/components/subscription/PlanUpgradeNotice';
+import Link from 'next/link';
 
 interface EnhancedBreedingRecord extends BreedingRecord {
   daysRemaining?: number;
@@ -68,6 +71,9 @@ export function BreedingList() {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Partial<BreedingRecord> | null>(null);
+  const [pregnancyCheckRecord, setPregnancyCheckRecord] = useState<EnhancedBreedingRecord | null>(
+    null
+  );
   const queryClient = useQueryClient();
 
   const {
@@ -75,14 +81,20 @@ export function BreedingList() {
     isLoading: breedingLoading,
     error: breedingError,
     refetch: refetchBreeding,
+    isError: isBreedingError,
   } = useQuery<{
     data: EnhancedBreedingRecord[];
+    error?: string;
   }>({
     queryKey: ['breeding-records'],
     queryFn: async () => {
       const res = await fetch('/api/breeding');
-      if (!res.ok) throw new Error('Failed to fetch breeding records');
-      return res.json();
+      const json = await res.json();
+      if (res.status === 403 && typeof json.error === 'string') {
+        throw new Error(json.error);
+      }
+      if (!res.ok) throw new Error(json.error || 'Failed to fetch breeding records');
+      return json;
     },
     staleTime: 60000,
   });
@@ -151,6 +163,11 @@ export function BreedingList() {
     void invalidateBreedingQueries(queryClient);
   };
 
+  const handlePregnancyCheckSuccess = () => {
+    setPregnancyCheckRecord(null);
+    void invalidateBreedingQueries(queryClient);
+  };
+
   // Summary stats
   const stats = {
     total: records.length,
@@ -159,6 +176,11 @@ export function BreedingList() {
     overdue: records.filter(r => r.isOverdue).length,
     delivered: records.filter(r => r.status === 'delivered').length,
   };
+
+  const featureBlocked =
+    isBreedingError &&
+    typeof breedingError?.message === 'string' &&
+    breedingError.message.startsWith('FEATURE_NOT_AVAILABLE');
 
   if (breedingLoading) {
     return (
@@ -210,6 +232,23 @@ export function BreedingList() {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  if (featureBlocked) {
+    return (
+      <Card>
+        <CardContent className='space-y-4 py-8'>
+          <PlanUpgradeNotice
+            message={breedingError?.message || 'FEATURE_NOT_AVAILABLE:breeding_tracking'}
+          />
+          <div className='text-center'>
+            <Button asChild>
+              <Link href='/subscription'>View Plans</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -362,6 +401,33 @@ export function BreedingList() {
         )}
       </AnimatePresence>
 
+      {/* Pregnancy Check Modal */}
+      <AnimatePresence>
+        {pregnancyCheckRecord && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className='max-h-[90vh] w-full max-w-lg overflow-y-auto'
+            >
+              <PregnancyCheckForm
+                breedingRecordId={pregnancyCheckRecord.id}
+                animalId={pregnancyCheckRecord.animalId}
+                animalName={getAnimalName(pregnancyCheckRecord.animalId)}
+                onClose={() => setPregnancyCheckRecord(null)}
+                onSuccess={handlePregnancyCheckSuccess}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Records Table */}
       <motion.div variants={itemVariants}>
         <Card>
@@ -489,7 +555,12 @@ export function BreedingList() {
                           </TableCell>
                           <TableCell className='text-right'>
                             <div className='flex items-center justify-end gap-1'>
-                              <Button variant='ghost' size='sm' title='Add Pregnancy Check'>
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                title='Add Pregnancy Check'
+                                onClick={() => setPregnancyCheckRecord(record)}
+                              >
                                 <Stethoscope className='h-4 w-4' />
                               </Button>
                               <Button

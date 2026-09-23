@@ -66,7 +66,7 @@ export default function ContactPage() {
 
               <div className='mt-8 space-y-6'>
                 <a
-                  href='https://wa.me/923020718182?text=Assalam-o-alaikum%20MTK%20Dairy%20team,%20I%20want%20information%20about%20your%20software'
+                  href='https://wa.me/923038111297?text=Assalam-o-alaikum%20MTK%20Dairy%20team,%20I%20want%20information%20about%20your%20software'
                   target='_blank'
                   rel='noopener noreferrer'
                   className='flex items-start gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 transition-all hover:bg-emerald-100/70 dark:border-emerald-900 dark:bg-emerald-950/30'
@@ -79,7 +79,7 @@ export default function ContactPage() {
                       WhatsApp (Fastest Response)
                     </div>
                     <div className='mt-0.5 text-base font-bold text-slate-900 dark:text-white'>
-                      +92 302 0718182
+                      +92 303 8111297
                     </div>
                     <div className='mt-1 text-xs text-emerald-700 dark:text-emerald-300'>
                       Click to chat directly with our farm advisor
@@ -96,10 +96,10 @@ export default function ContactPage() {
                       Direct Phone
                     </div>
                     <a
-                      href='tel:+923020718182'
+                      href='tel:+923038111297'
                       className='mt-0.5 block text-base font-semibold text-slate-900 hover:text-emerald-600 dark:text-white dark:hover:text-emerald-400'
                     >
-                      +92 302 0718182
+                      +92 303 8111297
                     </a>
                     <div className='text-xs text-slate-500'>
                       Monday to Saturday, 9:00 AM - 6:00 PM PKT
@@ -139,7 +139,7 @@ export default function ContactPage() {
                       Office Location
                     </div>
                     <div className='mt-0.5 text-base font-semibold text-slate-900 dark:text-white'>
-                      Bhubtian Branch, Lahore
+                      Garhi Shahu, Allama Iqbal Road, Lahore
                     </div>
                     <div className='text-xs text-slate-500'>
                       Punjab, Pakistan (Postal Code: 54000)
@@ -214,7 +214,7 @@ export default function ContactPage() {
                         required
                         value={formData.phone}
                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder='e.g. 0302-0718182'
+                        placeholder='e.g. 0303-8111297'
                         className='mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
                       />
                     </div>

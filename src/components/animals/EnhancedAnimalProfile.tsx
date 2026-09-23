@@ -81,13 +81,43 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
   const fetchAnimalData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/animals/enhanced?id=${animalId}`);
+      const response = await fetch(`/api/animals/${animalId}`);
       const result = await response.json();
       if (result.success) {
-        setAnimal(result.data);
-      } else {
+        const raw = result.animal || result.data?.animal;
+        const summary = result.data?.summary;
+        const recentHealth = result.data?.recentHealth || [];
+        if (raw) {
+          setAnimal({
+            id: raw.id,
+            name: raw.name || raw.tag || 'Unnamed',
+            tag: raw.tag,
+            species: raw.species,
+            breed: raw.breed || 'N/A',
+            gender: raw.gender,
+            birthDate: raw.dateOfBirth || raw.date_of_birth || '',
+            healthStatus: raw.status === 'sick' ? 'sick' : 'healthy',
+            healthScore: raw.status === 'sick' ? 40 : 85,
+            reproductiveStatus: 'unknown',
+            location: 'Farm',
+            qrCode: raw.tag,
+            image: raw.photoUrl || raw.photo_url,
+            weight: raw.weight,
+            createdAt: raw.createdAt || raw.created_at,
+            updatedAt: raw.updatedAt || raw.updated_at,
+            averageMilkYield:
+              summary?.totalMilkLogs > 0
+                ? Number(summary.totalMilkedLiters) / Number(summary.totalMilkLogs)
+                : 0,
+            lastHealthCheck: recentHealth[0]?.date,
+            lastVaccinationDate: recentHealth.find(
+              (r: { type?: string }) => r.type === 'vaccination'
+            )?.date,
+          });
+        }
       }
     } catch (error) {
+      console.error('Failed to load animal profile:', error);
     } finally {
       setLoading(false);
     }
@@ -269,7 +299,9 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>Average Milk Yield</span>
-                  <span className='font-semibold'>{animal.averageMilkYield.toFixed(1)} L/day</span>
+                  <span className='font-semibold'>
+                    {(animal.averageMilkYield || 0).toFixed(1)} L/day
+                  </span>
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>Last Health Check</span>
@@ -298,6 +330,11 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
           <AnimalHealthChart animalId={animalId} />
         </TabsContent>
         <TabsContent value='health' className='space-y-4'>
+          <div className='flex justify-end'>
+            <Button asChild>
+              <a href={`/animals/${animalId}/health`}>Open Health Records</a>
+            </Button>
+          </div>
           <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
             <Card>
               <CardHeader>
@@ -308,8 +345,11 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
               </CardHeader>
               <CardContent>
                 <p className='text-gray-600'>
-                  Detailed health history and records will be displayed here.
+                  View vaccinations, treatments, and disease history for this animal.
                 </p>
+                <Button className='mt-4' variant='outline' asChild>
+                  <a href={`/animals/${animalId}/health`}>Go to Health Records</a>
+                </Button>
               </CardContent>
             </Card>
             <Card>
@@ -341,7 +381,9 @@ export function EnhancedAnimalProfile({ animalId, className }: EnhancedAnimalPro
                 <div className='space-y-2'>
                   <div className='flex justify-between'>
                     <span className='text-sm text-gray-600'>Daily Average</span>
-                    <span className='font-semibold'>{animal.averageMilkYield.toFixed(1)} L</span>
+                    <span className='font-semibold'>
+                      {(animal.averageMilkYield || 0).toFixed(1)} L
+                    </span>
                   </div>
                   <div className='flex justify-between'>
                     <span className='text-sm text-gray-600'>Weekly Trend</span>

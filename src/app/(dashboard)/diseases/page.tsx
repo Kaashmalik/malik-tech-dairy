@@ -43,7 +43,19 @@ import {
   type Disease,
   type DiseaseCategory,
   type DiseaseSeverity,
+  type AffectedAnimalSpecies,
 } from '@/lib/data/diseases';
+
+const SPECIES_FILTERS: { value: AffectedAnimalSpecies | 'all'; label: string }[] = [
+  { value: 'all', label: 'All Species' },
+  { value: 'cow', label: 'Cow' },
+  { value: 'buffalo', label: 'Buffalo' },
+  { value: 'goat', label: 'Goat' },
+  { value: 'sheep', label: 'Sheep' },
+  { value: 'chicken', label: 'Chicken' },
+  { value: 'horse', label: 'Horse' },
+  { value: 'calf', label: 'Calf' },
+];
 
 // Animation variants
 const containerVariants = {
@@ -169,7 +181,7 @@ function DiseaseCard({ disease, onClick }: { disease: Disease; onClick: () => vo
         {/* Footer */}
         <div className='flex items-center justify-between border-t pt-3 dark:border-slate-700'>
           <span className='text-xs text-gray-500 dark:text-slate-400'>
-            Mortality: {disease.mortality}
+            {disease.affectedAnimals.join(', ')}
           </span>
           <span className='flex items-center gap-1 text-sm font-medium text-emerald-600'>
             View Details <ChevronRight className='h-4 w-4' />
@@ -419,6 +431,7 @@ export default function DiseasesGuidePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<DiseaseCategory | 'all'>('all');
   const [selectedSeverity, setSelectedSeverity] = useState<DiseaseSeverity | 'all'>('all');
+  const [selectedSpecies, setSelectedSpecies] = useState<AffectedAnimalSpecies | 'all'>('all');
   const [selectedDisease, setSelectedDisease] = useState<Disease | null>(null);
   const [showEmergency, setShowEmergency] = useState(false);
   const [showVaccination, setShowVaccination] = useState(false);
@@ -435,10 +448,12 @@ export default function DiseasesGuidePage() {
 
       const matchesCategory = selectedCategory === 'all' || disease.category === selectedCategory;
       const matchesSeverity = selectedSeverity === 'all' || disease.severity === selectedSeverity;
+      const matchesSpecies =
+        selectedSpecies === 'all' || disease.affectedAnimals.includes(selectedSpecies);
 
-      return matchesSearch && matchesCategory && matchesSeverity;
+      return matchesSearch && matchesCategory && matchesSeverity && matchesSpecies;
     });
-  }, [searchQuery, selectedCategory, selectedSeverity]);
+  }, [searchQuery, selectedCategory, selectedSeverity, selectedSpecies]);
 
   // Group by category
   const groupedDiseases = useMemo(() => {
@@ -484,7 +499,7 @@ export default function DiseasesGuidePage() {
                 transition={{ delay: 0.1 }}
                 className='text-lg text-emerald-100'
               >
-                Comprehensive Veterinary Reference for Cow &amp; Buffalo
+                Veterinary reference for cow, buffalo, goat, sheep, chicken &amp; horse
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, x: -20 }}
@@ -666,6 +681,19 @@ export default function DiseasesGuidePage() {
               <option value='high'>🟠 High</option>
               <option value='moderate'>🟡 Moderate</option>
               <option value='low'>🟢 Low</option>
+            </select>
+
+            {/* Species Filter */}
+            <select
+              value={selectedSpecies}
+              onChange={e => setSelectedSpecies(e.target.value as AffectedAnimalSpecies | 'all')}
+              className='rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200'
+            >
+              {SPECIES_FILTERS.map(s => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
             </select>
           </div>
 

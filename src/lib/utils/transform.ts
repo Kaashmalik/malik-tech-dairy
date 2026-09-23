@@ -230,57 +230,79 @@ export function transformMilkLogs(logs: MilkLogFromDb[]): MilkLog[] {
 
 /**
  * Health Record transformation
+ * DB columns: type, date, veterinarian, next_due_date (see health_records schema)
  */
 export interface HealthRecordFromDb {
   id: string;
   tenant_id: string;
   animal_id: string;
-  record_type: string;
-  description: string;
-  diagnosis: string | null;
-  treatment: string | null;
-  medication: string | null;
+  type: string;
+  date: string;
+  description: string | null;
+  diagnosis?: string | null;
+  treatment?: string | null;
+  medication?: string | null;
   cost: number | null;
-  vet_name: string | null;
-  next_checkup: string | null;
-  recorded_by: string | null;
+  veterinarian: string | null;
+  next_due_date: string | null;
+  notes?: string | null;
+  recorded_by?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string | null;
+  // Legacy column aliases (older rows / migrations)
+  record_type?: string;
+  vet_name?: string;
+  next_checkup?: string | null;
 }
 
 export interface HealthRecord {
   id: string;
   tenantId: string;
   animalId: string;
-  recordType: string;
-  description: string;
+  type: string;
+  date: string;
+  description: string | null;
   diagnosis: string | null;
   treatment: string | null;
   medication: string | null;
   cost: number | null;
-  vetName: string | null;
-  nextCheckup: string | null;
+  veterinarian: string | null;
+  nextDueDate: string | null;
+  notes: string | null;
   recordedBy: string | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string | null;
+  // Back-compat aliases used by older UI
+  recordType: string;
+  vetName: string | null;
+  nextCheckup: string | null;
 }
 
 export function transformHealthRecord(record: HealthRecordFromDb): HealthRecord {
+  const type = record.type || record.record_type || '';
+  const veterinarian = record.veterinarian ?? record.vet_name ?? null;
+  const nextDueDate = record.next_due_date ?? record.next_checkup ?? null;
+
   return {
     id: record.id,
     tenantId: record.tenant_id,
     animalId: record.animal_id,
-    recordType: record.record_type,
+    type,
+    date: record.date,
     description: record.description,
-    diagnosis: record.diagnosis,
-    treatment: record.treatment,
-    medication: record.medication,
+    diagnosis: record.diagnosis ?? null,
+    treatment: record.treatment ?? null,
+    medication: record.medication ?? null,
     cost: record.cost,
-    vetName: record.vet_name,
-    nextCheckup: record.next_checkup,
-    recordedBy: record.recorded_by,
+    veterinarian,
+    nextDueDate,
+    notes: record.notes ?? null,
+    recordedBy: record.recorded_by ?? null,
     createdAt: record.created_at,
-    updatedAt: record.updated_at,
+    updatedAt: record.updated_at ?? null,
+    recordType: type,
+    vetName: veterinarian,
+    nextCheckup: nextDueDate,
   };
 }
 

@@ -43,9 +43,9 @@ MTK Dairy is modern, bilingual (English & Urdu) cloud and offline-first PWA soft
 ## Contact & Head Office
 - Company: MTK Dairy / MalikTech
 - Founder: Muhammad Kashif
-- Phone / WhatsApp: +92 302 0718182
+- Phone / WhatsApp: +92 303 8111297
 - Support Email: mtkdairy@gmail.com / support@dairy.mtkcodex.site
-- Headquarters: Bhubtian Branch, Lahore, Punjab, Pakistan
+- Headquarters: Garhi Shahu, Allama Iqbal Road, Lahore, Punjab, Pakistan
 `;
 
   return new NextResponse(content, {

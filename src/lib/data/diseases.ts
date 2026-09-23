@@ -1,5 +1,5 @@
-// Comprehensive Disease Database for Cows & Buffaloes
-// Research by MTK CODEX - 2025
+// Comprehensive Disease Database for all MTK Dairy species
+// Research by MTK CODEX - 2025/2026 (Punjab Livestock Surveillance + Pakistan farm diseases)
 
 export type DiseaseSeverity = 'critical' | 'high' | 'moderate' | 'low';
 export type DiseaseCategory =
@@ -11,6 +11,15 @@ export type DiseaseCategory =
   | 'reproductive'
   | 'skin'
   | 'neonatal';
+
+export type AffectedAnimalSpecies =
+  | 'cow'
+  | 'buffalo'
+  | 'calf'
+  | 'goat'
+  | 'sheep'
+  | 'chicken'
+  | 'horse';
 
 export interface Disease {
   id: string;
@@ -35,7 +44,7 @@ export interface Disease {
   }[];
   notes?: string[];
   recoveryTime?: string;
-  affectedAnimals: ('cow' | 'buffalo' | 'calf')[];
+  affectedAnimals: AffectedAnimalSpecies[];
   seasonalRisk?: string;
   icon: string;
 }
@@ -164,7 +173,7 @@ export const diseases: Disease[] = [
       'FREE government vaccine available (NADCP)',
     ],
     recoveryTime: '2-3 weeks',
-    affectedAnimals: ['cow', 'buffalo', 'calf'],
+    affectedAnimals: ['cow', 'buffalo', 'calf', 'goat', 'sheep'],
     icon: '🦶',
   },
   {
@@ -1276,6 +1285,653 @@ export const diseases: Disease[] = [
     affectedAnimals: ['calf'],
     icon: '🔴',
   },
+  // ==========================================================================
+  // GOAT & SHEEP (Small Ruminants)
+  // ==========================================================================
+  {
+    id: 'ppr',
+    name: 'Peste des Petits Ruminants (PPR)',
+    localName: 'بکری/ بھیڑ کی طاعون',
+    nickname: 'Goat Plague',
+    category: 'viral',
+    severity: 'critical',
+    mortality: '50-90% in naive flocks',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'High fever, depression, anorexia',
+      'Nasal and ocular discharge',
+      'Mouth erosions and foul breath',
+      'Severe diarrhea and dehydration',
+      'Pneumonia and sudden deaths',
+    ],
+    prevention: [
+      'Vaccinate goats and sheep annually (PPR vaccine)',
+      'Quarantine new animals 21 days',
+      'Avoid mixing with infected flocks at markets',
+      'Control animal movement during outbreaks',
+    ],
+    treatment: [
+      'Supportive care: fluids, antibiotics for secondary infection',
+      'Isolate affected animals immediately',
+      'No specific antiviral — prevention is key',
+    ],
+    medicines: [
+      { name: 'PPR Live Vaccine', purpose: 'Prevention', rating: 4.9 },
+      { name: 'Oxytetracycline LA', purpose: 'Secondary bacterial infection', rating: 4.4 },
+      { name: 'Electrolytes + ORS', purpose: 'Rehydration', rating: 4.7 },
+    ],
+    notes: [
+      'Transboundary disease prioritized in Punjab surveillance 2025-26',
+      'Free/government campaigns often available — check livestock dept',
+    ],
+    recoveryTime: '2-4 weeks in survivors',
+    affectedAnimals: ['goat', 'sheep'],
+    seasonalRisk: 'Year-round; peaks after monsoon movement',
+    icon: '🐐',
+  },
+  {
+    id: 'enterotoxemia',
+    name: 'Enterotoxemia',
+    localName: 'انٹروٹوکسیمیا',
+    nickname: 'Pulpy Kidney / Overeating Disease',
+    category: 'bacterial',
+    severity: 'critical',
+    mortality: 'High — often sudden death',
+    contagious: false,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'Sudden death in best-conditioned animals',
+      'Convulsions, paddling, frothing',
+      'Diarrhea or bloating before collapse',
+      'Pulpy kidney on post-mortem',
+    ],
+    prevention: [
+      'Vaccinate kids/lambs (Clostridium perfringens type D)',
+      'Avoid abrupt high-grain feed changes',
+      'Gradual diet transitions',
+    ],
+    treatment: [
+      'Often too late once clinical — focus on flock vaccination',
+      'Antitoxin if available early',
+      'Supportive fluids and antibiotics',
+    ],
+    medicines: [
+      { name: 'Enterotoxemia Vaccine', purpose: 'Prevention', rating: 4.9 },
+      { name: 'Penicillin G', purpose: 'Emergency antibiotic', rating: 4.0 },
+    ],
+    notes: ['Common killer of goats/sheep on rich feed in Pakistan'],
+    recoveryTime: 'Rare once clinical',
+    affectedAnimals: ['goat', 'sheep'],
+    icon: '⚡',
+  },
+  {
+    id: 'sheep-goat-pox',
+    name: 'Sheep Pox & Goat Pox',
+    localName: 'چیچک',
+    category: 'viral',
+    severity: 'high',
+    mortality: '10-50% depending on strain',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'Fever and skin nodules/papules',
+      'Lesions on muzzle, udder, and hairless areas',
+      'Respiratory distress in severe cases',
+      'Reduced milk and weight loss',
+    ],
+    prevention: [
+      'Vaccinate endemic flocks annually',
+      'Isolate new purchases',
+      'Disinfect sheds and equipment',
+    ],
+    treatment: [
+      'Supportive care and wound hygiene',
+      'Antibiotics for secondary infection',
+      'Fly control on lesions',
+    ],
+    medicines: [
+      { name: 'Sheep/Goat Pox Vaccine', purpose: 'Prevention', rating: 4.7 },
+      { name: 'Himax / topical antiseptic', purpose: 'Lesion care', rating: 4.3 },
+    ],
+    affectedAnimals: ['goat', 'sheep'],
+    seasonalRisk: 'Dry season outbreaks common',
+    icon: '🔴',
+  },
+  {
+    id: 'orf',
+    name: 'Orf (Contagious Ecthyma)',
+    localName: 'مونہہ کے چھالے',
+    nickname: 'Soremouth / CPD',
+    category: 'viral',
+    severity: 'moderate',
+    mortality: 'Low in adults; higher in kids',
+    contagious: true,
+    zoonotic: true,
+    vaccineAvailable: true,
+    emergencyCall: false,
+    symptoms: [
+      'Scabby lesions on lips, muzzle, teats',
+      'Kids refuse to suckle',
+      'Secondary mastitis in does',
+    ],
+    prevention: [
+      'Vaccinate in endemic flocks',
+      'Wear gloves — zoonotic to handlers',
+      'Separate affected animals',
+    ],
+    treatment: [
+      'Usually self-limiting in 3-6 weeks',
+      'Soft feed, topical antiseptics',
+      'Treat secondary bacterial infection',
+    ],
+    medicines: [
+      { name: 'Orf Vaccine', purpose: 'Prevention', rating: 4.5 },
+      { name: 'Lorexane / wound spray', purpose: 'Topical care', rating: 4.2 },
+    ],
+    notes: ['Handlers can get painful finger lesions — use PPE'],
+    recoveryTime: '3-6 weeks',
+    affectedAnimals: ['goat', 'sheep'],
+    icon: '👄',
+  },
+  {
+    id: 'ccpp',
+    name: 'Contagious Caprine Pleuropneumonia (CCPP)',
+    localName: 'بکری نمونیا',
+    category: 'respiratory',
+    severity: 'critical',
+    mortality: '60-100% in outbreaks',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'High fever and severe cough',
+      'Labored breathing, nasal discharge',
+      'Weakness and rapid death',
+    ],
+    prevention: [
+      'Vaccinate goats in endemic areas',
+      'Strict quarantine of new goats',
+      'Avoid overcrowding',
+    ],
+    treatment: [
+      'Early antibiotics (tylosin, oxytetracycline, enrofloxacin)',
+      'Isolate and treat entire contact group',
+      'Supportive NSAIDs and fluids',
+    ],
+    medicines: [
+      { name: 'Tylosin', purpose: 'Mycoplasma antibiotic', rating: 4.6 },
+      { name: 'Oxytetracycline LA', purpose: 'Antibiotic', rating: 4.5 },
+    ],
+    affectedAnimals: ['goat'],
+    icon: '🫁',
+  },
+  {
+    id: 'gi-parasites-small-ruminant',
+    name: 'Gastrointestinal Parasites (Goats & Sheep)',
+    localName: 'پیٹ کے کیڑے',
+    nickname: 'Worm Burden / Haemonchus',
+    category: 'parasitic',
+    severity: 'high',
+    mortality: 'Moderate to high in kids/lambs',
+    contagious: false,
+    zoonotic: false,
+    vaccineAvailable: false,
+    emergencyCall: false,
+    symptoms: [
+      'Bottle jaw (edema under jaw)',
+      'Pale mucous membranes (anemia)',
+      'Diarrhea, poor weight gain',
+      'Rough coat and weakness',
+    ],
+    prevention: [
+      'Strategic deworming (FAMACHA / fecal counts)',
+      'Rotate pastures; avoid overgrazing',
+      'Separate young stock',
+    ],
+    treatment: [
+      'Effective anthelmintic based on local resistance',
+      'Supportive iron/vitamins for anemic animals',
+      'Repeat dose as per vet advice',
+    ],
+    medicines: [
+      { name: 'Levamisole / Albendazole', purpose: 'Dewormer', rating: 4.5 },
+      { name: 'Ivermectin', purpose: 'Broad parasite control', rating: 4.6 },
+    ],
+    notes: ['Haemonchus (barber pole worm) is a top killer of goats in Pakistan'],
+    affectedAnimals: ['goat', 'sheep'],
+    seasonalRisk: 'Monsoon and post-rain peak',
+    icon: '🪱',
+  },
+  // ==========================================================================
+  // CHICKEN / POULTRY
+  // ==========================================================================
+  {
+    id: 'newcastle',
+    name: 'Newcastle Disease (ND)',
+    localName: 'رانیکھیٹ',
+    nickname: 'Ranikhet',
+    category: 'viral',
+    severity: 'critical',
+    mortality: 'Up to 100% in unvaccinated flocks',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'Sudden deaths, depression',
+      'Greenish diarrhea',
+      'Twisted neck (torticollis), paralysis',
+      'Respiratory distress and drop in egg production',
+    ],
+    prevention: [
+      'Follow ND vaccination schedule (Lasota / R2B)',
+      'Biosecurity: limit visitors, disinfect footwear',
+      'Separate age groups',
+    ],
+    treatment: [
+      'No specific cure — supportive care only',
+      'Antibiotics for secondary infection',
+      'Cull severely affected birds per vet advice',
+    ],
+    medicines: [
+      { name: 'ND Lasota / R2B Vaccine', purpose: 'Prevention', rating: 4.9 },
+      { name: 'Electrolytes + vitamins', purpose: 'Supportive', rating: 4.5 },
+    ],
+    notes: ['Priority poultry disease in Punjab surveillance plan'],
+    affectedAnimals: ['chicken'],
+    icon: '🐔',
+  },
+  {
+    id: 'avian-influenza',
+    name: 'Avian Influenza (AI)',
+    localName: 'برڈ فلو',
+    nickname: 'Bird Flu',
+    category: 'viral',
+    severity: 'critical',
+    mortality: 'Very high in HPAI strains',
+    contagious: true,
+    zoonotic: true,
+    vaccineAvailable: false,
+    emergencyCall: true,
+    symptoms: [
+      'Sudden mass mortality',
+      'Swollen head/comb, cyanosis',
+      'Respiratory distress, diarrhea',
+      'Drop in egg production',
+    ],
+    prevention: [
+      'Strict biosecurity and wild bird control',
+      'Report suspected outbreaks to authorities immediately',
+      'Do not move birds during outbreaks',
+    ],
+    treatment: [
+      'Not treatable on farm — official response required',
+      'Follow livestock department culling/quarantine orders',
+    ],
+    medicines: [],
+    notes: [
+      'Zoonotic risk — protect handlers',
+      'Transboundary disease under national surveillance',
+    ],
+    affectedAnimals: ['chicken'],
+    icon: '🦠',
+  },
+  {
+    id: 'ibd',
+    name: 'Infectious Bursal Disease (IBD)',
+    localName: 'گمبورو',
+    nickname: 'Gumboro',
+    category: 'viral',
+    severity: 'high',
+    mortality: '10-50% in chicks',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: false,
+    symptoms: [
+      'Depression and ruffled feathers in 3-6 week chicks',
+      'Whitish diarrhea',
+      'Immunosuppression and secondary infections',
+    ],
+    prevention: [
+      'Vaccinate as per hatchery/farm schedule',
+      'Thorough shed disinfection between flocks',
+    ],
+    treatment: ['Supportive care and vitamins', 'Control secondary bacterial disease'],
+    medicines: [
+      { name: 'IBD Vaccine', purpose: 'Prevention', rating: 4.8 },
+      { name: 'Vitamin AD3E', purpose: 'Supportive', rating: 4.4 },
+    ],
+    affectedAnimals: ['chicken'],
+    icon: '🐤',
+  },
+  {
+    id: 'infectious-bronchitis',
+    name: 'Infectious Bronchitis (IB)',
+    category: 'viral',
+    severity: 'high',
+    mortality: 'Variable; major egg drop',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: false,
+    symptoms: [
+      'Coughing, sneezing, nasal discharge',
+      'Sharp drop in egg production and shell quality',
+      'Watery albumin in eggs',
+    ],
+    prevention: ['Vaccinate layers/breeders per schedule', 'Good ventilation and stocking density'],
+    treatment: [
+      'Supportive care; antibiotics if secondary infection',
+      'Electrolytes during outbreak',
+    ],
+    medicines: [
+      { name: 'IB Vaccine', purpose: 'Prevention', rating: 4.7 },
+      { name: 'Tylosin / Enrofloxacin', purpose: 'Secondary infection', rating: 4.3 },
+    ],
+    affectedAnimals: ['chicken'],
+    icon: '🌬️',
+  },
+  {
+    id: 'fowl-pox',
+    name: 'Fowl Pox',
+    category: 'viral',
+    severity: 'moderate',
+    mortality: 'Low to moderate',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: false,
+    symptoms: [
+      'Wart-like lesions on comb, wattles, eyelids',
+      'Difficulty eating if mouth lesions (wet form)',
+      'Reduced growth and egg production',
+    ],
+    prevention: ['Vaccinate in endemic areas', 'Mosquito and mite control'],
+    treatment: ['Supportive care', 'Topical antiseptics on dry lesions'],
+    medicines: [
+      { name: 'Fowl Pox Vaccine', purpose: 'Prevention', rating: 4.6 },
+      { name: 'Gentian violet / antiseptic', purpose: 'Lesion care', rating: 4.0 },
+    ],
+    affectedAnimals: ['chicken'],
+    icon: '🟡',
+  },
+  {
+    id: 'colibacillosis',
+    name: 'Colibacillosis (E. coli)',
+    category: 'bacterial',
+    severity: 'high',
+    mortality: 'Moderate to high in chicks',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: false,
+    emergencyCall: false,
+    symptoms: [
+      'Omphalitis (navel infection) in chicks',
+      'Respiratory signs, airsacculitis',
+      'Peritonitis, poor growth',
+    ],
+    prevention: [
+      'Hatchery and litter hygiene',
+      'Clean water lines',
+      'Reduce stress and overcrowding',
+    ],
+    treatment: ['Sensitivity-guided antibiotics', 'Supportive electrolytes'],
+    medicines: [{ name: 'Enrofloxacin / Florfenicol', purpose: 'Antibiotic', rating: 4.4 }],
+    affectedAnimals: ['chicken'],
+    icon: '🧫',
+  },
+  {
+    id: 'salmonellosis-poultry',
+    name: 'Salmonellosis (Poultry)',
+    category: 'bacterial',
+    severity: 'high',
+    mortality: 'High in young birds',
+    contagious: true,
+    zoonotic: true,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'White diarrhea in chicks',
+      'Weakness, pasted vent',
+      'Adults: reduced production, intermittent shedding',
+    ],
+    prevention: [
+      'Source chicks from clean hatcheries',
+      'Rodent control and feed hygiene',
+      'Vaccination where recommended',
+    ],
+    treatment: [
+      'Antibiotics under veterinary guidance',
+      'Strict hygiene; zoonotic food-safety risk',
+    ],
+    medicines: [
+      { name: 'Appropriate antibiotic (vet prescribed)', purpose: 'Treatment', rating: 4.0 },
+    ],
+    notes: ['Zoonotic — wash eggs/hands; cook poultry thoroughly'],
+    affectedAnimals: ['chicken'],
+    icon: '⚠️',
+  },
+  {
+    id: 'mycoplasma-poultry',
+    name: 'Mycoplasmosis (CRD)',
+    nickname: 'Chronic Respiratory Disease',
+    category: 'respiratory',
+    severity: 'moderate',
+    mortality: 'Low but chronic losses',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: false,
+    symptoms: [
+      'Chronic sneezing, rales, nasal discharge',
+      'Reduced growth and egg production',
+      'Often complicated by E. coli',
+    ],
+    prevention: ['Buy mycoplasma-free stock', 'Vaccinate breeders where used', 'Good air quality'],
+    treatment: [
+      'Tylosin, tiamulin, or other mycoplasma drugs',
+      'Treat concurrent bacterial infection',
+    ],
+    medicines: [{ name: 'Tylosin / Tiamulin', purpose: 'Anti-mycoplasma', rating: 4.6 }],
+    affectedAnimals: ['chicken'],
+    icon: '🫁',
+  },
+  // ==========================================================================
+  // HORSE / EQUINE
+  // ==========================================================================
+  {
+    id: 'surra',
+    name: 'Surra (Trypanosomiasis)',
+    localName: 'سُرا',
+    category: 'parasitic',
+    severity: 'high',
+    mortality: 'High if untreated',
+    contagious: false,
+    zoonotic: false,
+    vaccineAvailable: false,
+    emergencyCall: true,
+    symptoms: [
+      'Intermittent fever and progressive anemia',
+      'Weight loss, weakness, edema',
+      'Lacrimation and neurological signs in chronic cases',
+    ],
+    prevention: [
+      'Fly and biting insect control',
+      'Screen animals in endemic zones',
+      'Avoid grazing in high-vector areas at peak fly times',
+    ],
+    treatment: [
+      'Trypanocidal drugs under veterinary prescription',
+      'Supportive iron and vitamins',
+      'Rest during treatment',
+    ],
+    medicines: [{ name: 'Diminazene / Suramin (vet only)', purpose: 'Trypanocide', rating: 4.5 }],
+    notes: [
+      'Blood parasite prioritized in Punjab surveillance (Trypanosomiasis/Surra)',
+      'Also affects cattle/buffalo — listed here for equine focus',
+    ],
+    affectedAnimals: ['horse', 'cow', 'buffalo'],
+    seasonalRisk: 'Fly season',
+    icon: '🪰',
+  },
+  {
+    id: 'tetanus-equine',
+    name: 'Tetanus (Equine)',
+    localName: 'تشنج',
+    category: 'bacterial',
+    severity: 'critical',
+    mortality: 'Very high without early treatment',
+    contagious: false,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'Stiff gait, locked jaw, third eyelid prolapse',
+      'Muscle spasms triggered by noise/touch',
+      'Sawhorse stance',
+    ],
+    prevention: [
+      'Annual tetanus toxoid vaccination',
+      'Clean wound management; booster after deep wounds',
+    ],
+    treatment: [
+      'Tetanus antitoxin + penicillin',
+      'Quiet dark stall, muscle relaxants',
+      'Intensive nursing — poor prognosis if advanced',
+    ],
+    medicines: [
+      { name: 'Tetanus Toxoid', purpose: 'Prevention', rating: 4.9 },
+      { name: 'Tetanus Antitoxin', purpose: 'Emergency', rating: 4.8 },
+      { name: 'Penicillin G', purpose: 'Antibiotic', rating: 4.5 },
+    ],
+    affectedAnimals: ['horse'],
+    icon: '🔒',
+  },
+  {
+    id: 'strangles',
+    name: 'Strangles',
+    nickname: 'Equine Distemper',
+    category: 'bacterial',
+    severity: 'high',
+    mortality: 'Low to moderate; highly contagious',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: true,
+    symptoms: [
+      'Fever, nasal discharge',
+      'Swollen abscessed lymph nodes under jaw',
+      'Difficulty swallowing, depression',
+    ],
+    prevention: [
+      'Quarantine new horses 2-3 weeks',
+      'Vaccinate at-risk yards',
+      'Do not share tack/water buckets during outbreaks',
+    ],
+    treatment: [
+      'Hot packing abscesses; drain when mature',
+      'Antibiotics only under vet advice (may prolong)',
+      'Strict isolation and hygiene',
+    ],
+    medicines: [
+      { name: 'Strangles Vaccine', purpose: 'Prevention', rating: 4.4 },
+      { name: 'Penicillin (vet directed)', purpose: 'Selected cases', rating: 4.2 },
+    ],
+    affectedAnimals: ['horse'],
+    icon: '🐴',
+  },
+  {
+    id: 'equine-respiratory',
+    name: 'Equine Influenza & Viral Respiratory Disease',
+    category: 'respiratory',
+    severity: 'high',
+    mortality: 'Low in adults; higher in foals',
+    contagious: true,
+    zoonotic: false,
+    vaccineAvailable: true,
+    emergencyCall: false,
+    symptoms: [
+      'Fever, harsh cough, nasal discharge',
+      'Depression and reduced appetite',
+      'Rapid spread through stables',
+    ],
+    prevention: [
+      'Vaccinate competing/traveling horses',
+      'Isolate coughing horses immediately',
+      'Good ventilation; reduce dust',
+    ],
+    treatment: [
+      'Rest (minimum 1 week per fever day)',
+      'NSAIDs and supportive care',
+      'Antibiotics if secondary pneumonia',
+    ],
+    medicines: [
+      { name: 'Equine Influenza Vaccine', purpose: 'Prevention', rating: 4.7 },
+      { name: 'Flunixin / Phenylbutazone', purpose: 'Fever and pain', rating: 4.5 },
+    ],
+    affectedAnimals: ['horse'],
+    icon: '🤧',
+  },
+  {
+    id: 'colic',
+    name: 'Colic (Equine Abdominal Pain)',
+    category: 'metabolic',
+    severity: 'critical',
+    mortality: 'Variable — surgical cases high risk',
+    contagious: false,
+    zoonotic: false,
+    vaccineAvailable: false,
+    emergencyCall: true,
+    symptoms: [
+      'Pawing, looking at flank, rolling',
+      'Reduced or absent manure',
+      'Elevated heart rate, sweating',
+    ],
+    prevention: [
+      'Consistent feeding; quality forage',
+      'Adequate water and dental care',
+      'Parasite control; avoid sudden diet changes',
+    ],
+    treatment: [
+      'Call vet immediately — do not force walk endlessly',
+      'Pain relief, fluids, nasogastric oil as directed',
+      'Surgery if obstruction/torsion',
+    ],
+    medicines: [
+      { name: 'Flunixin meglumine', purpose: 'Pain relief (vet)', rating: 4.8 },
+      { name: 'Mineral oil / laxatives', purpose: 'Impaction (vet)', rating: 4.3 },
+    ],
+    notes: ['True emergency — delay kills horses'],
+    affectedAnimals: ['horse'],
+    icon: '🚨',
+  },
+  {
+    id: 'equine-babesiosis',
+    name: 'Equine Babesiosis (Piroplasmosis)',
+    category: 'parasitic',
+    severity: 'high',
+    mortality: 'Moderate to high untreated',
+    contagious: false,
+    zoonotic: false,
+    vaccineAvailable: false,
+    emergencyCall: true,
+    symptoms: ['Fever, anemia, jaundice', 'Dark urine, weakness', 'Poor performance'],
+    prevention: ['Tick control', 'Screen horses before movement/import'],
+    treatment: ['Imidocarb or other piroplasmicides under vet care', 'Supportive fluids and rest'],
+    medicines: [{ name: 'Imidocarb (vet only)', purpose: 'Anti-piroplasm', rating: 4.6 }],
+    affectedAnimals: ['horse'],
+    seasonalRisk: 'Tick season',
+    icon: '🩸',
+  },
 ];
 
 // Vaccination Schedule
@@ -1299,6 +1955,16 @@ export const vaccinationSchedule: VaccinationSchedule[] = [
   { age: 'Annual', vaccine: 'LSD Live Vaccine', disease: 'Lumpy Skin Disease' },
   { age: 'Annual', vaccine: 'Bovilis IBR', disease: 'Red Nose (IBR)' },
   { age: 'Before monsoon', vaccine: 'HS Booster', disease: 'Haemorrhagic Septicemia' },
+  { age: 'Goats/Sheep — annual', vaccine: 'PPR Vaccine', disease: 'Peste des Petits Ruminants' },
+  {
+    age: 'Goats/Sheep — kids/lambs',
+    vaccine: 'Enterotoxemia vaccine',
+    disease: 'Enterotoxemia',
+  },
+  { age: 'Poultry — day old / schedule', vaccine: 'ND Lasota', disease: 'Newcastle Disease' },
+  { age: 'Poultry — schedule', vaccine: 'IBD Vaccine', disease: 'Gumboro (IBD)' },
+  { age: 'Horses — annual', vaccine: 'Tetanus Toxoid', disease: 'Tetanus' },
+  { age: 'Horses — at-risk', vaccine: 'Equine Influenza', disease: 'Equine flu' },
 ];
 
 // Recommended Products

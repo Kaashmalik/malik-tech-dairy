@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://dairy.mtkcodex.site';
 
 function redirectWith(query: string) {
-  return NextResponse.redirect(`${APP_URL}/dashboard/subscription?${query}`);
+  return NextResponse.redirect(`${APP_URL}/subscription?${query}`);
 }
 
 export async function GET(

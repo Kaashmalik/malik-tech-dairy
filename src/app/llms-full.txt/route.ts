@@ -41,8 +41,8 @@ export async function GET() {
 ${faqMarkdown}
 
 ## Contact & Business Verification
-- Address: Bhubtian Branch, Lahore, Punjab, 54000, Pakistan
-- WhatsApp / Phone: +92-302-0718182
+- Address: Garhi Shahu, Allama Iqbal Road, Lahore, Punjab, 54000, Pakistan
+- WhatsApp / Phone: +92-303-8111297
 - Official Inquiries: support@dairy.mtkcodex.site
 `;
 

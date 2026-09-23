@@ -89,7 +89,7 @@ export default function CustomDomainPage() {
             <AlertDescription>
               Custom domain is available for Enterprise plan subscribers only.
               <Button variant='link' className='ml-1 h-auto p-0' asChild>
-                <a href='/dashboard/subscription'>Upgrade now</a>
+                <a href='/subscription'>Upgrade now</a>
               </Button>
             </AlertDescription>
           </Alert>

@@ -14,9 +14,9 @@ export const siteConfig = {
   // Contact Information
   contact: {
     email: 'support@dairy.mtkcodex.site',
-    phone: '+92-302-0718182',
+    phone: '+92-303-8111297',
     address: {
-      street: 'Bhubtian Branch',
+      street: 'Garhi Shahu, Allama Iqbal Road',
       city: 'Lahore',
       region: 'Punjab',
       postalCode: '54000',
@@ -24,8 +24,8 @@ export const siteConfig = {
       countryCode: 'PK',
     },
     coordinates: {
-      latitude: 31.5204,
-      longitude: 74.3587,
+      latitude: 31.5631,
+      longitude: 74.3507,
     },
   },
 
@@ -36,7 +36,7 @@ export const siteConfig = {
     instagram: 'https://instagram.com/mtkdairy',
     linkedin: 'https://linkedin.com/company/mtk-dairy',
     youtube: 'https://youtube.com/@mtkdairy',
-    whatsapp: 'https://wa.me/923020718182',
+    whatsapp: 'https://wa.me/923038111297',
   },
 
   // Verification Tags (configured via environment variables in production)
@@ -193,7 +193,7 @@ export const faqData = [
   {
     question: 'How can I contact support?',
     answer:
-      'You can reach our support team via WhatsApp at +92-302-0718182, email at support@dairy.mtkcodex.site, or through the in-app chat feature.',
+      'You can reach our support team via WhatsApp at +92-303-8111297, email at support@dairy.mtkcodex.site, or through the in-app chat feature.',
   },
 ];
 

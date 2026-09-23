@@ -113,7 +113,7 @@ export function MarketingFooter() {
                 <MapPin className='h-4 w-4 text-emerald-600' />
                 <span>Lahore, Punjab, Pakistan</span>
               </li>
-              <li className='text-xs text-slate-400'>WhatsApp Support: +92 302 0718182</li>
+              <li className='text-xs text-slate-400'>WhatsApp Support: +92 303 8111297</li>
             </ul>
           </div>
         </div>

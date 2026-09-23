@@ -50,6 +50,8 @@ export async function GET() {
     return NextResponse.redirect(new URL(path, appOrigin()));
   } catch (error) {
     console.error('auth/redirect error:', error);
+    // Prefer farm picker when auth succeeded but destination resolution failed;
+    // apply is the cold-start path if picker is empty.
     return NextResponse.redirect(new URL('/select-farm', appOrigin()));
   }
 }

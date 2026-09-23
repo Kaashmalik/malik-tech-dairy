@@ -219,7 +219,7 @@ export function OnboardingWizard() {
       // Step 5: If paid plan selected, redirect to checkout
       if (data.selectedPlan !== 'free') {
         toast.success('Farm created! Redirecting to payment...');
-        router.push(`/dashboard/subscription/checkout?plan=${data.selectedPlan}`);
+        router.push(`/subscription/checkout?plan=${data.selectedPlan}`);
       } else {
         toast.success('Farm setup complete!');
         router.push('/dashboard');
