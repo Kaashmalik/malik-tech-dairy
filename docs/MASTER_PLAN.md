@@ -188,3 +188,20 @@ _Last updated: 2026-10-30_
     in Phase 5), NPS survey, bank-transfer routes without callers.
   - Phase 3 follow-ups noted: milk quality (fat/SNF) and feed consumption tracking
     need real data models; API keys/IoT need a deliberate design if wanted.
+- **2026-10-30** — Phases 0 and 3–8 implemented (see commits "Phase 0" … "Phase 8"):
+  - Phase 0: leaked Supabase service-role key removed from tracked files (**must be
+    rotated** — docs/SETUP.md §0); stale docs/scripts/debug pages removed; npm CI gate.
+  - Phase 3: milk quantity decimal fix (migration 011), herd milk entry, fat/SNF,
+    monthly milk report, accurate PDF/CSV/dashboard totals; billing bypass
+    (`PUT /api/subscription`) removed; shared catalogue writes admin-only.
+  - Phase 4: super-admin farm create/plan/suspend (migration 012), real audit log
+    (audit inserts had been failing), unified tenant resolution.
+  - Phase 5: central rate limiting, working contact form (migration 013), farm export
+    and deletion.
+  - Phases 6–7: canonical/hreflang/og:image/sitemap/robots fixes, 12 guides, 2 free
+    calculators, AdSense wiring + privacy policy.
+  - Phase 8: README, ARCHITECTURE, SETUP checklist; 406 unit tests.
+  - **Remaining (needs your accounts/DB):** everything in docs/SETUP.md. Content goal:
+    grow guides to ~25 before applying to AdSense. Not done: Cypress e2e suite refresh
+    (existing specs predate these changes), real Urdu (`/ur`) pages, feed consumption
+    tracking, impersonation for support.

@@ -6,6 +6,19 @@ credentials. Every step says _where_, _what_ and _how to verify_.
 
 > Code changes are already on `main`. Nothing here is done automatically.
 
+## At a glance (do in this order)
+
+1. [ ] **Rotate the Supabase service-role key** and update Vercel + `.env.local` (§0) — urgent.
+2. [ ] `git pull`, `npm install`, fill `.env.local` (§1), `npm run dev` works locally.
+3. [ ] Supabase SQL editor: apply migrations **010 → 011 → 012 → 013** in order (§2),
+       running each file's PRE/POST-CHECK queries.
+4. [ ] Clerk: webhook endpoint + the 7 events incl. `organizationMembership.*` (§3).
+5. [ ] Vercel: add `SUPER_ADMIN_EMAILS`, `CRON_SECRET`, Upstash keys, `CONTACT_INBOX_EMAIL`;
+       remove all `FIREBASE_*`; redeploy (§1, §4).
+6. [ ] Run the smoke test (§8).
+7. [ ] Search Console + Bing, submit sitemap (§5).
+8. [ ] Later, once ~25 guides are indexed: apply for AdSense (§6).
+
 ---
 
 ## 0. URGENT — rotate the leaked Supabase service-role key
