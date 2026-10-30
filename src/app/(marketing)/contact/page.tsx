@@ -24,9 +24,31 @@ export default function ContactPage() {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [website, setWebsite] = useState(''); // honeypot
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, website }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) {
+        setError(json.error || 'Could not send your message. Please try again.');
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -265,11 +287,28 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {/* Honeypot: hidden from people, filled by bots */}
+                  <input
+                    type='text'
+                    name='website'
+                    tabIndex={-1}
+                    autoComplete='off'
+                    aria-hidden='true'
+                    className='hidden'
+                    value={website}
+                    onChange={e => setWebsite(e.target.value)}
+                  />
+                  {error && (
+                    <p role='alert' className='text-sm text-red-600'>
+                      {error}
+                    </p>
+                  )}
                   <button
                     type='submit'
+                    disabled={sending}
                     className='flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-700 sm:w-auto'
                   >
-                    <span>Submit Inquiry</span>
+                    <span>{sending ? 'Sending…' : 'Submit Inquiry'}</span>
                     <Send className='h-4 w-4' />
                   </button>
                 </form>

@@ -74,6 +74,12 @@ export default function SettingsPage() {
       href: '/settings/billing',
     },
     {
+      title: 'Data & Privacy',
+      description: 'Export all farm data or permanently close your farm',
+      icon: Shield,
+      href: '/settings/data',
+    },
+    {
       title: 'Domain Settings',
       description: 'Configure custom domain for your farm',
       icon: Globe,

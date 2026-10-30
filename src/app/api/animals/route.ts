@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getTenantContext, TenantAccessError } from '@/lib/tenant/context';
 import { z } from 'zod';
-import { withRateLimit, standardRateLimit } from '@/lib/ratelimit';
 import { AnimalService } from '@/lib/services/animals/animal.service';
 
 export const dynamic = 'force-dynamic';
@@ -53,9 +52,6 @@ const createAnimalSchema = z.object({
 
 // GET /api/animals - List all animals for the tenant
 export async function GET(request: NextRequest) {
-  const rateLimitResponse = await withRateLimit(request, standardRateLimit);
-  if (rateLimitResponse) return rateLimitResponse;
-
   try {
     const { userId } = await auth();
     if (!userId) {

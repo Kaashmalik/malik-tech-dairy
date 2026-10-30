@@ -46,7 +46,8 @@ Copy `.env.example` to `.env.local` and fill in. Required to run at all:
 | `CRON_SECRET`                                                                            | Any long random string (`openssl rand -hex 32`); Vercel Cron sends it |
 
 Optional (feature degrades gracefully without them): `UPSTASH_REDIS_REST_URL/TOKEN`
-(rate limiting, caching), `RESEND_API_KEY`/`RESEND_FROM_EMAIL` (emails),
+(**rate limiting is a no-op without Redis** — strongly recommended in production; free
+Upstash tier is enough), `CONTACT_INBOX_EMAIL` (where contact-form inquiries go), `RESEND_API_KEY`/`RESEND_FROM_EMAIL` (emails),
 `CLOUDINARY_*` (photo uploads), `OPENWEATHER_API_KEY`, `GROQ_API_KEY` (AI),
 `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`, payment gateway keys
 (`JAZZCASH_*`, `EASYPAISA_*`, `XPAY_*`), `INDEXNOW_API_KEY`, site verification codes.
@@ -82,6 +83,7 @@ Then apply the new ones:
 
 | `011_milk_logs_decimal_quality.sql` | `milk_logs.quantity` → `numeric(6,2)` litres (fixes every decimal entry like 12.5 L failing), adds `snf`, fat/SNF range checks, `(tenant_id, date)` index, and a unique index for one entry per animal/session/day | If it prints _"Duplicates found"_, run the DUPLICATE CHECK query in the file, delete the extra rows, and re-run. Fat/SNF entry works after this migration. |
 | `012_tenant_suspension.sql` | Adds `tenants.suspended_at` / `suspended_reason` for the super-admin **Suspend farm** action (members get HTTP 423 until reactivated) | Without it, the Suspend action returns an error; everything else works. |
+| `013_contact_messages.sql` | Inbox table for the public contact form (`POST /api/contact`) | Messages are also emailed to `CONTACT_INBOX_EMAIL` (or `NEXT_PUBLIC_SUPPORT_EMAIL`) when Resend is configured. Without the table **and** email, the form shows an error. |
 
 **Verify:** run the POST-CHECK query at the bottom of each file.
 
@@ -134,7 +136,23 @@ Then apply the new ones:
 
 ---
 
-## 5. Smoke test after deploy
+## 5. Deleted farms (recovery & purge)
+
+**Settings → Data & Privacy → Delete** soft-deletes: `tenants.deleted_at` is set, members
+are deactivated, the Clerk organization is deleted, and every API returns `410` for that
+farm. Rows are kept so you can recover a mistake.
+
+- Recover (within your stated 30 days): `UPDATE tenants SET deleted_at = NULL WHERE id = '<org id>';`
+  then recreate a Clerk organization for the owner (Super Admin → Farms → Create farm makes
+  a _new_ farm; for a true restore re-link manually) — or simply export and re-import.
+- Purge after 30 days (run monthly):
+  ```sql
+  DELETE FROM tenants WHERE deleted_at < now() - interval '30 days';  -- cascades
+  ```
+
+---
+
+## 6. Smoke test after deploy
 
 - [ ] New user → Free plan → dashboard opens (no admin approval)
 - [ ] Paid plan → application → super admin approves → user opens dashboard
@@ -143,3 +161,6 @@ Then apply the new ones:
 - [ ] Staff: invite, change role, remove member (removed user loses access)
 - [ ] Settings → Location saves
 - [ ] Super admin panel loads for the allow-listed verified email only
+- [ ] Contact form on `/contact` sends (check `contact_messages` / inbox)
+- [ ] Settings → Data & Privacy → Download export produces a ZIP
+- [ ] Super admin → Farms → Suspend: the farm's members get "farm is suspended"; Reactivate restores

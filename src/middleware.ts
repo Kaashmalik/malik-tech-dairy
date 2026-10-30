@@ -2,6 +2,13 @@ import { handleCorsPreflight, getCorsHeaders } from '@/lib/cors';
 import { getNoOrgFallbackPath } from '@/lib/auth/post-login-destination';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import {
+  checkRateLimit,
+  createRateLimitResponse,
+  lenientRateLimit,
+  strictRateLimit,
+  uploadRateLimit,
+} from '@/lib/ratelimit';
 import type { NextRequest } from 'next/server';
 
 // Note: Using middleware.ts (not deprecated proxy) - Next.js 15+ supports this
@@ -35,6 +42,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/weather/sync(.*)',
   '/api/auth/redirect(.*)',
   '/api/unsubscribe(.*)',
+  '/api/contact',
 ]);
 
 // Authenticated routes that work WITHOUT an active farm (organization).
@@ -54,6 +62,40 @@ const isNoOrgRoute = createRouteMatcher([
 ]);
 
 const IDENTITY_HEADERS = ['x-tenant-id', 'x-tenant-slug', 'x-user-id'];
+
+// Machine-to-machine endpoints authenticate themselves and are not user-rate-limited
+const isRateLimitExempt = createRouteMatcher([
+  '/api/webhooks(.*)',
+  '/api/cron(.*)',
+  '/api/payments/callback(.*)',
+  '/api/system/health(.*)',
+]);
+
+// Abuse-prone writes: applications, invites, contact, uploads
+const STRICT_WRITE_PATHS = ['/api/farm-applications', '/api/staff', '/api/contact'];
+
+/**
+ * Central API rate limiting (Upstash; a no-op when Redis is not configured).
+ * Keyed by user when signed in, otherwise by client IP.
+ */
+async function rateLimitApi(req: NextRequest, userId: string | null) {
+  const path = req.nextUrl.pathname;
+  if (!path.startsWith('/api') || isRateLimitExempt(req)) return null;
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anonymous';
+  const key = userId ? `user:${userId}` : `ip:${ip}`;
+  const isWrite = req.method !== 'GET' && req.method !== 'HEAD';
+
+  const limiter =
+    path.startsWith('/api/upload') && isWrite
+      ? uploadRateLimit
+      : isWrite && STRICT_WRITE_PATHS.some(p => path === p)
+        ? strictRateLimit
+        : lenientRateLimit;
+
+  const result = await checkRateLimit(limiter, key);
+  return result.success ? null : createRateLimitResponse(result);
+}
 
 // Pages a user with an active farm should not see again
 const ONBOARDING_PATHS = new Set(['/onboarding', '/apply', '/select-farm']);
@@ -95,6 +137,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   for (const header of IDENTITY_HEADERS) {
     requestHeaders.delete(header);
   }
+
+  const limited = await rateLimitApi(req, userId);
+  if (limited) return limited;
 
   // Allow public routes
   if (isPublicRoute(req)) {
