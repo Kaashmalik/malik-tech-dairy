@@ -1,8 +1,6 @@
 // API Route: Daily Cron Job to Trigger Predictions for All Tenants
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase/server';
-import { tenants } from '@/db/schema';
-import { isNull } from 'drizzle-orm';
+import { listActiveTenants } from '@/lib/supabase/tenant-db';
 import { predictionQueue } from '@/lib/workers/queue';
 
 export const dynamic = 'force-dynamic';
@@ -16,10 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const db = getDrizzle();
-    const rows = await db.select({ id: tenants.id }).from(tenants).where(isNull(tenants.deletedAt));
-
-    const tenantIds = rows.map(r => r.id);
+    const tenantIds = (await listActiveTenants()).map(r => r.id);
 
     const jobs = await Promise.all(
       tenantIds.map(tenantId =>

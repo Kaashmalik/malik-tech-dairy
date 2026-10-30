@@ -120,3 +120,11 @@ export async function fetchAllRows<T>(
   }
   return rows;
 }
+
+/** All live (not soft-deleted) farms - for platform-wide cron jobs. */
+export async function listActiveTenants(): Promise<Array<{ id: string; farm_name: string }>> {
+  return fetchAllRows<{ id: string; farm_name: string }>(
+    () => db().from('tenants').select('id, farm_name').is('deleted_at', null).order('id'),
+    'List active tenants'
+  );
+}

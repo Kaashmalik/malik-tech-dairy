@@ -3,11 +3,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyJazzCashResponse } from '@/lib/payments/jazzcash-server';
 import { verifyEasyPaisaResponse } from '@/lib/payments/easypaisa-server';
 import { verifyXPayResponse } from '@/lib/payments/xpay-server';
-import { updateTenantSubscription } from '@/lib/subscriptions/management';
+import { updateTenantSubscription, type SubscriptionUpdate } from '@/lib/subscriptions/management';
 import { recordCouponUsage } from '@/lib/coupons/validation';
-import { getDrizzle } from '@/lib/supabase/server';
-import { payments } from '@/db/schema';
-import { eq, or, sql } from 'drizzle-orm';
+import { db, tenantDb, unwrap } from '@/lib/supabase/tenant-db';
+import { logger } from '@/lib/logger';
+
+const ORDER_ID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
+
+interface PaymentRow {
+  id: string;
+  tenant_id: string;
+  status: string;
+  plan: string;
+  amount: number;
+  transaction_id: string | null;
+  metadata: Record<string, unknown> | null;
+}
 import type { PaymentGateway } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -77,22 +88,20 @@ export async function GET(
     }
 
     const orderId = responseData.orderId || responseData.pp_TxnRefNo || verification.transactionId;
-    if (!orderId) {
+    // orderId comes from the gateway response; validate before using it in a filter
+    if (!orderId || !ORDER_ID_PATTERN.test(String(orderId))) {
       return redirectWith('error=invalid_order');
     }
 
-    const db = getDrizzle();
-    const [paymentIntent] = await db
-      .select()
-      .from(payments)
-      .where(
-        or(
-          eq(payments.id, orderId),
-          eq(payments.transactionId, orderId),
-          sql`${payments.metadata}->>'orderId' = ${orderId}`
-        )
-      )
-      .limit(1);
+    // Callback has no session: look the intent up globally, then act within its tenant
+    const [paymentIntent] = unwrap(
+      await db()
+        .from('payments')
+        .select('id, tenant_id, status, plan, amount, transaction_id, metadata')
+        .or(`id.eq.${orderId},transaction_id.eq.${orderId},metadata->>orderId.eq.${orderId}`)
+        .limit(1),
+      'Load payment intent'
+    ) as PaymentRow[];
 
     if (!paymentIntent) {
       return redirectWith('error=order_not_found');
@@ -109,27 +118,40 @@ export async function GET(
     const userId = (metadata.userId || metadata.user_id) as string | undefined;
     const paidAmount = verification.amount ?? paymentIntent.amount;
 
-    await db
-      .update(payments)
-      .set({
-        status: 'completed',
-        transactionId: verification.transactionId || paymentIntent.transactionId,
-        amount: Math.round(paidAmount),
-        metadata: {
-          ...metadata,
-          orderId,
-          completedAt: new Date().toISOString(),
-        },
-        updatedAt: new Date(),
-      })
-      .where(eq(payments.id, paymentIntent.id));
-
-    if (couponCode && couponId && discountAmount > 0 && userId) {
-      await recordCouponUsage(couponId, paymentIntent.tenantId, userId, orderId, discountAmount);
+    // Never activate a plan for less than the amount the intent was created for
+    if (Math.round(paidAmount) < Math.round(paymentIntent.amount)) {
+      logger.error('Payment amount below intent amount', undefined, {
+        orderId,
+        paidAmount,
+        expected: paymentIntent.amount,
+      });
+      return redirectWith('error=amount_mismatch');
     }
 
-    await updateTenantSubscription(paymentIntent.tenantId, {
-      plan: paymentIntent.plan,
+    const tenantId = paymentIntent.tenant_id;
+    unwrap(
+      await tenantDb(tenantId)
+        .update('payments', {
+          status: 'completed',
+          transaction_id: verification.transactionId || paymentIntent.transaction_id,
+          amount: Math.round(paidAmount),
+          metadata: {
+            ...metadata,
+            orderId,
+            completedAt: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', paymentIntent.id),
+      'Complete payment'
+    );
+
+    if (couponCode && couponId && discountAmount > 0 && userId) {
+      await recordCouponUsage(couponId, tenantId, userId, orderId, discountAmount);
+    }
+
+    await updateTenantSubscription(tenantId, {
+      plan: paymentIntent.plan as SubscriptionUpdate['plan'],
       status: 'active',
       gateway: gateway as PaymentGateway,
       renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

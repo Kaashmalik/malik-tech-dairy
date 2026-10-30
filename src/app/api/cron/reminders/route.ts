@@ -1,7 +1,6 @@
 // API Route: Cron Job to Trigger Automated Reminders for All Tenants
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase/server';
-import { tenants } from '@/db/schema';
+import { listActiveTenants } from '@/lib/supabase/tenant-db';
 import { ReminderService } from '@/lib/services/notifications/notification.service';
 
 export const dynamic = 'force-dynamic';
@@ -15,10 +14,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const db = getDrizzle();
-    const allTenants = await db
-      .select({ id: tenants.id, farmName: tenants.farmName })
-      .from(tenants);
+    // Skips soft-deleted farms
+    const allTenants = (await listActiveTenants()).map(t => ({ id: t.id, farmName: t.farm_name }));
 
     const summary: Record<string, any> = {
       tenantsProcessed: allTenants.length,

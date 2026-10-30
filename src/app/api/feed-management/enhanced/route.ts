@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { eq, and, or, ilike, gte, lte, desc, asc, sql, between } from 'drizzle-orm';
-import { getDrizzle, getSupabaseClient } from '@/lib/supabase/server';
-import { feedInventory, animals, tenants } from '@/db/schema';
-import { getTenantContext } from '@/lib/tenant/context';
-// Note: nutrition_requirements accessed via Supabase REST API
 import { z } from 'zod';
+import { getTenantContext } from '@/lib/tenant/context';
+import { fetchAllRows, tenantDb } from '@/lib/supabase/tenant-db';
+import { logger } from '@/lib/logger';
+
 // Enhanced feed query schema
+const optionalNumber = (parse: (v: string) => number) =>
+  z
+    .string()
+    .optional()
+    .transform(val => (val ? parse(val) : undefined))
+    .refine(val => val === undefined || Number.isFinite(val), 'Must be a number');
+const csvList = z
+  .string()
+  .optional()
+  .transform(val => (val ? val.split(',').filter(Boolean) : []));
+
 const enhancedFeedQuerySchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform(val => (val ? parseInt(val) : 1)),
-  limit: z
-    .string()
-    .optional()
-    .transform(val => (val ? parseInt(val) : 20)),
+  page: optionalNumber(parseInt).transform(v => Math.max(1, v ?? 1)),
+  limit: optionalNumber(parseInt).transform(v => Math.min(100, Math.max(1, v ?? 20))),
   search: z.string().optional(),
-  category: z
-    .string()
-    .optional()
-    .transform(val => (val ? val.split(',') : [])),
-  qualityGrade: z
-    .string()
-    .optional()
-    .transform(val => (val ? val.split(',') : [])),
+  category: csvList,
+  qualityGrade: csvList,
   lowStock: z
     .string()
     .optional()
@@ -35,28 +33,131 @@ const enhancedFeedQuerySchema = z.object({
     .transform(val => val === 'true'),
   sortBy: z.enum(['name', 'category', 'currentStock', 'expiryDate', 'unitCost']).default('name'),
   sortOrder: z.enum(['asc', 'desc']).default('asc'),
-  minStock: z
-    .string()
-    .optional()
-    .transform(val => (val ? parseFloat(val) : undefined)),
-  maxStock: z
-    .string()
-    .optional()
-    .transform(val => (val ? parseFloat(val) : undefined)),
-  minCost: z
-    .string()
-    .optional()
-    .transform(val => (val ? parseFloat(val) : undefined)),
-  maxCost: z
-    .string()
-    .optional()
-    .transform(val => (val ? parseFloat(val) : undefined)),
-  expiryDays: z
-    .string()
-    .optional()
-    .transform(val => (val ? parseInt(val) : undefined)),
+  minStock: optionalNumber(parseFloat),
+  maxStock: optionalNumber(parseFloat),
+  minCost: optionalNumber(parseFloat),
+  maxCost: optionalNumber(parseFloat),
+  expiryDays: optionalNumber(parseInt),
   storageLocation: z.string().optional(),
 });
+
+interface FeedRow {
+  id: string;
+  feed_name: string;
+  feed_type: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  minimum_stock: number | null;
+  supplier: string | null;
+  batch_number: string | null;
+  purchase_date: string | null;
+  expiry_date: string | null;
+  storage_location: string | null;
+  nutritional_info: { protein?: number; moisture?: number; energy?: number } | null;
+  created_at: string;
+  updated_at: string;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function stockStatus(item: FeedRow): 'critical' | 'low' | 'overstock' | 'adequate' {
+  const min = Number(item.minimum_stock ?? 0);
+  const qty = Number(item.quantity);
+  if (min <= 0) return 'adequate';
+  if (qty <= min) return 'critical';
+  if (qty <= min * 1.5) return 'low';
+  if (qty >= min * 3) return 'overstock';
+  return 'adequate';
+}
+
+const daysUntil = (date: string | null) =>
+  date ? Math.max(0, Math.floor((new Date(date).getTime() - Date.now()) / DAY_MS)) : null;
+
+const SORT_KEYS: Record<string, (i: FeedRow) => string | number> = {
+  name: i => i.feed_name.toLowerCase(),
+  category: i => i.feed_type,
+  currentStock: i => Number(i.quantity),
+  expiryDate: i => (i.expiry_date ? new Date(i.expiry_date).getTime() : Number.MAX_SAFE_INTEGER),
+  unitCost: i => Number(i.unit_price),
+};
+
+function toFeedItem(item: FeedRow) {
+  return {
+    id: item.id,
+    ingredientName: item.feed_name,
+    category: item.feed_type,
+    currentStock: item.quantity,
+    unit: item.unit,
+    reorderLevel: item.minimum_stock,
+    maxStockLevel: item.quantity,
+    unitCost: item.unit_price,
+    totalValue: Number(item.quantity) * Number(item.unit_price),
+    supplierName: item.supplier,
+    batchNumber: item.batch_number,
+    manufactureDate: item.purchase_date,
+    expiryDate: item.expiry_date,
+    storageLocation: item.storage_location,
+    // Real values only - null when not recorded (previously hard-coded mock numbers)
+    qualityGrade: null,
+    moistureContent: item.nutritional_info?.moisture ?? null,
+    proteinContent: item.nutritional_info?.protein ?? null,
+    energyContent: item.nutritional_info?.energy ?? null,
+    averageDailyConsumption: null,
+    daysOfSupply: null,
+    usageRate: null,
+    daysUntilExpiry: daysUntil(item.expiry_date),
+    stockStatus: stockStatus(item),
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+  };
+}
+
+function calculateFeedAnalytics(items: FeedRow[]) {
+  const value = (i: FeedRow) => Number(i.quantity) * Number(i.unit_price);
+  const totalValue = items.reduce((sum, i) => sum + value(i), 0);
+  const expiryLimit = Date.now() + 30 * DAY_MS;
+
+  const byCategory = new Map<
+    string,
+    { totalValue: number; totalStock: number; itemCount: number }
+  >();
+  for (const item of items) {
+    const cat = byCategory.get(item.feed_type) || { totalValue: 0, totalStock: 0, itemCount: 0 };
+    cat.totalValue += value(item);
+    cat.totalStock += Number(item.quantity);
+    cat.itemCount += 1;
+    byCategory.set(item.feed_type, cat);
+  }
+
+  return {
+    totalValue,
+    totalItems: items.length,
+    totalStock: items.reduce((sum, i) => sum + Number(i.quantity), 0),
+    lowStockItems: items.filter(i => stockStatus(i) === 'critical').length,
+    expiringItems: items.filter(
+      i => i.expiry_date && new Date(i.expiry_date).getTime() <= expiryLimit
+    ).length,
+    categoryBreakdown: [...byCategory.entries()]
+      .map(([category, c]) => ({
+        category,
+        ...c,
+        percentage: totalValue > 0 ? (c.totalValue / totalValue) * 100 : 0,
+      }))
+      .sort((a, b) => b.totalValue - a.totalValue),
+    // Consumption is not tracked yet, so these stay 0 instead of invented numbers
+    efficiencyMetrics: {
+      averageDaysOfSupply: 0,
+      stockTurnoverRate: 0,
+      wastePercentage: 0,
+      costPerDay: 0,
+    },
+  };
+}
+
+const includesText = (value: string | null, term: string) =>
+  (value || '').toLowerCase().includes(term);
+
 // GET /api/feed-management/enhanced - Advanced feed inventory with analytics
 export async function GET(request: NextRequest) {
   try {
@@ -65,336 +166,112 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     const tenantContext = await getTenantContext();
-    if (!tenantContext) {
-      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
-    }
-    const db = getDrizzle();
     const { searchParams } = new URL(request.url);
     const query = enhancedFeedQuerySchema.parse(Object.fromEntries(searchParams));
-    const {
-      page,
-      limit,
-      search,
-      category,
-      qualityGrade,
-      lowStock,
-      expiringSoon,
-      sortBy,
-      sortOrder,
-      minStock,
-      maxStock,
-      minCost,
-      maxCost,
-      expiryDays,
-      storageLocation,
-    } = query;
-    // Build where conditions
-    const whereConditions = [
-      eq(feedInventory.tenantId, tenantContext.tenantId),
-      eq(feedInventory.isActive, true),
-    ];
-    // Search functionality
-    if (search) {
-      const searchConditions = [
-        ilike(feedInventory.feedName, `%${search}%`),
-        ilike(feedInventory.supplier ?? '', `%${search}%`),
-        ilike(feedInventory.batchNumber ?? '', `%${search}%`),
-        ilike(feedInventory.storageLocation ?? '', `%${search}%`),
-      ].filter(Boolean);
-      if (searchConditions.length > 0) {
-        whereConditions.push(or(...searchConditions)!);
+    const { page, limit, sortBy, sortOrder } = query;
+
+    // A farm's active inventory is small; load it once and derive list + analytics
+    const t = tenantDb(tenantContext.tenantId);
+    const allItems = await fetchAllRows<FeedRow>(
+      () => t.select('feed_inventory').eq('is_active', true).order('id'),
+      'Load feed inventory'
+    );
+
+    const term = query.search?.trim().toLowerCase();
+    const categories = [...query.category, ...query.qualityGrade];
+    const expiryLimit = Date.now() + (query.expiryDays || 30) * DAY_MS;
+    const location = query.storageLocation?.toLowerCase();
+
+    const filtered = allItems.filter(i => {
+      const qty = Number(i.quantity);
+      const price = Number(i.unit_price);
+      if (
+        term &&
+        ![i.feed_name, i.supplier, i.batch_number, i.storage_location].some(v =>
+          includesText(v, term)
+        )
+      ) {
+        return false;
       }
-    }
-    // Category filter
-    if (category && category.length > 0) {
-      whereConditions.push(sql`${feedInventory.feedType} = ANY(${category})`);
-    }
-    // Quality grade filter (using feedType as category since qualityGrade doesn't exist)
-    if (qualityGrade && qualityGrade.length > 0) {
-      whereConditions.push(sql`${feedInventory.feedType} = ANY(${qualityGrade})`);
-    }
-    // Low stock filter
-    if (lowStock) {
-      whereConditions.push(sql`${feedInventory.quantity} <= ${feedInventory.minimumStock}`);
-    }
-    // Expiring soon filter
-    if (expiringSoon) {
-      const days = expiryDays || 30;
-      whereConditions.push(
-        sql`${feedInventory.expiryDate} <= CURRENT_DATE + INTERVAL '${days} days'`
-      );
-    }
-    // Stock range filter
-    if (minStock !== undefined || maxStock !== undefined) {
-      if (minStock !== undefined && maxStock !== undefined) {
-        whereConditions.push(
-          sql`${feedInventory.quantity} >= ${minStock} AND ${feedInventory.quantity} <= ${maxStock}`
-        );
-      } else if (minStock !== undefined) {
-        whereConditions.push(sql`${feedInventory.quantity} >= ${minStock}`);
-      } else if (maxStock !== undefined) {
-        whereConditions.push(sql`${feedInventory.quantity} <= ${maxStock}`);
+      if (categories.length > 0 && !categories.includes(i.feed_type)) return false;
+      if (query.lowStock && stockStatus(i) !== 'critical') return false;
+      if (
+        query.expiringSoon &&
+        !(i.expiry_date && new Date(i.expiry_date).getTime() <= expiryLimit)
+      ) {
+        return false;
       }
-    }
-    // Cost range filter
-    if (minCost !== undefined || maxCost !== undefined) {
-      if (minCost !== undefined && maxCost !== undefined) {
-        whereConditions.push(
-          sql`${feedInventory.unitPrice} >= ${minCost} AND ${feedInventory.unitPrice} <= ${maxCost}`
-        );
-      } else if (minCost !== undefined) {
-        whereConditions.push(sql`${feedInventory.unitPrice} >= ${minCost}`);
-      } else if (maxCost !== undefined) {
-        whereConditions.push(sql`${feedInventory.unitPrice} <= ${maxCost}`);
-      }
-    }
-    // Storage location filter
-    if (storageLocation) {
-      whereConditions.push(ilike(feedInventory.storageLocation, `%${storageLocation}%`));
-    }
-    // Combine all conditions
-    const finalWhereCondition =
-      whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0];
-    // Build order by
-    let orderBy;
-    switch (sortBy) {
-      case 'category':
-        orderBy = sortOrder === 'desc' ? desc(feedInventory.feedType) : asc(feedInventory.feedType);
-        break;
-      case 'currentStock':
-        orderBy = sortOrder === 'desc' ? desc(feedInventory.quantity) : asc(feedInventory.quantity);
-        break;
-      case 'expiryDate':
-        orderBy =
-          sortOrder === 'desc' ? desc(feedInventory.expiryDate) : asc(feedInventory.expiryDate);
-        break;
-      case 'unitCost':
-        orderBy =
-          sortOrder === 'desc' ? desc(feedInventory.unitPrice) : asc(feedInventory.unitPrice);
-        break;
-      default:
-        orderBy = sortOrder === 'desc' ? desc(feedInventory.feedName) : asc(feedInventory.feedName);
-    }
-    // Execute main query
-    const [feedData, totalCount] = await Promise.all([
-      db
-        .select({
-          id: feedInventory.id,
-          ingredientName: feedInventory.feedName,
-          category: feedInventory.feedType,
-          currentStock: feedInventory.quantity,
-          unit: feedInventory.unit,
-          reorderLevel: feedInventory.minimumStock,
-          maxStockLevel: feedInventory.quantity, // Using quantity as max stock for now
-          unitCost: feedInventory.unitPrice,
-          totalValue: sql<number>`(${feedInventory.quantity} * ${feedInventory.unitPrice})`,
-          supplierName: feedInventory.supplier,
-          batchNumber: feedInventory.batchNumber,
-          manufactureDate: feedInventory.purchaseDate,
-          expiryDate: feedInventory.expiryDate,
-          storageLocation: feedInventory.storageLocation,
-          qualityGrade: sql<string>`'A'`, // Mock quality grade
-          moistureContent: sql<number>`12.5`, // Mock moisture content
-          proteinContent: sql<number>`18.2`, // Mock protein content
-          energyContent: sql<number>`3500`, // Mock energy content
-          averageDailyConsumption: sql<number>`50`, // Mock daily consumption
-          createdAt: sql<string>`CURRENT_TIMESTAMP`,
-          updatedAt: sql<string>`CURRENT_TIMESTAMP`,
-          // Computed fields
-          daysUntilExpiry: sql<number>`CASE 
-            WHEN ${feedInventory.expiryDate} IS NULL THEN NULL 
-            ELSE GREATEST(0, EXTRACT(DAY FROM (${feedInventory.expiryDate} - CURRENT_TIMESTAMP))::integer) 
-          END`.as('daysUntilExpiry'),
-          stockStatus: sql<string>`CASE
-            WHEN ${feedInventory.quantity} <= ${feedInventory.minimumStock} THEN 'critical'
-            WHEN ${feedInventory.quantity} <= (${feedInventory.minimumStock} * 1.5) THEN 'low'
-            WHEN ${feedInventory.quantity} >= (${feedInventory.minimumStock} * 3) THEN 'overstock'
-            ELSE 'adequate'
-          END`.as('stockStatus'),
-          daysOfSupply: sql<number>`CASE
-            WHEN 50 > 0 THEN 
-              FLOOR(${feedInventory.quantity} / 50)
-            ELSE NULL
-          END`.as('daysOfSupply'),
-          usageRate: sql<number>`COALESCE(50, 0)`.as('usageRate'),
-        })
-        .from(feedInventory)
-        .where(finalWhereCondition)
-        .orderBy(orderBy)
-        .limit(limit)
-        .offset((page - 1) * limit),
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(feedInventory)
-        .where(finalWhereCondition)
-        .then((result: any[]) => result[0]?.count || 0),
-    ]);
-    // Calculate inventory analytics
-    const analytics = await calculateFeedAnalytics(tenantContext.tenantId, db);
-    // Calculate pagination
+      if (query.minStock !== undefined && qty < query.minStock) return false;
+      if (query.maxStock !== undefined && qty > query.maxStock) return false;
+      if (query.minCost !== undefined && price < query.minCost) return false;
+      if (query.maxCost !== undefined && price > query.maxCost) return false;
+      if (location && !includesText(i.storage_location, location)) return false;
+      return true;
+    });
+
+    const key = SORT_KEYS[sortBy];
+    const direction = sortOrder === 'desc' ? -1 : 1;
+    filtered.sort((a, b) => (key(a) < key(b) ? -direction : key(a) > key(b) ? direction : 0));
+
+    const totalCount = filtered.length;
     const totalPages = Math.ceil(totalCount / limit);
-    const hasNextPage = page < totalPages;
-    const hasPreviousPage = page > 1;
+    const feedItems = filtered.slice((page - 1) * limit, page * limit).map(toFeedItem);
+    const distinct = (pick: (i: FeedRow) => string | null) =>
+      [...new Set(allItems.map(pick).filter((v): v is string => Boolean(v)))].sort();
+
     return NextResponse.json({
       success: true,
       data: {
-        feedItems: feedData,
-        analytics,
+        feedItems,
+        analytics: calculateFeedAnalytics(allItems),
         pagination: {
           currentPage: page,
           totalPages,
           totalCount,
           limit,
-          hasNextPage,
-          hasPreviousPage,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
         },
         filters: {
           applied: {
-            search,
-            category,
-            qualityGrade,
-            lowStock,
-            expiringSoon,
+            search: query.search,
+            category: query.category,
+            qualityGrade: query.qualityGrade,
+            lowStock: query.lowStock,
+            expiringSoon: query.expiringSoon,
             sortBy,
             sortOrder,
             stockRange:
-              minStock !== undefined || maxStock !== undefined
-                ? { min: minStock, max: maxStock }
+              query.minStock !== undefined || query.maxStock !== undefined
+                ? { min: query.minStock, max: query.maxStock }
                 : undefined,
             costRange:
-              minCost !== undefined || maxCost !== undefined
-                ? { min: minCost, max: maxCost }
+              query.minCost !== undefined || query.maxCost !== undefined
+                ? { min: query.minCost, max: query.maxCost }
                 : undefined,
-            expiryDays,
-            storageLocation,
+            expiryDays: query.expiryDays,
+            storageLocation: query.storageLocation,
           },
           available: {
-            categories: await getDistinctValues('feed_type', tenantContext.tenantId, db),
-            qualityGrades: ['A', 'B', 'C'],
-            storageLocations: await getDistinctValues(
-              'storage_location',
-              tenantContext.tenantId,
-              db
-            ),
+            categories: distinct(i => i.feed_type),
+            qualityGrades: [],
+            storageLocations: distinct(i => i.storage_location),
           },
         },
       },
-      message: `Found ${feedData.length} feed items`,
+      message: `Found ${feedItems.length} feed items`,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid query', details: error.errors },
+        { status: 400 }
+      );
+    }
+    logger.error('Enhanced feed inventory failed', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch feed inventory',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { success: false, error: 'Failed to fetch feed inventory' },
       { status: 500 }
     );
-  }
-}
-// Helper function to calculate feed analytics
-async function calculateFeedAnalytics(tenantId: string, db: any) {
-  try {
-    const [totalValue, lowStockItems, expiringItems, categoryBreakdown] = await Promise.all([
-      // Total inventory value
-      db
-        .select({
-          total: sql<number>`COALESCE(SUM(${feedInventory.quantity} * ${feedInventory.unitPrice}), 0)`,
-        })
-        .from(feedInventory)
-        .where(and(eq(feedInventory.tenantId, tenantId), eq(feedInventory.isActive, true)))
-        .then((result: any[]) => result[0]?.total || 0),
-      // Low stock items count
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(feedInventory)
-        .where(
-          and(
-            eq(feedInventory.tenantId, tenantId),
-            eq(feedInventory.isActive, true),
-            sql`${feedInventory.quantity} <= ${feedInventory.minimumStock}`
-          )
-        )
-        .then((result: any[]) => result[0]?.count || 0),
-      // Expiring items count (next 30 days)
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(feedInventory)
-        .where(
-          and(
-            eq(feedInventory.tenantId, tenantId),
-            eq(feedInventory.isActive, true),
-            sql`${feedInventory.expiryDate} <= CURRENT_DATE + INTERVAL '30 days'`
-          )
-        )
-        .then((result: any[]) => result[0]?.count || 0),
-      // Category breakdown
-      db
-        .select({
-          category: feedInventory.feedType,
-          totalValue: sql<number>`COALESCE(SUM(${feedInventory.quantity} * ${feedInventory.unitPrice}), 0)`,
-          totalStock: sql<number>`COALESCE(SUM(${feedInventory.quantity}), 0)`,
-          itemCount: sql<number>`count(*)`,
-        })
-        .from(feedInventory)
-        .where(and(eq(feedInventory.tenantId, tenantId), eq(feedInventory.isActive, true)))
-        .groupBy(feedInventory.feedType)
-        .orderBy(desc(sql`SUM(${feedInventory.quantity} * ${feedInventory.unitPrice})`)),
-    ]);
-    // Calculate additional metrics
-    const totalItems = categoryBreakdown.reduce((sum: number, cat: any) => sum + cat.itemCount, 0);
-    const totalStock = categoryBreakdown.reduce((sum: number, cat: any) => sum + cat.totalStock, 0);
-    return {
-      totalValue,
-      totalItems,
-      totalStock,
-      lowStockItems,
-      expiringItems,
-      categoryBreakdown: categoryBreakdown.map((cat: any) => ({
-        ...cat,
-        percentage: totalValue > 0 ? (cat.totalValue / totalValue) * 100 : 0,
-      })),
-      efficiencyMetrics: {
-        averageDaysOfSupply: totalItems > 0 ? 45 : 0, // Mock calculation
-        stockTurnoverRate: totalItems > 0 ? 8.5 : 0, // Mock calculation
-        wastePercentage: totalItems > 0 ? 2.3 : 0, // Mock calculation
-        costPerDay: totalValue > 0 ? totalValue / 30 : 0,
-      },
-    };
-  } catch (error) {
-    return {
-      totalValue: 0,
-      totalItems: 0,
-      totalStock: 0,
-      lowStockItems: 0,
-      expiringItems: 0,
-      categoryBreakdown: [],
-      efficiencyMetrics: {
-        averageDaysOfSupply: 0,
-        stockTurnoverRate: 0,
-        wastePercentage: 0,
-        costPerDay: 0,
-      },
-    };
-  }
-}
-// Helper function to get distinct values for filters
-async function getDistinctValues(column: string, tenantId: string, db: any): Promise<string[]> {
-  try {
-    const result = await db
-      .select({ value: sql<string>`DISTINCT ${sql.raw(column)}` })
-      .from(feedInventory)
-      .where(
-        and(
-          eq(feedInventory.tenantId, tenantId),
-          eq(feedInventory.isActive, true),
-          sql`${sql.raw(column)} IS NOT NULL`,
-          sql`${sql.raw(column)} != ''`
-        )
-      )
-      .orderBy(asc(sql.raw(column)));
-    return result.map((row: any) => row.value).filter(Boolean);
-  } catch (error) {
-    return [];
   }
 }

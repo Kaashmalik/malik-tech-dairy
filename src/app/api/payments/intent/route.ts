@@ -1,9 +1,7 @@
 // API Route: Create Payment Intent (store before redirecting to gateway)
 import { NextRequest, NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/api/middleware';
-import { getDrizzle } from '@/lib/supabase/server';
-import { payments } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { tenantDb, unwrap } from '@/lib/supabase/tenant-db';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
@@ -28,8 +26,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const db = getDrizzle();
-      const now = new Date();
+      const t = tenantDb(context.tenantId);
+      const now = new Date().toISOString();
       const metadata = {
         orderId,
         userId: context.userId,
@@ -38,47 +36,41 @@ export async function POST(request: NextRequest) {
         couponCode: couponCode || null,
         couponId: couponId || null,
       };
+      const values = {
+        amount: Math.round(amount),
+        plan,
+        gateway: gateway || 'bank_transfer',
+        status: 'pending',
+        metadata,
+        updated_at: now,
+      };
 
-      const [existing] = await db
-        .select({ id: payments.id })
-        .from(payments)
-        .where(eq(payments.id, orderId))
-        .limit(1);
+      // Scoped to this farm: an orderId belonging to another farm is never touched
+      const existing = unwrap(
+        await t.select('payments', 'id').eq('id', orderId).maybeSingle(),
+        'Load payment intent'
+      );
 
       if (existing) {
-        await db
-          .update(payments)
-          .set({
-            amount: Math.round(amount),
-            plan,
-            gateway: (gateway || 'bank_transfer') as
-              | 'jazzcash'
-              | 'easypaisa'
-              | 'xpay'
-              | 'bank_transfer',
-            status: 'pending',
-            metadata,
-            updatedAt: now,
-          })
-          .where(eq(payments.id, orderId));
+        unwrap(await t.update('payments', values).eq('id', orderId), 'Update payment intent');
       } else {
-        await db.insert(payments).values({
+        const { error } = await t.insert('payments', {
           id: orderId,
-          tenantId: context.tenantId,
-          amount: Math.round(amount),
+          ...values,
           currency: 'PKR',
-          gateway: (gateway || 'bank_transfer') as
-            | 'jazzcash'
-            | 'easypaisa'
-            | 'xpay'
-            | 'bank_transfer',
-          status: 'pending',
-          transactionId: null,
-          plan,
-          metadata,
-          createdAt: now,
-          updatedAt: now,
+          transaction_id: null,
+          created_at: now,
         });
+        if (error?.code === '23505') {
+          // orderId exists under a different farm
+          return NextResponse.json(
+            { success: false, error: 'Order ID already in use' },
+            { status: 409 }
+          );
+        }
+        if (error) {
+          throw new Error(`Create payment intent: ${error.message}`);
+        }
       }
 
       return NextResponse.json({ success: true, data: { orderId } });

@@ -1,20 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrizzle } from '@/lib/supabase/server';
-import { feedInventory } from '@/db/schema';
-import { eq, and, ilike, lte, desc, sql, isNotNull } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/tenant/context';
+import { fetchAllRows, tenantDb, toCamel, toSnake, unwrap } from '@/lib/supabase/tenant-db';
+import { sanitizeSearchTerm } from '@/lib/services/animals/animal.service';
+import { logger } from '@/lib/logger';
+
+// z.coerce.boolean() turns the string "false" into true; parse query flags explicitly
+const queryBool = z
+  .enum(['true', 'false'])
+  .transform(v => v === 'true')
+  .optional();
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FeedRow = Record<string, any>;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isLow = (i: FeedRow) =>
+  i.minimum_stock != null && Number(i.quantity) <= Number(i.minimum_stock);
+const isExpiringSoon = (i: FeedRow) =>
+  Boolean(i.expiry_date) && new Date(i.expiry_date) <= new Date(Date.now() + 30 * DAY_MS);
 // Validation schemas
 const feedInventoryQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
   feedType: z.enum(['concentrate', 'silage', 'hay', 'minerals', 'supplements', 'water']).optional(),
   supplier: z.string().optional(),
-  lowStock: z.coerce.boolean().optional(),
-  expiringSoon: z.coerce.boolean().optional(),
+  lowStock: queryBool,
+  expiringSoon: queryBool,
   search: z.string().optional(),
-  isActive: z.coerce.boolean().default(true),
+  isActive: queryBool.transform(v => v ?? true),
 });
 const createFeedInventorySchema = z.object({
   feedType: z.enum(['concentrate', 'silage', 'hay', 'minerals', 'supplements', 'water']),
@@ -49,61 +63,54 @@ export async function GET(request: NextRequest) {
     const tenantContext = await getTenantContext();
     const { searchParams } = new URL(request.url);
     const query = feedInventoryQuerySchema.parse(Object.fromEntries(searchParams));
-    const db = getDrizzle();
-    const offset = (query.page - 1) * query.limit;
-    // Build where conditions - ALWAYS include tenant filtering for tenant-specific tables
-    const whereConditions = [
-      eq(feedInventory.tenantId, tenantContext.tenantId),
-      eq(feedInventory.isActive, query.isActive),
-    ];
-    if (query.feedType) {
-      whereConditions.push(eq(feedInventory.feedType, query.feedType));
-    }
-    if (query.supplier) {
-      whereConditions.push(ilike(feedInventory.supplier, `%${query.supplier}%`));
-    }
-    if (query.search) {
-      whereConditions.push(ilike(feedInventory.feedName, `%${query.search}%`));
-    }
-    if (query.lowStock === true) {
-      whereConditions.push(sql`${feedInventory.quantity} <= ${feedInventory.minimumStock}`);
-    }
-    if (query.expiringSoon === true) {
-      // Items expiring within 30 days
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      whereConditions.push(
-        sql`${feedInventory.expiryDate} <= ${thirtyDaysFromNow} AND ${feedInventory.expiryDate} IS NOT NULL`
+    const t = tenantDb(tenantContext.tenantId);
+    const from = (query.page - 1) * query.limit;
+    const buildQuery = (options?: { count: 'exact' }) => {
+      let q = t
+        .select('feed_inventory', '*', options)
+        .eq('is_active', query.isActive)
+        .order('purchase_date', { ascending: false })
+        .order('id');
+      if (query.feedType) q = q.eq('feed_type', query.feedType);
+      const supplier = query.supplier && sanitizeSearchTerm(query.supplier);
+      if (supplier) q = q.ilike('supplier', `%${supplier}%`);
+      const search = query.search && sanitizeSearchTerm(query.search);
+      if (search) q = q.ilike('feed_name', `%${search}%`);
+      if (query.expiringSoon) {
+        q = q
+          .not('expiry_date', 'is', null)
+          .lte('expiry_date', new Date(Date.now() + 30 * DAY_MS).toISOString());
+      }
+      return q;
+    };
+
+    let inventoryList: FeedRow[];
+    let total: number;
+    if (query.lowStock) {
+      // quantity <= minimum_stock compares two columns, which PostgREST cannot filter
+      const all = (await fetchAllRows<FeedRow>(() => buildQuery(), 'List feed inventory')).filter(
+        isLow
       );
+      total = all.length;
+      inventoryList = all.slice(from, from + query.limit);
+    } else {
+      const { data, error, count } = await buildQuery({ count: 'exact' }).range(
+        from,
+        from + query.limit - 1
+      );
+      if (error) throw new Error(`List feed inventory: ${error.message}`);
+      inventoryList = (data || []) as unknown as FeedRow[];
+      total = count || 0;
     }
-    // Create combined where clause
-    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
-    // Get total count
-    const totalCountResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(feedInventory)
-      .where(whereClause);
-    const total = totalCountResult[0]?.count || 0;
-    // Get feed inventory
-    const inventoryList = await db
-      .select()
-      .from(feedInventory)
-      .where(whereClause)
-      .limit(query.limit)
-      .offset(offset)
-      .orderBy(desc(feedInventory.purchaseDate));
+
     // Calculate stock status for each item
     const inventoryWithStatus = inventoryList.map(item => ({
-      ...item,
-      stockStatus: item.minimumStock && item.quantity <= item.minimumStock ? 'low' : 'adequate',
-      daysToExpiry: item.expiryDate
-        ? Math.ceil(
-            (new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-          )
+      ...toCamel<FeedRow>(item),
+      stockStatus: isLow(item) ? 'low' : 'adequate',
+      daysToExpiry: item.expiry_date
+        ? Math.ceil((new Date(item.expiry_date).getTime() - Date.now()) / DAY_MS)
         : null,
-      isExpiringSoon: item.expiryDate
-        ? new Date(item.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        : false,
+      isExpiringSoon: isExpiringSoon(item),
     }));
     return NextResponse.json({
       success: true,
@@ -117,18 +124,19 @@ export async function GET(request: NextRequest) {
         },
         summary: {
           totalItems: inventoryList.length,
-          lowStockItems: inventoryList.filter(
-            item => item.minimumStock && item.quantity <= item.minimumStock
-          ).length,
-          expiringSoonItems: inventoryList.filter(
-            item =>
-              item.expiryDate &&
-              new Date(item.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-          ).length,
+          lowStockItems: inventoryList.filter(isLow).length,
+          expiringSoonItems: inventoryList.filter(isExpiringSoon).length,
         },
       },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid query', details: error.errors },
+        { status: 400 }
+      );
+    }
+    logger.error('Feed inventory list failed', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -141,26 +149,27 @@ export async function POST(request: NextRequest) {
     }
     const body = await request.json();
     const validatedData = createFeedInventorySchema.parse(body);
-    const db = getDrizzle();
-    const inventoryId = `feed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    // Get tenant context
     const tenantContext = await getTenantContext();
-    const newInventoryItem = await db
-      .insert(feedInventory)
-      .values({
-        id: inventoryId,
-        tenantId: tenantContext.tenantId,
-        ...validatedData,
-        purchaseDate: new Date(validatedData.purchaseDate),
-        expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : undefined,
-        createdBy: tenantContext.userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
+    const now = new Date().toISOString();
+    const created = unwrap(
+      await tenantDb(tenantContext.tenantId)
+        .insert(
+          'feed_inventory',
+          toSnake({
+            id: `feed_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+            ...validatedData,
+            createdBy: tenantContext.userId,
+            createdAt: now,
+            updatedAt: now,
+          })
+        )
+        .select()
+        .single(),
+      'Create feed inventory'
+    );
     return NextResponse.json({
       success: true,
-      data: newInventoryItem[0],
+      data: toCamel(created as unknown as FeedRow),
       message: 'Feed inventory item added successfully',
     });
   } catch (error) {
@@ -190,11 +199,12 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-    const db = getDrizzle();
-    await db
-      .update(feedInventory)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(and(eq(feedInventory.id, id), eq(feedInventory.tenantId, tenantContext.tenantId)));
+    unwrap(
+      await tenantDb(tenantContext.tenantId)
+        .update('feed_inventory', { is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', id),
+      'Archive feed inventory'
+    );
 
     return NextResponse.json({ success: true, message: 'Feed item archived successfully' });
   } catch (error) {

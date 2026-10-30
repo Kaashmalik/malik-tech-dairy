@@ -5,97 +5,44 @@ import {
   PRODUCTION_DOMAIN,
   PRODUCTION_ORIGIN,
 } from '@/lib/cors';
-import { getDrizzle } from '@/lib/supabase/server';
-import { tenantMembers, platformUsers, animals, taskAssignments } from '@/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { createSupabaseFake } from '@/mocks/supabase-rest';
 
-// Mock getDrizzle
-jest.mock('@/lib/supabase/server', () => ({
-  getDrizzle: jest.fn(),
-}));
+const fake = createSupabaseFake();
+jest.mock('@/lib/supabase/server', () => ({ getSupabaseClient: () => fake.client }));
 
 // Mock @clerk/nextjs/server
 jest.mock('@clerk/nextjs/server', () => ({
   auth: jest.fn(),
 }));
 
-describe('Phase 4.5 Security Regression Test Suite', () => {
-  const mockDrizzle = {
-    select: jest.fn(),
-    insert: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
+import { resolveUserRoleFromDatabase } from '@/lib/tenant/context';
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (getDrizzle as jest.Mock).mockReturnValue(mockDrizzle);
-  });
+describe('Phase 4.5 Security Regression Test Suite', () => {
+  beforeEach(() => fake.reset());
 
   describe('1. Tenant-Scoped Role Resolution', () => {
-    it('should query tenantMembers with BOTH userId and tenantId to prevent role inheritance across tenants', async () => {
-      // Re-import to test resolveUserRoleFromDatabase behavior
-      const mockLimit = jest
-        .fn()
-        .mockResolvedValue([
-          { id: 'mem_1', userId: 'user_1', tenantId: 'tenant_A', role: 'farm_owner' },
-        ]);
-      const mockWhere = jest.fn().mockReturnValue({ limit: mockLimit });
-      const mockFrom = jest.fn().mockReturnValue({ where: mockWhere });
-      mockDrizzle.select.mockReturnValue({ from: mockFrom });
+    it('queries membership by BOTH tenant and user so roles never cross farms', async () => {
+      fake.respond('tenant_members', 'select', { data: { role: 'farm_owner' } });
 
-      // Simulate a query scoped to user_1 and tenant_A
-      const query = and(eq(tenantMembers.userId, 'user_1'), eq(tenantMembers.tenantId, 'tenant_A'));
-      expect(query).toBeDefined();
+      const role = await resolveUserRoleFromDatabase('user_1', 'tenant_A');
 
-      // Ensure query contains both clauses
-      const sqlParts = (query as any)?.queryChunks;
-      expect(sqlParts).toBeDefined();
+      expect(role).toBe('farm_owner');
+      const filters = fake.filters(fake.queries[0]);
+      expect(filters).toContainEqual(['eq', 'tenant_id', 'tenant_A']);
+      expect(filters).toContainEqual(['eq', 'user_id', 'user_1']);
     });
 
-    it('should not allow a user with membership in Tenant A to claim that role in Tenant B', async () => {
-      // When querying for (user_1, tenant_B), DB returns empty membership
-      const mockLimit = jest.fn().mockResolvedValue([]);
-      const mockWhere = jest.fn().mockReturnValue({ limit: mockLimit });
-      const mockFrom = jest.fn().mockReturnValue({ where: mockWhere });
-      mockDrizzle.select.mockReturnValue({ from: mockFrom });
+    it('does not let a member of Tenant A claim a role in Tenant B', async () => {
+      fake.respond('tenant_members', 'select', { data: null });
+      fake.respond('platform_users', 'select', { data: { platform_role: 'user' } });
 
-      // If user is also not super admin
-      const mockPlatformLimit = jest.fn().mockResolvedValue([]);
-      const mockPlatformWhere = jest.fn().mockReturnValue({ limit: mockPlatformLimit });
-      const mockPlatformFrom = jest.fn().mockReturnValue({ where: mockPlatformWhere });
-
-      // Verification: A user belonging only to Tenant A yields empty result when queried for Tenant B
-      const result = await mockLimit();
-      expect(result.length).toBe(0);
-    });
-  });
-
-  describe('2. Cross-Tenant Task Validation Isolation', () => {
-    it('should reject task assignment if assigned user does not belong to the target tenant', () => {
-      const tenantA = 'org_tenant_A';
-      const tenantB = 'org_tenant_B';
-      const workerUser = 'user_worker_B';
-
-      // Membership verification function
-      const verifyMembership = (userTenantId: string, taskTenantId: string) => {
-        return userTenantId === taskTenantId;
-      };
-
-      expect(verifyMembership(tenantB, tenantA)).toBe(false);
-      expect(verifyMembership(tenantA, tenantA)).toBe(true);
+      expect(await resolveUserRoleFromDatabase('user_1', 'tenant_B')).toBe('guest');
     });
 
-    it('should reject task assignment if referenced animal belongs to another tenant', () => {
-      const tenantA = 'org_tenant_A';
-      const animalTenantId = 'org_tenant_B';
+    it('fails closed to guest when the database errors', async () => {
+      fake.respond('tenant_members', 'select', { error: { message: 'timeout' } });
 
-      const verifyAnimalTenant = (animalTenant: string, taskTenant: string) => {
-        return animalTenant === taskTenant;
-      };
-
-      expect(verifyAnimalTenant(animalTenantId, tenantA)).toBe(false);
-      expect(verifyAnimalTenant(tenantA, tenantA)).toBe(true);
+      expect(await resolveUserRoleFromDatabase('user_1', 'tenant_A')).toBe('guest');
     });
   });
 
