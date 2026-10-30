@@ -1,0 +1,144 @@
+# MTK Dairy — Setup & Deployment Checklist
+
+This is the single list of things that must be done **outside the code** (Supabase,
+Clerk, Vercel, Google). Work through it top to bottom on the machine that has your
+credentials. Every step says _where_, _what_ and _how to verify_.
+
+> Code changes are already on `main`. Nothing here is done automatically.
+
+---
+
+## 0. URGENT — rotate the leaked Supabase service-role key
+
+The GitHub repo is **public**, and the Supabase **service_role** key for project
+`gdditqkvzlpnklcoxspj` was committed in several files (MCP config and guide files,
+removed in the Phase 0 commit). It is still readable in git history. That key bypasses
+all security and gives full read/write access to every farm's data.
+
+1. Supabase Dashboard → project `gdditqkvzlpnklcoxspj` → **Project Settings → API Keys**.
+2. Create a new **secret** key (or roll the legacy JWT secret if you still use legacy
+   `anon`/`service_role` keys — this also invalidates the anon key).
+3. Disable/delete the old key.
+4. Vercel → Project → **Settings → Environment Variables**: update
+   `SUPABASE_SERVICE_ROLE_KEY` (and `NEXT_PUBLIC_SUPABASE_ANON_KEY` if rolled) for
+   Production, Preview and Development. **Redeploy.**
+5. Update your local `.env.local` the same way.
+6. Also rotate the **Supabase personal access token** used for the MCP server
+   (Account → Access Tokens) — it was in the same files.
+7. Optional but recommended: make the GitHub repo private, or purge history with
+   `git filter-repo` (rotation is still required either way).
+
+**Verify:** the old key returns `401` against `https://gdditqkvzlpnklcoxspj.supabase.co/rest/v1/`.
+
+---
+
+## 1. Local environment (`.env.local`)
+
+Copy `.env.example` to `.env.local` and fill in. Required to run at all:
+
+| Variable                                                                                 | Where to get it                                                       |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `NEXT_PUBLIC_APP_URL`                                                                    | `https://dairy.mtkcodex.site` (prod) / `http://localhost:3000`        |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`                                  | Clerk → API Keys                                                      |
+| `CLERK_WEBHOOK_SECRET`                                                                   | Clerk → Webhooks → your endpoint → Signing secret                     |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API                                     |
+| `SUPER_ADMIN_EMAILS`                                                                     | Comma-separated; must be the **verified primary** email in Clerk      |
+| `CRON_SECRET`                                                                            | Any long random string (`openssl rand -hex 32`); Vercel Cron sends it |
+
+Optional (feature degrades gracefully without them): `UPSTASH_REDIS_REST_URL/TOKEN`
+(rate limiting, caching), `RESEND_API_KEY`/`RESEND_FROM_EMAIL` (emails),
+`CLOUDINARY_*` (photo uploads), `OPENWEATHER_API_KEY`, `GROQ_API_KEY` (AI),
+`SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`, payment gateway keys
+(`JAZZCASH_*`, `EASYPAISA_*`, `XPAY_*`), `INDEXNOW_API_KEY`, site verification codes.
+
+`SUPABASE_DATABASE_URL` / `DATABASE_URL` are **only** needed for `drizzle-kit`
+(schema push/migrations). The running app no longer opens direct Postgres connections.
+
+**Remove from Vercel** (no longer used): all `FIREBASE_*` and `NEXT_PUBLIC_FIREBASE_*`.
+
+**Verify:** `npm run validate:env` then `npm run dev`, open http://localhost:3000.
+
+---
+
+## 2. Database migrations (Supabase SQL editor)
+
+All files are in `scripts/migrations/`, numbered. Apply in order; each is idempotent.
+
+### Existing production database
+
+Migrations `001`–`009` were part of earlier work — check before re-running:
+
+```sql
+-- Should return rows for each if 001–009 are applied
+SELECT to_regclass('public.notifications'), to_regclass('public.coupons'),
+       to_regclass('public.treatment_records');
+```
+
+Then apply the new ones:
+
+| File                            | What it does                                                             | Notes                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `010_lock_down_anon_access.sql` | RLS on every public table; revokes all `anon`/`authenticated` privileges | Run the PRE-CHECK query in the file first. The app uses only the service role, so nothing in the app breaks. |
+
+(Later phases append rows here — see below.)
+
+**Verify:** run the POST-CHECK query at the bottom of each file.
+
+### Fresh database (new project)
+
+1. Set `DATABASE_URL` in `.env.local` to the **session pooler** URL (port 5432).
+2. `npm run db:push` — creates all tables from `src/db/schema.ts`.
+3. Apply `scripts/migrations/001…` in order.
+4. Seed reference data: `scripts/diseases-seed-data.sql`,
+   `scripts/medicines-seed-data.sql`, `scripts/treatment-protocols-seed-data.sql`.
+
+---
+
+## 3. Clerk dashboard
+
+1. **Organizations → Settings:** enable Organizations; allow **invitations**.
+   Members should not be able to create organizations themselves
+   (farms are created by the app).
+2. **Webhooks → Add endpoint:** `https://dairy.mtkcodex.site/api/webhooks/clerk`.
+   Subscribe to:
+   - `user.created`, `user.updated`
+   - `organization.created`, `organization.deleted`
+   - `organizationMembership.created`, `organizationMembership.updated`,
+     `organizationMembership.deleted` ← **required for team invites**
+     Copy the signing secret to `CLERK_WEBHOOK_SECRET`.
+3. **Paths:** sign-in `/sign-in`, sign-up `/sign-up`; after sign-in/up redirect to
+   `/api/auth/redirect` (the components already set this).
+4. **Email:** make sure your super-admin email is **verified** in Clerk —
+   unverified emails are ignored for super-admin access.
+
+**Verify:**
+
+- Sign up a new account → choose **Free** on `/apply` → you land on `/dashboard`.
+- In Clerk → Webhooks → Message attempts: all `200`.
+- Invite a teammate from **Staff**: they receive a Clerk email; after accepting they
+  appear in the team list with the chosen role.
+
+---
+
+## 4. Vercel
+
+1. Environment variables as in section 1 (Production + Preview).
+2. **Cron jobs** come from `vercel.json` (`/api/cron/predictions`, `/api/cron/reminders`);
+   they authenticate with `CRON_SECRET`.
+3. Domain: `dairy.mtkcodex.site` (and wildcard `*.dairy.mtkcodex.site` only if you use
+   farm subdomains).
+
+**Verify:** Vercel → Logs show no `500` on `/dashboard`, `/animals`, `/milk`,
+`/reports`, `/staff`, `/tasks`, `/feed`.
+
+---
+
+## 5. Smoke test after deploy
+
+- [ ] New user → Free plan → dashboard opens (no admin approval)
+- [ ] Paid plan → application → super admin approves → user opens dashboard
+- [ ] Add animal, log milk, export milk CSV and PDF from **Reports**
+- [ ] Tasks page lists/creates tasks
+- [ ] Staff: invite, change role, remove member (removed user loses access)
+- [ ] Settings → Location saves
+- [ ] Super admin panel loads for the allow-listed verified email only
