@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 // Super Admin Layout
 // Protected layout for super admin pages
 import { auth } from '@clerk/nextjs/server';
@@ -6,6 +7,9 @@ import { SuperAdminSidebar } from '@/components/admin/SuperAdminSidebar';
 import { SuperAdminHeader } from '@/components/admin/SuperAdminHeader';
 import { ensurePlatformUser } from '@/lib/auth/platform-user';
 import { logger } from '@/lib/logger';
+
+// Private app area: keep out of search results
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export const dynamic = 'force-dynamic';
 

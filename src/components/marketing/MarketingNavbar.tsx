@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Shield, Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 
 export function MarketingNavbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,18 +52,16 @@ export function MarketingNavbar() {
             FAQ
           </Link>
           <Link
+            href='/guides'
+            className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
+          >
+            Guides
+          </Link>
+          <Link
             href='/contact'
             className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
           >
             Contact
-          </Link>
-          <Link
-            href='/super-admin'
-            className='inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 shadow-sm transition-all hover:border-purple-300 hover:bg-purple-100 dark:border-purple-800/60 dark:bg-purple-950/50 dark:text-purple-300 dark:hover:bg-purple-900/50'
-            title='Super Admin Management Portal'
-          >
-            <Shield className='h-3.5 w-3.5 text-purple-600 dark:text-purple-400' />
-            <span>Super Admin</span>
           </Link>
         </nav>
 
@@ -76,10 +74,10 @@ export function MarketingNavbar() {
             Sign In
           </Link>
           <Link
-            href='/apply'
+            href='/sign-up'
             className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-600/30 transition-colors hover:bg-emerald-700'
           >
-            <span>Start Free Trial</span>
+            <span>Start Free</span>
             <ArrowRight className='h-4 w-4' />
           </Link>
         </div>
@@ -127,19 +125,18 @@ export function MarketingNavbar() {
               FAQ
             </Link>
             <Link
+              href='/guides'
+              onClick={() => setIsOpen(false)}
+              className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
+            >
+              Guides
+            </Link>
+            <Link
               href='/contact'
               onClick={() => setIsOpen(false)}
               className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
             >
               Contact Us
-            </Link>
-            <Link
-              href='/super-admin'
-              onClick={() => setIsOpen(false)}
-              className='flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-2.5 text-base font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300'
-            >
-              <Shield className='h-5 w-5 text-purple-600' />
-              Super Admin Portal
             </Link>
             <div className='mt-2 flex flex-col gap-2 border-t border-slate-200 pt-3 dark:border-slate-800'>
               <Link
@@ -150,11 +147,11 @@ export function MarketingNavbar() {
                 Sign In
               </Link>
               <Link
-                href='/apply'
+                href='/sign-up'
                 onClick={() => setIsOpen(false)}
                 className='w-full rounded-lg bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white shadow hover:bg-emerald-700'
               >
-                Start Free Trial
+                Start Free
               </Link>
             </div>
           </nav>

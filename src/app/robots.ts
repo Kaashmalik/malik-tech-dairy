@@ -8,61 +8,35 @@ const baseUrl =
     ? process.env.NEXT_PUBLIC_APP_URL
     : productionDomain;
 
-export default function robots(): MetadataRoute.Robots {
-  const disallowed = [
-    '/api/',
-    '/dashboard/',
-    '/admin/',
-    '/super-admin/',
-    '/onboarding/',
-    '/_next/',
-    '/private/',
-  ];
+// Private app and auth areas. Pages also send `noindex`; robots keeps crawl budget
+// on the public site. (Do not block /_next/: Google needs CSS/JS to render pages.)
+const PRIVATE_PATHS = [
+  '/api/',
+  '/dashboard',
+  '/animals',
+  '/milk',
+  '/health',
+  '/breeding',
+  '/reports',
+  '/settings',
+  '/staff',
+  '/tasks',
+  '/feed',
+  '/finance',
+  '/analytics',
+  '/subscription',
+  '/super-admin',
+  '/admin',
+  '/apply',
+  '/onboarding',
+  '/select-farm',
+  '/sign-in',
+  '/sign-up',
+];
 
+export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [
-      {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: disallowed,
-      },
-      {
-        userAgent: 'Googlebot-Image',
-        allow: '/',
-        disallow: disallowed,
-      },
-      {
-        userAgent: 'Bingbot',
-        allow: '/',
-        disallow: disallowed,
-      },
-      {
-        userAgent: 'Applebot',
-        allow: '/',
-        disallow: disallowed,
-      },
-      {
-        userAgent: 'GPTBot',
-        allow: '/',
-        disallow: disallowed,
-      },
-      {
-        userAgent: 'ClaudeBot',
-        allow: '/',
-        disallow: disallowed,
-      },
-      {
-        userAgent: 'PerplexityBot',
-        allow: '/',
-        disallow: disallowed,
-      },
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: disallowed,
-      },
-    ],
+    rules: [{ userAgent: '*', allow: '/', disallow: PRIVATE_PATHS }],
     sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
   };
 }

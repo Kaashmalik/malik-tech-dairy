@@ -5,7 +5,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'sonner';
 import { PWARegister } from '@/components/PWARegister';
 import { ThemeProvider } from '@/components/providers/theme-provider';
-import { siteConfig, allKeywords, alternateLanguages } from '@/lib/seo/config';
+import { siteConfig, allKeywords } from '@/lib/seo/config';
 import { AllSchemas } from '@/components/seo/JsonLd';
 import './globals.css';
 
@@ -69,38 +69,20 @@ export const metadata: Metadata = {
   // Metadata Base for Canonical URLs
   metadataBase: new URL(siteConfig.url),
 
-  // Alternate Languages (hreflang)
-  alternates: {
-    canonical: '/',
-    languages: Object.fromEntries(alternateLanguages.map(lang => [lang.hrefLang, lang.href])),
-  },
+  // Canonical URLs are set per page (a root canonical would be inherited by every
+  // page and mark them all as duplicates of the homepage). No hreflang until a real
+  // Urdu route exists.
 
   // Open Graph (Facebook, WhatsApp, LinkedIn)
   openGraph: {
     type: 'website',
     locale: 'en_PK',
-    alternateLocale: ['ur_PK', 'en_US'],
     url: siteConfig.url,
     siteName: siteConfig.name,
     title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
     description:
       'Dairy farm management software for Pakistan. Track milk, health, breeding & finances. Free plan available.',
-    images: [
-      {
-        url: '/opengraph-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'MTK Dairy - Smart Dairy Farm Management Software',
-        type: 'image/png',
-      },
-      {
-        url: '/og-whatsapp.png', // Square image for WhatsApp
-        width: 600,
-        height: 600,
-        alt: 'MTK Dairy',
-        type: 'image/png',
-      },
-    ],
+    // og:image comes from app/opengraph-image.tsx (file convention)
     countryName: 'Pakistan',
   },
 
@@ -111,7 +93,6 @@ export const metadata: Metadata = {
     creator: '@mtkdairy',
     title: 'MTK Dairy - Smart Dairy Farm Management',
     description: 'Dairy farm management software for Pakistan. Free plan available.',
-    images: ['/opengraph-image.png'],
   },
 
   // Robots Directives

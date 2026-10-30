@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { QueryProvider } from '@/components/providers/QueryProvider';
@@ -8,6 +9,9 @@ import { CommandPalette } from '@/components/ui/command-palette';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import ToastProviderWrapper from '@/components/providers/ToastProviderWrapper';
 import { getNoOrgFallbackPath } from '@/lib/auth/post-login-destination';
+
+// Private app area: keep out of search results
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export const dynamic = 'force-dynamic';
 

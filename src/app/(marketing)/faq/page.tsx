@@ -6,7 +6,7 @@ import { FAQPageSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { HelpCircle, ChevronDown, Sparkles, ArrowRight, MessageSquare } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions (FAQ) | MTK Dairy Software Pakistan',
+  title: { absolute: 'Frequently Asked Questions (FAQ) | MTK Dairy Software Pakistan' },
   description:
     'Find answers to common questions about MTK Dairy farm software. Milk yield tracking, breeding cycles, Urdu language support, offline PWA, pricing in PKR, and data security.',
   alternates: {

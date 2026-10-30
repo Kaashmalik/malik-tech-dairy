@@ -48,7 +48,8 @@ Copy `.env.example` to `.env.local` and fill in. Required to run at all:
 Optional (feature degrades gracefully without them): `UPSTASH_REDIS_REST_URL/TOKEN`
 (**rate limiting is a no-op without Redis** — strongly recommended in production; free
 Upstash tier is enough), `CONTACT_INBOX_EMAIL` (where contact-form inquiries go), `RESEND_API_KEY`/`RESEND_FROM_EMAIL` (emails),
-`CLOUDINARY_*` (photo uploads), `OPENWEATHER_API_KEY`, `GROQ_API_KEY` (AI),
+`CLOUDINARY_*` (photo uploads), `NEXT_PUBLIC_ADSENSE_CLIENT` /
+`NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE` (ads on guides/tools — see section 6), `OPENWEATHER_API_KEY`, `GROQ_API_KEY` (AI),
 `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`, payment gateway keys
 (`JAZZCASH_*`, `EASYPAISA_*`, `XPAY_*`), `INDEXNOW_API_KEY`, site verification codes.
 
@@ -136,7 +137,65 @@ Then apply the new ones:
 
 ---
 
-## 5. Deleted farms (recovery & purge)
+## 5. Search engines (SEO)
+
+The code side is done (per-page canonicals, sitemap, robots, structured data, `/guides`,
+calculators). What you need to do:
+
+1. **Google Search Console** → add property `https://dairy.mtkcodex.site` (Domain property
+   via DNS TXT is best). If you use the HTML-tag method, put the code in
+   `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` and redeploy.
+2. Search Console → **Sitemaps** → submit `https://dairy.mtkcodex.site/sitemap.xml`.
+3. Search Console → **URL inspection** → request indexing for `/`, `/guides` and each guide.
+4. **Bing Webmaster Tools** → import from Search Console (one click), or set
+   `NEXT_PUBLIC_BING_SITE_VERIFICATION`.
+5. Optional: set `INDEXNOW_API_KEY` so new guides are pushed to Bing/Yandex instantly.
+6. Check the **Rich Results Test** on a guide URL: Article, Breadcrumb and FAQ should be valid.
+
+**Verify:** `https://dairy.mtkcodex.site/robots.txt` lists the sitemap; the sitemap lists
+the 12 guides and 2 tools and no sign-in/sign-up/app pages.
+
+**Keep publishing.** Aim for at least 25 quality guides before applying for AdSense
+(see below). Add guides in `src/content/guides/*.ts` and register them in
+`src/content/guides/index.ts`; `npm test` enforces length, headings and valid links.
+
+---
+
+## 6. Google AdSense
+
+Ads are wired but **off** until you set the publisher id. They appear only on `/guides/*`
+and `/tools/*` — never in the farm app, on sign-in/up pages, or on legal pages.
+
+### Before applying
+
+- [ ] At least ~25 substantial guides indexed in Search Console (12 are live now).
+- [ ] Privacy policy (updated for AdSense), About, Contact (form works), Terms all live.
+- [ ] Site has been live and indexed for a few weeks; no "under construction" pages.
+
+### Apply and configure
+
+1. Create an account at https://adsense.google.com with the business identity shown on
+   `/about` and `/contact`. Add site `dairy.mtkcodex.site`.
+2. Copy your publisher id (`ca-pub-XXXXXXXXXXXXXXXX`) → Vercel env
+   `NEXT_PUBLIC_ADSENSE_CLIENT` → redeploy. This loads the AdSense code on guides/tools and
+   makes `https://dairy.mtkcodex.site/ads.txt` serve the correct line automatically.
+3. Request review in AdSense. Approval usually takes days to a few weeks.
+4. **Privacy & messaging** in AdSense → create the **European regulations (GDPR)** message
+   (Google-certified CMP; required for EEA/UK/Switzerland visitors) and, if prompted, the
+   US state regulations message. Publish them — no code change needed.
+5. After approval: **Ads → By ad unit → Display/In-article ad** → create a unit, copy its
+   slot id → env `NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE` → redeploy. One slot is placed below
+   each guide's main content and on each calculator page, with reserved height (no layout
+   shift).
+6. Keep **Auto ads** off at first (it can place ads inside forms); enable later only for
+   `/guides` if you want more inventory.
+
+**Verify:** `/ads.txt` returns `google.com, pub-…, DIRECT, f08c47fec0942fa0`; AdSense →
+Sites shows "Ready"; no ad markup appears on `/dashboard` or `/sign-in`.
+
+---
+
+## 7. Deleted farms (recovery & purge)
 
 **Settings → Data & Privacy → Delete** soft-deletes: `tenants.deleted_at` is set, members
 are deactivated, the Clerk organization is deleted, and every API returns `410` for that
@@ -152,7 +211,7 @@ farm. Rows are kept so you can recover a mistake.
 
 ---
 
-## 6. Smoke test after deploy
+## 8. Smoke test after deploy
 
 - [ ] New user → Free plan → dashboard opens (no admin approval)
 - [ ] Paid plan → application → super admin approves → user opens dashboard

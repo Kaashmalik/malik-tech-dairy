@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'About MTK Dairy | Dairy Management Platform for Pakistan',
+  title: { absolute: 'About MTK Dairy | Dairy Management Platform for Pakistan' },
   description:
     'Learn about MTK Dairy by MalikTech — dairy farm software built in Lahore for Pakistani livestock operations, with offline PWA access and bilingual workflows.',
   alternates: {

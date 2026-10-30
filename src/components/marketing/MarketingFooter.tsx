@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Shield, Mail, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 
 export function MarketingFooter() {
   return (
@@ -47,7 +47,28 @@ export function MarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href='/apply' className='transition-colors hover:text-emerald-600'>
+                <Link href='/guides' className='transition-colors hover:text-emerald-600'>
+                  Dairy Farming Guides
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href='/tools/calving-date-calculator'
+                  className='transition-colors hover:text-emerald-600'
+                >
+                  Calving Date Calculator
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href='/tools/milk-price-calculator'
+                  className='transition-colors hover:text-emerald-600'
+                >
+                  Milk Price (Fat/SNF) Calculator
+                </Link>
+              </li>
+              <li>
+                <Link href='/sign-up' className='transition-colors hover:text-emerald-600'>
                   Register Your Farm (Free)
                 </Link>
               </li>
@@ -68,15 +89,6 @@ export function MarketingFooter() {
               <li>
                 <Link href='/dashboard' className='transition-colors hover:text-emerald-600'>
                   Farm Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href='/super-admin'
-                  className='inline-flex items-center gap-1.5 font-semibold text-purple-600 transition-colors hover:text-purple-700 dark:text-purple-400'
-                >
-                  <Shield className='h-4 w-4' />
-                  Super Admin Portal
                 </Link>
               </li>
               <li>

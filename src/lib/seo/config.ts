@@ -82,7 +82,6 @@ export const internationalKeywords = [
   'cattle breeding tracking system',
   'farm management SaaS',
   'dairy farm analytics',
-  'IoT dairy farming',
   'precision dairy management',
 ];
 
@@ -141,14 +140,14 @@ export const pricingPlans = [
     price: 12999,
     currency: 'PKR',
     billingPeriod: 'month',
-    features: ['Up to 500 animals', '15 users', 'IoT integration', 'API access'],
+    features: ['Up to 500 animals', '15 users', 'Staff & task management', 'Feed inventory'],
   },
   {
     name: 'Enterprise',
     price: 0, // Custom pricing
     currency: 'PKR',
     billingPeriod: 'month',
-    features: ['Unlimited animals', 'Unlimited users', 'White-label', 'Dedicated support'],
+    features: ['Unlimited animals', 'Unlimited users', 'All modules', 'Dedicated support'],
     isCustom: true,
   },
 ];

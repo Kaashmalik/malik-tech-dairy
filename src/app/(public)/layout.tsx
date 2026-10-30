@@ -1,9 +1,13 @@
+import type { Metadata } from 'next';
 // Public Layout - Requires authentication but NOT organization
 // Used for: /apply, /apply/success, /apply/status
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { ensurePlatformUser } from '@/lib/auth/platform-user';
 import { logger } from '@/lib/logger';
+
+// Private app area: keep out of search results
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const { userId, orgId } = await auth();

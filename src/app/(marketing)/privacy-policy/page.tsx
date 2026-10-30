@@ -6,7 +6,7 @@ import { BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { Shield, Lock, FileText, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | MTK Dairy Farm Software',
+  title: { absolute: 'Privacy Policy | MTK Dairy Farm Software' },
   description:
     'Learn how MTK Dairy collects, uses, and safeguards your livestock, financial, and personal farm data with bank-grade encryption.',
   alternates: {
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
               Privacy Policy
             </h1>
             <p className='mt-2 text-sm text-slate-500'>
-              Last updated: September 2026 • MTK Dairy / MalikTech
+              Last updated: 30 October 2026 • MTK Dairy / MalikTech
             </p>
 
             <div className='mt-8 space-y-8 text-sm leading-relaxed text-slate-600 dark:text-slate-300'>
@@ -85,10 +85,11 @@ export default function PrivacyPolicyPage() {
                   3. Multi-Tenant Data Isolation
                 </h2>
                 <p className='mt-2'>
-                  MTK Dairy utilizes strict multi-tenant isolation via PostgreSQL Row Level Security
-                  (RLS) and cryptographic access tokens. Your farm records cannot be accessed,
-                  inspected, or aggregated with other farms on the platform. Your herd data belongs
-                  entirely to you.
+                  Every request to your farm&apos;s data is checked on our servers against your
+                  signed-in account and farm membership, and the database is configured to refuse
+                  direct access from browsers. Other farms on the platform cannot see your records,
+                  and we do not aggregate or share individual farm data. Your herd data belongs to
+                  you.
                 </p>
               </section>
 
@@ -117,19 +118,120 @@ export default function PrivacyPolicyPage() {
 
               <section>
                 <h2 className='text-lg font-bold text-slate-900 dark:text-white'>
-                  5. Data Retention & Export Rights
+                  5. Cookies and Similar Technologies
                 </h2>
                 <p className='mt-2'>
-                  You retain complete ownership of your records. You may export your livestock logs,
-                  milk charts, and accounting data at any time via CSV or printable reports. If you
-                  choose to terminate your subscription, your tenant data can be securely purged
-                  upon request.
+                  We use essential cookies to keep you signed in and to secure your session (via our
+                  authentication provider). We use privacy-conscious product analytics and error
+                  monitoring to understand how features are used and to fix problems. On our public
+                  guides and free tools we may also show advertising, which uses cookies as
+                  described below. You can block or delete cookies in your browser settings;
+                  essential cookies are required to use the farm dashboard.
+                </p>
+              </section>
+
+              <section>
+                <h2 className='text-lg font-bold text-slate-900 dark:text-white'>6. Advertising</h2>
+                <p className='mt-2'>
+                  Advertising appears only on public content pages (such as our dairy farming guides
+                  and calculators) — never inside your farm dashboard, and never using your farm
+                  records. We use Google AdSense. Third-party vendors, including Google, use cookies
+                  to serve ads based on your prior visits to this and other websites. Google&apos;s
+                  use of advertising cookies enables it and its partners to serve ads to you based
+                  on those visits.
+                </p>
+                <ul className='mt-2 list-disc space-y-2 pl-5'>
+                  <li>
+                    You can opt out of personalised advertising in
+                    <a
+                      href='https://adssettings.google.com'
+                      className='text-emerald-700 underline'
+                      rel='noopener noreferrer'
+                      target='_blank'
+                    >
+                      Google Ads Settings
+                    </a>
+                    , or opt out of some third-party vendors&apos; use of cookies at
+                    <a
+                      href='https://www.aboutads.info/choices'
+                      className='text-emerald-700 underline'
+                      rel='noopener noreferrer'
+                      target='_blank'
+                    >
+                      aboutads.info
+                    </a>
+                    .
+                  </li>
+                  <li>
+                    Learn how Google uses information from sites that use its services at
+                    <a
+                      href='https://policies.google.com/technologies/partner-sites'
+                      className='text-emerald-700 underline'
+                      rel='noopener noreferrer'
+                      target='_blank'
+                    >
+                      policies.google.com/technologies/partner-sites
+                    </a>
+                    .
+                  </li>
+                  <li>
+                    Visitors from the European Economic Area, the United Kingdom and Switzerland are
+                    asked for consent through a Google-certified consent management platform before
+                    personalised ads are shown.
+                  </li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className='text-lg font-bold text-slate-900 dark:text-white'>
+                  7. Service Providers
+                </h2>
+                <p className='mt-2'>
+                  We use trusted processors to run the service, under their own security and privacy
+                  commitments: account sign-in and team invitations (Clerk), database hosting
+                  (Supabase), application hosting (Vercel), image storage (Cloudinary),
+                  transactional email (Resend), error monitoring (Sentry), product analytics
+                  (PostHog), payment gateways for paid plans, and Google AdSense for advertising on
+                  public pages. They process data only to provide their service to us.
                 </p>
               </section>
 
               <section>
                 <h2 className='text-lg font-bold text-slate-900 dark:text-white'>
-                  6. Contact Information
+                  8. Data Retention, Export and Deletion
+                </h2>
+                <p className='mt-2'>
+                  You own your records. Farm owners can download a complete export of all farm data
+                  at any time from <strong>Settings → Data &amp; Privacy</strong>, in addition to
+                  CSV and PDF reports. Owners can also delete the farm there: access ends
+                  immediately for all members, and the data is kept for up to 30 days so a mistake
+                  can be reversed on request, after which it is permanently deleted. Inquiries sent
+                  through our contact form are kept only as long as needed to respond.
+                </p>
+              </section>
+
+              <section>
+                <h2 className='text-lg font-bold text-slate-900 dark:text-white'>9. Children</h2>
+                <p className='mt-2'>
+                  Our service is intended for farm owners and staff and is not directed at children
+                  under 13. We do not knowingly collect personal information from children.
+                </p>
+              </section>
+
+              <section>
+                <h2 className='text-lg font-bold text-slate-900 dark:text-white'>
+                  10. Changes to This Policy
+                </h2>
+                <p className='mt-2'>
+                  We may update this policy as the service changes. The &ldquo;Last updated&rdquo;
+                  date above shows the latest revision; significant changes will be notified to
+                  account holders by email or in the app.
+                </p>
+              </section>
+
+              <section>
+                <h2 className='text-lg font-bold text-slate-900 dark:text-white'>
+                  11. Contact Information
                 </h2>
                 <p className='mt-2'>
                   If you have inquiries regarding this policy or wish to exercise data rights,

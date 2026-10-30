@@ -20,9 +20,9 @@ import { siteConfig } from '@/lib/seo/config';
 import { BreadcrumbSchema } from '@/components/seo/JsonLd';
 
 export const metadata: Metadata = {
-  title: 'Features | MTK Dairy SaaS Platform',
+  title: { absolute: 'Features | MTK Dairy SaaS Platform' },
   description:
-    'Comprehensive livestock management, IoT milk yield tracking, breeding cycles, disease diagnosis, feed optimization, and offline PWA capability.',
+    'Comprehensive livestock management, milk yield tracking with fat & SNF, breeding cycles, disease diagnosis, feed optimization, and offline PWA capability.',
   alternates: {
     canonical: `${siteConfig.url}/features`,
   },
@@ -74,7 +74,7 @@ const featureList = [
   {
     icon: Shield,
     title: 'Enterprise Multi-Tenancy',
-    desc: 'Strict tenant isolation via PostgreSQL Row Level Security, role-based access control, and encrypted data.',
+    desc: 'Strict tenant isolation enforced on every request, role-based access control, and encrypted data.',
     badge: 'Security',
   },
 ];

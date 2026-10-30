@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',
+  title: { absolute: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan' },
   description:
     'Dairy farm management software built for Pakistan. Track milk production, cattle health, breeding, and finances with bilingual English & Urdu support and offline PWA. Free plan available. ڈیری فارم مینجمنٹ',
   alternates: {

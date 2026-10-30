@@ -6,7 +6,7 @@ import { BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { FileText, Shield } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | MTK Dairy Farm Software',
+  title: { absolute: 'Terms of Service | MTK Dairy Farm Software' },
   description:
     'Read the terms of service governing the use of MTK Dairy SaaS farm management application, subscriptions, and offline services.',
   alternates: {

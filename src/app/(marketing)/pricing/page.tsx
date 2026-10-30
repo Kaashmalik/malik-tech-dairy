@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Pricing Plans & Subscriptions | MTK Dairy Farm Software',
+  title: { absolute: 'Pricing Plans & Subscriptions | MTK Dairy Farm Software' },
   description:
     'Affordable and transparent dairy farm management software pricing in Pakistan. Free plan available for small farms, with scalable plans for commercial cattle & buffalo herds.',
   alternates: {
