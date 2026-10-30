@@ -4,6 +4,10 @@ import { heatStress, mastitis, vaccinationSchedule } from './health';
 import { fatSnf, increaseMilkYield } from './milk';
 import { calfRearing, fodderSilage, recordKeeping } from './management';
 import { cattleBreeds, niliRavi } from './breeds';
+import { deworming, fmd, lumpySkin, milkFever, tickControl } from './health-2';
+import { balancedRation, minerals } from './nutrition';
+import { artificialInsemination, cleanMilk, shedDesign } from './farm';
+import { beetalGoat, buffaloVsCow, profitability, startDairyFarm } from './business';
 
 export type { Guide, GuideCategory, GuideFaq } from './types';
 
@@ -21,6 +25,20 @@ export const guides: Guide[] = [
   cattleBreeds,
   niliRavi,
   recordKeeping,
+  fmd,
+  lumpySkin,
+  tickControl,
+  deworming,
+  milkFever,
+  artificialInsemination,
+  cleanMilk,
+  balancedRation,
+  minerals,
+  shedDesign,
+  buffaloVsCow,
+  beetalGoat,
+  startDairyFarm,
+  profitability,
 ];
 
 export function getGuide(slug: string): Guide | undefined {
