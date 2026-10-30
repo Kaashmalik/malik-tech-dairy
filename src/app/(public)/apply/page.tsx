@@ -2,7 +2,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -132,6 +132,7 @@ interface UserStatus {
 export default function ApplyForFarmPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const { setActive } = useClerk();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [selectedAnimalTypes, setSelectedAnimalTypes] = useState<string[]>([]);
@@ -310,9 +311,20 @@ export default function ApplyForFarmPage() {
 
       const result = await response.json();
 
+      if (result.success && result.data?.autoApproved && result.data.tenantId) {
+        // Free plan: farm already exists - activate it and go straight in
+        toast.success(result.message || 'Your farm is ready!');
+        await setActive({ organization: result.data.tenantId });
+        router.replace('/dashboard');
+        return;
+      }
+
       if (result.success) {
         toast.success(result.message || 'Application submitted successfully!');
         router.push(`/apply/success?id=${result.data.id}`);
+      } else if (response.status === 409 && result.data?.id) {
+        toast.info(result.error);
+        router.push(`/apply/status?id=${encodeURIComponent(result.data.id)}`);
       } else {
         // Display detailed error message from API
         const errorMessage = result.error || 'Failed to submit application';
@@ -1006,7 +1018,7 @@ export default function ApplyForFarmPage() {
                   {submitting ? (
                     <>
                       <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                      Submitting...
+                      {isPaidPlan ? 'Submitting...' : 'Creating your farm...'}
                     </>
                   ) : !isPlanSelected ? (
                     <>
@@ -1016,9 +1028,11 @@ export default function ApplyForFarmPage() {
                   ) : (
                     <>
                       <CheckCircle2 className='mr-2 h-4 w-4' />
-                      {isPaidPlan && !paymentSlipUrl
-                        ? 'Submit (Upload Later)'
-                        : 'Submit Application'}
+                      {!isPaidPlan
+                        ? 'Create My Farm'
+                        : !paymentSlipUrl
+                          ? 'Submit (Upload Later)'
+                          : 'Submit Application'}
                     </>
                   )}
                 </Button>

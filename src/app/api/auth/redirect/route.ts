@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { getPostLoginPath } from '@/lib/auth/post-login-destination';
+import { ensurePlatformUser } from '@/lib/auth/platform-user';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,13 +19,9 @@ export async function GET() {
       return NextResponse.redirect(new URL('/sign-in', appOrigin()));
     }
 
+    // First login after signup: create platform_users even if the webhook hasn't run
+    const platformUser = await ensurePlatformUser(userId);
     const supabase = getSupabaseClient();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: user } = await (supabase.from('platform_users') as any)
-      .select('platform_role')
-      .eq('id', userId)
-      .maybeSingle();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: memberships } = await (supabase.from('tenant_members') as any)
@@ -41,7 +39,7 @@ export async function GET() {
       .maybeSingle();
 
     const path = getPostLoginPath({
-      isSuperAdmin: user?.platform_role === 'super_admin',
+      isSuperAdmin: platformUser.isSuperAdmin,
       hasActiveOrg: Boolean(orgId),
       hasMemberships: Boolean(memberships?.length),
       latestApplication: application ? { id: application.id, status: application.status } : null,
@@ -49,7 +47,7 @@ export async function GET() {
 
     return NextResponse.redirect(new URL(path, appOrigin()));
   } catch (error) {
-    console.error('auth/redirect error:', error);
+    logger.error('auth/redirect failed', error);
     // Prefer farm picker when auth succeeded but destination resolution failed;
     // apply is the cold-start path if picker is empty.
     return NextResponse.redirect(new URL('/select-farm', appOrigin()));

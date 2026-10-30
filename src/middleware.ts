@@ -18,6 +18,9 @@ const isPublicRoute = createRouteMatcher([
   '/terms-of-service(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/login',
+  '/signup',
+  '/unsubscribe(.*)',
   '/robots.txt',
   '/sitemap.xml',
   '/llms.txt',
@@ -32,34 +35,32 @@ const isPublicRoute = createRouteMatcher([
   '/api/payments/callback(.*)',
   '/api/weather/sync(.*)',
   '/api/auth/redirect(.*)',
+  '/api/unsubscribe(.*)',
 ]);
 
-// Routes that require authentication but NOT organization
-const isAuthOnlyRoute = createRouteMatcher([
+// Authenticated routes that work WITHOUT an active farm (organization).
+// Everything else that is authenticated requires one - tenant scope is the default,
+// so a newly added page or API cannot accidentally skip the org check.
+const isNoOrgRoute = createRouteMatcher([
   '/apply(.*)',
   '/onboarding(.*)',
   '/select-farm(.*)',
-  '/api/farm-applications(.*)',
-  '/api/user/farms(.*)',
-  '/api/user/join-org(.*)',
-  '/api/upload(.*)',
+  '/invite(.*)',
   '/admin(.*)', // Super admin routes
   '/super-admin(.*)', // Super admin routes
+  '/payments(.*)', // Super admin payments
+  '/api/farm-applications(.*)',
+  '/api/user(.*)',
+  '/api/upload(.*)',
+  '/api/invitations(.*)', // accept flow; send route checks tenant itself
   '/api/admin(.*)',
+  '/api/migration(.*)',
 ]);
 
-// Define routes that require organization (tenant) context
-const isOrganizationRoute = createRouteMatcher([
-  '/dashboard(.*)',
-  '/api/tenants(.*)',
-  '/api/animals(.*)',
-  '/api/milk(.*)',
-  '/api/health(.*)',
-  '/api/breeding(.*)',
-  '/api/expenses(.*)',
-  '/api/reports(.*)',
-  '/api/weather(.*)',
-]);
+const IDENTITY_HEADERS = ['x-tenant-id', 'x-tenant-slug', 'x-user-id'];
+
+// Pages a user with an active farm should not see again
+const ONBOARDING_PATHS = new Set(['/onboarding', '/apply', '/select-farm']);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   // Google Search Console Instant HTML File Verification
@@ -86,15 +87,22 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // Extract subdomain from hostname
   const hostname = req.headers.get('host') || '';
   const subdomain = hostname.split('.')[0];
-  const isMainDomain =
+  const isTenantSubdomain =
     hostname.includes('dairy.mtkcodex.site') &&
     !subdomain.includes('www') &&
     subdomain !== 'dairy' &&
     subdomain !== 'maliktechdairy';
 
+  // Identity headers are trusted downstream (lib/api/middleware.ts), so never let a
+  // client supply them - strip on every request and re-set only from the Clerk session.
+  const requestHeaders = new Headers(req.headers);
+  for (const header of IDENTITY_HEADERS) {
+    requestHeaders.delete(header);
+  }
+
   // Allow public routes
   if (isPublicRoute(req)) {
-    const response = NextResponse.next();
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
     if (req.nextUrl.pathname.startsWith('/api')) {
       const origin = req.headers.get('origin');
       const corsHeaders = getCorsHeaders(origin);
@@ -106,7 +114,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   // Redirect to sign-in if not authenticated on protected routes
-  if (!userId && !isPublicRoute(req)) {
+  if (!userId) {
     const signInUrl = new URL('/sign-in', req.url);
     signInUrl.searchParams.set('redirect_url', req.url);
     if (req.nextUrl.pathname.startsWith('/api')) {
@@ -115,37 +123,30 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // Handle auth-only routes (apply, onboarding, select-farm, etc.)
-  if (isAuthOnlyRoute(req) && userId) {
-    // Users who already have an active farm skip apply/onboarding
-    if (
-      orgId &&
-      (req.nextUrl.pathname === '/onboarding' ||
-        req.nextUrl.pathname === '/apply' ||
-        req.nextUrl.pathname === '/select-farm')
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
+  const pathname = req.nextUrl.pathname;
+
+  // Users who already have an active farm skip apply/onboarding
+  if (orgId && ONBOARDING_PATHS.has(pathname)) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  // Handle organization (tenant) routes
-  if (isOrganizationRoute(req) && userId) {
-    // If subdomain exists and user is authenticated, ensure they belong to that tenant
-    if (isMainDomain && subdomain) {
-      // User should be in the organization matching the subdomain
-      if (orgSlug !== subdomain) {
-        // Redirect to correct tenant or show error
-        const redirectUrl = new URL(
-          `https://${subdomain}.dairy.mtkcodex.site${req.nextUrl.pathname}`,
-          req.url
+  // Everything else that is authenticated is tenant-scoped
+  if (!isNoOrgRoute(req)) {
+    // On a tenant subdomain the active org must be that tenant. (Previously this
+    // redirected to the same URL, which looped forever.)
+    if (isTenantSubdomain && orgSlug !== subdomain) {
+      if (pathname.startsWith('/api')) {
+        return NextResponse.json(
+          { success: false, error: 'Active farm does not match this farm address.' },
+          { status: 403 }
         );
-        return NextResponse.redirect(redirectUrl);
       }
+      return NextResponse.redirect(new URL(getNoOrgFallbackPath(), req.url));
     }
 
     // No active org → farm picker (not apply). Apply is only for brand-new users.
     if (!orgId) {
-      if (req.nextUrl.pathname.startsWith('/api')) {
+      if (pathname.startsWith('/api')) {
         return NextResponse.json(
           { success: false, error: 'Select a farm organization before continuing.' },
           { status: 403 }
@@ -156,14 +157,11 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   // Add tenant context to headers for API routes
-  const requestHeaders = new Headers(req.headers);
   if (orgId) {
     requestHeaders.set('x-tenant-id', orgId);
     requestHeaders.set('x-tenant-slug', orgSlug || subdomain || '');
   }
-  if (userId) {
-    requestHeaders.set('x-user-id', userId);
-  }
+  requestHeaders.set('x-user-id', userId);
 
   const response = NextResponse.next({
     request: {

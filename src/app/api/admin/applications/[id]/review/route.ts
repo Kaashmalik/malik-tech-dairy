@@ -1,10 +1,13 @@
 // Super Admin - Review Farm Application API
 // POST: Approve or reject an application
 // On approval: Creates Clerk Org, Tenant, assigns farm_owner role
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseClient } from '@/lib/supabase/server';
+import { ensurePlatformUser } from '@/lib/auth/platform-user';
+import { provisionFarm, ProvisioningError, type FarmPlan } from '@/lib/tenant/provision';
+import { logger } from '@/lib/logger';
 // Type definitions
 interface FarmApplication {
   id: string;
@@ -37,15 +40,6 @@ async function isSuperAdmin(userId: string): Promise<boolean> {
     .single();
   const user = data as PlatformUser | null;
   return user?.platform_role === 'super_admin';
-}
-// Generate a URL-friendly slug from farm name
-function generateSlug(farmName: string): string {
-  return farmName
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .substring(0, 50);
 }
 // Generate a unique Farm ID
 function generateFarmId(): string {
@@ -95,136 +89,49 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (validatedData.action === 'approve') {
       // ============ APPROVAL FLOW ============
       const farmId = generateFarmId();
-      const baseSlug = generateSlug(application.farm_name);
-      // 1. Create Clerk Organization (or fallback to UUID)
-      let clerkOrgId: string = '';
-      let finalSlug: string = baseSlug;
-      let orgCreated = false;
-      try {
-        const clerk = await clerkClient();
-        // Try to create organization with different slug variations
-        const slugVariations = [
-          baseSlug,
-          `${baseSlug}-${Date.now().toString(36)}`,
-          `${baseSlug}-${Math.random().toString(36).slice(2, 8)}`,
-        ];
-        for (const slug of slugVariations) {
-          try {
-            const org = await clerk.organizations.createOrganization({
-              name: application.farm_name,
-              slug: slug,
-            });
-            clerkOrgId = org.id;
-            finalSlug = slug;
-            orgCreated = true;
-            // Add the applicant as admin member - CRITICAL STEP
-            try {
-              await clerk.organizations.createOrganizationMembership({
-                organizationId: clerkOrgId,
-                userId: application.applicant_id,
-                role: 'org:admin',
-              });
-            } catch (memberError: unknown) {
-              // Try with basic member role if admin fails
-              try {
-                await clerk.organizations.createOrganizationMembership({
-                  organizationId: clerkOrgId,
-                  userId: application.applicant_id,
-                  role: 'org:member',
-                });
-                console.log('✅ Added applicant as org member (fallback)');
-              } catch (memberError2) {
-                // Don't break - continue with tenant creation
-              }
-            }
-            break;
-          } catch (clerkError: unknown) {
-            const errorMessage =
-              clerkError instanceof Error ? clerkError.message : String(clerkError);
-            if (!errorMessage.includes('slug') && !errorMessage.includes('already exists')) {
-              break;
-            }
-          }
-        }
-      } catch (clerkInitError) {}
-      // FALLBACK: Use UUID if Clerk fails
-      if (!orgCreated) {
-        clerkOrgId = `tenant_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-        finalSlug = `${baseSlug}-${Date.now().toString(36)}`;
-      }
-      // 2. Create Tenant record in Supabase (matching schema)
-      const tenantData = {
-        id: clerkOrgId!,
-        slug: finalSlug,
-        farm_name: application.farm_name,
-        animal_types: application.animal_types || ['cow', 'buffalo'],
-        language: 'en',
-        currency: 'PKR',
-        timezone: 'Asia/Karachi',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const plan = (application.requested_plan || 'free') as FarmPlan;
+
+      // Claim the application atomically so a double click cannot create two farms
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: tenantError } = await (supabase.from('tenants') as any).insert([tenantData]);
-      // 2b. Create subscription record
-      if (!tenantError) {
-        try {
-          const subscriptionData = {
-            id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-            tenant_id: clerkOrgId!,
-            plan: application.requested_plan || 'free',
-            status: 'active',
-            gateway: 'bank_transfer',
-            renew_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            amount: 0,
-            currency: 'PKR',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { error: subError } = await (supabase.from('subscriptions') as any).insert([
-            subscriptionData,
-          ]);
-          if (subError) {
-          }
-        } catch (e) {}
-      }
-      if (tenantError) {
-        // Rollback: Delete Clerk organization (only if we created one)
-        if (orgCreated && clerkOrgId) {
-          try {
-            const clerk = await clerkClient();
-            await clerk.organizations.deleteOrganization(clerkOrgId);
-          } catch (e) {}
-        }
+      const { data: claimed, error: claimError } = await (supabase.from('farm_applications') as any)
+        .update({ status: 'under_review', updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('status', application.status)
+        .select('id');
+      if (claimError || !claimed?.length) {
         return NextResponse.json(
-          { error: 'Failed to create tenant record', details: tenantError.message },
-          { status: 500 }
+          { error: 'Application is already being processed. Refresh and try again.' },
+          { status: 409 }
         );
       }
-      // 3. Add user as farm_owner in tenant_members (matching schema)
-      const memberData = {
-        id: `mem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        tenant_id: clerkOrgId!,
-        user_id: application.applicant_id,
-        role: 'farm_owner',
-        status: 'active',
-        join_date: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: memberError } = await (supabase.from('tenant_members') as any).insert([
-        memberData,
-      ]);
-      if (memberError) {
-        // Continue anyway - user can be added later
+
+      // 1-3. Clerk org (applicant = org admin) + tenant + subscription + owner membership.
+      // Throws ProvisioningError and rolls back on failure - no synthetic tenant IDs.
+      let farm;
+      try {
+        await ensurePlatformUser(application.applicant_id);
+        farm = await provisionFarm({
+          ownerId: application.applicant_id,
+          farmName: application.farm_name,
+          plan,
+          animalTypes: application.animal_types,
+        });
+      } catch (provisionError) {
+        // Release the claim so the admin can retry
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('farm_applications') as any)
+          .update({ status: application.status, updated_at: new Date().toISOString() })
+          .eq('id', id);
+        throw provisionError;
       }
+      const clerkOrgId = farm.tenantId;
+      const finalSlug = farm.slug;
+
       // 4. Update application status
       const updateData = {
         status: 'approved',
         assigned_farm_id: farmId,
-        assigned_tenant_id: clerkOrgId!,
+        assigned_tenant_id: clerkOrgId,
         reviewed_by: userId,
         reviewed_at: new Date().toISOString(),
         review_notes: validatedData.reviewNotes || null,
@@ -240,7 +147,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .single();
       const updatedApp = updatedAppData as FarmApplication;
       if (updateError) {
-        return NextResponse.json({ error: 'Failed to update application status' }, { status: 500 });
+        // Farm is live; surface the inconsistency so the admin can retry the status update
+        logger.error('Farm provisioned but application status update failed', updateError, {
+          applicationId: id,
+          tenantId: clerkOrgId,
+        });
+        return NextResponse.json(
+          {
+            error: 'Farm was created but the application status could not be updated',
+            details: updateError.message,
+            data: { tenantId: clerkOrgId },
+          },
+          { status: 500 }
+        );
       }
       // 5. Create notification for the user (fire and forget)
       try {
@@ -251,12 +170,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             type: 'application_approved',
             title: 'Farm Application Approved! 🎉',
             message: `Your farm "${application.farm_name}" has been approved. Farm ID: ${farmId}`,
-            data: { applicationId: id, farmId, tenantId: clerkOrgId! },
+            data: { applicationId: id, farmId, tenantId: clerkOrgId },
             read: false,
             created_at: new Date().toISOString(),
           },
         ]);
-      } catch (e) {}
+      } catch (e) {
+        logger.warn('Notification insert failed', { applicationId: id, error: String(e) });
+      }
       // 6. Create super admin notification (fire and forget)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -270,7 +191,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             created_at: new Date().toISOString(),
           },
         ]);
-      } catch (e) {}
+      } catch (e) {
+        logger.warn('Notification insert failed', { applicationId: id, error: String(e) });
+      }
       return NextResponse.json({
         success: true,
         data: {
@@ -281,7 +204,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             assignedFarmId: farmId,
           },
           tenant: {
-            id: clerkOrgId!,
+            id: clerkOrgId,
             name: application.farm_name,
             slug: finalSlug,
           },
@@ -327,7 +250,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             created_at: new Date().toISOString(),
           },
         ]);
-      } catch (e) {}
+      } catch (e) {
+        logger.warn('Notification insert failed', { applicationId: id, error: String(e) });
+      }
       return NextResponse.json({
         success: true,
         data: {
@@ -347,6 +272,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         { status: 400 }
       );
     }
+    if (error instanceof ProvisioningError) {
+      return NextResponse.json(
+        { error: error.message, details: `Provisioning failed at step: ${error.step}` },
+        { status: 502 }
+      );
+    }
+    logger.error('Application review failed', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       {

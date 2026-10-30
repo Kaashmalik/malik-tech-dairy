@@ -4,94 +4,22 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { SuperAdminSidebar } from '@/components/admin/SuperAdminSidebar';
 import { SuperAdminHeader } from '@/components/admin/SuperAdminHeader';
-// Super admin emails for auto-detection
-const SUPER_ADMIN_EMAILS = ['mtkdairy@gmail.com'];
-// Type for platform_users table
-interface PlatformUser {
-  id: string;
-  email: string;
-  name: string | null;
-  platform_role: 'super_admin' | 'admin' | 'user';
-  is_active: boolean;
-  email_verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { ensurePlatformUser } from '@/lib/auth/platform-user';
+import { logger } from '@/lib/logger';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Fail closed: access requires a super_admin platform role (granted via DB, or via
+ * the allow-list for a *verified* primary email). Any error denies access.
+ */
 async function checkAndSetupSuperAdmin(userId: string): Promise<boolean> {
-  // Get user from Clerk to check email
-  const { clerkClient } = await import('@clerk/nextjs/server');
-  const client = await clerkClient();
-
-  let email = '';
-  let isSuperAdminEmail = false;
-
   try {
-    const clerkUser = await client.users.getUser(userId);
-    email = clerkUser.emailAddresses[0]?.emailAddress || '';
-    isSuperAdminEmail = SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
-  } catch (clerkError) {
-    // If Clerk fails, we can't verify the user
-    if (process.env.NODE_ENV === 'development') {
-    }
-    return false;
-  }
-  // If email matches super admin list, grant access even if DB fails
-  // This ensures super admin can always access the panel
-  if (!isSuperAdminEmail) {
-    return false;
-  }
-  try {
-    // Use Supabase REST API instead of direct postgres
-    const { getSupabaseClient } = await import('@/lib/supabase/server');
-    const supabase = getSupabaseClient();
-    // Check if user exists in DB
-    const { data, error: fetchError } = await supabase
-      .from('platform_users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    const user = data as PlatformUser | null;
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      if (process.env.NODE_ENV === 'development') {
-      }
-    }
-    if (!user) {
-      // Create user with appropriate role
-      const newUser = {
-        id: userId,
-        email: email,
-        name: null,
-        platform_role: 'super_admin',
-        is_active: true,
-        email_verified: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insertError } = await (supabase.from('platform_users') as any).insert([
-        newUser,
-      ]);
-      // Ignore duplicate key error (23505) - user already exists
-      if (insertError && insertError.code !== '23505' && process.env.NODE_ENV === 'development') {
-      }
-      return true; // Super admin email, allow access
-    }
-    // If user exists but should be super admin, upgrade
-    if (user.platform_role !== 'super_admin') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: updateError } = await (supabase.from('platform_users') as any)
-        .update({ platform_role: 'super_admin', updated_at: new Date().toISOString() })
-        .eq('id', userId);
-      if (updateError && process.env.NODE_ENV === 'development') {
-      }
-    }
-    return true;
+    const platformUser = await ensurePlatformUser(userId);
+    return platformUser.isSuperAdmin;
   } catch (error) {
-    // DB connection failed but email is in super admin list - allow access
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[SuperAdmin] DB error (allowing based on email):', error);
-    }
-    return isSuperAdminEmail;
+    logger.error('Super admin check failed; denying access', error, { userId });
+    return false;
   }
 }
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {

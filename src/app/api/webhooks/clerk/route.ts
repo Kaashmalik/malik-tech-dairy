@@ -2,9 +2,12 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { initializeTenant } from '@/lib/supabase/tenant'; // Use Supabase instead of Firestore
-import { adminDb } from '@/lib/firebase/admin'; // Keep for Firestore document data
-import { cacheClaimOnce, CacheTTL } from '@/lib/cache/redis-cache';
+import { cacheClaimOnce, cacheDelete, CacheTTL } from '@/lib/cache/redis-cache';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { ensurePlatformUser } from '@/lib/auth/platform-user';
+import { upsertTenantRecords, type FarmPlan } from '@/lib/tenant/provision';
+import { logAuditEvent } from '@/lib/audit';
+import { logger } from '@/lib/logger';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +36,12 @@ async function claimWebhookOnce(webhookId: string): Promise<boolean> {
   return true;
 }
 
+/** Undo a claim when processing failed, so the Svix retry is not dropped as a duplicate. */
+async function releaseWebhookClaim(webhookId: string): Promise<void> {
+  processedWebhooks.delete(webhookId);
+  await cacheDelete(`webhook:clerk:${webhookId}`);
+}
+
 export async function POST(request: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
@@ -59,9 +68,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing required svix headers' }, { status: 400 });
   }
 
-  // Get body
-  const payload = await request.json();
-  const body = JSON.stringify(payload);
+  // Svix signs the raw body - verify exactly what was sent
+  const body = await request.text();
 
   // Generate webhook ID for replay protection
   const webhookId = crypto
@@ -97,157 +105,104 @@ export async function POST(request: Request) {
   // Claim after verify so invalid payloads cannot poison the replay cache
   const claimed = await claimWebhookOnce(webhookId);
   if (!claimed) {
-    console.warn('Duplicate webhook detected, possible replay attack');
-    return NextResponse.json({ error: 'Duplicate webhook' }, { status: 400 });
+    // Already processed: acknowledge so Svix stops retrying
+    logger.warn('Duplicate Clerk webhook ignored', { svixId: svix_id });
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   const eventType = evt.type;
   const data = evt.data;
 
-  // Log webhook event for audit
-  console.log(`Webhook received: ${eventType}`, {
-    id: evt.id,
-    timestamp: new Date().toISOString(),
-  });
+  logger.info('Clerk webhook received', { eventType, eventId: evt.id });
 
-  // Handle organization.created event
-  if (eventType === 'organization.created') {
-    try {
-      const orgId = data.id;
-      const orgSlug =
-        data.slug || data.name?.toLowerCase().replace(/\s+/g, '-') || `org-${orgId.slice(0, 8)}`;
-      const ownerId = data.created_by;
+  const auditMeta = {
+    ipAddress: headerPayload.get('x-forwarded-for') || undefined,
+    userAgent: headerPayload.get('user-agent') || undefined,
+  };
 
-      // Get owner email from Clerk (or from user data)
-      // For now, we'll initialize without email and update later
-      await initializeTenant(orgId, orgSlug, ownerId, 'owner@example.com');
-
-      // Create user records for the organization owner
-      const { getDrizzle } = await import('@/lib/supabase/server');
-      const { platformUsers, tenantMembers } = await import('@/db/schema');
-      const { eq } = await import('drizzle-orm');
-      const db = getDrizzle();
-
-      // Create platform user record for the owner
-      const existingPlatformUser = await db
-        .select()
-        .from(platformUsers)
-        .where(eq(platformUsers.id, ownerId))
-        .limit(1);
-
-      if (existingPlatformUser.length === 0) {
-        await db.insert(platformUsers).values({
-          id: ownerId,
-          email: 'owner@example.com', // Will be updated by user.created webhook
-          name: 'Farm Owner',
-          platformRole: 'user',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+  try {
+    switch (eventType) {
+      case 'user.created':
+      case 'user.updated': {
+        // Idempotent mirror into platform_users (also handles super-admin allow-list)
+        await ensurePlatformUser(data.id);
+        if (eventType === 'user.updated') {
+          const primary = data.email_addresses?.find(
+            (e: { id: string }) => e.id === data.primary_email_address_id
+          );
+          if (primary?.email_address) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (getSupabaseClient().from('platform_users') as any)
+              .update({
+                email: primary.email_address.toLowerCase(),
+                name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || null,
+                email_verified: primary.verification?.status === 'verified',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', data.id);
+          }
+        }
+        break;
       }
 
-      // Create tenant member record for the owner
-      const { and } = await import('drizzle-orm');
-      const existingMember = await db
-        .select()
-        .from(tenantMembers)
-        .where(and(eq(tenantMembers.userId, ownerId), eq(tenantMembers.tenantId, orgId)))
-        .limit(1);
-
-      if (existingMember.length === 0) {
-        await db.insert(tenantMembers).values({
-          id: `${orgId}_${ownerId}`,
+      case 'organization.created': {
+        // Usually provisionFarm() already wrote these rows; this is the safety net for
+        // orgs created elsewhere (Clerk dashboard, OrganizationSwitcher). Never overwrite.
+        const orgId: string = data.id;
+        const ownerId: string | undefined = data.created_by;
+        if (!ownerId) {
+          logger.warn('organization.created without created_by; skipping tenant init', { orgId });
+          break;
+        }
+        await ensurePlatformUser(ownerId);
+        const plan = (data.public_metadata?.plan as FarmPlan | undefined) || 'free';
+        await upsertTenantRecords({
+          tenantId: orgId,
+          slug: data.slug || orgId.toLowerCase(),
+          farmName: data.name || 'My Farm',
+          ownerId,
+          plan,
+          ignoreExisting: true,
+        });
+        await logAuditEvent({
           tenantId: orgId,
           userId: ownerId,
-          role: 'farm_owner', // Give the owner full access
-          status: 'active',
-          joinDate: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          action: 'create',
+          resource: 'organization',
+          resourceId: orgId,
+          details: { eventType, orgSlug: data.slug },
+          ...auditMeta,
         });
+        break;
       }
 
-      console.log(`Tenant initialized: ${orgId} (${orgSlug})`);
-
-      // Log audit event
-      const { logAuditEvent } = await import('@/lib/audit');
-      await logAuditEvent({
-        tenantId: orgId,
-        userId: ownerId,
-        action: 'create',
-        resource: 'organization',
-        resourceId: orgId,
-        details: { eventType, orgSlug },
-        ipAddress: headerPayload.get('x-forwarded-for') || undefined,
-        userAgent: headerPayload.get('user-agent') || undefined,
-      });
-    } catch (error) {
-      console.error('Failed to initialize tenant:', error);
-      return NextResponse.json({ error: 'Failed to initialize tenant' }, { status: 500 });
-    }
-  }
-
-  // Handle organization.deleted event
-  if (eventType === 'organization.deleted') {
-    try {
-      const orgId = data.id;
-
-      // Archive tenant in Supabase (soft delete)
-      const { getDrizzle } = await import('@/lib/supabase/server');
-      const { tenants } = await import('@/db/schema');
-      const { eq } = await import('drizzle-orm');
-      const db = getDrizzle();
-
-      await db.update(tenants).set({ deletedAt: new Date() }).where(eq(tenants.id, orgId));
-
-      // Log audit event
-      const { logAuditEvent } = await import('@/lib/audit');
-      await logAuditEvent({
-        tenantId: orgId,
-        userId: data.deleted_by || 'system',
-        action: 'delete',
-        resource: 'organization',
-        resourceId: orgId,
-        details: { eventType },
-        ipAddress: headerPayload.get('x-forwarded-for') || undefined,
-        userAgent: headerPayload.get('user-agent') || undefined,
-      });
-
-      console.log(`Tenant archived: ${orgId}`);
-    } catch (error) {
-      console.error('Failed to archive tenant:', error);
-    }
-  }
-
-  // Handle user.created event to update email
-  if (eventType === 'user.created') {
-    try {
-      const userId = data.id;
-      const email = data.email_addresses?.[0]?.email_address;
-      const firstName = data.first_name;
-      const lastName = data.last_name;
-
-      if (email) {
-        const { getDrizzle } = await import('@/lib/supabase/server');
-        const { platformUsers } = await import('@/db/schema');
-        const { eq } = await import('drizzle-orm');
-        const db = getDrizzle();
-
-        await db
-          .update(platformUsers)
-          .set({
-            email,
-            name: `${firstName || ''} ${lastName || ''}`.trim() || null,
-            emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
-            updatedAt: new Date(),
-          })
-          .where(eq(platformUsers.id, userId));
-
-        console.log(`User email updated: ${userId} -> ${email}`);
+      case 'organization.deleted': {
+        const orgId: string = data.id;
+        // Soft delete - data is retained for export/recovery
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (getSupabaseClient().from('tenants') as any)
+          .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .eq('id', orgId);
+        await logAuditEvent({
+          tenantId: orgId,
+          userId: data.deleted_by || 'system',
+          action: 'delete',
+          resource: 'organization',
+          resourceId: orgId,
+          details: { eventType },
+          ...auditMeta,
+        });
+        break;
       }
-    } catch (error) {
-      console.error('Failed to update user email:', error);
+
+      default:
+        break;
     }
+  } catch (error) {
+    logger.error('Clerk webhook handler failed', error, { eventType, eventId: evt.id });
+    await releaseWebhookClaim(webhookId);
+    // 500 lets Svix retry with backoff; handlers above are idempotent
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true, id: evt.id });

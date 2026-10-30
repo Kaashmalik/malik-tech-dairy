@@ -2,76 +2,9 @@
 // Used for: /apply, /apply/success, /apply/status
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { TablesInsert, TablesUpdate } from '@/types/database';
+import { ensurePlatformUser } from '@/lib/auth/platform-user';
+import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
-// Super admin emails - users with these emails get super_admin role
-const SUPER_ADMIN_EMAILS = ['mtkdairy@gmail.com'];
-// Type for platform_users table
-interface PlatformUser {
-  id: string;
-  email: string;
-  name: string | null;
-  platform_role: 'super_admin' | 'admin' | 'user';
-  is_active: boolean;
-  email_verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
-// Ensure user exists in Supabase after Clerk signup
-// Returns true if user is super admin
-async function ensureUserExists(userId: string, email: string, name?: string): Promise<boolean> {
-  // Determine if user should be super admin
-  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
-  try {
-    // Use Supabase REST API instead of direct postgres (more reliable)
-    const { getSupabaseClient } = await import('@/lib/supabase/server');
-    const supabase = getSupabaseClient();
-    // Check if user already exists
-    const { data, error: fetchError } = await supabase
-      .from('platform_users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    const existingUser = data as PlatformUser | null;
-    if (fetchError && fetchError.code !== 'PGRST116') {
-    }
-    if (!existingUser) {
-      // Create user in Supabase
-      const newUser: Partial<PlatformUser> = {
-        id: userId,
-        email: email,
-        name: name || null,
-        platform_role: isSuperAdmin ? 'super_admin' : 'user',
-        is_active: true,
-        email_verified: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      const { error: insertError } = await supabase
-        .from('platform_users')
-        .insert(newUser as TablesInsert<'platform_users'>);
-      if (insertError) {
-        return isSuperAdmin;
-      }
-      return isSuperAdmin;
-    } else if (isSuperAdmin && existingUser.platform_role !== 'super_admin') {
-      // Upgrade existing user to super admin if email matches
-      const { error: updateError } = await supabase
-        .from('platform_users')
-        .update({
-          platform_role: 'super_admin',
-          updated_at: new Date().toISOString(),
-        } as TablesUpdate<'platform_users'>)
-        .eq('id', userId);
-      if (updateError) {
-      }
-      return true;
-    }
-    return existingUser.platform_role === 'super_admin';
-  } catch (error) {
-    return isSuperAdmin;
-  }
-}
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const { userId, orgId } = await auth();
   // Must be authenticated
@@ -82,14 +15,17 @@ export default async function PublicLayout({ children }: { children: React.React
   if (orgId) {
     redirect('/dashboard');
   }
-  // Get user email from Clerk
-  const { clerkClient } = await import('@clerk/nextjs/server');
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const email = user.emailAddresses[0]?.emailAddress || '';
-  const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
   // Ensure user exists in Supabase and check if super admin
-  const isSuperAdmin = await ensureUserExists(userId, email, name);
+  let email = '';
+  let isSuperAdmin = false;
+  try {
+    const platformUser = await ensurePlatformUser(userId);
+    email = platformUser.email || '';
+    isSuperAdmin = platformUser.isSuperAdmin;
+  } catch (error) {
+    // Page still renders; API calls re-attempt the bootstrap and report errors
+    logger.error('Public layout user bootstrap failed', error, { userId });
+  }
   return (
     <div className='min-h-screen bg-gray-50 dark:bg-slate-900'>
       {/* Simple header for public pages */}

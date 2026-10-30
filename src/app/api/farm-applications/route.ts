@@ -5,6 +5,14 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseClient } from '@/lib/supabase/server';
+import { ensurePlatformUser } from '@/lib/auth/platform-user';
+import { provisionFarm, ProvisioningError } from '@/lib/tenant/provision';
+import { logger } from '@/lib/logger';
+
+export const dynamic = 'force-dynamic';
+
+const OPEN_STATUSES = ['pending', 'payment_uploaded', 'under_review'];
+
 const createApplicationSchema = z.object({
   farmName: z.string().min(2).max(255),
   ownerName: z.string().min(2).max(255),
@@ -14,7 +22,7 @@ const createApplicationSchema = z.object({
   city: z.string().optional(),
   province: z.string().optional(),
   animalTypes: z.array(z.string()).optional(),
-  estimatedAnimals: z.number().int().positive().optional(),
+  estimatedAnimals: z.number().int().min(0).optional(),
   requestedPlan: z.enum(['free', 'professional', 'farm', 'enterprise']),
   paymentSlipUrl: z.string().optional(),
 });
@@ -37,93 +45,124 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createApplicationSchema.parse(body);
 
+    // Mirror the Clerk user into platform_users (idempotent, webhook-independent)
+    await ensurePlatformUser(userId, { phone: validatedData.phone });
+
     const supabase = getSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const applications = () => supabase.from('farm_applications') as any;
 
-    // Ensure user exists in platform_users
-    const { data: existingUser, error: userFetchError } = await supabase
-      .from('platform_users')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    if (userFetchError && userFetchError.code !== 'PGRST116') {
-      // PGRST116 is "not found" error, which is expected for new users
-      console.error('Error fetching user:', userFetchError);
+    // One open application per user; and the free plan is limited to one farm
+    const { data: priorApps, error: priorError } = await applications()
+      .select('id, status, requested_plan')
+      .eq('applicant_id', userId);
+    if (priorError) {
+      throw new Error(`Failed to check existing applications: ${priorError.message}`);
+    }
+    const prior = (priorApps || []) as Array<{
+      id: string;
+      status: string;
+      requested_plan: string;
+    }>;
+    const open = prior.find(a => OPEN_STATUSES.includes(a.status));
+    if (open) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to verify user account',
+          error: 'You already have an application under review.',
+          data: { id: open.id, status: open.status },
         },
-        { status: 500 }
+        { status: 409 }
       );
     }
-
-    if (!existingUser) {
-      // Create platform user
-      const { error: userCreateError } = await supabase.from('platform_users').insert([
+    if (
+      validatedData.requestedPlan === 'free' &&
+      prior.some(a => a.status === 'approved' && a.requested_plan === 'free')
+    ) {
+      return NextResponse.json(
         {
-          id: userId,
-          email: validatedData.email,
-          name: validatedData.ownerName,
-          phone: validatedData.phone,
-          platform_role: 'user',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          success: false,
+          error: 'The free plan includes one farm. Upgrade to add more farms.',
         },
-      ]);
-
-      if (userCreateError) {
-        console.error('Error creating platform user:', userCreateError);
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Failed to create user account',
-          },
-          { status: 500 }
-        );
-      }
+        { status: 409 }
+      );
     }
 
     // Generate application ID
     const applicationId = `APP-${Date.now().toString(36).toUpperCase()}`;
 
-    // Determine initial status based on plan and payment
-    // Valid statuses: 'pending', 'payment_uploaded', 'under_review', 'approved', 'rejected'
     const isPaidPlan = validatedData.requestedPlan !== 'free';
-    const status =
-      isPaidPlan && validatedData.paymentSlipUrl
-        ? 'payment_uploaded' // Paid plan with payment slip uploaded
-        : 'pending'; // Free plan or paid plan awaiting payment
+    const now = new Date().toISOString();
+    const baseRow = {
+      id: applicationId,
+      applicant_id: userId,
+      farm_name: validatedData.farmName,
+      owner_name: validatedData.ownerName,
+      email: validatedData.email,
+      phone: validatedData.phone,
+      address: validatedData.address || null,
+      city: validatedData.city || null,
+      province: validatedData.province || null,
+      animal_types: validatedData.animalTypes || [],
+      estimated_animals: validatedData.estimatedAnimals || 0,
+      requested_plan: validatedData.requestedPlan,
+      payment_slip_url: validatedData.paymentSlipUrl || null,
+      created_at: now,
+      updated_at: now,
+    };
 
-    // Create application
-    const { data: application, error: createError } = await supabase
-      .from('farm_applications')
-      .insert([
+    // Free plan: no review needed - create the farm right away
+    if (!isPaidPlan) {
+      const farm = await provisionFarm({
+        ownerId: userId,
+        farmName: validatedData.farmName,
+        plan: 'free',
+        animalTypes: validatedData.animalTypes,
+      });
+
+      const { data: application, error: createError } = await applications()
+        .insert([
+          {
+            ...baseRow,
+            status: 'approved',
+            assigned_tenant_id: farm.tenantId,
+            reviewed_at: now,
+            review_notes: 'Auto-approved (free plan)',
+          },
+        ])
+        .select()
+        .single();
+      if (createError) {
+        // The farm exists and is usable; the application row is only an audit trail
+        logger.error('Free farm provisioned but application record failed', createError, {
+          tenantId: farm.tenantId,
+        });
+      }
+
+      return NextResponse.json(
         {
-          id: applicationId,
-          applicant_id: userId,
-          farm_name: validatedData.farmName,
-          owner_name: validatedData.ownerName,
-          email: validatedData.email,
-          phone: validatedData.phone,
-          address: validatedData.address || null,
-          city: validatedData.city || null,
-          province: validatedData.province || null,
-          animal_types: validatedData.animalTypes || [],
-          estimated_animals: validatedData.estimatedAnimals || 0,
-          requested_plan: validatedData.requestedPlan,
-          payment_slip_url: validatedData.paymentSlipUrl || null,
-          status: status,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          success: true,
+          data: {
+            ...(application || { id: applicationId }),
+            autoApproved: true,
+            tenantId: farm.tenantId,
+            slug: farm.slug,
+          },
+          message: 'Your farm is ready!',
         },
-      ])
+        { status: 201 }
+      );
+    }
+
+    // Paid plans go through payment verification by a super admin
+    const status = validatedData.paymentSlipUrl ? 'payment_uploaded' : 'pending';
+    const { data: application, error: createError } = await applications()
+      .insert([{ ...baseRow, status }])
       .select()
       .single();
 
     if (createError) {
-      console.error('Error creating farm application:', createError);
+      logger.error('Error creating farm application', createError, { userId });
       return NextResponse.json(
         {
           success: false,
@@ -135,10 +174,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Success response with appropriate message
-    const successMessage =
-      isPaidPlan && !validatedData.paymentSlipUrl
-        ? 'Application submitted. Please upload payment slip to complete.'
-        : 'Application submitted successfully!';
+    const successMessage = !validatedData.paymentSlipUrl
+      ? 'Application submitted. Please upload payment slip to complete.'
+      : 'Application submitted successfully!';
 
     return NextResponse.json(
       {
@@ -162,8 +200,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (error instanceof ProvisioningError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 502 });
+    }
+
     // Handle unexpected errors
-    console.error('Unexpected error in farm application creation:', error);
+    logger.error('Unexpected error in farm application creation', error);
     return NextResponse.json(
       {
         success: false,
