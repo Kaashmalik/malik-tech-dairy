@@ -81,6 +81,7 @@ Then apply the new ones:
 | `010_lock_down_anon_access.sql` | RLS on every public table; revokes all `anon`/`authenticated` privileges | Run the PRE-CHECK query in the file first. The app uses only the service role, so nothing in the app breaks. |
 
 | `011_milk_logs_decimal_quality.sql` | `milk_logs.quantity` → `numeric(6,2)` litres (fixes every decimal entry like 12.5 L failing), adds `snf`, fat/SNF range checks, `(tenant_id, date)` index, and a unique index for one entry per animal/session/day | If it prints _"Duplicates found"_, run the DUPLICATE CHECK query in the file, delete the extra rows, and re-run. Fat/SNF entry works after this migration. |
+| `012_tenant_suspension.sql` | Adds `tenants.suspended_at` / `suspended_reason` for the super-admin **Suspend farm** action (members get HTTP 423 until reactivated) | Without it, the Suspend action returns an error; everything else works. |
 
 **Verify:** run the POST-CHECK query at the bottom of each file.
 

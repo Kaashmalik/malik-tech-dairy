@@ -1,195 +1,172 @@
-// Super Admin - Security Page
+// Super Admin - Security & audit log
 'use client';
-
 import { useState } from 'react';
-import {
-  Shield,
-  Key,
-  Lock,
-  Eye,
-  EyeOff,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  MapPin,
-  Monitor,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { useClerk } from '@clerk/nextjs';
 import { format } from 'date-fns';
+import { Shield, History, KeyRound, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface AuditLog {
+  id: string;
+  tenantId: string | null;
+  user: string;
+  action: string;
+  resource: string;
+  resourceId: string | null;
+  details: Record<string, unknown> | null;
+  ip: string | null;
+  createdAt: string;
+}
+
+const ACTIONS = ['', 'create', 'update', 'delete', 'read', 'login', 'logout'];
 
 export default function SecurityPage() {
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [ipRestriction, setIpRestriction] = useState(false);
+  const { openUserProfile } = useClerk();
+  const [page, setPage] = useState(1);
+  const [action, setAction] = useState('');
 
-  const sessions = [
-    {
-      id: '1',
-      device: 'Chrome on Windows',
-      ip: '192.168.1.1',
-      location: 'Lahore, Pakistan',
-      current: true,
-      lastActive: new Date(),
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['admin', 'audit-logs', page, action],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page: String(page), limit: '50' });
+      if (action) params.set('action', action);
+      const res = await fetch(`/api/admin/audit-logs?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to load audit log');
+      return res.json() as Promise<{
+        data: AuditLog[];
+        pagination: { page: number; totalPages: number; total: number };
+      }>;
     },
-    {
-      id: '2',
-      device: 'Safari on iPhone',
-      ip: '192.168.1.2',
-      location: 'Karachi, Pakistan',
-      current: false,
-      lastActive: new Date(Date.now() - 3600000),
-    },
-  ];
-
-  const auditLogs = [
-    {
-      id: '1',
-      action: 'Farm Approved',
-      user: 'Malik Kashif',
-      ip: '192.168.1.1',
-      createdAt: new Date(),
-    },
-    {
-      id: '2',
-      action: 'User Role Changed',
-      user: 'Malik Kashif',
-      ip: '192.168.1.1',
-      createdAt: new Date(Date.now() - 7200000),
-    },
-    {
-      id: '3',
-      action: 'Settings Updated',
-      user: 'Malik Kashif',
-      ip: '192.168.1.1',
-      createdAt: new Date(Date.now() - 86400000),
-    },
-  ];
+  });
 
   return (
     <div className='space-y-4 md:space-y-6'>
       <div>
         <h1 className='text-xl font-bold md:text-2xl dark:text-white'>Security</h1>
-        <p className='text-sm text-gray-500'>Manage platform security settings</p>
+        <p className='text-sm text-gray-500'>Platform audit trail and account security</p>
       </div>
 
-      {/* Security Status */}
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
-          <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-emerald-100 p-2'>
-              <Shield className='h-5 w-5 text-emerald-600' />
-            </div>
-            <div>
-              <p className='font-medium dark:text-white'>Security Score</p>
-              <p className='text-2xl font-bold text-emerald-600'>85%</p>
-            </div>
+      <div className='grid gap-4 md:grid-cols-2'>
+        <div className='rounded-xl border border-gray-100 bg-white p-5 dark:border-slate-700 dark:bg-slate-800'>
+          <div className='mb-2 flex items-center gap-2 font-semibold dark:text-white'>
+            <KeyRound className='h-5 w-5 text-emerald-600' /> Two-factor & sessions
           </div>
-        </div>
-        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
-          <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-blue-100 p-2'>
-              <Monitor className='h-5 w-5 text-blue-600' />
-            </div>
-            <div>
-              <p className='font-medium dark:text-white'>Active Sessions</p>
-              <p className='text-2xl font-bold text-blue-600'>{sessions.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className='rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800'>
-          <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-amber-100 p-2'>
-              <AlertTriangle className='h-5 w-5 text-amber-600' />
-            </div>
-            <div>
-              <p className='font-medium dark:text-white'>Failed Logins</p>
-              <p className='text-2xl font-bold text-amber-600'>0</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Security Settings */}
-      <div className='rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
-        <div className='border-b border-gray-100 p-4 dark:border-slate-700'>
-          <h3 className='font-semibold dark:text-white'>Security Settings</h3>
-        </div>
-        <div className='space-y-4 p-4'>
-          <div className='flex items-center justify-between py-2'>
-            <div>
-              <p className='font-medium dark:text-white'>Two-Factor Authentication</p>
-              <p className='text-sm text-gray-500'>Add an extra layer of security</p>
-            </div>
-            <Switch checked={twoFactorEnabled} onCheckedChange={setTwoFactorEnabled} />
-          </div>
-          <div className='flex items-center justify-between py-2'>
-            <div>
-              <p className='font-medium dark:text-white'>IP Restriction</p>
-              <p className='text-sm text-gray-500'>Limit access to specific IP addresses</p>
-            </div>
-            <Switch checked={ipRestriction} onCheckedChange={setIpRestriction} />
-          </div>
-        </div>
-      </div>
-
-      {/* Active Sessions */}
-      <div className='rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
-        <div className='flex items-center justify-between border-b border-gray-100 p-4 dark:border-slate-700'>
-          <h3 className='font-semibold dark:text-white'>Active Sessions</h3>
-          <Button variant='outline' size='sm'>
-            End All Sessions
+          <p className='mb-3 text-sm text-gray-500'>
+            Sign-in security (2FA, active sessions, devices) is managed by Clerk for every account,
+            including yours.
+          </p>
+          <Button variant='outline' size='sm' onClick={() => openUserProfile()}>
+            Manage my account security
           </Button>
         </div>
-        <div className='divide-y divide-gray-100 dark:divide-slate-700'>
-          {sessions.map(session => (
-            <div key={session.id} className='flex items-center justify-between p-4'>
-              <div className='flex items-center gap-3'>
-                <Monitor className='h-5 w-5 text-gray-400' />
-                <div>
-                  <p className='flex items-center gap-2 font-medium dark:text-white'>
-                    {session.device}
-                    {session.current && (
-                      <span className='rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-600'>
-                        Current
-                      </span>
-                    )}
-                  </p>
-                  <p className='flex items-center gap-2 text-sm text-gray-500'>
-                    <MapPin className='h-3 w-3' /> {session.location} • {session.ip}
-                  </p>
-                </div>
-              </div>
-              {!session.current && (
-                <Button variant='ghost' size='sm' className='text-red-500'>
-                  End
-                </Button>
-              )}
-            </div>
-          ))}
+        <div className='rounded-xl border border-gray-100 bg-white p-5 dark:border-slate-700 dark:bg-slate-800'>
+          <div className='mb-2 flex items-center gap-2 font-semibold dark:text-white'>
+            <Shield className='h-5 w-5 text-blue-600' /> Super admin access
+          </div>
+          <p className='text-sm text-gray-500'>
+            Granted only to verified primary emails listed in <code>SUPER_ADMIN_EMAILS</code>, or
+            users promoted under{' '}
+            <Link href='/super-admin/users' className='underline'>
+              Users
+            </Link>
+            . Access is denied whenever the check cannot be completed.
+          </p>
         </div>
       </div>
 
-      {/* Audit Log */}
-      <div className='rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'>
-        <div className='border-b border-gray-100 p-4 dark:border-slate-700'>
-          <h3 className='font-semibold dark:text-white'>Recent Activity</h3>
+      <div className='rounded-xl border border-gray-100 bg-white dark:border-slate-700 dark:bg-slate-800'>
+        <div className='flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700'>
+          <div className='flex items-center gap-2 font-semibold dark:text-white'>
+            <History className='h-5 w-5' /> Audit log
+            {data && (
+              <span className='text-sm font-normal text-gray-500'>({data.pagination.total})</span>
+            )}
+          </div>
+          <select
+            aria-label='Filter by action'
+            className='h-9 rounded-md border px-2 text-sm dark:bg-slate-900'
+            value={action}
+            onChange={e => {
+              setAction(e.target.value);
+              setPage(1);
+            }}
+          >
+            {ACTIONS.map(a => (
+              <option key={a} value={a}>
+                {a ? a[0].toUpperCase() + a.slice(1) : 'All actions'}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className='divide-y divide-gray-100 dark:divide-slate-700'>
-          {auditLogs.map(log => (
-            <div key={log.id} className='flex items-center justify-between p-4'>
-              <div>
-                <p className='font-medium dark:text-white'>{log.action}</p>
-                <p className='text-sm text-gray-500'>
-                  by {log.user} • {log.ip}
-                </p>
-              </div>
-              <span className='text-xs text-gray-400'>
-                {format(log.createdAt, 'MMM d, h:mm a')}
-              </span>
-            </div>
-          ))}
-        </div>
+
+        {isLoading && (
+          <div className='flex justify-center p-8'>
+            <Loader2 className='h-6 w-6 animate-spin text-gray-400' />
+          </div>
+        )}
+        {isError && <p className='p-4 text-sm text-red-600'>Could not load the audit log.</p>}
+        {data && data.data.length === 0 && (
+          <p className='p-4 text-sm text-gray-500'>No audit events recorded yet.</p>
+        )}
+        {data && data.data.length > 0 && (
+          <div className='overflow-x-auto'>
+            <table className='w-full text-sm'>
+              <thead className='text-left text-gray-500'>
+                <tr>
+                  <th className='p-3'>When</th>
+                  <th className='p-3'>User</th>
+                  <th className='p-3'>Action</th>
+                  <th className='p-3'>Resource</th>
+                  <th className='p-3'>Farm</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.data.map(log => (
+                  <tr key={log.id} className='border-t border-gray-100 dark:border-slate-700'>
+                    <td className='whitespace-nowrap p-3'>
+                      {format(new Date(log.createdAt), 'dd MMM yyyy HH:mm')}
+                    </td>
+                    <td className='p-3'>{log.user}</td>
+                    <td className='p-3 capitalize'>{log.action}</td>
+                    <td className='p-3'>
+                      {log.resource}
+                      {log.resourceId && (
+                        <span className='ml-1 text-xs text-gray-400'>{log.resourceId}</span>
+                      )}
+                    </td>
+                    <td className='p-3 text-xs text-gray-500'>{log.tenantId || 'platform'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {data && data.pagination.totalPages > 1 && (
+          <div className='flex items-center justify-end gap-2 p-3'>
+            <Button
+              variant='outline'
+              size='sm'
+              disabled={page <= 1}
+              onClick={() => setPage(p => p - 1)}
+            >
+              Previous
+            </Button>
+            <span className='text-sm text-gray-500'>
+              Page {page} of {data.pagination.totalPages}
+            </span>
+            <Button
+              variant='outline'
+              size='sm'
+              disabled={page >= data.pagination.totalPages}
+              onClick={() => setPage(p => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

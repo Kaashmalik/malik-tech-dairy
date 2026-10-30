@@ -195,6 +195,8 @@ export const tenants = pgTable(
     weatherUnit: varchar('weather_unit', { length: 10 }).default('metric'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    suspendedAt: timestamp('suspended_at'), // migration 012
+    suspendedReason: text('suspended_reason'),
     deletedAt: timestamp('deleted_at'),
   },
   table => ({

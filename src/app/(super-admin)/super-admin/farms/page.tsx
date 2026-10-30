@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { FarmActionsMenu } from '@/components/super-admin/FarmActionsMenu';
 import { format } from 'date-fns';
 interface Farm {
   id: string;
@@ -214,28 +215,7 @@ export default function FarmsPage() {
                       <h3 className='truncate font-medium dark:text-white'>{farm.farmName}</h3>
                       <p className='truncate text-sm text-gray-500'>{farm.ownerName}</p>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' size='icon' className='h-8 w-8'>
-                          <MoreVertical className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem>
-                          <Eye className='mr-2 h-4 w-4' /> View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <ExternalLink className='mr-2 h-4 w-4' /> Open Dashboard
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                          <Pause className='mr-2 h-4 w-4' /> Pause Farm
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className='text-red-600'>
-                          <Trash2 className='mr-2 h-4 w-4' /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <FarmActionsMenu farm={farm} onChanged={fetchFarms} compact />
                   </div>
                   <div className='flex flex-wrap gap-2'>
                     <span
@@ -332,28 +312,7 @@ export default function FarmsPage() {
                         {format(new Date(farm.createdAt), 'MMM d, yyyy')}
                       </td>
                       <td className='px-6 py-4 text-right'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' size='sm'>
-                              Actions <ChevronDown className='ml-1 h-4 w-4' />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem>
-                              <Eye className='mr-2 h-4 w-4' /> View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <ExternalLink className='mr-2 h-4 w-4' /> Open Dashboard
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Pause className='mr-2 h-4 w-4' /> Pause Farm
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className='text-red-600'>
-                              <Trash2 className='mr-2 h-4 w-4' /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <FarmActionsMenu farm={farm} onChanged={fetchFarms} />
                       </td>
                     </tr>
                   ))}

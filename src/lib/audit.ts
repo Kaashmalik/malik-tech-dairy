@@ -3,7 +3,9 @@
  * Logs all sensitive operations for security and compliance
  */
 
+import { randomUUID } from 'crypto';
 import { getSupabaseClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export interface AuditEventParams {
   tenantId: string;
@@ -16,28 +18,51 @@ export interface AuditEventParams {
   userAgent?: string;
 }
 
+// DB enum audit_action only has these; export/import are recorded as 'read'/'create'
+const DB_ACTIONS: Record<AuditEventParams['action'], string> = {
+  create: 'create',
+  update: 'update',
+  delete: 'delete',
+  read: 'read',
+  login: 'login',
+  logout: 'logout',
+  export: 'read',
+  import: 'create',
+};
+
 /**
- * Log an audit event to the database
+ * Log an audit event to the database. Never throws: auditing must not break the
+ * operation being audited, but failures are logged loudly.
  */
 export async function logAuditEvent(params: AuditEventParams): Promise<void> {
   try {
     const supabase = getSupabaseClient();
-
-    await supabase.from('audit_logs').insert({
-      tenant_id: params.tenantId,
+    const { error } = await supabase.from('audit_logs').insert({
+      // audit_logs.id is TEXT PRIMARY KEY without a default
+      id: randomUUID(),
+      // FK to tenants: platform-level events ('system') have no tenant
+      tenant_id: params.tenantId && params.tenantId !== 'system' ? params.tenantId : null,
       user_id: params.userId,
-      action: params.action,
+      action: DB_ACTIONS[params.action],
       resource: params.resource,
       resource_id: params.resourceId || null,
-      details: params.details || null,
+      details:
+        params.action === 'export' || params.action === 'import'
+          ? { ...(params.details || {}), operation: params.action }
+          : params.details || null,
       ip_address: params.ipAddress || null,
       user_agent: params.userAgent || null,
       created_at: new Date().toISOString(),
     });
+    if (error) {
+      logger.error('Failed to write audit event', error, {
+        action: params.action,
+        resource: params.resource,
+        tenantId: params.tenantId,
+      });
+    }
   } catch (error) {
-    // Log to console if database insert fails
-    console.error('Failed to log audit event:', error);
-    console.error('Audit event details:', params);
+    logger.error('Failed to write audit event', error, { resource: params.resource });
   }
 }
 

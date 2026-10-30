@@ -22,11 +22,7 @@ export default function CreateFarmPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     farmName: '',
-    ownerName: '',
     email: '',
-    phone: '',
-    city: '',
-    province: '',
     plan: 'free',
   });
 
@@ -103,79 +99,21 @@ export default function CreateFarmPage() {
             Owner Details
           </h3>
 
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div>
-              <Label htmlFor='ownerName'>Owner Name *</Label>
-              <Input
-                id='ownerName'
-                value={formData.ownerName}
-                onChange={e => setFormData(s => ({ ...s, ownerName: e.target.value }))}
-                placeholder='Full name'
-                required
-                className='mt-1.5'
-              />
-            </div>
-            <div>
-              <Label htmlFor='email'>Email *</Label>
-              <Input
-                id='email'
-                type='email'
-                value={formData.email}
-                onChange={e => setFormData(s => ({ ...s, email: e.target.value }))}
-                placeholder='owner@example.com'
-                required
-                className='mt-1.5'
-              />
-            </div>
-            <div>
-              <Label htmlFor='phone'>Phone</Label>
-              <Input
-                id='phone'
-                value={formData.phone}
-                onChange={e => setFormData(s => ({ ...s, phone: e.target.value }))}
-                placeholder='+92 300 1234567'
-                className='mt-1.5'
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className='space-y-4'>
-          <h3 className='flex items-center gap-2 font-semibold dark:text-white'>
-            <MapPin className='h-5 w-5 text-purple-600' />
-            Location
-          </h3>
-
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div>
-              <Label htmlFor='city'>City</Label>
-              <Input
-                id='city'
-                value={formData.city}
-                onChange={e => setFormData(s => ({ ...s, city: e.target.value }))}
-                placeholder='e.g., Lahore'
-                className='mt-1.5'
-              />
-            </div>
-            <div>
-              <Label htmlFor='province'>Province</Label>
-              <Select
-                value={formData.province}
-                onValueChange={v => setFormData(s => ({ ...s, province: v }))}
-              >
-                <SelectTrigger className='mt-1.5'>
-                  <SelectValue placeholder='Select province' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='punjab'>Punjab</SelectItem>
-                  <SelectItem value='sindh'>Sindh</SelectItem>
-                  <SelectItem value='kpk'>KPK</SelectItem>
-                  <SelectItem value='balochistan'>Balochistan</SelectItem>
-                  <SelectItem value='islamabad'>Islamabad</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor='email'>Owner&apos;s account email *</Label>
+            <Input
+              id='email'
+              type='email'
+              value={formData.email}
+              onChange={e => setFormData(s => ({ ...s, email: e.target.value }))}
+              placeholder='owner@example.com'
+              required
+              className='mt-1.5'
+            />
+            <p className='mt-1.5 text-xs text-gray-500'>
+              The owner must already have signed up. They become the farm owner and see it in their
+              farm list immediately.
+            </p>
           </div>
         </div>
 

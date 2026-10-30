@@ -39,20 +39,19 @@ export async function getTenantContext(): Promise<TenantContext> {
     throw new TenantAccessError('User authentication required', 401);
   }
 
-  // Prefer Supabase REST for membership lookup (works when serverless cannot open Postgres)
+  // Membership, platform role and farm status in parallel (Supabase REST)
   const supabase = getSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: members } = await (supabase.from('tenant_members') as any)
-    .select('tenant_id, role, status')
-    .eq('user_id', userId)
-    .eq('status', 'active');
+  const [{ data: members }, { data: platformUser }] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('tenant_members') as any)
+      .select('tenant_id, role, status')
+      .eq('user_id', userId)
+      .eq('status', 'active'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('platform_users') as any).select('platform_role').eq('id', userId).maybeSingle(),
+  ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: platformUser } = await (supabase.from('platform_users') as any)
-    .select('platform_role')
-    .eq('id', userId)
-    .maybeSingle();
-
+  const isSuperAdmin = platformUser?.platform_role === 'super_admin';
   const resolved = resolveTenantAccess({
     clerkOrgId: orgId,
     headerTenantId: null,
@@ -63,12 +62,23 @@ export async function getTenantContext(): Promise<TenantContext> {
         status: m.status,
       })
     ),
-    isSuperAdmin: platformUser?.platform_role === 'super_admin',
+    isSuperAdmin,
     clerkOrgRole: orgRole,
   });
 
   if (!resolved.ok) {
     throw new TenantAccessError(resolved.error, resolved.status);
+  }
+
+  // Suspended (migration 012) or deleted farms are closed to everyone but platform admins
+  if (!isSuperAdmin) {
+    const status = await getTenantAccessStatus(resolved.tenantId);
+    if (status === 'deleted') {
+      throw new TenantAccessError('This farm has been deleted.', 410);
+    }
+    if (status === 'suspended') {
+      throw new TenantAccessError('This farm is suspended. Please contact support.', 423);
+    }
   }
 
   const tenantId = resolved.tenantId;
@@ -83,6 +93,21 @@ export async function getTenantContext(): Promise<TenantContext> {
     organizationId,
   };
 }
+/**
+ * Farm lifecycle state. Selects '*' so this keeps working before migration 012
+ * adds tenants.suspended_at.
+ */
+export async function getTenantAccessStatus(
+  tenantId: string
+): Promise<'active' | 'suspended' | 'deleted' | 'unknown'> {
+  const { data, error } = await db().from('tenants').select('*').eq('id', tenantId).maybeSingle();
+  if (error || !data) return 'unknown'; // don't lock users out on a lookup failure
+  const row = data as { deleted_at?: string | null; suspended_at?: string | null };
+  if (row.deleted_at) return 'deleted';
+  if (row.suspended_at) return 'suspended';
+  return 'active';
+}
+
 /**
  * Resolve user role from database membership
  * Fallback when Clerk role doesn't provide enough detail

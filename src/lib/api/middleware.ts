@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { UserRole, PlatformRole, TenantRole } from '@/types/roles';
-import { resolveTenantAccess } from '@/lib/tenant/resolve-access';
+import { getTenantContext as resolveTenantContext, TenantAccessError } from '@/lib/tenant/context';
 export interface TenantContext {
   tenantId: string;
   tenantSlug: string;
@@ -35,43 +35,23 @@ export function withTenantContext(
 ) {
   return async (req: NextRequest) => {
     try {
-      const { userId, orgId, orgRole } = await auth();
+      const { userId } = await auth();
       if (!userId) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
       }
 
-      const supabase = getSupabaseClient();
-      const { data: members } = (await supabase
-        .from('tenant_members')
-        .select('tenant_id, role, status')
-        .eq('user_id', userId)
-        .eq('status', 'active')) as {
-        data: { tenant_id: string; role: string; status: string }[] | null;
-      };
-
-      const { data: platformUser } = (await supabase
-        .from('platform_users')
-        .select('platform_role')
-        .eq('id', userId)
-        .maybeSingle()) as { data: { platform_role: string } | null };
-
-      const resolved = resolveTenantAccess({
-        clerkOrgId: orgId,
-        headerTenantId: req.headers.get('x-tenant-id'),
-        memberships: (members || []).map(m => ({
-          tenantId: m.tenant_id,
-          role: m.role,
-          status: m.status,
-        })),
-        isSuperAdmin: platformUser?.platform_role === 'super_admin',
-        clerkOrgRole: orgRole,
-      });
-
-      if (!resolved.ok) {
-        return NextResponse.json(
-          { success: false, error: resolved.error },
-          { status: resolved.status }
-        );
+      // Single implementation of tenant resolution (membership, role, suspension)
+      let resolved;
+      try {
+        resolved = await resolveTenantContext();
+      } catch (error) {
+        if (error instanceof TenantAccessError) {
+          return NextResponse.json(
+            { success: false, error: error.message },
+            { status: error.status }
+          );
+        }
+        throw error;
       }
 
       const orgSlug = req.headers.get('x-tenant-slug') || '';
@@ -79,7 +59,7 @@ export function withTenantContext(
         tenantId: resolved.tenantId,
         tenantSlug: orgSlug,
         userId,
-        userRole: resolved.userRole,
+        userRole: resolved.userRole as UserRole,
       };
       return handler(req, context);
     } catch (error) {
