@@ -1,7 +1,8 @@
 /**
  * @jest-environment node
  */
-import { guides, getGuide, getRelatedGuides } from '@/content/guides';
+import { guides, getGuide, getRelatedGuides, urduGuides } from '@/content/guides';
+import { urduTranslations } from '@/content/guides/urdu';
 import { guideHeadings, parseGuide } from '@/components/guides/GuideBody';
 import { calvingPlan } from '@/components/tools/CalvingDateCalculator';
 import { milkPrice } from '@/components/tools/MilkPriceCalculator';
@@ -38,6 +39,27 @@ describe('guides content', () => {
   it('parses lists, callouts and paragraphs', () => {
     const blocks = parseGuide('## A\n\nText one\nline two\n\n- a\n- b\n\n1. x\n2. y\n\n> note');
     expect(blocks.map(b => b.type)).toEqual(['h2', 'p', 'ul', 'ol', 'note']);
+  });
+});
+
+describe('Urdu translations', () => {
+  it('only translate guides that exist', () => {
+    for (const slug of Object.keys(urduTranslations)) expect(getGuide(slug)).toBeDefined();
+    expect(urduGuides.length).toBe(Object.keys(urduTranslations).length);
+  });
+
+  it.each(urduGuides.map(g => [g.slug, g]))('%s is a full Urdu article', (_slug, guide) => {
+    const ur = guide.ur!;
+    // Mostly Arabic-script text, not an untranslated English copy
+    const letters = ur.body.match(/\p{L}/gu) || [];
+    const arabic = ur.body.match(/\p{Script=Arabic}/gu) || [];
+    expect(arabic.length / letters.length).toBeGreaterThan(0.8);
+    expect(ur.body.split(/\s+/).filter(Boolean).length).toBeGreaterThan(250);
+    expect(guideHeadings(ur.body).length).toBeGreaterThanOrEqual(3);
+    // Every Urdu heading gets a usable anchor id
+    for (const h of guideHeadings(ur.body)) expect(h.id.length).toBeGreaterThan(0);
+    expect(ur.description.length).toBeGreaterThan(60);
+    expect(ur.body).not.toMatch(/<[a-z]/i);
   });
 });
 

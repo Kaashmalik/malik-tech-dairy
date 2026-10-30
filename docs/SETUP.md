@@ -15,7 +15,7 @@ credentials. Every step says _where_, _what_ and _how to verify_.
 4. [ ] Clerk: webhook endpoint + the 7 events incl. `organizationMembership.*` (§3).
 5. [ ] Vercel: add `SUPER_ADMIN_EMAILS`, `CRON_SECRET`, Upstash keys, `CONTACT_INBOX_EMAIL`;
        remove all `FIREBASE_*`; redeploy (§1, §4).
-6. [ ] Run the smoke test (§8).
+6. [ ] Run the smoke test (§9) and the Cypress suites (§8).
 7. [ ] Search Console + Bing, submit sitemap (§5).
 8. [ ] Later, once ~25 guides are indexed: apply for AdSense (§6).
 
@@ -224,7 +224,34 @@ farm. Rows are kept so you can recover a mistake.
 
 ---
 
-## 8. Smoke test after deploy
+## 8. End-to-end tests (Cypress)
+
+Two suites live in `cypress/e2e/`:
+
+| Suite | Needs | Covers |
+| --- | --- | --- |
+| `public-site.cy.ts` | nothing | guides (25+), Urdu pages (RTL, hreflang), calculators, contact form, robots/sitemap/ads.txt, noindex, auth redirects, spoofed tenant headers |
+| `farm-app.cy.ts` | a Clerk **test user who owns a farm** | dashboard, herd milk entry + duplicate guard, monthly report, tasks/staff APIs, data export |
+
+Run locally:
+
+```bash
+npm run dev
+npx cypress run --spec cypress/e2e/public-site.cy.ts
+CYPRESS_TEST_EMAIL=you+clerk_test@example.com CYPRESS_TEST_PASSWORD=...   npx cypress run --spec cypress/e2e/farm-app.cy.ts
+```
+
+Against a Vercel preview: add `CYPRESS_BASE_URL=https://<preview-url>`.
+
+**Test user:** in a Clerk *development* instance, create a user with an email containing
+`+clerk_test` (Clerk accepts verification code `424242` for these), sign in once, choose
+the Free plan on `/apply` so it owns a farm. The farm-app suite creates one animal tagged
+`E2E-<timestamp>` and archives it again. `farm-app.cy.ts` is skipped automatically when
+the credentials are not set. CI runs the public suite on every push.
+
+---
+
+## 9. Smoke test after deploy
 
 - [ ] New user → Free plan → dashboard opens (no admin approval)
 - [ ] Paid plan → application → super admin approves → user opens dashboard

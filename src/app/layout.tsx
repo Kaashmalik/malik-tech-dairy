@@ -152,37 +152,12 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <html lang={locale} dir={isRTL ? 'rtl' : 'ltr'} suppressHydrationWarning>
-        <head>
-          {/* Preconnect to External Resources */}
-          <link rel='preconnect' href='https://fonts.googleapis.com' />
-          <link rel='preconnect' href='https://fonts.gstatic.com' crossOrigin='anonymous' />
-          <link rel='dns-prefetch' href='https://www.googletagmanager.com' />
-
-          {/* PWA */}
-          <link rel='manifest' href='/manifest.json' />
-          <meta name='theme-color' content='#1F7A3D' />
-          <meta name='mobile-web-app-capable' content='yes' />
-          <meta name='apple-mobile-web-app-capable' content='yes' />
-          <meta name='apple-mobile-web-app-status-bar-style' content='default' />
-          <meta name='apple-mobile-web-app-title' content='MTK Dairy' />
-
-          {/* Additional SEO Meta Tags */}
-          <meta name='geo.region' content='PK-PB' />
-          <meta name='geo.placename' content='Lahore' />
-          <meta name='geo.position' content='31.5204;74.3587' />
-          <meta name='ICBM' content='31.5204, 74.3587' />
-          <meta name='language' content='English, Urdu' />
-          <meta name='coverage' content='Worldwide' />
-          <meta name='distribution' content='Global' />
-          <meta name='rating' content='General' />
-          <meta name='revisit-after' content='7 days' />
-
-          {/* JSON-LD Structured Data for Google Knowledge Graph & Rich Snippets */}
-          <AllSchemas />
-        </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${notoUrdu.variable} ${isRTL ? 'font-urdu' : ''} antialiased`}
         >
+          {/* JSON-LD for search engines. Rendered in <body>: a hand-written <head> with
+              scripts caused a hydration mismatch (full client re-render on every page). */}
+          <AllSchemas />
           <ThemeProvider
             attribute='class'
             defaultTheme='system'

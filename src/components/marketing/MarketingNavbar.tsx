@@ -58,6 +58,14 @@ export function MarketingNavbar() {
             Guides
           </Link>
           <Link
+            href='/ur'
+            hrefLang='ur-PK'
+            lang='ur'
+            className='font-urdu text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
+          >
+            اردو
+          </Link>
+          <Link
             href='/contact'
             className='text-sm font-medium text-slate-600 transition-colors hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400'
           >
@@ -130,6 +138,15 @@ export function MarketingNavbar() {
               className='rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
             >
               Guides
+            </Link>
+            <Link
+              href='/ur'
+              hrefLang='ur-PK'
+              lang='ur'
+              onClick={() => setIsOpen(false)}
+              className='font-urdu rounded-lg px-3 py-2 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
+            >
+              اردو
             </Link>
             <Link
               href='/contact'

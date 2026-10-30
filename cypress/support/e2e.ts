@@ -1,29 +1,12 @@
-// ***********************************************************
-// This example support/e2e.ts is processed and
-// loaded automatically before your test files.
-//
-// This is a great place to put global configuration and
-// behavior that modifies Cypress.
-//
-// You can change the location of this file or turn off
-// automatically serving support files with the
-// 'supportFile' configuration option.
-//
-// You can read more here:
-// https://on.cypress.io/configuration
-// ***********************************************************
-
-// Import commands.js using ES2015 syntax:
+// Loaded before every spec.
 import './commands';
 
-// Alternatively you can use CommonJS syntax:
-// require('./commands')
-
-// Hide fetch/XHR requests from command log
-const app = window.top;
-if (!app.document.head.querySelector('[data-hide-command-log-request]')) {
-  const style = app.document.createElement('style');
-  style.innerHTML = '.command-name-request, .command-name-xhr { display: none }';
-  style.setAttribute('data-hide-command-log-request', '');
-  app.document.head.appendChild(style);
-}
+// The public suite runs with placeholder Clerk keys (CI, local smoke runs), so
+// Clerk's browser script cannot load. Ignore exactly that failure; every other
+// application error (hydration, React, our code) still fails the test.
+Cypress.on('uncaught:exception', err => {
+  if (/clerk/i.test(err.message) && /(load|failed|publishable)/i.test(err.message)) {
+    return false;
+  }
+  return undefined;
+});

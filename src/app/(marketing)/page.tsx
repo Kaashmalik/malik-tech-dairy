@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     'Dairy farm management software built for Pakistan. Track milk production, cattle health, breeding, and finances with bilingual English & Urdu support and offline PWA. Free plan available. ڈیری فارم مینجمنٹ',
   alternates: {
     canonical: '/',
+    languages: { 'en-PK': '/', 'ur-PK': '/ur', 'x-default': '/' },
   },
   openGraph: {
     title: 'MTK Dairy - Smart Dairy Farm Management Software Pakistan',

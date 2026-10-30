@@ -23,6 +23,8 @@ const isPublicRoute = createRouteMatcher([
   '/faq(.*)',
   '/guides(.*)',
   '/tools(.*)',
+  '/ur',
+  '/ur/(.*)',
   '/ads.txt',
   '/privacy-policy(.*)',
   '/terms-of-service(.*)',

@@ -16,7 +16,7 @@ function inline(text: string): ReactNode[] {
 export function slugifyHeading(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
     .trim()
     .replace(/\s+/g, '-');
 }
@@ -71,9 +71,13 @@ export function guideHeadings(body: string) {
     .map(b => ({ id: slugifyHeading(b.text), text: b.text }));
 }
 
-export function GuideBody({ body }: { body: string }) {
+export function GuideBody({ body, lang = 'en' }: { body: string; lang?: 'en' | 'ur' }) {
   return (
-    <div className='space-y-5 text-[17px] leading-8 text-slate-700 dark:text-slate-300'>
+    <div
+      className={`space-y-5 text-slate-700 dark:text-slate-300 ${
+        lang === 'ur' ? 'text-lg leading-[2.4]' : 'text-[17px] leading-8'
+      }`}
+    >
       {parseGuide(body).map((block, i) => {
         switch (block.type) {
           case 'h2':
@@ -96,14 +100,14 @@ export function GuideBody({ body }: { body: string }) {
             return (
               <aside
                 key={i}
-                className='rounded-xl border-l-4 border-emerald-500 bg-emerald-50 p-4 text-base dark:bg-emerald-950/40'
+                className='rounded-xl border-s-4 border-emerald-500 bg-emerald-50 p-4 text-base dark:bg-emerald-950/40'
               >
                 {inline(block.text)}
               </aside>
             );
           case 'ul':
             return (
-              <ul key={i} className='list-disc space-y-2 pl-6'>
+              <ul key={i} className='list-disc space-y-2 ps-6'>
                 {block.items.map((item, j) => (
                   <li key={j}>{inline(item)}</li>
                 ))}
@@ -111,7 +115,7 @@ export function GuideBody({ body }: { body: string }) {
             );
           case 'ol':
             return (
-              <ol key={i} className='list-decimal space-y-2 pl-6'>
+              <ol key={i} className='list-decimal space-y-2 ps-6'>
                 {block.items.map((item, j) => (
                   <li key={j}>{inline(item)}</li>
                 ))}

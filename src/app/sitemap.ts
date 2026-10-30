@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { guides } from '@/content/guides';
+import { guides, urduGuides } from '@/content/guides';
 
 const productionDomain = 'https://dairy.mtkcodex.site';
 const baseUrl =
@@ -34,12 +34,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: p.priority,
   }));
 
+  const pair = (en: string, ur: string) => ({
+    languages: { 'en-PK': `${baseUrl}${en}`, 'ur-PK': `${baseUrl}${ur}` },
+  });
+
   const guidePages: MetadataRoute.Sitemap = guides.map(g => ({
     url: `${baseUrl}/guides/${g.slug}`,
     lastModified: g.updated,
     changeFrequency: 'monthly',
     priority: 0.8,
+    ...(g.ur ? { alternates: pair(`/guides/${g.slug}`, `/ur/guides/${g.slug}`) } : {}),
   }));
 
-  return [...staticPages, ...guidePages];
+  // Urdu pages (each declares its English counterpart)
+  const urduPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/ur`,
+      lastModified: SITE_UPDATED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+      alternates: pair('', '/ur'),
+    },
+    {
+      url: `${baseUrl}/ur/guides`,
+      lastModified: SITE_UPDATED,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+      alternates: pair('/guides', '/ur/guides'),
+    },
+    ...urduGuides.map(g => ({
+      url: `${baseUrl}/ur/guides/${g.slug}`,
+      lastModified: g.updated,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+      alternates: pair(`/guides/${g.slug}`, `/ur/guides/${g.slug}`),
+    })),
+  ];
+
+  return [...staticPages, ...guidePages, ...urduPages];
 }

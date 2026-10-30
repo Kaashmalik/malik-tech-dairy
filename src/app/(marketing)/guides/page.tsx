@@ -11,7 +11,10 @@ export const metadata: Metadata = {
   title: { absolute: 'Dairy Farming Guides for Pakistan | MTK Dairy' },
   description:
     'Free, practical guides for Pakistani dairy farmers: vaccination schedules, heat detection, calving, milk fat and SNF, mastitis, fodder and silage, breeds and record keeping.',
-  alternates: { canonical: url },
+  alternates: {
+    canonical: url,
+    languages: { 'en-PK': url, 'ur-PK': `${siteConfig.url}/ur/guides`, 'x-default': url },
+  },
   openGraph: {
     title: 'Dairy Farming Guides for Pakistan',
     description:

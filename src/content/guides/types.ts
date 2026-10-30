@@ -5,6 +5,14 @@ export interface GuideFaq {
   a: string;
 }
 
+/** Full translation of a guide (currently Urdu, served under /ur). */
+export interface GuideTranslation {
+  title: string;
+  description: string;
+  body: string;
+  faqs?: GuideFaq[];
+}
+
 export interface Guide {
   slug: string;
   title: string;
@@ -29,4 +37,6 @@ export interface Guide {
   related?: string[];
   /** Link to an in-app feature or free tool that helps apply the guide */
   cta?: { label: string; href: string };
+  /** Urdu translation; when present the guide is also published at /ur/guides/<slug> */
+  ur?: GuideTranslation;
 }

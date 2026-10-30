@@ -9,10 +9,12 @@ import { balancedRation, minerals } from './nutrition';
 import { artificialInsemination, cleanMilk, shedDesign } from './farm';
 import { beetalGoat, buffaloVsCow, profitability, startDairyFarm } from './business';
 
-export type { Guide, GuideCategory, GuideFaq } from './types';
+import { urduTranslations } from './urdu';
+
+export type { Guide, GuideCategory, GuideFaq, GuideTranslation } from './types';
 
 /** All published guides, in the order shown on /guides. */
-export const guides: Guide[] = [
+const allGuides: Guide[] = [
   vaccinationSchedule,
   heatDetection,
   calvingCalendar,
@@ -40,6 +42,18 @@ export const guides: Guide[] = [
   startDairyFarm,
   profitability,
 ];
+
+export const guides: Guide[] = allGuides.map(g =>
+  urduTranslations[g.slug] ? { ...g, ur: urduTranslations[g.slug] } : g
+);
+
+/** Guides that have an Urdu translation (published under /ur/guides). */
+export const urduGuides = guides.filter((g): g is Guide & { ur: NonNullable<Guide['ur']> } =>
+  Boolean(g.ur)
+);
+
+export const guideUrl = (slug: string, lang: 'en' | 'ur' = 'en') =>
+  lang === 'ur' ? `/ur/guides/${slug}` : `/guides/${slug}`;
 
 export function getGuide(slug: string): Guide | undefined {
   return guides.find(g => g.slug === slug);

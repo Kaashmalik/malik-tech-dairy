@@ -50,6 +50,39 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
           SUPABASE_SERVICE_ROLE_KEY: placeholder
 
+  e2e-public:
+    name: E2E (public site)
+    runs-on: ubuntu-latest
+    needs: quality
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
+      # Production-format placeholder: a pk_test_ key makes Clerk redirect every page
+      # load to its dev-instance handshake, which a fake domain cannot answer.
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsuZXhhbXBsZS5jb20k
+      CLERK_SECRET_KEY: sk_live_placeholder
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+      SUPABASE_SERVICE_ROLE_KEY: placeholder
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # Production build: no on-demand compilation stalls during the tests
+      - run: npx next build
+      # Public pages need no real backend; signed-in flows run locally (docs/SETUP.md §8)
+      - uses: cypress-io/github-action@v6
+        with:
+          install: false
+          start: npx next start -p 3000
+          wait-on: 'http://localhost:3000/guides'
+          wait-on-timeout: 180
+          spec: cypress/e2e/public-site.cy.ts
+          browser: electron
+
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
