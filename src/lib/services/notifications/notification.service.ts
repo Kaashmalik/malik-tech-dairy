@@ -1,7 +1,5 @@
-import { getDrizzle } from '@/lib/supabase/server';
-import { notifications, healthRecords, breedingRecords, feedInventory, animals } from '@/db/schema';
-import { eq, and, desc, lte, gte, isNull, or, count, sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { fetchAllRows, tenantDb, toCamel, unwrap, type TenantDb } from '@/lib/supabase/tenant-db';
 
 export interface CreateNotificationDTO {
   userId?: string | null;
@@ -15,7 +13,7 @@ export interface CreateNotificationDTO {
   title: string;
   message: string;
   link?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export interface ListNotificationFilters {
@@ -25,102 +23,99 @@ export interface ListNotificationFilters {
   offset?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = Record<string, any>;
+
+const mapRows = (rows: unknown) => ((rows || []) as Row[]).map(r => toCamel<Row>(r)!);
+
+/** Notifications addressed to this user or to the whole farm (user_id IS NULL). */
+function forUser<Q extends { or: (filter: string) => Q }>(query: Q, userId?: string): Q {
+  // Clerk user IDs are [A-Za-z0-9_]; reject anything else rather than interpolate it
+  if (userId && /^[A-Za-z0-9_]+$/.test(userId)) {
+    return query.or(`user_id.eq.${userId},user_id.is.null`);
+  }
+  return query;
+}
+
+const formatDate = (value: string | Date) =>
+  new Date(value).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: 'numeric' });
+
 export class NotificationService {
   /**
    * Create an in-app notification for a tenant (and optionally specific user)
    */
   static async createNotification(tenantId: string, data: CreateNotificationDTO) {
-    const db = getDrizzle();
-    const id = uuidv4();
-
-    const [created] = await db
-      .insert(notifications)
-      .values({
-        id,
-        tenantId,
-        userId: data.userId || null,
-        type: data.type,
-        title: data.title,
-        message: data.message,
-        link: data.link || null,
-        metadata: data.metadata || null,
-        read: false,
-        createdAt: new Date(),
-      })
-      .returning();
-
-    return created;
+    const created = unwrap(
+      await tenantDb(tenantId)
+        .insert('notifications', {
+          id: uuidv4(),
+          user_id: data.userId || null,
+          type: data.type,
+          title: data.title,
+          message: data.message,
+          link: data.link || null,
+          metadata: data.metadata || null,
+          read: false,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single(),
+      'Create notification'
+    );
+    return toCamel<Row>(created as unknown as Row);
   }
 
   /**
    * List notifications for a tenant with optional filtering
    */
   static async listNotifications(tenantId: string, filters: ListNotificationFilters = {}) {
-    const db = getDrizzle();
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
     const offset = Math.max(0, filters.offset || 0);
 
-    const conditions = [eq(notifications.tenantId, tenantId)];
-
-    if (filters.userId) {
-      conditions.push(or(eq(notifications.userId, filters.userId), isNull(notifications.userId))!);
-    }
-
+    let query = forUser(
+      tenantDb(tenantId).select('notifications', '*', { count: 'exact' }),
+      filters.userId
+    );
     if (filters.unreadOnly) {
-      conditions.push(eq(notifications.read, false));
+      query = query.eq('read', false);
     }
 
-    const whereClause = and(...conditions);
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (error) {
+      throw new Error(`List notifications: ${error.message}`);
+    }
 
-    const items = await db
-      .select()
-      .from(notifications)
-      .where(whereClause)
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    const [total] = await db.select({ count: count() }).from(notifications).where(whereClause);
-
-    return {
-      items,
-      total: Number(total?.count || 0),
-      limit,
-      offset,
-    };
+    return { items: mapRows(data), total: count || 0, limit, offset };
   }
 
   /**
    * Mark a single notification as read
    */
   static async markAsRead(tenantId: string, notificationId: string) {
-    const db = getDrizzle();
-    const [updated] = await db
-      .update(notifications)
-      .set({ read: true })
-      .where(and(eq(notifications.id, notificationId), eq(notifications.tenantId, tenantId)))
-      .returning();
-
-    return updated;
+    const updated = unwrap(
+      await tenantDb(tenantId)
+        .update('notifications', { read: true })
+        .eq('id', notificationId)
+        .select()
+        .maybeSingle(),
+      'Mark notification read'
+    );
+    return toCamel<Row>(updated as Row | null);
   }
 
   /**
    * Mark all notifications as read for a tenant/user
    */
   static async markAllAsRead(tenantId: string, userId?: string) {
-    const db = getDrizzle();
-    const conditions = [eq(notifications.tenantId, tenantId), eq(notifications.read, false)];
-
-    if (userId) {
-      conditions.push(or(eq(notifications.userId, userId), isNull(notifications.userId))!);
-    }
-
-    const updated = await db
-      .update(notifications)
-      .set({ read: true })
-      .where(and(...conditions))
-      .returning();
-
+    const updated = unwrap(
+      await forUser(
+        tenantDb(tenantId).update('notifications', { read: true }).eq('read', false),
+        userId
+      ).select('id'),
+      'Mark all notifications read'
+    ) as unknown[];
     return { count: updated.length };
   }
 
@@ -128,11 +123,10 @@ export class NotificationService {
    * Delete a notification
    */
   static async deleteNotification(tenantId: string, notificationId: string) {
-    const db = getDrizzle();
-    await db
-      .delete(notifications)
-      .where(and(eq(notifications.id, notificationId), eq(notifications.tenantId, tenantId)));
-
+    unwrap(
+      await tenantDb(tenantId).delete('notifications').eq('id', notificationId),
+      'Delete notification'
+    );
     return { success: true };
   }
 
@@ -140,20 +134,35 @@ export class NotificationService {
    * Get unread notification count
    */
   static async getUnreadCount(tenantId: string, userId?: string): Promise<number> {
-    const db = getDrizzle();
-    const conditions = [eq(notifications.tenantId, tenantId), eq(notifications.read, false)];
-
-    if (userId) {
-      conditions.push(or(eq(notifications.userId, userId), isNull(notifications.userId))!);
+    const { count, error } = await forUser(
+      tenantDb(tenantId)
+        .select('notifications', 'id', { count: 'exact', head: true })
+        .eq('read', false),
+      userId
+    );
+    if (error) {
+      throw new Error(`Count notifications: ${error.message}`);
     }
-
-    const [result] = await db
-      .select({ count: count() })
-      .from(notifications)
-      .where(and(...conditions));
-
-    return Number(result?.count || 0);
+    return count || 0;
   }
+}
+
+/** Metadata keys of unread notifications of a type - one query instead of one per record. */
+async function unreadMetadataKeys(t: TenantDb, type: string, key: string): Promise<Set<string>> {
+  const rows = await fetchAllRows<{ metadata: Row | null }>(
+    () => t.select('notifications', 'metadata').eq('type', type).eq('read', false).order('id'),
+    'Load unread notifications'
+  );
+  return new Set(rows.map(r => String(r.metadata?.[key] ?? '')).filter(Boolean));
+}
+
+async function animalLabels(t: TenantDb, ids: string[]): Promise<Map<string, Row>> {
+  if (ids.length === 0) return new Map();
+  const rows = unwrap(
+    await t.select('animals', 'id, tag, name').in('id', [...new Set(ids)]),
+    'Load animals'
+  ) as Row[];
+  return new Map(rows.map(r => [r.id, r]));
 }
 
 export class ReminderService {
@@ -161,70 +170,45 @@ export class ReminderService {
    * Check for upcoming vaccinations within daysAhead and generate notifications
    */
   static async checkVaccinationsDue(tenantId: string, daysAhead: number = 7): Promise<number> {
-    const db = getDrizzle();
+    const t = tenantDb(tenantId);
     const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(now.getDate() + daysAhead);
+    const futureDate = new Date(now.getTime() + daysAhead * 86_400_000);
 
-    // Get health records of type vaccination where nextDueDate is in range
-    const records = await db
-      .select({
-        recordId: healthRecords.id,
-        animalId: healthRecords.animalId,
-        type: healthRecords.type,
-        description: healthRecords.description,
-        nextDueDate: healthRecords.nextDueDate,
-        animalTag: animals.tag,
-        animalName: animals.name,
-      })
-      .from(healthRecords)
-      .innerJoin(animals, eq(healthRecords.animalId, animals.id))
-      .where(
-        and(
-          eq(healthRecords.tenantId, tenantId),
-          eq(healthRecords.type, 'vaccination'),
-          gte(healthRecords.nextDueDate, now),
-          lte(healthRecords.nextDueDate, futureDate)
-        )
-      );
+    const records = unwrap(
+      await t
+        .select('health_records', 'id, animal_id, description, next_due_date')
+        .eq('type', 'vaccination')
+        .gte('next_due_date', now.toISOString())
+        .lte('next_due_date', futureDate.toISOString()),
+      'Load due vaccinations'
+    ) as Row[];
+    if (records.length === 0) return 0;
+
+    const [notified, animals] = await Promise.all([
+      unreadMetadataKeys(t, 'vaccination_due', 'recordId'),
+      animalLabels(
+        t,
+        records.map(r => r.animal_id)
+      ),
+    ]);
 
     let createdCount = 0;
     for (const record of records) {
-      if (!record.nextDueDate) continue;
+      const animal = animals.get(record.animal_id);
+      if (!record.next_due_date || !animal || notified.has(record.id)) continue;
 
-      // Check if unread notification already exists
-      const existing = await db
-        .select({ id: notifications.id })
-        .from(notifications)
-        .where(
-          and(
-            eq(notifications.tenantId, tenantId),
-            eq(notifications.type, 'vaccination_due'),
-            eq(notifications.read, false),
-            sql`${notifications.metadata}->>'recordId' = ${record.recordId}`
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        const dueDateStr = new Date(record.nextDueDate).toLocaleDateString('en-PK', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-        await NotificationService.createNotification(tenantId, {
-          type: 'vaccination_due',
-          title: `Vaccination Due: ${record.animalTag || 'Animal'}`,
-          message: `${record.description || 'Vaccination'} scheduled for ${record.animalName || record.animalTag} on ${dueDateStr}.`,
-          link: `/animals/${record.animalId}`,
-          metadata: {
-            recordId: record.recordId,
-            animalId: record.animalId,
-            dueDate: record.nextDueDate,
-          },
-        });
-        createdCount++;
-      }
+      await NotificationService.createNotification(tenantId, {
+        type: 'vaccination_due',
+        title: `Vaccination Due: ${animal.tag || 'Animal'}`,
+        message: `${record.description || 'Vaccination'} scheduled for ${animal.name || animal.tag} on ${formatDate(record.next_due_date)}.`,
+        link: `/animals/${record.animal_id}`,
+        metadata: {
+          recordId: record.id,
+          animalId: record.animal_id,
+          dueDate: record.next_due_date,
+        },
+      });
+      createdCount++;
     }
 
     return createdCount;
@@ -234,67 +218,45 @@ export class ReminderService {
    * Check for upcoming pregnancy checks or calving dates
    */
   static async checkPregnancyChecksDue(tenantId: string, daysAhead: number = 7): Promise<number> {
-    const db = getDrizzle();
+    const t = tenantDb(tenantId);
     const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(now.getDate() + daysAhead);
+    const futureDate = new Date(now.getTime() + daysAhead * 86_400_000);
 
-    // Check calving dates for confirmed pregnant animals
-    const calvingDue = await db
-      .select({
-        recordId: breedingRecords.id,
-        animalId: breedingRecords.animalId,
-        expectedDueDate: breedingRecords.expectedDueDate,
-        animalTag: animals.tag,
-        animalName: animals.name,
-      })
-      .from(breedingRecords)
-      .innerJoin(animals, eq(breedingRecords.animalId, animals.id))
-      .where(
-        and(
-          eq(breedingRecords.tenantId, tenantId),
-          eq(breedingRecords.pregnancyConfirmed, true),
-          gte(breedingRecords.expectedDueDate, now),
-          lte(breedingRecords.expectedDueDate, futureDate)
-        )
-      );
+    const records = unwrap(
+      await t
+        .select('breeding_records', 'id, animal_id, expected_due_date')
+        .eq('pregnancy_confirmed', true)
+        .gte('expected_due_date', now.toISOString())
+        .lte('expected_due_date', futureDate.toISOString()),
+      'Load expected calvings'
+    ) as Row[];
+    if (records.length === 0) return 0;
+
+    const [notified, animals] = await Promise.all([
+      unreadMetadataKeys(t, 'pregnancy_check', 'recordId'),
+      animalLabels(
+        t,
+        records.map(r => r.animal_id)
+      ),
+    ]);
 
     let createdCount = 0;
-    for (const record of calvingDue) {
-      if (!record.expectedDueDate) continue;
+    for (const record of records) {
+      const animal = animals.get(record.animal_id);
+      if (!record.expected_due_date || !animal || notified.has(record.id)) continue;
 
-      const existing = await db
-        .select({ id: notifications.id })
-        .from(notifications)
-        .where(
-          and(
-            eq(notifications.tenantId, tenantId),
-            eq(notifications.type, 'pregnancy_check'),
-            eq(notifications.read, false),
-            sql`${notifications.metadata}->>'recordId' = ${record.recordId}`
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        const dateStr = new Date(record.expectedDueDate).toLocaleDateString('en-PK', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-        await NotificationService.createNotification(tenantId, {
-          type: 'pregnancy_check',
-          title: `Calving Expected: ${record.animalTag || 'Animal'}`,
-          message: `${record.animalName || record.animalTag} is expected to calve on or around ${dateStr}.`,
-          link: `/breeding`,
-          metadata: {
-            recordId: record.recordId,
-            animalId: record.animalId,
-            expectedDate: record.expectedDueDate,
-          },
-        });
-        createdCount++;
-      }
+      await NotificationService.createNotification(tenantId, {
+        type: 'pregnancy_check',
+        title: `Calving Expected: ${animal.tag || 'Animal'}`,
+        message: `${animal.name || animal.tag} is expected to calve on or around ${formatDate(record.expected_due_date)}.`,
+        link: `/breeding`,
+        metadata: {
+          recordId: record.id,
+          animalId: record.animal_id,
+          expectedDate: record.expected_due_date,
+        },
+      });
+      createdCount++;
     }
 
     return createdCount;
@@ -304,49 +266,37 @@ export class ReminderService {
    * Check for low feed inventory levels
    */
   static async checkLowFeedStock(tenantId: string): Promise<number> {
-    const db = getDrizzle();
+    const t = tenantDb(tenantId);
 
-    const lowStockItems = await db
-      .select()
-      .from(feedInventory)
-      .where(
-        and(
-          eq(feedInventory.tenantId, tenantId),
-          eq(feedInventory.isActive, true),
-          sql`${feedInventory.minimumStock} IS NOT NULL`,
-          sql`CAST(${feedInventory.quantity} AS numeric) <= CAST(${feedInventory.minimumStock} AS numeric)`
-        )
-      );
+    // PostgREST cannot compare two columns, so filter quantity <= minimum_stock here
+    const items = unwrap(
+      await t
+        .select('feed_inventory', 'id, feed_name, quantity, unit, minimum_stock')
+        .eq('is_active', true)
+        .not('minimum_stock', 'is', null),
+      'Load feed inventory'
+    ) as Row[];
+    const lowStockItems = items.filter(i => Number(i.quantity) <= Number(i.minimum_stock));
+    if (lowStockItems.length === 0) return 0;
+
+    const notified = await unreadMetadataKeys(t, 'low_stock', 'feedId');
 
     let createdCount = 0;
     for (const item of lowStockItems) {
-      const existing = await db
-        .select({ id: notifications.id })
-        .from(notifications)
-        .where(
-          and(
-            eq(notifications.tenantId, tenantId),
-            eq(notifications.type, 'low_stock'),
-            eq(notifications.read, false),
-            sql`${notifications.metadata}->>'feedId' = ${item.id}`
-          )
-        )
-        .limit(1);
+      if (notified.has(item.id)) continue;
 
-      if (existing.length === 0) {
-        await NotificationService.createNotification(tenantId, {
-          type: 'low_stock',
-          title: `Low Stock: ${item.feedName}`,
-          message: `Inventory for ${item.feedName} has reached ${item.quantity} ${item.unit} (reorder point: ${item.minimumStock} ${item.unit}).`,
-          link: `/feed`,
-          metadata: {
-            feedId: item.id,
-            currentStock: item.quantity,
-            minimumStock: item.minimumStock,
-          },
-        });
-        createdCount++;
-      }
+      await NotificationService.createNotification(tenantId, {
+        type: 'low_stock',
+        title: `Low Stock: ${item.feed_name}`,
+        message: `Inventory for ${item.feed_name} has reached ${item.quantity} ${item.unit} (reorder point: ${item.minimum_stock} ${item.unit}).`,
+        link: `/feed`,
+        metadata: {
+          feedId: item.id,
+          currentStock: item.quantity,
+          minimumStock: item.minimum_stock,
+        },
+      });
+      createdCount++;
     }
 
     return createdCount;

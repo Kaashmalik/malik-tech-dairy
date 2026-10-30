@@ -8,6 +8,7 @@ import { getSupabaseClient } from '@/lib/supabase/server';
 import { ensurePlatformUser } from '@/lib/auth/platform-user';
 import { provisionFarm, ProvisioningError, type FarmPlan } from '@/lib/tenant/provision';
 import { logger } from '@/lib/logger';
+import { NotificationService } from '@/lib/services/notifications/notification.service';
 // Type definitions
 interface FarmApplication {
   id: string;
@@ -163,18 +164,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
       // 5. Create notification for the user (fire and forget)
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('notifications') as any).insert([
-          {
-            user_id: application.applicant_id,
-            type: 'application_approved',
-            title: 'Farm Application Approved! 🎉',
-            message: `Your farm "${application.farm_name}" has been approved. Farm ID: ${farmId}`,
-            data: { applicationId: id, farmId, tenantId: clerkOrgId },
-            read: false,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        await NotificationService.createNotification(clerkOrgId, {
+          userId: application.applicant_id,
+          type: 'system',
+          title: 'Farm Application Approved! 🎉',
+          message: `Your farm "${application.farm_name}" has been approved. Farm ID: ${farmId}`,
+          link: '/dashboard',
+          metadata: { applicationId: id, farmId },
+        });
       } catch (e) {
         logger.warn('Notification insert failed', { applicationId: id, error: String(e) });
       }
@@ -236,23 +233,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (updateError) {
         return NextResponse.json({ error: 'Failed to reject application' }, { status: 500 });
       }
-      // Create notification for the user (fire and forget)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('notifications') as any).insert([
-          {
-            user_id: application.applicant_id,
-            type: 'application_rejected',
-            title: 'Farm Application Update',
-            message: `Your farm application has been reviewed. Reason: ${validatedData.rejectionReason}`,
-            data: { applicationId: id, reason: validatedData.rejectionReason },
-            read: false,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-      } catch (e) {
-        logger.warn('Notification insert failed', { applicationId: id, error: String(e) });
-      }
+      // No tenant exists for a rejected farm (notifications.tenant_id is NOT NULL);
+      // the applicant sees the reason on /apply/status.
       return NextResponse.json({
         success: true,
         data: {

@@ -1,6 +1,5 @@
-import { getDrizzle } from '@/lib/supabase/server';
-import { subscriptions, animals, tenantMembers } from '@/db/schema';
-import { eq, and, count } from 'drizzle-orm';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { tenantDb, unwrap } from '@/lib/supabase/tenant-db';
 import { PLAN_LIMITS, PLAN_FEATURES, PROBATION_PERIOD_DAYS } from './constants';
 import { isWithinPlanLimit, featureNotAvailableMessage } from './plan-limits';
 import type { SubscriptionPlan, AnimalSpecies } from '@/types';
@@ -19,11 +18,23 @@ export interface SubscriptionUpdate {
   trialEndsAt?: Date;
 }
 
+interface SubscriptionRow {
+  id: string;
+  tenant_id: string;
+  plan: string;
+  status: 'active' | 'trial' | 'expired' | 'cancelled' | 'past_due' | 'pending_approval';
+  gateway: string;
+  renew_date: string;
+  trial_ends_at: string | null;
+  amount: number;
+  currency: string;
+  [key: string]: unknown;
+}
+
 export type ResourceType = 'animals' | 'users' | 'storage' | 'emails';
 
 export class SubscriptionService {
   private tenantId: string;
-  private db = getDrizzle();
 
   constructor(tenantId: string) {
     this.tenantId = tenantId;
@@ -33,9 +44,17 @@ export class SubscriptionService {
    * Get current subscription details
    */
   async getSubscription() {
-    const sub = await this.db.query.subscriptions.findFirst({
-      where: eq(subscriptions.tenantId, this.tenantId),
-    });
+    const row = unwrap(
+      await tenantDb(this.tenantId).select('subscriptions').maybeSingle(),
+      'Load subscription'
+    ) as SubscriptionRow | null;
+    const sub = row
+      ? {
+          ...row,
+          renewDate: new Date(row.renew_date),
+          trialEndsAt: row.trial_ends_at ? new Date(row.trial_ends_at) : null,
+        }
+      : null;
 
     if (!sub) {
       // Default fallback for tenants without explicit record (legacy handling)
@@ -52,7 +71,8 @@ export class SubscriptionService {
     const now = new Date();
     let effectiveStatus = sub.status;
 
-    if (sub.status === 'active' && sub.renewDate < now) {
+    // Free plan never expires (older rows were created with a 30-day renew_date)
+    if (sub.plan !== 'free' && sub.status === 'active' && sub.renewDate < now) {
       const probationEnd = new Date(sub.renewDate);
       probationEnd.setDate(probationEnd.getDate() + PROBATION_PERIOD_DAYS);
 
@@ -111,11 +131,7 @@ export class SubscriptionService {
       if (typeof currentCountOverride === 'number') {
         currentUsage = currentCountOverride;
       } else {
-        const [animalCount] = await this.db
-          .select({ count: count() })
-          .from(animals)
-          .where(and(eq(animals.tenantId, this.tenantId), eq(animals.status, 'active')));
-        currentUsage = Number(animalCount?.count || 0);
+        currentUsage = await this.countActive('animals');
       }
       return isWithinPlanLimit(currentUsage, maxAllowed);
     }
@@ -125,19 +141,23 @@ export class SubscriptionService {
       if (typeof currentCountOverride === 'number') {
         currentUsage = currentCountOverride;
       } else {
-        const [userCount] = await this.db
-          .select({ count: count() })
-          .from(tenantMembers)
-          .where(
-            and(eq(tenantMembers.tenantId, this.tenantId), eq(tenantMembers.status, 'active'))
-          );
-        currentUsage = Number(userCount?.count || 0);
+        currentUsage = await this.countActive('tenant_members');
       }
       return isWithinPlanLimit(currentUsage, maxAllowed);
     }
 
     // storage/emails not enforced here yet — allow
     return true;
+  }
+
+  private async countActive(table: 'animals' | 'tenant_members'): Promise<number> {
+    const { count, error } = await tenantDb(this.tenantId)
+      .select(table, 'id', { count: 'exact', head: true })
+      .eq('status', 'active');
+    if (error) {
+      throw new Error(`Count ${table}: ${error.message}`);
+    }
+    return count || 0;
   }
 
   /**
@@ -166,15 +186,15 @@ export async function updateTenantSubscription(
   tenantId: string,
   update: SubscriptionUpdate
 ): Promise<void> {
-  const { getSupabaseClient } = await import('@/lib/supabase/server');
   const supabase = getSupabaseClient();
   const subscriptionId = `${tenantId}_subscription`;
   const now = new Date().toISOString();
 
+  // Keyed on tenant_id (unique): older rows have non-standard ids like sub_<ts>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from('subscriptions') as any).upsert(
     {
-      id: subscriptionId,
+      id: subscriptionId, // text PK without default; nothing references it
       tenant_id: tenantId,
       plan: update.plan,
       status: update.status,
@@ -185,9 +205,8 @@ export async function updateTenantSubscription(
       currency: update.currency,
       trial_ends_at: update.trialEndsAt ? update.trialEndsAt.toISOString() : null,
       updated_at: now,
-      created_at: now,
     },
-    { onConflict: 'id' }
+    { onConflict: 'tenant_id' }
   );
 
   if (error) {
@@ -209,15 +228,11 @@ export async function updateTenantSubscription(
  * Cancel subscription via Supabase REST
  */
 export async function cancelSubscription(tenantId: string): Promise<void> {
-  const { getSupabaseClient } = await import('@/lib/supabase/server');
-  const supabase = getSupabaseClient();
-  const subscriptionId = `${tenantId}_subscription`;
   const now = new Date().toISOString();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from('subscriptions') as any)
-    .update({ status: 'cancelled', updated_at: now })
-    .eq('id', subscriptionId);
+  const { error } = await tenantDb(tenantId).update('subscriptions', {
+    status: 'cancelled',
+    updated_at: now,
+  });
 
   if (error) {
     throw new Error(`Failed to cancel subscription: ${error.message}`);

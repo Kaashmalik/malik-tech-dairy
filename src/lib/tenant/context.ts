@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
-import { getDrizzle, getSupabaseClient } from '@/lib/supabase/server';
-import { tenants, tenantMembers, platformUsers, subscriptions, animals } from '@/db/schema';
-import { eq, and, count } from 'drizzle-orm';
+import { getSupabaseClient } from '@/lib/supabase/server';
+import { db, tenantDb, toCamel, unwrap } from '@/lib/supabase/tenant-db';
+import { logger } from '@/lib/logger';
 import { resolveTenantAccess } from '@/lib/tenant/resolve-access';
 import {
   PLAN_LIMITS as SUBSCRIPTION_PLAN_LIMITS,
@@ -92,34 +92,58 @@ export async function resolveUserRoleFromDatabase(
   tenantId: string
 ): Promise<string> {
   try {
-    const db = getDrizzle();
-    const membership = await db
-      .select()
-      .from(tenantMembers)
-      .where(and(eq(tenantMembers.userId, userId), eq(tenantMembers.tenantId, tenantId)))
-      .limit(1);
-    if (membership.length > 0) {
-      return membership[0].role;
+    // Scoped to BOTH user and tenant so a role never leaks across farms
+    const membership = unwrap(
+      await tenantDb(tenantId).select('tenant_members', 'role').eq('user_id', userId).maybeSingle(),
+      'Load membership'
+    ) as { role: string } | null;
+    if (membership) {
+      return membership.role;
     }
     // If no membership found, check if user is super admin
-    const user = await db.select().from(platformUsers).where(eq(platformUsers.id, userId)).limit(1);
-    if (user.length > 0 && user[0].platformRole === 'super_admin') {
-      return 'super_admin';
-    }
-    return 'guest';
+    const user = unwrap(
+      await db().from('platform_users').select('platform_role').eq('id', userId).maybeSingle(),
+      'Load platform user'
+    ) as { platform_role: string } | null;
+    return user?.platform_role === 'super_admin' ? 'super_admin' : 'guest';
   } catch (error) {
+    logger.error('resolveUserRoleFromDatabase failed', error, { userId, tenantId });
     return 'guest';
   }
 }
+export interface TenantRecord {
+  id: string;
+  slug: string;
+  farmName: string;
+  logoUrl: string | null;
+  primaryColor: string | null;
+  accentColor: string | null;
+  language: string | null;
+  currency: string | null;
+  timezone: string | null;
+  animalTypes: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: unknown;
+}
+
 /**
  * Get tenant information
  */
 export async function getTenantInfo(tenantId: string) {
   try {
-    const db = getDrizzle();
-    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1);
-    return tenant[0] || null;
+    const tenant = unwrap(
+      await db()
+        .from('tenants')
+        .select('*')
+        .eq('id', tenantId)
+        .is('deleted_at', null)
+        .maybeSingle(),
+      'Load tenant'
+    );
+    return toCamel<TenantRecord>(tenant as Record<string, unknown> | null);
   } catch (error) {
+    logger.error('getTenantInfo failed', error, { tenantId });
     return null;
   }
 }
@@ -180,21 +204,18 @@ export async function getUserTenants() {
     if (!userId) {
       return [];
     }
-    const db = getDrizzle();
-    const memberships = await db
-      .select({
-        tenant: tenants,
-        membership: tenantMembers,
-      })
-      .from(tenantMembers)
-      .innerJoin(tenants, eq(tenantMembers.tenantId, tenants.id))
-      .where(eq(tenantMembers.userId, userId));
+    const memberships = unwrap(
+      await db().from('tenant_members').select('id, role, tenants!inner(*)').eq('user_id', userId),
+      'Load user tenants'
+      // many-to-one embed returns an object at runtime; generated types say array
+    ) as unknown as Array<{ id: string; role: string; tenants: Record<string, unknown> }>;
     return memberships.map(m => ({
-      ...m.tenant,
-      role: m.membership.role,
-      membershipId: m.membership.id,
+      ...toCamel<TenantRecord>(m.tenants)!,
+      role: m.role,
+      membershipId: m.id,
     }));
   } catch (error) {
+    logger.error('getUserTenants failed', error);
     return [];
   }
 }
@@ -261,12 +282,19 @@ export async function getTenantSubscriptionInfo(
       tenantId = context.tenantId;
     }
 
-    const db = getDrizzle();
-    const [sub] = await db
-      .select()
-      .from(subscriptions)
-      .where(eq(subscriptions.tenantId, tenantId))
-      .limit(1);
+    const sub = toCamel<{
+      plan: string;
+      status: string;
+      renewDate: string | null;
+      trialEndsAt: string | null;
+    }>(
+      unwrap(
+        await tenantDb(tenantId)
+          .select('subscriptions', 'plan, status, renew_date, trial_ends_at')
+          .maybeSingle(),
+        'Load subscription'
+      ) as Record<string, unknown> | null
+    );
 
     if (!sub) {
       // Default fallback for unconfigured or new tenant
@@ -280,7 +308,12 @@ export async function getTenantSubscriptionInfo(
     }
 
     const now = new Date();
-    const isExpired = sub.renewDate && new Date(sub.renewDate) < now && sub.status !== 'trial';
+    // Free plan never expires (older rows were created with a 30-day renew_date)
+    const isExpired =
+      sub.plan !== 'free' &&
+      sub.renewDate &&
+      new Date(sub.renewDate) < now &&
+      sub.status !== 'trial';
     const isTrialExpired =
       sub.trialEndsAt && new Date(sub.trialEndsAt) < now && sub.status === 'trial';
 
@@ -305,6 +338,10 @@ export async function getTenantSubscriptionInfo(
       features: limits.features,
     };
   } catch (error) {
+    // Fail closed to free-plan limits, but make the outage visible
+    logger.error('getTenantSubscriptionInfo failed; using free limits', error, {
+      tenantId: tenantIdOverride,
+    });
     return {
       plan: 'free',
       status: 'active',
@@ -350,14 +387,14 @@ export async function checkTenantAnimalQuota(tenantIdOverride?: string): Promise
     }
 
     const sub = await getTenantSubscriptionInfo(tenantId);
-    const db = getDrizzle();
+    const { count: activeCount, error } = await tenantDb(tenantId)
+      .select('animals', 'id', { count: 'exact', head: true })
+      .eq('status', 'active');
+    if (error) {
+      throw new Error(`Count animals: ${error.message}`);
+    }
 
-    const [res] = await db
-      .select({ count: count() })
-      .from(animals)
-      .where(and(eq(animals.tenantId, tenantId), eq(animals.status, 'active')));
-
-    const currentCount = Number(res?.count || 0);
+    const currentCount = activeCount || 0;
     const allowed = currentCount < sub.maxAnimals;
 
     return {
@@ -367,6 +404,7 @@ export async function checkTenantAnimalQuota(tenantIdOverride?: string): Promise
       plan: sub.plan,
     };
   } catch (error) {
+    logger.error('checkTenantAnimalQuota failed', error, { tenantId: tenantIdOverride });
     return {
       allowed: false,
       currentCount: 0,

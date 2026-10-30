@@ -1,6 +1,4 @@
-import { getDrizzle, getSupabaseClient } from '@/lib/supabase/server';
-import { animals, milkLogs, healthRecords, breedingRecords } from '@/db/schema';
-import { eq, and, or, ilike, desc, sql, count } from 'drizzle-orm';
+import { fetchAllRows, tenantDb, toCamel, toSnake, unwrap } from '@/lib/supabase/tenant-db';
 import { ServiceContext, PaginatedResult } from '../types';
 import { SubscriptionService } from '@/lib/subscriptions/management';
 import { checkTenantAnimalQuota } from '@/lib/tenant/context';
@@ -37,6 +35,31 @@ export interface CreateAnimalDTO {
 
 export interface UpdateAnimalDTO extends Partial<CreateAnimalDTO> {}
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnimalRecord = Record<string, any>;
+
+const toIso = (value?: string | Date | null) => (value ? new Date(value).toISOString() : null);
+
+/** Strip PostgREST filter syntax (, ( ) * etc.) so a search term cannot alter the query. */
+export function sanitizeSearchTerm(term: string): string {
+  return term
+    .replace(/[^\p{L}\p{N}\s\-_.]/gu, '')
+    .trim()
+    .slice(0, 50);
+}
+
+function mapAnimal(row: Record<string, unknown>): AnimalRecord {
+  return toCamel<AnimalRecord>(row)!;
+}
+
+async function auditSafely(params: Parameters<typeof logAuditEvent>[0]) {
+  try {
+    await logAuditEvent(params);
+  } catch {
+    // Audit failure must not fail the mutation
+  }
+}
+
 export class AnimalService {
   /**
    * List animals with server-side pagination, search and filtering
@@ -44,35 +67,26 @@ export class AnimalService {
   static async listAnimals(
     ctx: ServiceContext,
     filters: AnimalListFilters = {}
-  ): Promise<PaginatedResult<any>> {
+  ): Promise<PaginatedResult<AnimalRecord>> {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 50));
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    const supabase = getSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabase.from('animals') as any)
-      .select('*', { count: 'exact' })
-      .eq('tenant_id', ctx.tenantId)
+    let query = tenantDb(ctx.tenantId)
+      .select('animals', '*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
 
-    if (filters.species) {
-      query = query.eq('species', filters.species);
-    }
-    if (filters.status) {
-      query = query.eq('status', filters.status);
-    }
-    if (filters.gender) {
-      query = query.eq('gender', filters.gender);
-    }
-    if (filters.breed) {
-      query = query.eq('breed', filters.breed);
-    }
+    if (filters.species) query = query.eq('species', filters.species);
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.gender) query = query.eq('gender', filters.gender);
+    if (filters.breed) query = query.eq('breed', filters.breed);
     if (filters.search) {
-      const term = filters.search.trim();
-      query = query.or(`tag.ilike.%${term}%,name.ilike.%${term}%`);
+      const term = sanitizeSearchTerm(filters.search);
+      if (term) {
+        query = query.or(`tag.ilike.%${term}%,name.ilike.%${term}%`);
+      }
     }
 
     const { data, error, count } = await query;
@@ -81,30 +95,8 @@ export class AnimalService {
     }
 
     const total = count || 0;
-    const items = (data || []).map((r: Record<string, unknown>) => ({
-      id: r.id,
-      tenantId: r.tenant_id,
-      tag: r.tag,
-      name: r.name,
-      species: r.species,
-      breed: r.breed,
-      dateOfBirth: r.date_of_birth,
-      gender: r.gender,
-      photoUrl: r.photo_url,
-      status: r.status,
-      weight: r.weight,
-      color: r.color,
-      notes: r.notes,
-      motherId: r.mother_id,
-      fatherId: r.father_id,
-      purchaseDate: r.purchase_date,
-      purchasePrice: r.purchase_price,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }));
-
     return {
-      items,
+      items: ((data || []) as unknown as Record<string, unknown>[]).map(mapAnimal),
       pagination: {
         page,
         limit,
@@ -118,38 +110,11 @@ export class AnimalService {
    * Get animal by ID ensuring tenant ownership
    */
   static async getAnimalById(ctx: ServiceContext, animalId: string) {
-    const db = getDrizzle();
-    const rows = await db
-      .select()
-      .from(animals)
-      .where(and(eq(animals.id, animalId), eq(animals.tenantId, ctx.tenantId)))
-      .limit(1);
-
-    if (!rows.length) return null;
-
-    const r = rows[0];
-    return {
-      id: r.id,
-      tenantId: r.tenantId,
-      tag: r.tag,
-      name: r.name,
-      species: r.species,
-      breed: r.breed,
-      dateOfBirth: r.dateOfBirth,
-      gender: r.gender,
-      photoUrl: r.photoUrl,
-      status: r.status,
-      weight: r.weight,
-      color: r.color,
-      notes: r.notes,
-      motherId: r.motherId,
-      fatherId: r.fatherId,
-      purchaseDate: r.purchaseDate,
-      purchasePrice: r.purchasePrice,
-      customFields: r.customFields,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-    };
+    const row = unwrap(
+      await tenantDb(ctx.tenantId).select('animals').eq('id', animalId).maybeSingle(),
+      'Load animal'
+    ) as Record<string, unknown> | null;
+    return row ? mapAnimal(row) : null;
   }
 
   /**
@@ -159,51 +124,38 @@ export class AnimalService {
     const animal = await this.getAnimalById(ctx, animalId);
     if (!animal) return null;
 
-    const db = getDrizzle();
+    const t = tenantDb(ctx.tenantId);
+    const [milk, health, breeding, quantities] = await Promise.all([
+      t.select('milk_logs').eq('animal_id', animalId).order('date', { ascending: false }).limit(10),
+      t
+        .select('health_records')
+        .eq('animal_id', animalId)
+        .order('date', { ascending: false })
+        .limit(5),
+      t
+        .select('breeding_records')
+        .eq('animal_id', animalId)
+        .order('breeding_date', { ascending: false })
+        .limit(5),
+      // Lifetime totals: quantities only, paged past the PostgREST row cap
+      fetchAllRows<{ quantity: number | null }>(
+        () => t.select('milk_logs', 'quantity').eq('animal_id', animalId).order('id'),
+        'Load milk totals'
+      ),
+    ]);
 
-    // Fetch recent 10 milk logs
-    const recentMilk = await db
-      .select()
-      .from(milkLogs)
-      .where(and(eq(milkLogs.animalId, animalId), eq(milkLogs.tenantId, ctx.tenantId)))
-      .orderBy(desc(milkLogs.date))
-      .limit(10);
-
-    // Fetch recent 5 health records
-    const recentHealth = await db
-      .select()
-      .from(healthRecords)
-      .where(and(eq(healthRecords.animalId, animalId), eq(healthRecords.tenantId, ctx.tenantId)))
-      .orderBy(desc(healthRecords.date))
-      .limit(5);
-
-    // Fetch recent 5 breeding records
-    const recentBreeding = await db
-      .select()
-      .from(breedingRecords)
-      .where(
-        and(eq(breedingRecords.animalId, animalId), eq(breedingRecords.tenantId, ctx.tenantId))
-      )
-      .orderBy(desc(breedingRecords.breedingDate))
-      .limit(5);
-
-    // Calculate 30-day milk average
-    const [milkStats] = await db
-      .select({
-        totalQuantity: sql<number>`coalesce(sum(${milkLogs.quantity}), 0)`,
-        countLogs: count(),
-      })
-      .from(milkLogs)
-      .where(and(eq(milkLogs.animalId, animalId), eq(milkLogs.tenantId, ctx.tenantId)));
+    const rows = (r: { data: unknown }) =>
+      ((r.data || []) as Record<string, unknown>[]).map(row => toCamel(row)!);
+    const totalQuantity = quantities.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
 
     return {
       animal,
-      recentMilk,
-      recentHealth,
-      recentBreeding,
+      recentMilk: rows(milk),
+      recentHealth: rows(health),
+      recentBreeding: rows(breeding),
       summary: {
-        totalMilkLogs: Number(milkStats?.countLogs || 0),
-        totalMilkedLiters: Math.round(Number(milkStats?.totalQuantity || 0) * 10) / 10,
+        totalMilkLogs: quantities.length,
+        totalMilkedLiters: Math.round(totalQuantity * 10) / 10,
       },
     };
   }
@@ -234,8 +186,6 @@ export class AnimalService {
       );
     }
 
-    const db = getDrizzle();
-
     // Enforce tenant animal quota
     const quota = await checkTenantAnimalQuota(ctx.tenantId);
     if (!quota.allowed) {
@@ -244,141 +194,126 @@ export class AnimalService {
       );
     }
 
-    // Check duplicate tag within tenant
-    const existing = await db
-      .select({ id: animals.id })
-      .from(animals)
-      .where(and(eq(animals.tenantId, ctx.tenantId), eq(animals.tag, data.tag.trim())))
-      .limit(1);
+    const t = tenantDb(ctx.tenantId);
+    const tag = data.tag.trim();
 
+    // Check duplicate tag within tenant
+    const existing = unwrap(
+      await t.select('animals', 'id').eq('tag', tag).limit(1),
+      'Check duplicate tag'
+    ) as unknown[];
     if (existing.length > 0) {
       throw new Error(
         'DUPLICATE_TAG: An animal with this ear tag number already exists on your farm.'
       );
     }
 
-    const animalId = `animal_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const now = new Date().toISOString();
+    const created = unwrap(
+      await t
+        .insert('animals', {
+          id: `animal_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          tag,
+          name: data.name?.trim() || null,
+          species: normalizedSpecies,
+          breed: data.breed?.trim() || null,
+          date_of_birth: toIso(data.dateOfBirth),
+          gender: data.gender,
+          photo_url: data.photoUrl || null,
+          status: data.status || 'active',
+          weight: data.weight ? Math.round(data.weight) : null,
+          color: data.color?.trim() || null,
+          notes: data.notes?.trim() || null,
+          mother_id: data.motherId || null,
+          father_id: data.fatherId || null,
+          purchase_date: toIso(data.purchaseDate),
+          purchase_price: data.purchasePrice ? Math.round(data.purchasePrice) : null,
+          created_by: ctx.userId,
+          created_at: now,
+          updated_at: now,
+        })
+        .select()
+        .single(),
+      'Create animal'
+    ) as Record<string, unknown>;
 
-    const [created] = await db
-      .insert(animals)
-      .values({
-        id: animalId,
-        tenantId: ctx.tenantId,
-        tag: data.tag.trim(),
-        name: data.name?.trim() || null,
-        species: normalizedSpecies,
-        breed: data.breed?.trim() || null,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-        gender: data.gender,
-        photoUrl: data.photoUrl || null,
-        status: data.status || 'active',
-        weight: data.weight ? Math.round(data.weight) : null,
-        color: data.color?.trim() || null,
-        notes: data.notes?.trim() || null,
-        motherId: data.motherId || null,
-        fatherId: data.fatherId || null,
-        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : null,
-        purchasePrice: data.purchasePrice ? Math.round(data.purchasePrice) : null,
-        createdBy: ctx.userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
+    const animal = mapAnimal(created);
+    await auditSafely({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'create',
+      resource: 'animals',
+      resourceId: animal.id,
+      details: { tag: animal.tag, species: animal.species },
+    });
 
-    // Record audit event
-    try {
-      await logAuditEvent({
-        tenantId: ctx.tenantId,
-        userId: ctx.userId,
-        action: 'create',
-        resource: 'animals',
-        resourceId: created.id,
-        details: { tag: created.tag, species: created.species },
-      });
-    } catch {
-      // Audit failure must not fail the mutation
-    }
-
-    return created;
+    return animal;
   }
 
   /**
    * Update animal details
    */
   static async updateAnimal(ctx: ServiceContext, animalId: string, data: UpdateAnimalDTO) {
-    const db = getDrizzle();
-
-    // Verify animal exists
     const existing = await this.getAnimalById(ctx, animalId);
     if (!existing) {
       throw new Error('NOT_FOUND: Animal not found.');
     }
 
+    const t = tenantDb(ctx.tenantId);
+
     // If tag changed, ensure new tag is unique within tenant
     if (data.tag && data.tag.trim() !== existing.tag) {
-      const duplicate = await db
-        .select({ id: animals.id })
-        .from(animals)
-        .where(
-          and(
-            eq(animals.tenantId, ctx.tenantId),
-            eq(animals.tag, data.tag.trim()),
-            sql`${animals.id} != ${animalId}`
-          )
-        )
-        .limit(1);
-
+      const duplicate = unwrap(
+        await t.select('animals', 'id').eq('tag', data.tag.trim()).neq('id', animalId).limit(1),
+        'Check duplicate tag'
+      ) as unknown[];
       if (duplicate.length > 0) {
         throw new Error('DUPLICATE_TAG: An animal with this ear tag number already exists.');
       }
     }
 
-    const updateValues: Record<string, any> = {
-      updatedAt: new Date(),
+    const trimOrNull = (v?: string) => (v ? v.trim() : null);
+    const changes: Record<string, unknown> = {
+      tag: data.tag?.trim(),
+      name: data.name !== undefined ? trimOrNull(data.name) : undefined,
+      species:
+        data.species !== undefined ? (data.species === 'cattle' ? 'cow' : data.species) : undefined,
+      breed: data.breed !== undefined ? trimOrNull(data.breed) : undefined,
+      dateOfBirth: data.dateOfBirth !== undefined ? toIso(data.dateOfBirth) : undefined,
+      gender: data.gender,
+      photoUrl: data.photoUrl !== undefined ? data.photoUrl || null : undefined,
+      status: data.status,
+      weight:
+        data.weight !== undefined ? (data.weight ? Math.round(data.weight) : null) : undefined,
+      color: data.color !== undefined ? trimOrNull(data.color) : undefined,
+      notes: data.notes !== undefined ? trimOrNull(data.notes) : undefined,
+      motherId: data.motherId !== undefined ? data.motherId || null : undefined,
+      fatherId: data.fatherId !== undefined ? data.fatherId || null : undefined,
+      purchaseDate: data.purchaseDate !== undefined ? toIso(data.purchaseDate) : undefined,
+      purchasePrice:
+        data.purchasePrice !== undefined
+          ? data.purchasePrice
+            ? Math.round(data.purchasePrice)
+            : null
+          : undefined,
     };
+    const updateValues = { ...toSnake(changes), updated_at: new Date().toISOString() };
 
-    if (data.tag !== undefined) updateValues.tag = data.tag.trim();
-    if (data.name !== undefined) updateValues.name = data.name ? data.name.trim() : null;
-    if (data.species !== undefined)
-      updateValues.species = data.species === 'cattle' ? 'cow' : data.species;
-    if (data.breed !== undefined) updateValues.breed = data.breed ? data.breed.trim() : null;
-    if (data.dateOfBirth !== undefined)
-      updateValues.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
-    if (data.gender !== undefined) updateValues.gender = data.gender;
-    if (data.photoUrl !== undefined) updateValues.photoUrl = data.photoUrl || null;
-    if (data.status !== undefined) updateValues.status = data.status;
-    if (data.weight !== undefined)
-      updateValues.weight = data.weight ? Math.round(data.weight) : null;
-    if (data.color !== undefined) updateValues.color = data.color ? data.color.trim() : null;
-    if (data.notes !== undefined) updateValues.notes = data.notes ? data.notes.trim() : null;
-    if (data.motherId !== undefined) updateValues.motherId = data.motherId || null;
-    if (data.fatherId !== undefined) updateValues.fatherId = data.fatherId || null;
-    if (data.purchaseDate !== undefined)
-      updateValues.purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : null;
-    if (data.purchasePrice !== undefined)
-      updateValues.purchasePrice = data.purchasePrice ? Math.round(data.purchasePrice) : null;
+    const updated = unwrap(
+      await t.update('animals', updateValues).eq('id', animalId).select().single(),
+      'Update animal'
+    ) as Record<string, unknown>;
 
-    const [updated] = await db
-      .update(animals)
-      .set(updateValues)
-      .where(and(eq(animals.id, animalId), eq(animals.tenantId, ctx.tenantId)))
-      .returning();
+    await auditSafely({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'update',
+      resource: 'animals',
+      resourceId: animalId,
+      details: { changes: Object.keys(updateValues) },
+    });
 
-    // Record audit event
-    try {
-      await logAuditEvent({
-        tenantId: ctx.tenantId,
-        userId: ctx.userId,
-        action: 'update',
-        resource: 'animals',
-        resourceId: animalId,
-        details: { changes: Object.keys(updateValues) },
-      });
-    } catch {
-      // Audit failure must not fail the mutation
-    }
-
-    return updated;
+    return mapAnimal(updated);
   }
 
   /**
@@ -394,29 +329,24 @@ export class AnimalService {
       throw new Error('NOT_FOUND: Animal not found.');
     }
 
-    const db = getDrizzle();
-    const [archived] = await db
-      .update(animals)
-      .set({
-        status,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(animals.id, animalId), eq(animals.tenantId, ctx.tenantId)))
-      .returning();
+    const archived = unwrap(
+      await tenantDb(ctx.tenantId)
+        .update('animals', { status, updated_at: new Date().toISOString() })
+        .eq('id', animalId)
+        .select()
+        .single(),
+      'Archive animal'
+    ) as Record<string, unknown>;
 
-    try {
-      await logAuditEvent({
-        tenantId: ctx.tenantId,
-        userId: ctx.userId,
-        action: 'update',
-        resource: 'animals',
-        resourceId: animalId,
-        details: { newStatus: status, previousStatus: existing.status },
-      });
-    } catch {
-      // Ignore audit failure
-    }
+    await auditSafely({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'update',
+      resource: 'animals',
+      resourceId: animalId,
+      details: { newStatus: status, previousStatus: existing.status },
+    });
 
-    return archived;
+    return mapAnimal(archived);
   }
 }
