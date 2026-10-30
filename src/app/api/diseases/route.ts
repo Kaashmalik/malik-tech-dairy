@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
-import { getTenantContext, getTenantInfo } from '@/lib/tenant/context';
+import { getTenantContext, getTenantInfo, isPlatformAdmin } from '@/lib/tenant/context';
 
 // GET /api/diseases - Fetch all diseases
 export async function GET(request: NextRequest) {
@@ -73,7 +73,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
-    const { tenantId } = await getTenantContext();
+    const tenantCtx = await getTenantContext();
+    const { tenantId } = tenantCtx;
+    // Shared reference catalogue (visible to every farm): platform admins only
+    if (!isPlatformAdmin(tenantCtx)) {
+      return NextResponse.json(
+        { success: false, error: 'Only platform administrators can change the shared catalogue' },
+        { status: 403 }
+      );
+    }
     const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
-import { getTenantContext, getTenantInfo } from '@/lib/tenant/context';
+import { getTenantContext, getTenantInfo, isPlatformAdmin } from '@/lib/tenant/context';
 
 // GET /api/medicines/[id] - Fetch a specific medicine
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -81,7 +81,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const supabase = getSupabaseClient();
-    const { tenantId } = await getTenantContext();
+    const tenantCtx = await getTenantContext();
+    const { tenantId } = tenantCtx;
+    // Shared reference catalogue (visible to every farm): platform admins only
+    if (!isPlatformAdmin(tenantCtx)) {
+      return NextResponse.json(
+        { success: false, error: 'Only platform administrators can change the shared catalogue' },
+        { status: 403 }
+      );
+    }
     const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {
@@ -161,7 +169,15 @@ export async function DELETE(
   try {
     const { id } = await params;
     const supabase = getSupabaseClient();
-    const { tenantId } = await getTenantContext();
+    const tenantCtx = await getTenantContext();
+    const { tenantId } = tenantCtx;
+    // Shared reference catalogue (visible to every farm): platform admins only
+    if (!isPlatformAdmin(tenantCtx)) {
+      return NextResponse.json(
+        { success: false, error: 'Only platform administrators can change the shared catalogue' },
+        { status: 403 }
+      );
+    }
     const tenant = await getTenantInfo(tenantId);
 
     if (!tenant) {

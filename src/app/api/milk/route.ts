@@ -24,7 +24,12 @@ const milkQuerySchema = z.object({
   days: z
     .string()
     .optional()
-    .transform(val => (val ? parseInt(val) : 30)),
+    .transform(val => Math.min(365, Math.max(1, val ? parseInt(val) || 30 : 30))),
+  report: z.enum(['monthly']).optional(),
+  month: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, 'Month must be YYYY-MM')
+    .optional(),
 });
 
 const createMilkLogSchema = z.object({
@@ -37,6 +42,7 @@ const createMilkLogSchema = z.object({
     .max(100, 'Quantity exceeds realistic single milking limit'),
   quality: z.number().min(1).max(10).optional(),
   fat: z.number().min(0).max(20).optional(),
+  snf: z.number().min(0).max(20).optional(),
   notes: z.string().max(500).optional(),
 });
 
@@ -47,11 +53,15 @@ const bulkMilkSchema = z.object({
     .array(
       z.object({
         animalId: z.string().min(1),
-        quantity: z.number().min(0.1),
+        quantity: z.number().min(0.1).max(100),
         quality: z.number().min(1).max(10).optional(),
+        fat: z.number().min(0).max(20).optional(),
+        snf: z.number().min(0).max(20).optional(),
+        notes: z.string().max(500).optional(),
       })
     )
-    .min(1, 'At least one milk entry required'),
+    .min(1, 'At least one milk entry required')
+    .max(500, 'At most 500 entries per request'),
 });
 
 // GET: List milk logs, daily summary, or trends
@@ -67,13 +77,20 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, summary, data: summary });
       }
 
-      // 2. Production trends request
+      // 2. Monthly report (per-animal + per-day)
+      if (query.report === 'monthly') {
+        const month = query.month || new Date().toISOString().slice(0, 7);
+        const report = await MilkService.getMonthlyReport(context, month);
+        return NextResponse.json({ success: true, data: report });
+      }
+
+      // 3. Production trends request
       if (query.trends === 'true') {
         const trends = await MilkService.getProductionTrends(context, query.days || 30);
         return NextResponse.json({ success: true, trends, data: trends });
       }
 
-      // 3. Regular paginated list
+      // 4. Regular paginated list
       const result = await MilkService.listLogs(context, {
         date: query.date,
         startDate: query.startDate,
@@ -115,7 +132,8 @@ export async function POST(request: NextRequest) {
       if (body.entries && Array.isArray(body.entries)) {
         const validatedBulk = bulkMilkSchema.parse(body);
         const result = await MilkService.bulkLogMilk(context, validatedBulk);
-        return NextResponse.json({ ...result }, { status: 201 });
+        // 201 when anything was saved; per-animal problems are listed in `errors`
+        return NextResponse.json(result, { status: result.loggedCount > 0 ? 201 : 422 });
       }
 
       // Single entry

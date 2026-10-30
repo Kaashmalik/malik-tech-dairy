@@ -221,6 +221,7 @@ export async function PUT(request: NextRequest) {
       .select('quantity')
       .eq('id', body.id)
       .eq('tenant_id', tenant.id)
+      .eq('tenant_id', tenant.id)
       .single();
 
     if (fetchError || !current) {
@@ -247,6 +248,7 @@ export async function PUT(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', body.id)
+      .eq('tenant_id', tenant.id)
       .select(
         `
         *,

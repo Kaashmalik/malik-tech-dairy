@@ -26,6 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { MonthlyMilkReport } from '@/components/reports/MonthlyMilkReport';
 
 interface ReportType {
   id: string;
@@ -241,6 +242,9 @@ export default function ReportsPage() {
           </p>
         </div>
       </motion.div>
+
+      {/* Monthly milk summary (live, no download needed) */}
+      <MonthlyMilkReport />
 
       {/* Report Type Selection */}
       <div>

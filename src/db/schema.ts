@@ -1,6 +1,6 @@
 // Drizzle ORM Schema for Supabase PostgreSQL
-// PRIMARY DATABASE - All core data stored here
-// Firebase Firestore is ONLY used for real-time activity feeds (limited to 50K reads/day)
+// Source of truth for table shapes; used by drizzle-kit (db:push / migrations).
+// The running app accesses data through Supabase REST (lib/supabase/tenant-db.ts).
 import {
   pgTable,
   text,
@@ -8,6 +8,7 @@ import {
   boolean,
   jsonb,
   integer,
+  numeric,
   varchar,
   pgEnum,
   index,
@@ -525,9 +526,10 @@ export const milkLogs = pgTable(
       .references(() => animals.id, { onDelete: 'cascade' }),
     date: varchar('date', { length: 10 }).notNull(), // YYYY-MM-DD
     session: varchar('session', { length: 10 }).notNull(), // morning, evening
-    quantity: integer('quantity').notNull(), // in ml (stored as integer for precision)
+    quantity: numeric('quantity', { precision: 6, scale: 2 }).notNull(), // litres (migration 011)
     quality: integer('quality'), // 1-10 scale
     fat: integer('fat'), // percentage * 100 (e.g., 450 = 4.5%)
+    snf: integer('snf'), // solids-not-fat, percentage * 100 (migration 011)
     notes: text('notes'),
     recordedBy: text('recorded_by').references(() => platformUsers.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -537,6 +539,12 @@ export const milkLogs = pgTable(
     animalIdIdx: index('milk_logs_animal_id_idx').on(table.animalId),
     dateIdx: index('milk_logs_date_idx').on(table.date),
     tenantDateIdx: index('milk_logs_tenant_date_idx').on(table.tenantId, table.date),
+    onePerSessionIdx: uniqueIndex('milk_logs_one_per_session_idx').on(
+      table.tenantId,
+      table.animalId,
+      table.date,
+      table.session
+    ),
   })
 );
 

@@ -1,5 +1,5 @@
 // PDF Report Generation using pdfmake (Supabase-based)
-import { getSupabaseClient } from '@/lib/supabase/server';
+import { db, fetchAllRows, tenantDb, unwrap } from '@/lib/supabase/tenant-db';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 
 // Initialize pdfmake fonts (using default fonts)
@@ -22,164 +22,149 @@ function getPrinter() {
   return printer;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = Record<string, any>;
+
+const day = (d: Date) => d.toISOString().split('T')[0];
+
 /**
  * Get tenant configuration from Supabase
  */
 async function getTenantConfig(tenantId: string) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('farm_name')
-      .eq('id', tenantId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching tenant config:', error);
-      return null;
-    }
-
-    return {
-      farmName: (data as any)?.farm_name || 'Farm',
-      settings: {}, // Settings field removed in favor of direct columns
-    };
-  } catch (error) {
-    console.error('Error in getTenantConfig:', error);
-    return null;
-  }
+  const data = unwrap(
+    await db().from('tenants').select('farm_name').eq('id', tenantId).maybeSingle(),
+    'Load tenant'
+  ) as Row | null;
+  return { farmName: data?.farm_name || 'Farm', settings: {} };
 }
 
+/** id -> tag lookup so reports show ear tags instead of internal IDs */
+async function getAnimalTags(tenantId: string): Promise<Map<string, string>> {
+  const rows = await fetchAllRows<{ id: string; tag: string }>(
+    () => tenantDb(tenantId).select('animals', 'id, tag').order('id'),
+    'Load animal tags'
+  );
+  return new Map(rows.map(r => [r.id, r.tag]));
+}
+
+const withTags = (rows: Row[], tags: Map<string, string>) =>
+  rows.map(r => ({ ...r, animal_tag: tags.get(r.animal_id) || r.animal_id || '' }));
+
 /**
- * Fetch milk logs from Supabase
+ * Fetch milk logs from Supabase (all rows in range - totals must not be truncated)
  */
 async function getMilkLogs(tenantId: string, startDate: Date, endDate: Date) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('milk_logs')
-      .select('id, date, session, quantity, animal_id, notes')
-      .eq('tenant_id', tenantId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      console.error('Error fetching milk logs:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getMilkLogs:', error);
-    return [];
-  }
+  const [rows, tags] = await Promise.all([
+    fetchAllRows<Row>(
+      () =>
+        tenantDb(tenantId)
+          .select('milk_logs', 'id, date, session, quantity, fat, animal_id, notes')
+          .gte('date', day(startDate))
+          .lte('date', day(endDate))
+          .order('date', { ascending: false })
+          .order('id'),
+      'Load milk logs'
+    ),
+    getAnimalTags(tenantId),
+  ]);
+  return withTags(
+    rows.map(r => ({ ...r, quantity: Number(r.quantity) || 0 })),
+    tags
+  );
 }
 
 /**
  * Fetch expenses from Supabase
  */
 async function getExpenses(tenantId: string, startDate: Date, endDate: Date) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('expenses')
-      .select('id, date, category, amount, description')
-      .eq('tenant_id', tenantId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      console.error('Error fetching expenses:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getExpenses:', error);
-    return [];
-  }
+  return fetchAllRows<Row>(
+    () =>
+      tenantDb(tenantId)
+        .select('expenses', 'id, date, category, amount, description')
+        .gte('date', day(startDate))
+        .lte('date', `${day(endDate)}T23:59:59.999Z`)
+        .order('date', { ascending: false })
+        .order('id'),
+    'Load expenses'
+  );
 }
 
 /**
  * Fetch sales from Supabase
  */
 async function getSales(tenantId: string, startDate: Date, endDate: Date) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('sales')
-      .select('id, date, type, quantity, unit, total, customer_name')
-      .eq('tenant_id', tenantId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      console.error('Error fetching sales:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getSales:', error);
-    return [];
-  }
+  return fetchAllRows<Row>(
+    () =>
+      tenantDb(tenantId)
+        .select('sales', 'id, date, type, quantity, unit, total, customer_name:buyer_name')
+        .gte('date', day(startDate))
+        .lte('date', `${day(endDate)}T23:59:59.999Z`)
+        .order('date', { ascending: false })
+        .order('id'),
+    'Load sales'
+  );
 }
 
 /**
  * Fetch animals for animal report
  */
 async function getAnimals(tenantId: string) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('animals')
-      .select('id, tag_number, name, species, breed, status, gender, birth_date')
-      .eq('tenant_id', tenantId)
-      .order('tag_number', { ascending: true })
-      .limit(200);
-
-    if (error) {
-      console.error('Error fetching animals:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getAnimals:', error);
-    return [];
-  }
+  return fetchAllRows<Row>(
+    () =>
+      tenantDb(tenantId)
+        .select(
+          'animals',
+          'id, tag_number:tag, name, species, breed, status, gender, birth_date:date_of_birth'
+        )
+        .order('tag', { ascending: true })
+        .order('id'),
+    'Load animals'
+  );
 }
 
 /**
  * Fetch health records
  */
 async function getHealthRecords(tenantId: string, startDate: Date, endDate: Date) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('health_records')
-      .select('id, date, type, description, animal_id, treatment, vet_name')
-      .eq('tenant_id', tenantId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: false })
-      .limit(100);
+  const [rows, tags] = await Promise.all([
+    fetchAllRows<Row>(
+      () =>
+        tenantDb(tenantId)
+          .select(
+            'health_records',
+            'id, date, type, description, animal_id, cost, vet_name:veterinarian'
+          )
+          .gte('date', day(startDate))
+          .lte('date', `${day(endDate)}T23:59:59.999Z`)
+          .order('date', { ascending: false })
+          .order('id'),
+      'Load health records'
+    ),
+    getAnimalTags(tenantId),
+  ]);
+  return withTags(
+    rows.map(r => ({ ...r, date: r.date ? String(r.date).slice(0, 10) : '' })),
+    tags
+  );
+}
 
-    if (error) {
-      console.error('Error fetching health records:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getHealthRecords:', error);
-    return [];
+/** Per-animal totals for the milk report, highest producers first */
+function perAnimalRows(milkLogs: Row[]): string[][] {
+  const byAnimal = new Map<string, { total: number; days: Set<string> }>();
+  for (const log of milkLogs) {
+    const a = byAnimal.get(log.animal_tag) || { total: 0, days: new Set<string>() };
+    a.total += Number(log.quantity) || 0;
+    a.days.add(log.date);
+    byAnimal.set(log.animal_tag, a);
   }
+  return [...byAnimal.entries()]
+    .sort((x, y) => y[1].total - x[1].total)
+    .map(([tag, a]) => [
+      tag,
+      a.total.toFixed(1),
+      String(a.days.size),
+      (a.total / Math.max(1, a.days.size)).toFixed(1),
+    ]);
 }
 
 /**
@@ -404,7 +389,22 @@ async function generateMilkReport(
         margin: [0, 0, 0, 20],
       },
       {
-        text: 'Daily Records',
+        text: 'Production by Animal',
+        style: 'sectionHeader',
+        margin: [0, 20, 0, 10],
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['*', 'auto', 'auto', 'auto'],
+          body: [
+            ['Animal', 'Total (L)', 'Days milked', 'Avg / day (L)'],
+            ...perAnimalRows(milkLogs),
+          ],
+        },
+      },
+      {
+        text: 'Latest Entries (up to 50)',
         style: 'sectionHeader',
         margin: [0, 20, 0, 10],
       },
@@ -413,14 +413,14 @@ async function generateMilkReport(
           headerRows: 1,
           widths: ['*', '*', '*', '*'],
           body: [
-            ['Date', 'Session', 'Quantity (L)', 'Animal ID'],
+            ['Date', 'Session', 'Quantity (L)', 'Animal'],
             ...milkLogs
               .slice(0, 50)
               .map((log: any) => [
                 log.date || '',
                 log.session || '',
-                (log.quantity || 0).toFixed(2),
-                log.animal_id || '',
+                Number(log.quantity || 0).toFixed(2),
+                log.animal_tag || '',
               ]),
           ],
         },
@@ -500,14 +500,14 @@ async function generateHealthReport(
           headerRows: 1,
           widths: ['auto', '*', '*', '*'],
           body: [
-            ['Date', 'Type', 'Animal ID', 'Treatment'],
+            ['Date', 'Type', 'Animal', 'Details'],
             ...healthRecords
               .slice(0, 50)
               .map((record: any) => [
                 record.date || '',
                 record.type || '',
-                record.animal_id || '',
-                record.treatment || '',
+                record.animal_tag || '',
+                record.description || '',
               ]),
           ],
         },
@@ -583,14 +583,14 @@ async function generateFinancialReport(
           headerRows: 1,
           widths: ['*', '*', '*', '*'],
           body: [
-            ['Date', 'Session', 'Quantity (L)', 'Animal ID'],
+            ['Date', 'Session', 'Quantity (L)', 'Animal'],
             ...milkLogs
               .slice(0, 50)
               .map((log: any) => [
                 log.date || '',
                 log.session || '',
-                (log.quantity || 0).toFixed(2),
-                log.animal_id || '',
+                Number(log.quantity || 0).toFixed(2),
+                log.animal_tag || '',
               ]),
           ],
         },

@@ -247,7 +247,7 @@ export async function downgradeToFree(tenantId: string): Promise<void> {
     plan: 'free',
     status: 'active',
     gateway: 'bank_transfer',
-    renewDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+    renewDate: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000), // free never expires
     amount: 0,
     currency: 'PKR',
   });

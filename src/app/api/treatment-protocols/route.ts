@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
-import { getTenantContext } from '@/lib/tenant/context';
+import { getTenantContext, isPlatformAdmin } from '@/lib/tenant/context';
 
 // GET /api/treatment-protocols - Fetch all treatment protocols
 export async function GET(request: NextRequest) {
@@ -82,6 +82,13 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
     const tenant = await getTenantContext();
+    // Shared reference catalogue (visible to every farm): platform admins only
+    if (!isPlatformAdmin(tenant)) {
+      return NextResponse.json(
+        { success: false, error: 'Only platform administrators can change the shared catalogue' },
+        { status: 403 }
+      );
+    }
 
     if (!tenant) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 401 });

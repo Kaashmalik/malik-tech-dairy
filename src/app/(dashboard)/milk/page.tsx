@@ -86,6 +86,12 @@ export default function MilkLogsPage() {
           </p>
         </div>
         <div className='flex items-center gap-3'>
+          <Link href='/milk/bulk'>
+            <Button variant='outline' className='gap-2'>
+              <Plus className='h-4 w-4' />
+              Herd Entry
+            </Button>
+          </Link>
           <Link href='/milk/new'>
             <Button className='gap-2'>
               <Plus className='h-4 w-4' />

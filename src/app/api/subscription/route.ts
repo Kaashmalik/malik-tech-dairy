@@ -1,135 +1,57 @@
-// API Route: Get & Update Subscription (Supabase-based)
+// API Route: Current subscription (read) and cancellation.
+// Source of truth is the `subscriptions` table via SubscriptionService - the same
+// data plan limits are enforced from. Paid upgrades never happen here: they go
+// through checkout -> payment verification (gateway callback or super-admin review).
 import { NextRequest, NextResponse } from 'next/server';
-import { withTenantContext } from '@/lib/api/middleware';
-import { getSupabaseClient } from '@/lib/supabase/server';
-import { checkUserRole } from '@/lib/api/middleware';
+import { withTenantContext, checkUserRole } from '@/lib/api/middleware';
+import { SubscriptionService, downgradeToFree } from '@/lib/subscriptions/management';
 import { SUBSCRIPTION_PLANS } from '@/lib/constants';
+import { logger } from '@/lib/logger';
+
 export const dynamic = 'force-dynamic';
+
 // GET: Get current subscription
 export async function GET(request: NextRequest) {
-  return withTenantContext(async (req, context) => {
+  return withTenantContext(async (_req, context) => {
     try {
-      const supabase = getSupabaseClient();
-      // Get tenant subscription from Supabase
-
-      const { data: tenant, error } = (await supabase
-        .from('tenants')
-        .select('subscription_plan, subscription_status, subscription_expires_at, created_at')
-        .eq('id', context.tenantId)
-        .single()) as { data: any; error: any };
-      if (error || !tenant) {
-        // Return default free subscription if tenant not found
-        return NextResponse.json({
-          plan: 'free',
-          status: 'trial',
-          amount: 0,
-          renewDate: null,
-          features: SUBSCRIPTION_PLANS.free,
-        });
-      }
-      const plan = tenant.subscription_plan || 'free';
-      const planDetails =
-        SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS] || SUBSCRIPTION_PLANS.free;
+      const sub = await new SubscriptionService(context.tenantId).getSubscription();
+      const plan = sub.plan in SUBSCRIPTION_PLANS ? sub.plan : 'free';
+      const planDetails = SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS];
+      const record = sub as unknown as { renewDate?: Date; created_at?: string };
       return NextResponse.json({
         plan,
-        status: tenant.subscription_status || 'trial',
+        status: sub.status,
         amount: planDetails.price || 0,
-        renewDate: tenant.subscription_expires_at,
+        // Free never renews; don't show the far-future sentinel date
+        renewDate: plan === 'free' ? null : record.renewDate || null,
         features: planDetails,
-        startDate: tenant.created_at,
+        limits: sub.limits,
+        startDate: record.created_at || null,
       });
     } catch (error) {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      logger.error('Subscription lookup failed', error, { tenantId: context.tenantId });
+      return NextResponse.json({ error: 'Failed to load subscription' }, { status: 500 });
     }
   })(request);
 }
-// PUT: Update subscription
-export async function PUT(request: NextRequest) {
-  return withTenantContext(async (req, context) => {
-    try {
-      // Only farm_owner can update subscription
-      const hasPermission = await checkUserRole(context.tenantId, context.userId, [
-        'owner',
-        'farm_owner',
-      ]);
-      if (!hasPermission) {
-        return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-      }
-      const body = await req.json();
-      const { plan, gateway, transactionId } = body;
-      if (!plan || !SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS]) {
-        return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
-      }
-      const supabase = getSupabaseClient();
-      const now = new Date();
-      const expiresAt = new Date(now.setMonth(now.getMonth() + 1)).toISOString();
-      // Update tenant subscription
 
-      const { error } = (await supabase
-        .from('tenants')
-        .update({
-          subscription_plan: plan,
-          subscription_status: 'active',
-          subscription_expires_at: expiresAt,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', context.tenantId)) as { error: any };
-      if (error) {
-        return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
-      }
-      // Log the payment/subscription change
-
-      await (supabase.from('subscription_history').insert({
-        tenant_id: context.tenantId,
-        user_id: context.userId,
-        plan,
-        gateway: gateway || 'manual',
-        transaction_id: transactionId || null,
-        amount: SUBSCRIPTION_PLANS[plan as keyof typeof SUBSCRIPTION_PLANS].price,
-        status: 'completed',
-        created_at: new Date().toISOString(),
-      }) as any);
-      return NextResponse.json({
-        success: true,
-        message: 'Subscription updated successfully',
-        plan,
-        expiresAt,
-      });
-    } catch (error) {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-  })(request);
-}
-// DELETE: Cancel subscription
+// DELETE: Cancel subscription (owner only) -> free plan
 export async function DELETE(request: NextRequest) {
-  return withTenantContext(async (req, context) => {
+  return withTenantContext(async (_req, context) => {
     try {
-      // Only owner can cancel
       const hasPermission = await checkUserRole(context.tenantId, context.userId, ['owner']);
       if (!hasPermission) {
         return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
       }
-      const supabase = getSupabaseClient();
-      // Downgrade to free plan
-
-      const { error } = (await supabase
-        .from('tenants')
-        .update({
-          subscription_plan: 'free',
-          subscription_status: 'cancelled',
-          subscription_expires_at: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', context.tenantId)) as { error: any };
-      if (error) {
-        return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 });
-      }
+      await downgradeToFree(context.tenantId);
+      logger.info('Subscription cancelled', { tenantId: context.tenantId, userId: context.userId });
       return NextResponse.json({
         success: true,
         message: 'Subscription cancelled. Downgraded to free plan.',
       });
     } catch (error) {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      logger.error('Subscription cancel failed', error, { tenantId: context.tenantId });
+      return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 });
     }
   })(request);
 }

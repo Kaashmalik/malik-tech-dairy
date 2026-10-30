@@ -427,3 +427,8 @@ export async function getTenantFeatureOverrides(): Promise<Record<string, boolea
     return {};
   }
 }
+
+/** Platform (super) admin check on an already-resolved tenant context. */
+export function isPlatformAdmin(ctx: Pick<TenantContext, 'userRole'> | null | undefined): boolean {
+  return ctx?.userRole === 'super_admin';
+}

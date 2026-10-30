@@ -102,6 +102,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const { data: current } = await (supabase.from('sales') as any)
           .select('quantity, price_per_unit')
           .eq('id', id)
+          .eq('tenant_id', context.tenantId)
           .single();
 
         const quantity = updateData.quantity ?? current?.quantity;
