@@ -31,7 +31,6 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)',
   '/api/system/health(.*)',
   '/api/cron(.*)',
-  '/api/migration/schedule(.*)',
   '/api/payments/callback(.*)',
   '/api/weather/sync(.*)',
   '/api/auth/redirect(.*)',
@@ -45,16 +44,13 @@ const isNoOrgRoute = createRouteMatcher([
   '/apply(.*)',
   '/onboarding(.*)',
   '/select-farm(.*)',
-  '/invite(.*)',
   '/admin(.*)', // Super admin routes
   '/super-admin(.*)', // Super admin routes
   '/payments(.*)', // Super admin payments
   '/api/farm-applications(.*)',
   '/api/user(.*)',
   '/api/upload(.*)',
-  '/api/invitations(.*)', // accept flow; send route checks tenant itself
   '/api/admin(.*)',
-  '/api/migration(.*)',
 ]);
 
 const IDENTITY_HEADERS = ['x-tenant-id', 'x-tenant-slug', 'x-user-id'];

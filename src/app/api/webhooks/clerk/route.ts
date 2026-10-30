@@ -6,6 +6,12 @@ import { cacheClaimOnce, cacheDelete, CacheTTL } from '@/lib/cache/redis-cache';
 import { getSupabaseClient } from '@/lib/supabase/server';
 import { ensurePlatformUser } from '@/lib/auth/platform-user';
 import { upsertTenantRecords, type FarmPlan } from '@/lib/tenant/provision';
+import { tenantDb, unwrap } from '@/lib/supabase/tenant-db';
+import { mapClerkOrgRole } from '@/lib/tenant/resolve-access';
+import { TenantRole } from '@/types/roles';
+
+const isTenantRole = (role: string): role is TenantRole =>
+  (Object.values(TenantRole) as string[]).includes(role);
 import { logAuditEvent } from '@/lib/audit';
 import { logger } from '@/lib/logger';
 import crypto from 'crypto';
@@ -173,6 +179,59 @@ export async function POST(request: Request) {
           details: { eventType, orgSlug: data.slug },
           ...auditMeta,
         });
+        break;
+      }
+
+      case 'organizationMembership.created':
+      case 'organizationMembership.updated': {
+        // Invite accepted (or role changed in Clerk): mirror into tenant_members.
+        const orgId: string = data.organization?.id;
+        const memberUserId: string = data.public_user_data?.user_id;
+        if (!orgId || !memberUserId) break;
+        await ensurePlatformUser(memberUserId);
+
+        const t = tenantDb(orgId);
+        const existing = unwrap(
+          await t.select('tenant_members', 'id, role').eq('user_id', memberUserId).maybeSingle(),
+          'Load membership'
+        ) as { id: string; role: string } | null;
+        // The owner row is written by provisioning; never downgrade it from here
+        if (existing?.role === TenantRole.FARM_OWNER) break;
+
+        const invitedRole = data.public_metadata?.tenantRole as string | undefined;
+        const role =
+          invitedRole && invitedRole !== TenantRole.FARM_OWNER && isTenantRole(invitedRole)
+            ? invitedRole
+            : existing?.role || mapClerkOrgRole(data.role);
+        const now = new Date().toISOString();
+        unwrap(
+          await t.upsert(
+            'tenant_members',
+            {
+              id: existing?.id || `${orgId}_${memberUserId}`,
+              user_id: memberUserId,
+              role,
+              status: 'active',
+              join_date: now,
+              updated_at: now,
+            },
+            { onConflict: 'tenant_id,user_id' }
+          ),
+          'Upsert membership'
+        );
+        break;
+      }
+
+      case 'organizationMembership.deleted': {
+        const orgId: string = data.organization?.id;
+        const memberUserId: string = data.public_user_data?.user_id;
+        if (!orgId || !memberUserId) break;
+        unwrap(
+          await tenantDb(orgId)
+            .update('tenant_members', { status: 'inactive', updated_at: new Date().toISOString() })
+            .eq('user_id', memberUserId),
+          'Deactivate membership'
+        );
         break;
       }
 

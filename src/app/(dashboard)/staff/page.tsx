@@ -52,19 +52,10 @@ export default function TeamManagementPage() {
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
       });
       if (response.ok) {
+        // Clerk emails the invite; the member appears here once they accept
         const data = await response.json();
-        alert(`Invitation sent! Invite ID: ${data.inviteId}`);
+        alert(data.message || 'Invitation sent!');
         setInviteEmail('');
-        // Send invitation email
-        await fetch('/api/invitations/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: inviteEmail,
-            role: inviteRole,
-            inviteId: data.inviteId,
-          }),
-        });
         fetchMembers();
       } else {
         const error = await response.json();

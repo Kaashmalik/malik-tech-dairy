@@ -14,7 +14,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@/lib/supabase/client';
 
 interface FarmLocation {
   latitude: number;
@@ -49,8 +48,6 @@ export default function LocationSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const supabase = createClient();
-
   // Fetch current tenant settings with proper tenant filtering
   const {
     data: settings,
@@ -63,17 +60,18 @@ export default function LocationSettings() {
         throw new Error('No organization found');
       }
 
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('id, farm_location, weather_enabled, weather_unit')
-        .eq('id', organization.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching tenant settings:', error);
-        throw error;
+      // Server API enforces tenant + role; the browser never touches tables directly
+      const res = await fetch('/api/tenants/config');
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to load farm settings');
       }
-
+      const data = {
+        id: json.config.id,
+        farm_location: json.config.farmLocation,
+        weather_enabled: json.config.weatherEnabled ?? true,
+        weather_unit: json.config.weatherUnit || 'metric',
+      };
       return data as TenantSettings;
     },
     enabled: !!organization?.id && orgLoaded,
@@ -89,31 +87,25 @@ export default function LocationSettings() {
           throw new Error('No organization found');
         }
 
-        // Get organization slug from organization metadata if available, otherwise use farm name
-        const slug =
-          (organization as any)?.slug ||
-          (settings?.id ? '' : organization.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-
-        // Use upsert to handle both new and existing tenants
-        const { data, error } = await supabase
-          .from('tenants')
-          .upsert({
-            id: organization.id,
-            slug: slug,
-            farm_name: organization.name,
-            farm_location: newSettings.farm_location,
-            weather_enabled: newSettings.weather_enabled,
-            weather_unit: newSettings.weather_unit,
-            updated_at: new Date().toISOString(),
-          })
-          .select('id, farm_location, weather_enabled, weather_unit')
-          .single();
-
-        if (error) {
-          console.error('Error updating tenant settings:', error);
-          throw error;
+        const res = await fetch('/api/tenants/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            farmLocation: newSettings.farm_location,
+            weatherEnabled: newSettings.weather_enabled,
+            weatherUnit: newSettings.weather_unit,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || 'Failed to save farm settings');
         }
-
+        const data = {
+          id: organization.id,
+          farm_location: newSettings.farm_location,
+          weather_enabled: newSettings.weather_enabled,
+          weather_unit: newSettings.weather_unit,
+        };
         return data as TenantSettings | null;
       },
       onSuccess: () => {

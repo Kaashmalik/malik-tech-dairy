@@ -318,7 +318,7 @@ export function ModernSuperAdminDashboard({
                   {
                     label: 'System Audit',
                     icon: Zap,
-                    href: '/super-admin/migration',
+                    href: '/super-admin/security',
                     color: 'from-purple-500 to-pink-600',
                     bg: 'bg-purple-500/10',
                   },

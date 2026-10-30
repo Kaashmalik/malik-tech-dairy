@@ -11,19 +11,8 @@ jest.mock('@clerk/nextjs', () => ({
   useUser: jest.fn(),
 }));
 
-// Mock Firebase
-jest.mock('firebase/firestore', () => ({
-  doc: jest.fn(),
-  getDoc: jest.fn(),
-}));
-
-jest.mock('@/lib/firebase/client', () => ({
-  db: {},
-}));
-
 import { useTenantContext } from '@/components/tenant/TenantProvider';
 import { useUser } from '@clerk/nextjs';
-import { getDoc } from 'firebase/firestore';
 
 describe('usePermissions', () => {
   beforeEach(() => {
@@ -37,10 +26,6 @@ describe('usePermissions', () => {
 
     (useUser as jest.Mock).mockReturnValue({
       user: { id: 'user123' },
-    });
-
-    (getDoc as jest.Mock).mockResolvedValue({
-      exists: () => false,
     });
 
     const { result } = renderHook(() => usePermissions());

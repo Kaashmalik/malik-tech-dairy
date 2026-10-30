@@ -38,6 +38,9 @@ export async function GET(request: NextRequest) {
         currency: tenant.currency,
         timezone: tenant.timezone,
         animalTypes: tenant.animal_types,
+        farmLocation: tenant.farm_location,
+        weatherEnabled: tenant.weather_enabled,
+        weatherUnit: tenant.weather_unit,
         createdAt: tenant.created_at,
         updatedAt: tenant.updated_at,
       };
@@ -83,6 +86,32 @@ export async function PUT(request: NextRequest) {
       if (body.currency !== undefined) updates.currency = body.currency;
       if (body.timezone !== undefined) updates.timezone = body.timezone;
       if (body.animalTypes !== undefined) updates.animal_types = body.animalTypes;
+      if (body.farmLocation !== undefined) {
+        const loc = body.farmLocation;
+        const validCoords =
+          loc &&
+          Number.isFinite(loc.latitude) &&
+          Number.isFinite(loc.longitude) &&
+          Math.abs(loc.latitude) <= 90 &&
+          Math.abs(loc.longitude) <= 180;
+        if (!validCoords) {
+          return NextResponse.json(
+            { success: false, error: 'Invalid farm location' },
+            { status: 400 }
+          );
+        }
+        updates.farm_location = loc;
+      }
+      if (body.weatherEnabled !== undefined) updates.weather_enabled = Boolean(body.weatherEnabled);
+      if (body.weatherUnit !== undefined) {
+        if (!['metric', 'imperial'].includes(body.weatherUnit)) {
+          return NextResponse.json(
+            { success: false, error: 'Invalid weather unit' },
+            { status: 400 }
+          );
+        }
+        updates.weather_unit = body.weatherUnit;
+      }
       const { error } = (await supabase
         .from('tenants')
         .update(updates)

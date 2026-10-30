@@ -34,9 +34,9 @@ const ContentSecurityPolicy = `
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://js.sentry-cdn.com https://*.posthog.com https://challenges.cloudflare.com;
   worker-src 'self' blob:;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' data: blob: https://res.cloudinary.com https://*.supabase.co https://img.clerk.com https://images.clerk.dev https://*.googleusercontent.com https://*.googleapis.com https://*.firebaseapp.com https://openweathermap.org;
+  img-src 'self' data: blob: https://res.cloudinary.com https://*.supabase.co https://img.clerk.com https://images.clerk.dev https://*.googleusercontent.com https://*.googleapis.com https://openweathermap.org;
   font-src 'self' https://fonts.gstatic.com data:;
-  connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.supabase.co wss://*.supabase.co https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://us.i.posthog.com https://api.cloudinary.com https://res.cloudinary.com https://*.upstash.io https://api.openweathermap.org;
+  connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://*.sentry.io https://*.posthog.com https://us.i.posthog.com https://api.cloudinary.com https://res.cloudinary.com https://*.upstash.io https://api.openweathermap.org;
   media-src 'self' https://res.cloudinary.com;
   frame-src 'self' https://clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com;
   manifest-src 'self';
@@ -98,10 +98,6 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.firebaseapp.com',
-      },
       {
         protocol: 'https',
         hostname: '**.googleapis.com',

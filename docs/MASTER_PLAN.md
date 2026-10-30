@@ -162,3 +162,29 @@ _Last updated: 2026-10-30_
     fixed subdomain redirect loop.
   - Deferred to Phase 2: `api/tenants/initialize` and `lib/supabase/tenant.ts`
     still use Drizzle.
+- **2026-10-30** — Phase 2 implemented (commits "Phase 2A/2B/2C"):
+  - Runtime data access is Supabase REST only. `getDrizzle()` and the postgres pool
+    are gone from `lib/supabase/server.ts`; Drizzle remains for schema/migrations.
+  - `lib/supabase/tenant-db.ts`: `tenantDb(tenantId)` (always filters/stamps
+    `tenant_id`, `tenant_id` immutable on update), `unwrap()`, `fetchAllRows()`
+    (pages past the 1000-row cap), `listActiveTenants()`.
+  - Silent-degradation bugs fixed: paid farms fell back to free limits on DB errors;
+    `getTenantInfo` null → "Tenant not found"; tasks list was invalid SQL; feed
+    analytics returned hard-coded mock numbers.
+  - Security: payment intent cross-farm overwrite; payment callback activated plans
+    for under-payment; staff PUT allowed privilege escalation to `farm_owner`;
+    removing a member left their Clerk membership (kept access as manager);
+    `roleMiddleware` read roles from Firestore and accepted `?tenantId=`.
+  - Team invites now use Clerk organization invitations (Clerk sends email); the
+    webhook mirrors `organizationMembership.*` into `tenant_members` with the
+    invited role. Seat limits enforced (members + pending invites).
+  - Firebase fully removed (packages, config, CSP, env). Browser Supabase client
+    removed: location settings and offline sync go through tenant-checked APIs.
+  - `scripts/migrations/010_lock_down_anon_access.sql`: RLS on every public table,
+    anon/authenticated privileges revoked. **Must be applied manually** (see file).
+  - Removed unreachable code (restorable from git): Firestore migration tooling,
+    IoT/API-key chain (middleware blocked devices anyway), batch-operations stub,
+    duplicate veterinary routes, milk-quality, tenant export/delete (no UI — rebuild
+    in Phase 5), NPS survey, bank-transfer routes without callers.
+  - Phase 3 follow-ups noted: milk quality (fat/SNF) and feed consumption tracking
+    need real data models; API keys/IoT need a deliberate design if wanted.

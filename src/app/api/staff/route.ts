@@ -2,9 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole, AuthenticatedRequest } from '@/lib/middleware/roleMiddleware';
 import { TenantRole, PlatformRole } from '@/types/roles';
+import { clerkClient } from '@clerk/nextjs/server';
 import { getSupabaseClient } from '@/lib/supabase/server';
+import { tenantDb } from '@/lib/supabase/tenant-db';
+import { SubscriptionService } from '@/lib/subscriptions/management';
 import { logger } from '@/lib/logger';
-import { v4 as uuidv4 } from 'uuid';
+
+// Owners are created by provisioning only; everyone else can be invited
+const INVITABLE_ROLES: string[] = Object.values(TenantRole).filter(
+  r => r !== TenantRole.FARM_OWNER && r !== TenantRole.GUEST
+);
 // GET - List all team members
 export async function GET(request: NextRequest) {
   const handler = withRole(
@@ -86,71 +93,67 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Tenant ID required or unauthorized' }, { status: 401 });
       }
 
-      const { email, role, name } = await req.json();
+      const { email, role } = await req.json();
       if (!email || !role) {
         return NextResponse.json({ error: 'Email and role are required' }, { status: 400 });
       }
+      const normalizedEmail = String(email).trim().toLowerCase();
+      if (!INVITABLE_ROLES.includes(role)) {
+        return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+      }
 
       try {
-        const supabase = getSupabaseClient();
-        const inviteId = uuidv4();
-        const now = new Date().toISOString();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
-
-        // Check if user already exists in platform_users
-        const { data: existingUser } = await (supabase.from('platform_users') as any)
-          .select('id')
-          .eq('email', email)
-          .single();
-
-        // Check if already a member of this tenant
-        if (existingUser) {
-          const { data: existingMember } = await (supabase.from('tenant_members') as any)
-            .select('id')
-            .eq('tenant_id', tenantId)
-            .eq('user_id', existingUser.id)
-            .single();
-
-          if (existingMember) {
-            return NextResponse.json(
-              {
-                success: false,
-                error: 'User is already a member of this farm',
-              },
-              { status: 409 }
-            );
-          }
+        // Seat limit: active members + pending invites must fit the plan
+        const clerk = await clerkClient();
+        const pending = await clerk.organizations.getOrganizationInvitationList({
+          organizationId: tenantId,
+          status: ['pending'],
+        });
+        const { count: activeMembers, error: countError } = await tenantDb(tenantId)
+          .select('tenant_members', 'id', { count: 'exact', head: true })
+          .eq('status', 'active');
+        if (countError) throw new Error(`Count members: ${countError.message}`);
+        const seatsUsed = (activeMembers || 0) + pending.data.length;
+        const allowed = await new SubscriptionService(tenantId).checkLimit('users', seatsUsed);
+        if (!allowed) {
+          return NextResponse.json(
+            {
+              error:
+                'PLAN_LIMIT_REACHED: Your plan has no free team seats. Upgrade to invite more members.',
+            },
+            { status: 403 }
+          );
         }
 
-        // Create invitation in a dedicated invitations table or use tenant_members with pending status
-        const { data: invitation, error } = await (supabase.from('tenant_members') as any)
-          .insert({
-            id: inviteId,
-            tenant_id: tenantId,
-            user_id: existingUser?.id || null, // Will be linked when user accepts
-            role: role,
-            status: 'invited',
-            permissions: { invited_email: email, invited_name: name },
-            created_at: now,
-            updated_at: now,
-          })
-          .select()
-          .single();
+        // Clerk sends the email and handles sign-up/sign-in from the link; on
+        // acceptance the organizationMembership.created webhook adds tenant_members
+        // with the role carried in publicMetadata.
+        const invitation = await clerk.organizations.createOrganizationInvitation({
+          organizationId: tenantId,
+          inviterUserId: req.user!.id,
+          emailAddress: normalizedEmail,
+          role: 'org:member',
+          redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/sign-up`,
+          publicMetadata: { tenantRole: role },
+        });
 
-        if (error) {
-          logger.error('Failed to create invitation', error, { tenantId, email });
-          return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
-        }
-
-        // TODO: Send invitation email via Resend
-        logger.info('Team invitation created', { tenantId, email, role, inviteId });
-
+        logger.info('Team invitation created', { tenantId, role, invitationId: invitation.id });
         return NextResponse.json({
           success: true,
-          inviteId,
-          message: 'Invitation created successfully. Email notification pending.',
+          inviteId: invitation.id,
+          message: `Invitation emailed to ${normalizedEmail}.`,
         });
       } catch (error) {
+        const clerkErrors = (error as { errors?: Array<{ code?: string; message?: string }> })
+          .errors;
+        if (
+          clerkErrors?.some(e => e.code === 'duplicate_record' || /already/i.test(e.message || ''))
+        ) {
+          return NextResponse.json(
+            { success: false, error: 'This person is already a member or has a pending invite.' },
+            { status: 409 }
+          );
+        }
         logger.error('Error creating invitation', error, { tenantId });
         return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
       }

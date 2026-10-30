@@ -1,5 +1,54 @@
 import { OfflineDB, QueuedMutation, db } from './database';
-import { createClient } from '@/lib/supabase/client';
+
+// The browser never writes Supabase tables directly (the anon key is public and the
+// user has no Supabase identity). Mutations replay through the same tenant-checked
+// server APIs the app uses online.
+type Endpoint = { method: 'POST' | 'PUT' | 'DELETE'; url: string; body?: unknown };
+
+const ENDPOINTS: Record<
+  string,
+  Partial<Record<QueuedMutation['operation'], (d: any) => Endpoint>>
+> = {
+  animals: {
+    create: d => ({ method: 'POST', url: '/api/animals', body: d }),
+    update: ({ id, ...rest }) => ({
+      method: 'PUT',
+      url: `/api/animals/${encodeURIComponent(id)}`,
+      body: rest,
+    }),
+    delete: d => ({ method: 'DELETE', url: `/api/animals/${encodeURIComponent(d.id)}` }),
+  },
+  milk_logs: {
+    create: d => ({ method: 'POST', url: '/api/milk', body: d }),
+  },
+  health_records: {
+    create: d => ({ method: 'POST', url: '/api/health/records', body: d }),
+    update: ({ id, ...rest }) => ({
+      method: 'PUT',
+      url: `/api/health/records/${encodeURIComponent(id)}`,
+      body: rest,
+    }),
+    delete: d => ({ method: 'DELETE', url: `/api/health/records/${encodeURIComponent(d.id)}` }),
+  },
+};
+
+async function callApi({ method, url, body }: Endpoint): Promise<void> {
+  const res = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error(json.error || `${method} ${url} failed (${res.status})`);
+  }
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`GET ${url} failed (${res.status})`);
+  return res.json();
+}
 export class SyncService {
   private static instance: SyncService;
   private syncInProgress = false;
@@ -60,167 +109,62 @@ export class SyncService {
   }
   // Process individual mutation
   private async processMutation(mutation: QueuedMutation): Promise<void> {
-    const supabase = createClient();
-    switch (mutation.table) {
-      case 'animals':
-        await this.processAnimalMutation(supabase, mutation);
-        break;
-      case 'milk_logs':
-        await this.processMilkLogMutation(supabase, mutation);
-        break;
-      case 'health_records':
-        await this.processHealthRecordMutation(supabase, mutation);
-        break;
-      default:
-        throw new Error(`Unknown table: ${mutation.table}`);
+    const build = ENDPOINTS[mutation.table]?.[mutation.operation];
+    if (!build) {
+      throw new Error(`Unsupported offline mutation: ${mutation.table}.${mutation.operation}`);
+    }
+    await callApi(build(mutation.data));
+
+    const { id } = mutation.data;
+    const { tenantId } = mutation;
+    if (mutation.table === 'animals') {
+      if (mutation.operation === 'delete') await db.animals.delete([id, tenantId]);
+      else await OfflineDB.updateAnimal(id, { _synced: true }, tenantId);
+    } else if (mutation.table === 'milk_logs') {
+      await OfflineDB.updateMilkLog(id, { _synced: true }, tenantId);
+    } else if (mutation.table === 'health_records') {
+      if (mutation.operation === 'delete') await db.healthRecords.delete([id, tenantId]);
+      else await OfflineDB.updateHealthRecord(id, { _synced: true }, tenantId);
     }
   }
-  // Animal mutations
-  private async processAnimalMutation(supabase: any, mutation: QueuedMutation): Promise<void> {
-    switch (mutation.operation) {
-      case 'create':
-        const { error: createError } = await supabase.from('animals').insert(mutation.data);
-        if (createError) throw createError;
-        // Mark as synced in IndexedDB
-        await OfflineDB.updateAnimal(mutation.data.id, { _synced: true }, mutation.tenantId);
-        break;
-      case 'update':
-        const { id, ...updates } = mutation.data;
-        const { error: updateError } = await supabase.from('animals').update(updates).eq('id', id);
-        if (updateError) throw updateError;
-        // Mark as synced in IndexedDB
-        await OfflineDB.updateAnimal(id, { _synced: true }, mutation.tenantId);
-        break;
-      case 'delete':
-        const { error: deleteError } = await supabase
-          .from('animals')
-          .delete()
-          .eq('id', mutation.data.id);
-        if (deleteError) throw deleteError;
-        // Remove from IndexedDB
-        await db.animals.delete([mutation.data.id, mutation.tenantId]);
-        break;
-    }
-  }
-  // Milk log mutations
-  private async processMilkLogMutation(supabase: any, mutation: QueuedMutation): Promise<void> {
-    switch (mutation.operation) {
-      case 'create':
-        const { error: createError } = await supabase.from('milk_logs').insert(mutation.data);
-        if (createError) throw createError;
-        // Mark as synced in IndexedDB
-        await OfflineDB.updateMilkLog(mutation.data.id, { _synced: true }, mutation.tenantId);
-        break;
-      case 'update':
-        const { id, ...updates } = mutation.data;
-        const { error: updateError } = await supabase
-          .from('milk_logs')
-          .update(updates)
-          .eq('id', id);
-        if (updateError) throw updateError;
-        // Mark as synced in IndexedDB
-        await OfflineDB.updateMilkLog(id, { _synced: true }, mutation.tenantId);
-        break;
-      case 'delete':
-        const { error: deleteError } = await supabase
-          .from('milk_logs')
-          .delete()
-          .eq('id', mutation.data.id);
-        if (deleteError) throw deleteError;
-        // Remove from IndexedDB
-        await db.milkLogs.delete([mutation.data.id, mutation.tenantId]);
-        break;
-    }
-  }
-  // Health record mutations
-  private async processHealthRecordMutation(
-    supabase: any,
-    mutation: QueuedMutation
-  ): Promise<void> {
-    switch (mutation.operation) {
-      case 'create':
-        const { error: createError } = await supabase.from('health_records').insert(mutation.data);
-        if (createError) throw createError;
-        // Mark as synced in IndexedDB
-        await OfflineDB.updateHealthRecord(mutation.data.id, { _synced: true }, mutation.tenantId);
-        break;
-      case 'update':
-        const { id, ...updates } = mutation.data;
-        const { error: updateError } = await supabase
-          .from('health_records')
-          .update(updates)
-          .eq('id', id);
-        if (updateError) throw updateError;
-        // Mark as synced in IndexedDB
-        await OfflineDB.updateHealthRecord(id, { _synced: true }, mutation.tenantId);
-        break;
-      case 'delete':
-        const { error: deleteError } = await supabase
-          .from('health_records')
-          .delete()
-          .eq('id', mutation.data.id);
-        if (deleteError) throw deleteError;
-        // Remove from IndexedDB
-        await db.healthRecords.delete([mutation.data.id, mutation.tenantId]);
-        break;
-    }
-  }
-  // Pull latest data from server
+  // Pull latest data from server (tenant comes from the session, not the argument)
   async pullLatestData(tenantId: string): Promise<void> {
-    const supabase = createClient();
-    try {
-      // Pull animals
-      const { data: animals, error: animalsError } = (await supabase
-        .from('animals')
-        .select('*')
-        .eq('tenant_id', tenantId)) as { data: any[]; error: any };
-      if (!animalsError && animals) {
-        for (const animal of animals) {
-          const existing = await OfflineDB.getAnimal(animal.id, tenantId);
-          if (!existing || animal.updated_at > new Date(existing._lastModified).toISOString()) {
-            // Update or add animal
-            await db.animals.put({
-              ...animal,
-              _synced: true,
-              _lastModified: new Date(animal.updated_at).getTime(),
-            });
-          }
+    // Animals: page through the list API
+    for (let page = 1; page <= 50; page++) {
+      const json = await getJson<{ data: { animals: any[]; pagination: { totalPages: number } } }>(
+        `/api/animals?page=${page}&limit=100`
+      );
+      for (const animal of json.data.animals) {
+        const existing = await OfflineDB.getAnimal(animal.id, tenantId);
+        const updatedAt = new Date(animal.updatedAt).getTime();
+        if (!existing || updatedAt > existing._lastModified) {
+          await db.animals.put({ ...animal, tenantId, _synced: true, _lastModified: updatedAt });
         }
       }
-      // Pull recent milk logs (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const { data: milkLogs, error: milkError } = (await supabase
-        .from('milk_logs')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])) as { data: any[]; error: any };
-      if (!milkError && milkLogs) {
-        for (const log of milkLogs) {
-          await db.milkLogs.put({
-            ...log,
-            _synced: true,
-            _lastModified: new Date(log.created_at).getTime(),
-          });
-        }
-      }
-      // Pull recent health records (last 30 days)
-      const { data: healthRecords, error: healthError } = (await supabase
-        .from('health_records')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])) as { data: any[]; error: any };
-      if (!healthError && healthRecords) {
-        for (const record of healthRecords) {
-          await db.healthRecords.put({
-            ...record,
-            _synced: true,
-            _lastModified: new Date(record.created_at).getTime(),
-          });
-        }
-      }
-    } catch (error) {
-      throw error;
+      if (page >= json.data.pagination.totalPages) break;
+    }
+
+    // Recent milk logs (last 30 days)
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const milk = await getJson<{ data: { logs: any[] } }>(`/api/milk?startDate=${since}&limit=100`);
+    for (const log of milk.data.logs) {
+      await db.milkLogs.put({
+        ...log,
+        tenantId,
+        _synced: true,
+        _lastModified: new Date(log.createdAt || Date.now()).getTime(),
+      });
+    }
+
+    // Recent health records
+    const health = await getJson<{ records: any[] }>('/api/health/records');
+    for (const record of health.records || []) {
+      await db.healthRecords.put({
+        ...record,
+        tenantId,
+        _synced: true,
+        _lastModified: new Date(record.createdAt || Date.now()).getTime(),
+      });
     }
   }
   // Full sync (pull + push)
