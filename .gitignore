@@ -65,6 +65,9 @@ ui-debug.log
 # clerk configuration (can include secrets)
 /.clerk/
 
+# Serena MCP local project config
+/.serena/
+
 # PWA generated files
 /public/sw.js
 /public/workbox-*.js

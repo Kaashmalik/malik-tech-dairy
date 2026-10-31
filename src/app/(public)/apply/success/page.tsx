@@ -27,6 +27,8 @@ interface Application {
   status: string;
   payment_slip_url?: string;
   paymentSlipUrl?: string;
+  assigned_farm_id?: string | null;
+  assignedFarmId?: string | null;
 }
 // Payment methods
 const paymentMethods = {
@@ -144,7 +146,9 @@ function SuccessContent() {
   const farmName = application?.farm_name || application?.farmName || 'Your Farm';
   const requestedPlan = application?.requested_plan || application?.requestedPlan || 'free';
   const paymentSlipUrl = application?.payment_slip_url || application?.paymentSlipUrl;
-  const needsPayment = requestedPlan !== 'free' && !paymentSlipUrl;
+  const assignedFarmId = application?.assigned_farm_id || application?.assignedFarmId;
+  const isApproved = application?.status === 'approved';
+  const needsPayment = requestedPlan !== 'free' && !paymentSlipUrl && !isApproved;
   const paymentUploaded = paymentSlipUrl && application?.status === 'payment_uploaded';
   return (
     <div className='min-h-screen bg-gray-50 px-4 py-12 dark:bg-slate-900'>
@@ -191,6 +195,12 @@ function SuccessContent() {
                   : application?.status?.replace('_', ' ')}
               </span>
             </div>
+            {assignedFarmId && (
+              <div className='flex justify-between'>
+                <span className='text-gray-500 dark:text-slate-400'>Farm ID</span>
+                <span className='font-mono font-bold text-emerald-600'>{assignedFarmId}</span>
+              </div>
+            )}
           </div>
         </div>
         {/* Next Steps */}
@@ -372,11 +382,14 @@ function SuccessContent() {
           <div className='mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-800 dark:bg-emerald-900/20'>
             <div className='mb-4 flex items-center gap-3 text-emerald-600'>
               <CheckCircle2 className='h-6 w-6' />
-              <h2 className='font-semibold'>Processing Your Application</h2>
+              <h2 className='font-semibold'>
+                {isApproved ? 'Free Trial Activated!' : 'Processing Your Application'}
+              </h2>
             </div>
             <p className='text-gray-600 dark:text-slate-300'>
-              Since you selected the Free plan, your application will be processed automatically.
-              You should receive your Farm ID within a few minutes.
+              {isApproved
+                ? 'Your farm has been provisioned automatically. Open the farm switcher to start using your dashboard.'
+                : 'Since you selected the Free plan, your application is processed automatically. Your farm will be ready in a few moments.'}
             </p>
           </div>
         )}
@@ -388,8 +401,8 @@ function SuccessContent() {
               Check Application Status
             </Button>
           </Link>
-          {application?.status === 'approved' ? (
-            <Link href='/dashboard' className='flex-1'>
+          {isApproved ? (
+            <Link href='/select-farm' className='flex-1'>
               <Button className='w-full bg-emerald-600 hover:bg-emerald-700'>
                 Go to Dashboard
                 <ArrowRight className='ml-2 h-4 w-4' />
