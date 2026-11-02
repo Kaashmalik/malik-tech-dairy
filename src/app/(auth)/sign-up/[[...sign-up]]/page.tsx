@@ -1,4 +1,5 @@
 import { SignUp } from '@clerk/nextjs';
+import { LogoMark } from '@/components/brand/Logo';
 
 export default function SignUpPage() {
   return (
@@ -7,9 +8,7 @@ export default function SignUpPage() {
       <div className='hidden flex-col justify-between bg-gradient-to-br from-emerald-600 to-emerald-800 p-12 text-white lg:flex lg:w-1/2'>
         <div>
           <div className='mb-8 flex items-center gap-3'>
-            <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-white/20'>
-              <span className='text-2xl'>🐄</span>
-            </div>
+            <LogoMark className='h-12 w-12 rounded-xl ring-2 ring-white/30' />
             <div>
               <h1 className='text-2xl font-bold'>MTK Dairy</h1>
               <p className='text-sm text-emerald-200'>Smart Farm Management</p>
@@ -61,9 +60,7 @@ export default function SignUpPage() {
         <div className='w-full max-w-md'>
           {/* Mobile logo */}
           <div className='mb-8 flex items-center justify-center gap-3 lg:hidden'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600'>
-              <span className='text-xl'>🐄</span>
-            </div>
+            <LogoMark />
             <div>
               <h1 className='text-xl font-bold text-gray-900 dark:text-white'>MTK Dairy</h1>
               <p className='text-xs text-gray-500'>Smart Farm Management</p>

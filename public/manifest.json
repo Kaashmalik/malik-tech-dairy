@@ -1,23 +1,46 @@
 {
+  "id": "/",
   "name": "MTK Dairy & Cattle Management",
   "short_name": "MTK Dairy",
   "description": "Premium livestock management SaaS for dairy farms in Pakistan",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#ffffff",
-  "theme_color": "#1F7A3D",
+  "theme_color": "#047857",
   "orientation": "portrait-primary",
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "/icon.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/apple-icon.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/brand/logo-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
     }
   ],
@@ -28,13 +51,27 @@
       "name": "Add Animal",
       "short_name": "New Animal",
       "description": "Add a new animal to your farm",
-      "url": "/animals/new"
+      "url": "/animals/new",
+      "icons": [
+        {
+          "src": "/icons/shortcut-add-animal.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Log Milk",
       "short_name": "Milk",
       "description": "Record milk production",
-      "url": "/milk/new"
+      "url": "/milk/new",
+      "icons": [
+        {
+          "src": "/icons/shortcut-log-milk.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

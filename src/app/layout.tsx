@@ -34,8 +34,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#1F7A3D' },
-    { media: '(prefers-color-scheme: dark)', color: '#155a2d' },
+    { media: '(prefers-color-scheme: light)', color: '#047857' },
+    { media: '(prefers-color-scheme: dark)', color: '#064E3B' },
   ],
 };
 
@@ -56,15 +56,9 @@ export const metadata: Metadata = {
   generator: 'Next.js',
   referrer: 'origin-when-cross-origin',
 
-  // Manifest & Icons
+  // Manifest. Icons come from the app/ file conventions (favicon.ico, icon.svg, apple-icon.png),
+  // generated from public/brand/logo-mark.svg by scripts/generate-icons.mjs.
   manifest: '/manifest.json',
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
-    ],
-    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
-  },
 
   // Metadata Base for Canonical URLs
   metadataBase: new URL(siteConfig.url),

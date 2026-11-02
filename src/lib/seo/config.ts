@@ -8,7 +8,7 @@ export const siteConfig = {
     "Pakistan's modern smart dairy farm management software. Track milk production, cattle health, breeding records, and farm finances with multi-herd support and offline PWA capability. ڈیری فارم مینجمنٹ سافٹ ویئر",
   url: 'https://dairy.mtkcodex.site',
   ogImage: '/opengraph-image.png',
-  logo: '/icon.png',
+  logo: '/brand/logo-512.png',
   locale: 'en_PK',
 
   // Contact Information

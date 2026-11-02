@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { ImageResponse } from 'next/og';
 
 export const alt =
@@ -10,11 +12,14 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
+  const logoSvg = await readFile(path.join(process.cwd(), 'public/brand/logo-mark.svg'));
+  const logoSrc = `data:image/svg+xml;base64,${logoSvg.toString('base64')}`;
+
   return new ImageResponse(
     <div
       style={{
         fontSize: 128,
-        background: 'linear-gradient(135deg, #1F7A3D 0%, #155a2d 50%, #0f4a23 100%)',
+        background: 'linear-gradient(135deg, #059669 0%, #047857 50%, #064E3B 100%)',
         width: '100%',
         height: '100%',
         display: 'flex',
@@ -27,8 +32,20 @@ export default async function Image() {
       }}
     >
       {/* Decorative elements */}
-      <div style={{ position: 'absolute', top: 40, left: 40, fontSize: 24, opacity: 0.9 }}>
-        🐄 MTK Dairy
+      <div
+        style={{
+          position: 'absolute',
+          top: 40,
+          left: 40,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          fontSize: 26,
+          fontWeight: 'bold',
+        }}
+      >
+        <img src={logoSrc} width={48} height={48} alt='' />
+        MTK Dairy
       </div>
       <div
         style={{
@@ -46,7 +63,13 @@ export default async function Image() {
       </div>
 
       {/* Main content */}
-      <div style={{ fontSize: 72, marginBottom: 10 }}>🐄</div>
+      <img
+        src={logoSrc}
+        width={120}
+        height={120}
+        alt=''
+        style={{ marginBottom: 20, borderRadius: 28, boxShadow: '0 12px 32px rgba(0,0,0,0.25)' }}
+      />
       <div style={{ fontSize: 56, fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>
         Smart Dairy Farm
       </div>
@@ -65,7 +88,7 @@ export default async function Image() {
         style={{
           marginTop: 30,
           background: 'white',
-          color: '#1F7A3D',
+          color: '#047857',
           padding: '12px 32px',
           borderRadius: 30,
           fontSize: 22,

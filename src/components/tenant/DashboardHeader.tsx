@@ -7,6 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { LogoMark } from '@/components/brand/Logo';
 import {
   Home,
   Beef,
@@ -182,9 +183,7 @@ export function DashboardHeader() {
           <div className='flex items-center gap-4'>
             <Link href='/dashboard' className='group flex items-center gap-3'>
               <div className='relative'>
-                <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-lg font-bold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/50'>
-                  🐄
-                </div>
+                <LogoMark className='rounded-xl shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/50' />
               </div>
               <div className='hidden sm:block'>
                 <h1 className='text-lg font-bold leading-tight text-gray-900 dark:text-white'>

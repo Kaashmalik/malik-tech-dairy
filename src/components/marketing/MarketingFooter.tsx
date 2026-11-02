@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mail, MapPin } from 'lucide-react';
+import { LogoMark } from '@/components/brand/Logo';
 
 export function MarketingFooter() {
   return (
@@ -10,7 +11,8 @@ export function MarketingFooter() {
           {/* Col 1 */}
           <div>
             <div className='flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white'>
-              <span>🐄 MTK Dairy</span>
+              <LogoMark className='h-8 w-8' />
+              <span>MTK Dairy</span>
             </div>
             <p className='mt-3 text-sm'>
               Smart dairy & livestock farm management platform. Built for farmers across Pakistan.
